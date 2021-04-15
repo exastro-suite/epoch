@@ -1,0 +1,93 @@
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+import cgi # CGIモジュールのインポート
+import cgitb
+import sys
+import requests
+import json
+import subprocess
+import traceback
+import os
+
+from django.shortcuts import render
+from django.http import HttpResponse
+from django.http.response import JsonResponse
+
+from django.views.decorators.csrf import csrf_exempt
+
+@csrf_exempt
+def index(request):
+    if request.method == 'POST':
+        return post(request)
+    else:
+        return ""
+
+@csrf_exempt    
+def post(request):
+    try:
+
+        print ("pipelineParameter post")
+
+        # ヘッダ情報
+        post_headers = {
+            'Content-Type': 'application/json',
+        }
+
+        # 引数をJSON形式で受け取りそのまま引数に設定
+        post_data = request.body
+
+        # 呼び出すapiInfoは、clusterInfo情報より取得
+#        print (request.body)
+        request_json = json.loads(request.body)
+        apiInfo = request_json["clusterInfo"]["apiInfo"]
+        print ("apiInfo:" + apiInfo)
+
+        output = []
+        # # パイプラインパラメータ設定(ITA)
+        # request_response = requests.post( apiInfo + "ita/manifestGitEnv", headers=post_headers, data=post_data)
+        # print("ita/manifestGitEnv:response:" + request_response.text)
+        # ret = json.loads(request_response.text)
+        # #ret = request_response.text
+        # print(ret["result"])
+        # if ret["result"] == "200" or ret["result"] == "201":
+        #     output.append(ret["items"])
+        # else:
+        #     return (request_response.text)
+
+        # パイプラインパラメータ設定(ArgoCD)
+        request_response = requests.post( apiInfo + "argocd/pipelineParameter", headers=post_headers, data=post_data)
+        print("argocd/pipelineParameter:response:" + request_response.text)
+        ret = json.loads(request_response.text)
+        if ret["result"] == "200" or ret["result"] == "201":
+            output.append(ret["output"])
+        else:
+            return (request_response.text)
+
+        response = {
+            "result":"200",
+            "output" : output,
+        }
+        return JsonResponse(response)
+
+    except Exception as e:
+        response = {
+            "result":"500",
+            "returncode": "0201",
+            "args": e.args,
+            "output": e.args,
+            "traceback": traceback.format_exc(),
+        }
+        return JsonResponse(response)
+
+
