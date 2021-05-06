@@ -22,3 +22,6 @@ spec:
   resources:
     requests:
       storage: 500Mi
+  storageClassName: epoch-tekton-pipeline-storage
+  volumeMode: Filesystem
+  volumeName: epoch-pv
