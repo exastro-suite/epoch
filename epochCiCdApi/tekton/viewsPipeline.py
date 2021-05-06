@@ -103,6 +103,10 @@ def postCommon(request):
 
         output_data = ""
 
+        # resource_dir作成
+        if not os.path.isdir(resource_dir):
+            os.makedirs(resource_dir)
+
         for yaml_name in yamls:
             # テンプレートの文字列置き換え
             conv(templates_dir + "/" + yaml_name,
@@ -161,6 +165,10 @@ def postPipeline(request):
                   "pipeline-task-kaniko.yaml" ]
 
         output_data = ""
+
+        # resource_dir作成
+        if not os.path.isdir(resource_dir):
+            os.makedirs(resource_dir)
 
         for yaml_name in yamls:
             # テンプレートの文字列置き換え
@@ -221,6 +229,10 @@ def postTrigger(request):
                   "gitlab-push-trigger-binding.yaml" ]
 
         output_data = ""
+
+        # resource_dir作成
+        if not os.path.isdir(resource_dir):
+            os.makedirs(resource_dir)
 
         for yaml_name in yamls:
             # テンプレートの文字列置き換え
