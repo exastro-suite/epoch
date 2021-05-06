@@ -39,6 +39,15 @@ def post(request):
     try:
 
         output_data = []
+
+        # Common設定
+        output = postCommon(request)
+        if output["result"] == "201":
+            output_data.append(output["output"])
+        else:
+            # エラーの場合は、そのまま返す
+            return JsonResponse(output)
+
         # Pipelineの設定
         output = postPipeline(request)
         if output["result"] == "201":
@@ -71,6 +80,66 @@ def post(request):
             "traceback": traceback.format_exc(),
         }
         return JsonResponse(response)
+
+@csrf_exempt    
+def postCommon(request):
+    try:
+
+        # 引数で指定されたCD環境を取得
+        print (request.body)
+        request_json = json.loads(request.body)
+        print (request_json)
+        request_build = request_json["build"]
+
+        templates_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource/templates/tekton-common"
+        resource_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource/conv/tekton-common"
+
+
+        # 対象となるYamlを定義
+        yamls = [ "pipeline-sa-and-rbac.yaml",
+                  "pipeline-ws-pvc.yaml",
+                  "trigger-rbac.yaml",
+                  "trigger-secret.yaml" ]
+
+        output_data = ""
+
+        for yaml_name in yamls:
+            # テンプレートの文字列置き換え
+            conv(templates_dir + "/" + yaml_name,
+                resource_dir + "/" + yaml_name,
+                request_build)
+        
+            try:
+                stdout = subprocess.check_output(["kubectl","apply","-f",resource_dir +  "/" + yaml_name],stderr=subprocess.STDOUT)
+
+                output_data += "{" + stdout.decode('utf-8') + "},"
+
+            except subprocess.CalledProcessError as e:
+                response = {
+                    "result": e.returncode,
+                    "returncode": "0107",
+                    "command": e.cmd,
+                    "output": e.output.decode('utf-8'),
+                    "traceback": traceback.format_exc(),
+                }
+                return (response)
+
+        response = {
+            "result":"201",
+            "output" : [ output_data ],
+        }
+        return (response)
+
+    except Exception as e:
+        print (e)
+        response = {
+            "result":"500",
+            "returncode": "0106",
+            "args": e.args,
+            "output": e.args,
+            "traceback": traceback.format_exc(),
+        }
+        return (response)
 
 @csrf_exempt    
 def postPipeline(request):
@@ -212,6 +281,8 @@ def conv(template_yaml, dest_yaml, json_build):
     data_lines = data_lines.replace("<__http_proxy__>", os.environ['EPOCH_HTTP_PROXY'])
     data_lines = data_lines.replace("<__https_proxy__>", os.environ['EPOCH_HTTPS_PROXY'])
     data_lines = data_lines.replace("<__no_proxy__>", os.environ['EPOCH_NO_PROXY'])
+
+    data_lines = data_lines.replace("<__webhook_token__>", os.environ['EPOCH_WEBHOOK_TOKEN'])
 
     # 同じファイル名で保存
     with open(dest_yaml, mode="w", encoding="utf-8") as f:

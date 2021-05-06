@@ -1,0 +1,14 @@
+#
+# https://github.com/IBM/tekton-tutorial/blob/beta-update/tekton/picalc-pipeline-pvc.yaml
+#
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: workspace-source-pvc
+  namespace: epoch-tekton-pipelines
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Mi
