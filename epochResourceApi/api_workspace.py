@@ -1,3 +1,17 @@
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
 from flask import Flask, request, abort, jsonify
 from datetime import datetime
 import os
@@ -35,7 +49,31 @@ def create_workspace():
     """
     globals.logger.debug('CALL create_workspace')
 
-    return jsonify({"result": "200", "time": str(datetime.now(globals.TZ))}), 200
+    try:
+        # Requestからspecification項目を生成する
+        specification = convert_workspace_specification(request.json)
+
+        with dbconnector() as db, dbcursor(db) as cursor:
+            # workspace情報 insert実行
+            cursor.execute('INSERT INTO workspace ( specification ) VALUES ( %(specification)s )',
+                {
+                    'specification' : json.dumps(specification)
+                }
+            )
+            # 追加したワークスペースID
+            workspace_id = cursor.lastrowid
+            # workspace情報 データ再取得
+            fetch_rows = select_workspace(cursor, workspace_id)
+
+        # Response用のjsonに変換
+        response_rows = convert_workspace_response(fetch_rows)
+
+        globals.logger.info('CREATED workspace:{}'.format(str(id)))
+
+        return jsonify({"result": "200", "rows": response_rows })
+
+    except Exception as e:
+        return common.serverError(e)
 
 
 @app.route('/workspace', methods=['GET'])
