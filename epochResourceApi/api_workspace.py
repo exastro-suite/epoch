@@ -83,7 +83,18 @@ def list_workspace():
     """
     globals.logger.debug('CALL list_workspace')
 
-    return jsonify({"result": "200", "time": str(datetime.now(globals.TZ))}), 200
+    try:
+        with dbconnector() as db, dbcursor(db) as cursor:
+            # select実行
+            fetch_rows = da_workspace.select_workspace(cursor)
+
+        # Response用のjsonに変換
+        response_rows = convert_workspace_response(fetch_rows)
+
+        return jsonify({"result": "200", "rows": response_rows, "time": str(datetime.now(globals.TZ))}), 200
+
+    except Exception as e:
+        return common.serverError(e)
 
 @app.route('/workspace/<int:workspace_id>', methods=['GET'])
 def get_workspace(workspace_id):
@@ -97,7 +108,23 @@ def get_workspace(workspace_id):
     """
     globals.logger.debug('CALL get_workspace:{}'.format(workspace_id))
 
-    return jsonify({"result": "200", "time": str(datetime.now(globals.TZ))}), 200
+    try:
+        with dbconnector() as db, dbcursor(db) as cursor:
+            # workspace情報データ取得
+            fetch_rows = da_workspace.select_workspace_id(cursor, workspace_id)
+
+        if len(fetch_rows) > 0:
+            # Response用のjsonに変換
+            response_rows = convert_workspace_response(fetch_rows)
+
+            return jsonify({"result": "200", "rows": response_rows, "time": str(datetime.now(globals.TZ))}), 200
+
+        else:
+            # 0件のときは404応答
+            return jsonify({"result": "404" }), 404
+
+    except Exception as e:
+        return common.serverError(e)
 
 @app.route('/workspace/<int:workspace_id>', methods=['PUT'])
 def update_workspace(workspace_id):
