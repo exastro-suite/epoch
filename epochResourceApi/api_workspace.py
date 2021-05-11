@@ -138,7 +138,7 @@ def update_workspace(workspace_id):
     Returns:
         response: HTTP Respose
     """
-    globals.logger.debug("CALL update_workspace{}".format(workspace_id))
+    globals.logger.debug("CALL update_workspace:{}".format(workspace_id))
 
     try:
         # Requestからspecification項目を生成する
@@ -146,7 +146,7 @@ def update_workspace(workspace_id):
       
         with dbconnector() as db, dbcursor(db) as cursor:
             # workspace情報 update実行
-            upd_cnt = da_workspace.update_workspace(cursor, specification)
+            upd_cnt = da_workspace.update_workspace(cursor, specification, workspace_id)
 
             if upd_cnt == 0:
                 # データがないときは404応答
@@ -159,12 +159,13 @@ def update_workspace(workspace_id):
             # workspace情報の再取得
             fetch_rows = da_workspace.select_workspace_id(cursor, workspace_id)
 
+        # Response用のjsonに変換
+        response_rows = fetch_rows
+
         return jsonify({"result": "200", "rows": response_rows })
 
     except Exception as e:
         return common.serverError(e)
-
-    return jsonify({"result": "200", "time": str(datetime.now(globals.TZ))}), 200
 
 @app.route('/workspace/<int:workspace_id>', methods=['DELETE'])
 def delete_workspace(workspace_id):
