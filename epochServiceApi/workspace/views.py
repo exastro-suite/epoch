@@ -214,6 +214,8 @@ def conv(template_yaml, dest_yaml):
 def info_all(request):
     if request.method == 'POST':
         return info_all_post(request)
+    elif request.method == 'PUT':
+        return info_all_put(request)
     else:
         return info_all_get(request)
 
@@ -243,9 +245,9 @@ def info_all_post(request):
 
         # ワークスペース情報保存
         request_response = requests.post( apiInfo + "/workspace", headers=post_headers, data=post_data)
-        print("github/webhooks:" + request_response.text)
+        print("workspace:" + request_response.text)
         ret = json.loads(request_response.text)
-        print(ret)
+        #print(ret)
         # 戻り値をそのまま返却        
         return JsonResponse(ret, status=request_response.status_code)
 
@@ -269,7 +271,6 @@ def info_all_get(request):
         }
     }
     return JsonResponse(response)
-
 
 @require_http_methods(['GET'])
 @csrf_exempt
