@@ -275,47 +275,60 @@ def info_all_get(request):
 @require_http_methods(['GET'])
 @csrf_exempt
 def info(request, workspace_id):
+    """ワークスペース詳細取得
+
+    Args:
+        request (HttpRequest): HTTP request
+        workspace_id (int): ワークスペースID
+
+    Returns:
+        response: HTTP Respose
+    """
     try:
         # ヘッダ情報
         headers = {
             'Content-Type': 'application/json',
         }
 
-        # パラメータ情報(JSON形式)
-        payload = json.loads(request.body)
-
         # GET送信（作成）
-        apiInfo = payload["clusterInfo"]["apiInfo"]
-        print('apiInfo : ' + apiInfo)
-        response = requests.get(apiInfo + 'workspace/', headers=headers, data=data, params=payload)
+        resourceProtocol = os.environ['EPOCH_RESOURCE_PROTOCOL']
+        resourceHost = os.environ['EPOCH_RESOURCE_HOST']
+        resourcePort = os.environ['EPOCH_RESOURCE_PORT']
+        apiInfo = "{}://{}:{}/".format(resourceProtocol, resourceHost, resourcePort)
+        response = requests.get(apiInfo + 'workspace/' + str(workspace_id), headers=headers)
 
-        if isJsonFormat(response.text):
+        output = []
+        if response.status_code == 200 and isJsonFormat(response.text):
             # 取得したJSON結果が正常でない場合、例外を返す
             ret = json.loads(response.text)
-            if ret["result"] == "OK":
-                output.append(ret["output"])
-            else:
-                raise Exception
-        else:
+            output = ret["rows"]
+        elif response.status_code == 404:
             response = {
                 "result": {
-                    "code": "500",
                     "detailcode": "",
                     "output": response.text,
                     "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
                 }
             }
-            return JsonResponse(response)
+            return JsonResponse(response, status=404)
+        else:
+            response = {
+                "result": {
+                    "detailcode": "",
+                    "output": response.text,
+                    "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
+                }
+            }
+            return JsonResponse(response, status=500)
 
         response = {
             "result": {
-                "code": "200",
                 "detailcode": "",
                 "output": output,
                 "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
             }
         }
-        return JsonResponse(response)
+        return JsonResponse(response, status=200)
 
     except Exception as e:
         response = {
