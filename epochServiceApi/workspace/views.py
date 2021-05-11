@@ -280,15 +280,14 @@ def info(request, workspace_id):
             'Content-Type': 'application/json',
         }
 
-        # パラメータ情報(JSON形式)
-        payload = json.loads(request.body)
-
         # GET送信（作成）
-        apiInfo = payload["clusterInfo"]["apiInfo"]
-        print('apiInfo : ' + apiInfo)
-        response = requests.get(apiInfo + 'workspace/', headers=headers, data=data, params=payload)
+        resourceProtocol = os.environ['EPOCH_RESOURCE_PROTOCOL']
+        resourceHost = os.environ['EPOCH_RESOURCE_HOST']
+        resourcePort = os.environ['EPOCH_RESOURCE_PORT']
+        apiInfo = "{}://{}:{}/".format(resourceProtocol, resourceHost, resourcePort)
+        response = requests.get(apiInfo + 'workspace/' + str(workspace_id), headers=headers)
 
-        if isJsonFormat(response.text):
+        if response.status != 200 && isJsonFormat(response.text):
             # 取得したJSON結果が正常でない場合、例外を返す
             ret = json.loads(response.text)
             if ret["result"] == "OK":
@@ -298,23 +297,21 @@ def info(request, workspace_id):
         else:
             response = {
                 "result": {
-                    "code": "500",
                     "detailcode": "",
                     "output": response.text,
                     "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
                 }
             }
-            return JsonResponse(response)
+            return JsonResponse(response, status=500)
 
         response = {
             "result": {
-                "code": "200",
                 "detailcode": "",
                 "output": output,
                 "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
             }
         }
-        return JsonResponse(response)
+        return JsonResponse(response, status=200)
 
     except Exception as e:
         response = {
