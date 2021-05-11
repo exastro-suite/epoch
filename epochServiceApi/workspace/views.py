@@ -26,19 +26,14 @@ import shutil
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.http.response import JsonResponse
+from django.views.decorators.http import require_http_methods
 
 from django.views.decorators.csrf import csrf_exempt
 
 from kubernetes import client, config
 
+@require_http_methods(['POST'])
 @csrf_exempt
-def index(request):
-    if request.method == 'POST':
-        return post(request)
-    else:
-        return ""
-
-@csrf_exempt    
 def post(request):
     try:
         # ヘッダ情報
@@ -51,7 +46,7 @@ def post(request):
 
         # データ情報
         data = '{}'
-        
+
         temp_yaml_name = templates_dir + "/epochCiCdApi.yaml"
         conv_yaml_name = resource_dir + "/epochCiCdApi.yaml"
         deploy_config = "/etc/epoch/deploy-config/deployconfig.yaml"
@@ -65,12 +60,12 @@ def post(request):
 
         apiInfo = payload["clusterInfo"]["apiInfo"]
         output = []
-        
+
         # CI/CD APIコンテナ作成
         stdout = subprocess.check_output(["kubectl","apply","-f",conv_yaml_name, "--kubeconfig=" + deploy_config],stderr=subprocess.STDOUT)
 
         # CI/CD API Pod状態確認
-        config.load_kube_config(deploy_config) 
+        config.load_kube_config(deploy_config)
         v1 = client.CoreV1Api()
 
         namespace = 'epoch-system'
@@ -79,11 +74,11 @@ def post(request):
         start = time.time()
         floop = True
         while floop:
-            try:                                                
+            try:
                 time.sleep(1)
-                pod_list = v1.list_namespaced_pod(namespace)      
-                # pod_list = v1.list_namespaced_pod(namespace, label_selector=label)      
-            except ApiException as e:                                                 
+                pod_list = v1.list_namespaced_pod(namespace)
+                # pod_list = v1.list_namespaced_pod(namespace, label_selector=label)
+            except ApiException as e:
                 print('Exception when calling CoreV1Api->list_namespaced_pod: %s\n' % e)
 
             time.sleep(1)
@@ -143,7 +138,6 @@ def post(request):
             }
             return JsonResponse(response)
 
-
         # post送信（ita/pod作成）
         response = requests.post(apiInfo + 'ita/', headers=headers, data=data, params=payload)
 
@@ -193,12 +187,12 @@ def isJsonFormat(line):
         return False
     return True
 
-@csrf_exempt    
+@csrf_exempt
 def conv(template_yaml, dest_yaml):
 
     # 実行yamlの保存
     shutil.copy(template_yaml, dest_yaml)
-        
+
     # 実行yamlを読み込む
     with open(dest_yaml, encoding="utf-8") as f:
         data_lines = f.read()
@@ -209,7 +203,80 @@ def conv(template_yaml, dest_yaml):
     # 文字列置換
     data_lines = data_lines.replace("<__epoch_cicd_api_image__>", epochImage)
     data_lines = data_lines.replace("<__epoch_cicd_api_port__>", epochPort)
-  
+
     # 同じファイル名で保存
     with open(dest_yaml, mode="w", encoding="utf-8") as f:
         f.write(data_lines)
+
+
+@require_http_methods(['GET'])
+@csrf_exempt
+def info_all(request):
+
+    # sample
+    response = {
+        "result": {
+            "code": "200",
+            "detailcode": "",
+            "output": "Hello World. (Sample)",
+            "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
+        }
+    }
+    return JsonResponse(response)
+
+
+@require_http_methods(['GET'])
+@csrf_exempt
+def info(request, workspace_id):
+    try:
+        # ヘッダ情報
+        headers = {
+            'Content-Type': 'application/json',
+        }
+
+        # パラメータ情報(JSON形式)
+        payload = json.loads(request.body)
+
+        # GET送信（作成）
+        apiInfo = payload["clusterInfo"]["apiInfo"]
+        print('apiInfo : ' + apiInfo)
+        response = requests.get(apiInfo + 'workspace/', headers=headers, data=data, params=payload)
+
+        if isJsonFormat(response.text):
+            # 取得したJSON結果が正常でない場合、例外を返す
+            ret = json.loads(response.text)
+            if ret["result"] == "OK":
+                output.append(ret["output"])
+            else:
+                raise Exception
+        else:
+            response = {
+                "result": {
+                    "code": "500",
+                    "detailcode": "",
+                    "output": response.text,
+                    "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
+                }
+            }
+            return JsonResponse(response)
+
+        response = {
+            "result": {
+                "code": "200",
+                "detailcode": "",
+                "output": output,
+                "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
+            }
+        }
+        return JsonResponse(response)
+
+    except Exception as e:
+        response = {
+            "result": {
+                "code": "500",
+                "detailcode": "",
+                "output": traceback.format_exc(),
+                "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
+            }
+        }
+        return JsonResponse(response)
