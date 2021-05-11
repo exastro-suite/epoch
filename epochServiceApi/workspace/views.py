@@ -209,10 +209,56 @@ def conv(template_yaml, dest_yaml):
         f.write(data_lines)
 
 
-@require_http_methods(['GET'])
+@require_http_methods(['GET','POST'])
 @csrf_exempt
 def info_all(request):
+    if request.method == 'POST':
+        return info_all_post(request)
+    else:
+        return info_all_get(request)
 
+@csrf_exempt
+def info_all_post(request):
+    """ワークスペース情報(POST)
+
+    Args:
+        request ([json]): 画面項目
+
+    Returns:
+        int : ワークスペースID
+    """
+    try:
+        print ("CALL " + __name__)
+        # ヘッダ情報
+        post_headers = {
+            'Content-Type': 'application/json',
+        }
+
+        # 引数をJSON形式で受け取りそのまま引数に設定
+        post_data = request.body
+
+        # 呼び出すapiInfoは、環境変数より取得
+        request_json = json.loads(request.body)
+        apiInfo = os.environ['EPOCH_RESOURCE_PROTOCOL'] + "://" + os.environ['EPOCH_RESOURCE_HOST'] + ":" + os.environ['EPOCH_RESOURCE_PORT'] 
+
+        # ワークスペース情報保存
+        request_response = requests.post( apiInfo + "/workspace", headers=post_headers, data=post_data)
+        print("github/webhooks:" + request_response.text)
+        ret = json.loads(request_response.text)
+        print(ret)
+        # 戻り値をそのまま返却        
+        return JsonResponse(ret, status=request_response.status_code)
+
+    except Exception as e:
+        response = {
+            "result": {
+                "output": traceback.format_exc(),
+                "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
+            }
+        }
+        return JsonResponse(response, status=500)
+
+def info_all_get(request):
     # sample
     response = {
         "result": {
