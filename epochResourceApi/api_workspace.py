@@ -86,8 +86,7 @@ def list_workspace():
     try:
         with dbconnector() as db, dbcursor(db) as cursor:
             # select実行
-            da_workspace.select_workspace(cursor)
-            fetch_rows = cursor.fetchall()
+            fetch_rows = da_workspace.select_workspace(cursor)
 
         # Response用のjsonに変換
         response_rows = convert_workspace_response(fetch_rows)
@@ -112,7 +111,7 @@ def get_workspace(workspace_id):
     try:
         with dbconnector() as db, dbcursor(db) as cursor:
             # workspace情報データ取得
-            fetch_rows = da_workspace.select_workspace(cursor, workspace_id)
+            fetch_rows = da_workspace.select_workspace_id(cursor, workspace_id)
 
         if len(fetch_rows) > 0:
             # Response用のjsonに変換

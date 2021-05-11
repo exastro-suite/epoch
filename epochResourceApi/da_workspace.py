@@ -38,7 +38,7 @@ def insert_workspace(cursor, specification):
     # 追加したワークスペースIDをreturn
     return cursor.lastrowid
 
-def select_workspace(cursor, workspace_id):
+def select_workspace_id(cursor, workspace_id):
     """workspace情報取得(id指定)
 
     Args:
