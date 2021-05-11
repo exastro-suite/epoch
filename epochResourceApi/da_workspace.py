@@ -1,4 +1,3 @@
-
 #   Copyright 2019 NEC Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,7 +39,7 @@ def insert_workspace(cursor, specification):
     return cursor.lastrowid
 
 def select_workspace(cursor, workspace_id):
-    """workspace情報取得
+    """workspace情報取得(id指定)
 
     Args:
         cursor (mysql.connector.cursor): カーソル
@@ -58,6 +57,19 @@ def select_workspace(cursor, workspace_id):
     rows = cursor.fetchall()
     return rows
 
+def select_workspace(cursor):
+    """workspace情報取得(全取得)
+
+    Args:
+        cursor (mysql.connector.cursor): カーソル
+
+    Returns:
+        dict: select結果
+    """
+    # select実行
+    cursor.execute('SELECT * FROM workspace ORDER BY workspace_id')
+    rows = cursor.fetchall()
+    return rows
 
 def insert_history(cursor, workspace_id):
     """workspace履歴情報追加
