@@ -15,5 +15,10 @@ from django.urls import path, include
 from . import views
 
 urlpatterns = [
-    path('pod/', views.index),
+    # get workspaces information
+    path('info/', views.info_all),
+    # get a workspace information
+    path('info/<int:workspace_id>/', views.info),
+    # create a workspace
+    path('pod/', views.post),
 ]
