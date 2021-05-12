@@ -46,7 +46,7 @@ def post(request):
         # 引数で指定されたCD環境を取得
         print (request.body)
         request_json = json.loads(request.body)
-        print (request_json)
+        #print (request_json)
         request_deploy = request_json["deploy"]
 
         try:
@@ -151,7 +151,7 @@ def get(request):
         # 引数で指定されたCD環境を取得
         print (request.body)
         request_json = json.loads(request.body)
-        print (request_json)
+        #print (request_json)
         request_deploy = request_json["deploy"]
 
         try:
