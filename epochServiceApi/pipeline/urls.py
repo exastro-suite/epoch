@@ -15,5 +15,6 @@ from django.urls import path, include
 from . import views
 
 urlpatterns = [
-    path('', views.index),
+    # set pipeline
+    path('', views.post),
 ]
