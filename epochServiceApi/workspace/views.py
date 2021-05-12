@@ -209,10 +209,64 @@ def conv(template_yaml, dest_yaml):
         f.write(data_lines)
 
 
-@require_http_methods(['GET'])
+@require_http_methods(['GET','POST'])
 @csrf_exempt
 def info_all(request):
+    """ワークスペース情報
 
+    Args:
+       request ([json]): 画面項目
+
+    Returns:
+        dict : workspace情報
+    """
+    if request.method == 'POST':
+        return info_all_post(request)
+    else:
+        return info_all_get(request)
+
+@csrf_exempt
+def info_all_post(request):
+    """ワークスペース情報(POST)
+
+    Args:
+        request ([json]): 画面項目
+
+    Returns:
+        dict : workspace情報
+    """
+    try:
+        print ("CALL " + __name__)
+        # ヘッダ情報
+        post_headers = {
+            'Content-Type': 'application/json',
+        }
+
+        # 引数をJSON形式で受け取りそのまま引数に設定
+        post_data = request.body
+
+        # 呼び出すapiInfoは、環境変数より取得
+        request_json = json.loads(request.body)
+        apiInfo = os.environ['EPOCH_RESOURCE_PROTOCOL'] + "://" + os.environ['EPOCH_RESOURCE_HOST'] + ":" + os.environ['EPOCH_RESOURCE_PORT'] 
+
+        # ワークスペース情報保存
+        request_response = requests.post( apiInfo + "/workspace", headers=post_headers, data=post_data)
+        print("workspace:" + request_response.text)
+        ret = json.loads(request_response.text)
+        #print(ret)
+        # 戻り値をそのまま返却        
+        return JsonResponse(ret, status=request_response.status_code)
+
+    except Exception as e:
+        response = {
+            "result": {
+                "output": traceback.format_exc(),
+                "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
+            }
+        }
+        return JsonResponse(response, status=500)
+
+def info_all_get(request):
     # sample
     response = {
         "result": {
@@ -224,51 +278,121 @@ def info_all(request):
     }
     return JsonResponse(response)
 
-
-@require_http_methods(['GET'])
+@require_http_methods(['GET','PUT'])
 @csrf_exempt
 def info(request, workspace_id):
+    """ワークスペース詳細取得(id指定)
+
+    Args:
+        request (HttpRequest): HTTP request
+        workspace_id (int): ワークスペースID
+
+    Returns:
+        response: HTTP Respose
+    """
+    if request.method == 'PUT':
+        return info_put(request, workspace_id)
+    else:
+        return info_get(request, workspace_id)
+
+@csrf_exempt
+def info_put(request, workspace_id):
+    """ワークスペース詳細取得
+
+    Args:
+        request (HttpRequest): HTTP request
+        workspace_id (int): ワークスペースID
+
+    Returns:
+        response: HTTP Respose
+    """
     try:
         # ヘッダ情報
         headers = {
             'Content-Type': 'application/json',
         }
 
-        # パラメータ情報(JSON形式)
-        payload = json.loads(request.body)
+        # 引数をJSON形式で受け取りそのまま引数に設定
+        post_data = request.body
+
+        # PUT送信（更新）
+        resourceProtocol = os.environ['EPOCH_RESOURCE_PROTOCOL']
+        resourceHost = os.environ['EPOCH_RESOURCE_HOST']
+        resourcePort = os.environ['EPOCH_RESOURCE_PORT']
+        apiInfo = "{}://{}:{}/".format(resourceProtocol, resourceHost, resourcePort)
+        request_response = requests.put(apiInfo + 'workspace/' + str(workspace_id), headers=headers, data=post_data)
+        ret = json.loads(request_response.text)
+
+        # 戻り値をそのまま返却        
+        return JsonResponse(ret, status=request_response.status_code)
+
+    except Exception as e:
+        response = {
+            "result": {
+                "code": "500",
+                "detailcode": "",
+                "output": traceback.format_exc(),
+                "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
+            }
+        }
+        return JsonResponse(response)
+
+@csrf_exempt
+def info_get(request, workspace_id):
+    """ワークスペース詳細取得
+
+    Args:
+        request (HttpRequest): HTTP request
+        workspace_id (int): ワークスペースID
+
+    Returns:
+        response: HTTP Respose
+    """
+    try:
+        # ヘッダ情報
+        headers = {
+            'Content-Type': 'application/json',
+        }
 
         # GET送信（作成）
-        apiInfo = payload["clusterInfo"]["apiInfo"]
-        print('apiInfo : ' + apiInfo)
-        response = requests.get(apiInfo + 'workspace/', headers=headers, data=data, params=payload)
+        resourceProtocol = os.environ['EPOCH_RESOURCE_PROTOCOL']
+        resourceHost = os.environ['EPOCH_RESOURCE_HOST']
+        resourcePort = os.environ['EPOCH_RESOURCE_PORT']
+        apiInfo = "{}://{}:{}/".format(resourceProtocol, resourceHost, resourcePort)
+        response = requests.get(apiInfo + 'workspace/' + str(workspace_id), headers=headers)
 
-        if isJsonFormat(response.text):
+        output = []
+        if response.status_code == 200 and isJsonFormat(response.text):
             # 取得したJSON結果が正常でない場合、例外を返す
             ret = json.loads(response.text)
-            if ret["result"] == "OK":
-                output.append(ret["output"])
-            else:
-                raise Exception
-        else:
+            output = ret["rows"]
+        elif response.status_code == 404:
             response = {
                 "result": {
-                    "code": "500",
                     "detailcode": "",
                     "output": response.text,
                     "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
                 }
             }
-            return JsonResponse(response)
+            return JsonResponse(response, status=404)
+        else:
+            response = {
+                "result": {
+                    "detailcode": "",
+                    "output": response.text,
+                    "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
+                }
+            }
+            return JsonResponse(response, status=500)
 
         response = {
             "result": {
-                "code": "200",
                 "detailcode": "",
                 "output": output,
                 "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
             }
         }
-        return JsonResponse(response)
+        return JsonResponse(response, status=200)
 
     except Exception as e:
         response = {

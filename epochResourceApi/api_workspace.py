@@ -47,7 +47,7 @@ def create_workspace():
     Returns:
         response: HTTP Respose
     """
-    globals.logger.debug('CALL ' + __name__)
+    globals.logger.debug('CALL create_workspace')
 
     try:
         # Requestからspecification項目を生成する
@@ -57,16 +57,18 @@ def create_workspace():
             # workspace情報 insert実行(戻り値：追加したワークスペースID)
             workspace_id = da_workspace.insert_workspace(cursor, specification)
 
+            globals.logger.debug('insert workspaced_id:{}'.format(str(workspace_id)))
+
             # workspace履歴追加
             da_workspace.insert_history(cursor, workspace_id)
 
             # workspace情報 データ再取得
-            fetch_rows = da_workspace.select_workspace(cursor, workspace_id)
+            fetch_rows = da_workspace.select_workspace_id(cursor, workspace_id)
 
         # Response用のjsonに変換
-        response_rows = convert_workspace_response(fetch_rows)
+        response_rows = fetch_rows
 
-        globals.logger.info('CREATED workspace:{}'.format(str(id)))
+        globals.logger.info('CREATED workspace:{}'.format(str(workspace_id)))
 
         return jsonify({"result": "200", "rows": response_rows })
 
@@ -136,9 +138,34 @@ def update_workspace(workspace_id):
     Returns:
         response: HTTP Respose
     """
-    globals.logger.debug('CALL update_workspace:{}'.format(workspace_id))
+    globals.logger.debug("CALL update_workspace:{}".format(workspace_id))
 
-    return jsonify({"result": "200", "time": str(datetime.now(globals.TZ))}), 200
+    try:
+        # Requestからspecification項目を生成する
+        specification = convert_workspace_specification(request.json)
+      
+        with dbconnector() as db, dbcursor(db) as cursor:
+            # workspace情報 update実行
+            upd_cnt = da_workspace.update_workspace(cursor, specification, workspace_id)
+
+            if upd_cnt == 0:
+                # データがないときは404応答
+                db.rollback()
+                return jsonify({"result": "404" }), 404
+
+            # workspace履歴追加
+            da_workspace.insert_history(cursor, workspace_id)
+
+            # workspace情報の再取得
+            fetch_rows = da_workspace.select_workspace_id(cursor, workspace_id)
+
+        # Response用のjsonに変換
+        response_rows = fetch_rows
+
+        return jsonify({"result": "200", "rows": response_rows })
+
+    except Exception as e:
+        return common.serverError(e)
 
 @app.route('/workspace/<int:workspace_id>', methods=['DELETE'])
 def delete_workspace(workspace_id):
