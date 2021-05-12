@@ -63,6 +63,7 @@ def post(request):
         else:
             return (request_response.text)
 
+        ## 再有効化は、後日
         # # パイプライン設定(TEKTON)
         # request_response = requests.post( apiInfo + "tekton/pipeline", headers=post_headers, data=post_data)
         # print("tekton/pipeline:response:" + request_response.text)
@@ -74,16 +75,16 @@ def post(request):
         # else:
         #     return (request_response.text)
 
-        # パイプライン設定(ITA)
-        request_response = requests.post( apiInfo + "ita/manifestGitEnv", headers=post_headers, data=post_data)
-        print("ita/manifestGitEnv:response:" + request_response.text)
-        ret = json.loads(request_response.text)
-        #ret = request_response.text
-        print(ret["result"])
-        if ret["result"] == "200" or ret["result"] == "201":
-            output.append(ret["items"])
-        else:
-            return (request_response.text)
+        # # パイプライン設定(ITA)
+        # request_response = requests.post( apiInfo + "ita/manifestGitEnv", headers=post_headers, data=post_data)
+        # print("ita/manifestGitEnv:response:" + request_response.text)
+        # ret = json.loads(request_response.text)
+        # #ret = request_response.text
+        # print(ret["result"])
+        # if ret["result"] == "200" or ret["result"] == "201":
+        #     output.append(ret["items"])
+        # else:
+        #     return (request_response.text)
 
         # パイプライン設定(ArgoCD)
         request_response = requests.post( apiInfo + "argocd/pipeline", headers=post_headers, data=post_data)
