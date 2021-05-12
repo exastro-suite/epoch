@@ -16,6 +16,7 @@ from django.urls import path, include
 from . import views
 from . import viewsManifestGitEnv
 from . import viewsConductorExec
+from . import viewsInitialize
 
 urlpatterns = [
     # create ITA pod

@@ -28,6 +28,7 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.http.response import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 
 @require_http_methods(['POST'])
 @csrf_exempt
@@ -46,9 +47,10 @@ def post(request):
 
         # *-*-*-* ファイルアップロード *-*-*-*
         kym_file_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource/ita_kym/epoch_initialize.kym"
-        with open(kym_file_path, 'r') as f:
+        with open(kym_file_path, 'rb') as f:
             kym_binary = f.read()
-        encoded_data = base64.b64encode(kym_binary)
+        encoded_data = base64.b64encode(kym_binary).decode(encoding='utf-8')
+        upload_filename = os.path.basename(kym_file_path)
 
         # POST送信する
         # ヘッダ情報
@@ -62,7 +64,7 @@ def post(request):
         # 実行パラメータ設定
         data = {
             "zipfile": {
-                "name": os.path.basename(kym_file_path),
+                "name": upload_filename,
                 "base64": encoded_data,
             }
         }
@@ -73,25 +75,64 @@ def post(request):
         # リクエスト送信
         upload_response = requests.post('http://' + host + '/default/menu/07_rest_api_ver1.php?no=2100000212', headers=header, data=json_data)
         if upload_response.status_code != 200:
-            riase Exception
+            raise Exception
 
-        print(upload_response)
+        print(upload_response.text)
 
-        up_resp_data = json.loads(exec_response.text)
+        up_resp_data = json.loads(upload_response.text)
         if up_resp_data["status"] != "SUCCEED":
-            riase Exception
+            raise Exception
 
         upload_id = up_resp_data["resultdata"]["upload_id"]
 
         # menu_list再構築
         menu_list = {}
-        for menu_group_id, menu_group_detail as up_resp_data["resultdata"]["IMPORT_LIST"].items():
+        for menu_group_id, menu_group_detail in up_resp_data["resultdata"]["IMPORT_LIST"].items():
             if menu_group_id in menu_list:
                 menu_id_list = menu_list[menu_group_id]
             else:
                 menu_id_list = []
 
+            for menu_detail in menu_group_detail["menu"]:
+                menu_id_list.append(int(menu_detail["menu_id"]))
+
+            menu_list[menu_group_id] = menu_id_list
+
+        print(menu_list)
+
         # *-*-*-* インポート実行 *-*-*-*
+
+        # POST送信する
+        # ヘッダ情報
+        header = {
+            'host': host,
+            'Content-Type': 'application/json',
+            'Authorization': auth,
+            'X-Command': 'EXECUTE',
+        }
+
+        # 実行パラメータ設定
+        data = menu_list
+        data["upload_id"] = "A_" + upload_id
+        data["data_portability_upload_file_name"] = upload_filename
+
+        # json文字列に変換（"utf-8"形式に自動エンコードされる）
+        json_data = json.dumps(data)
+
+        # リクエスト送信
+        exec_response = requests.post('http://' + host + '/default/menu/07_rest_api_ver1.php?no=2100000212', headers=header, data=json_data)
+        if exec_response.status_code != 200:
+            raise Exception
+
+        print(exec_response.text)
+
+        exec_resp_data = json.loads(exec_response.text)
+        if exec_resp_data["status"] != "SUCCEED" or exec_resp_data["resultdata"]["RESULTCODE"] != "000":
+            raise Exception(exec_response.text)
+
+        task_id = exec_resp_data["resultdata"]["TASK_ID"]
+
+        # *-*-*-* インポート結果確認 *-*-*-*
 
         # # POST送信する
         # # ヘッダ情報
@@ -99,27 +140,48 @@ def post(request):
         #     'host': host,
         #     'Content-Type': 'application/json',
         #     'Authorization': auth,
-        #     'X-Command': 'EXECUTE',
+        #     'X-Command': 'FILTER',
         # }
 
         # # 実行パラメータ設定
         # data = {
-        #     "CONDUCTOR_CLASS_NO": conductor_class_no,
-        #     "OPERATION_ID": operation_id,
-        #     "PRESERVE_DATETIME": preserve_datetime,
+        #     "2": {
+        #         "LIST": [task_id]
+        #     }
         # }
 
         # # json文字列に変換（"utf-8"形式に自動エンコードされる）
         # json_data = json.dumps(data)
 
-        # # リクエスト送信
-        # exec_response = requests.post('http://' + host + '/default/menu/07_rest_api_ver1.php?no=2100000212', headers=header, data=json_data)
+        # i = 1
+        # while True:
+        #     i += 1
+        #     print("状態監視: " + datetime.datetime.now(pytz.timezone('Asia/Tokyo')))
+        #     sleep(1)
+
+        #     # リクエスト送信
+        #     dialog_response = requests.post('http://' + host + '/default/menu/07_rest_api_ver1.php?no=2100000213', headers=header, data=json_data)
+        #     if dialog_response.status_code != 200:
+        #         raise Exception
+
+        #     print(dialog_response.text)
+
+        #     dialog_resp_data = json.loads(dialog_response.text)
+        #     if dialog_resp_data["status"] != "SUCCEED" or dialog_resp_data["CONTENTS"]["RECORD_LENGTH"] != 1:
+        #         raise Exception(dialog_response.text)
+
+        #     if dialog_resp_data["CONTENTS"]
+
+        #     # dev safety break
+        #     if i > 100:
+        #         break
+
 
         # *-*-*-* 結果 *-*-*-*
 
         response = {
             "result": "200",
-            # "output": exec_response.text,
+            "output": task_id,
             "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
         }
         return JsonResponse(response, status=200)
