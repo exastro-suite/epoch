@@ -57,17 +57,17 @@ def post(request):
         else:
             return (request_response.text)
 
-        # 再有効化は、後日
-        # パイプライン設定(TEKTON)
-        request_response = requests.post( apiInfo + "tekton/pipeline", headers=post_headers, data=post_data)
-        print("tekton/pipeline:response:" + request_response.text)
-        ret = json.loads(request_response.text)
-        #ret = request_response.text
-        print(ret["result"])
-        if ret["result"] == "200" or ret["result"] == "201":
-            output.append(ret["output"])
-        else:
-            return (request_response.text)
+        # # 再有効化は、後日
+        # # パイプライン設定(TEKTON)
+        # request_response = requests.post( apiInfo + "tekton/pipeline", headers=post_headers, data=post_data)
+        # print("tekton/pipeline:response:" + request_response.text)
+        # ret = json.loads(request_response.text)
+        # #ret = request_response.text
+        # print(ret["result"])
+        # if ret["result"] == "200" or ret["result"] == "201":
+        #     output.append(ret["output"])
+        # else:
+        #     return (request_response.text)
 
         # パイプライン設定(ITA - 初期化設定)
         request_response = requests.post( apiInfo + "ita/initialize", headers=post_headers, data=post_data)
