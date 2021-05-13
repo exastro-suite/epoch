@@ -39,9 +39,9 @@ def post(request):
         # パラメータ情報(JSON形式)
         payload = json.loads(request.body)
 
-        host = payload["itaInfo"]["host"]
-        user_id = payload["itaInfo"]["userId"]
-        user_pass = payload["itaInfo"]["userPass"]
+        host = os.environ["EPOCH_ITA_HOST"] + ":" + os.environ["EPOCH_ITA_PORT"]
+        user_id = os.environ["EPOCH_ITA_USER"]
+        user_pass = os.environ["EPOCH_ITA_PASSWORD"]
 
         auth = base64.b64encode((user_id + ':' + user_pass).encode())
 
