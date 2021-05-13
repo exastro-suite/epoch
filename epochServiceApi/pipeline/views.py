@@ -75,7 +75,7 @@ def post(request):
         ret = json.loads(request_response.text)
         print(ret["result"])
         if ret["result"] == "200" or ret["result"] == "201":
-            output.append(ret["items"])
+            output.append(ret["output"])
         else:
             return (request_response.text)
 
@@ -102,7 +102,7 @@ def post(request):
             "result":"200",
             "output" : output,
         }
-        return JsonResponse(response, code=200)
+        return JsonResponse(response, status=200)
 
     except Exception as e:
         response = {
@@ -112,6 +112,6 @@ def post(request):
             "output": e.args,
             "traceback": traceback.format_exc(),
         }
-        return JsonResponse(response, code=500)
+        return JsonResponse(response, status=500)
 
 
