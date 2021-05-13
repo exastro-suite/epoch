@@ -46,6 +46,7 @@ def post(request):
         auth = base64.b64encode((user_id + ':' + user_pass).encode())
 
         # *-*-*-* ファイルアップロード *-*-*-*
+        print('---- upload kym file ----')
         kym_file_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource/ita_kym/epoch_initialize.kym"
         with open(kym_file_path, 'rb') as f:
             kym_binary = f.read()
@@ -75,15 +76,16 @@ def post(request):
         # リクエスト送信
         upload_response = requests.post('http://' + host + '/default/menu/07_rest_api_ver1.php?no=2100000212', headers=header, data=json_data)
         if upload_response.status_code != 200:
-            raise Exception
+            raise Exception(upload_response)
 
         # print(upload_response.text)
 
         up_resp_data = json.loads(upload_response.text)
         if up_resp_data["status"] != "SUCCEED":
-            raise Exception
+            raise Exception(upload_response.text)
 
         upload_id = up_resp_data["resultdata"]["upload_id"]
+        print('upload_id: ' + upload_id)
 
         # menu_list再構築
         menu_list = {}
@@ -101,6 +103,7 @@ def post(request):
         # print(menu_list)
 
         # *-*-*-* インポート実行 *-*-*-*
+        print('---- execute menu import ----')
 
         # POST送信する
         # ヘッダ情報
@@ -122,7 +125,7 @@ def post(request):
         # リクエスト送信
         exec_response = requests.post('http://' + host + '/default/menu/07_rest_api_ver1.php?no=2100000212', headers=header, data=json_data)
         if exec_response.status_code != 200:
-            raise Exception
+            raise Exception(exec_response)
 
         print(exec_response.text)
 
@@ -131,8 +134,10 @@ def post(request):
             raise Exception(exec_response.text)
 
         task_id = exec_resp_data["resultdata"]["TASK_ID"]
+        print('task_id: ' + task_id)
 
         # *-*-*-* インポート結果確認 *-*-*-*
+        print('---- monitoring import dialog ----')
 
         # POST送信する
         # ヘッダ情報
@@ -162,7 +167,7 @@ def post(request):
             # リクエスト送信
             dialog_response = requests.post('http://' + host + '/default/menu/07_rest_api_ver1.php?no=2100000213', headers=header, data=json_data)
             if dialog_response.status_code != 200:
-                raise Exception
+                raise Exception(dialog_response)
 
             # ファイルがあるメニューのため、response.textをデバッグ出力すると酷い目にあう
             # print(dialog_response.text)
@@ -181,6 +186,7 @@ def post(request):
             # timeout
             current_time = time.time()
             if (current_time - start_time) > 60:
+                print("ITA menu import Time out")
                 response = {
                     "result": "500",
                     "output": "ITAメニューインポート状況確認 Time out",
@@ -189,7 +195,7 @@ def post(request):
                 return JsonResponse(response, status=500)
 
         # *-*-*-* 結果 *-*-*-*
-
+        print("ITA initialize finished.(success)")
         response = {
             "result": "200",
             "output": "",
@@ -198,6 +204,7 @@ def post(request):
         return JsonResponse(response, status=200)
 
     except Exception as e:
+        print(e)
         response = {
             "result": "500",
             "output": traceback.format_exc(),
