@@ -77,7 +77,7 @@ def post(request):
         if upload_response.status_code != 200:
             raise Exception
 
-        print(upload_response.text)
+        # print(upload_response.text)
 
         up_resp_data = json.loads(upload_response.text)
         if up_resp_data["status"] != "SUCCEED":
@@ -98,7 +98,7 @@ def post(request):
 
             menu_list[menu_group_id] = menu_id_list
 
-        print(menu_list)
+        # print(menu_list)
 
         # *-*-*-* インポート実行 *-*-*-*
 
@@ -134,54 +134,65 @@ def post(request):
 
         # *-*-*-* インポート結果確認 *-*-*-*
 
-        # # POST送信する
-        # # ヘッダ情報
-        # header = {
-        #     'host': host,
-        #     'Content-Type': 'application/json',
-        #     'Authorization': auth,
-        #     'X-Command': 'FILTER',
-        # }
+        # POST送信する
+        # ヘッダ情報
+        header = {
+            'host': host,
+            'Content-Type': 'application/json',
+            'Authorization': auth,
+            'X-Command': 'FILTER',
+        }
 
-        # # 実行パラメータ設定
-        # data = {
-        #     "2": {
-        #         "LIST": [task_id]
-        #     }
-        # }
+        # 実行パラメータ設定
+        data = {
+            "2": {
+                "LIST": [task_id]
+            }
+        }
 
-        # # json文字列に変換（"utf-8"形式に自動エンコードされる）
-        # json_data = json.dumps(data)
+        # json文字列に変換（"utf-8"形式に自動エンコードされる）
+        json_data = json.dumps(data)
 
-        # i = 1
-        # while True:
-        #     i += 1
-        #     print("状態監視: " + datetime.datetime.now(pytz.timezone('Asia/Tokyo')))
-        #     sleep(1)
+        start_time = time.time()
+        while True:
+            print("monitoring...")
+            print(datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'))
+            time.sleep(3)
 
-        #     # リクエスト送信
-        #     dialog_response = requests.post('http://' + host + '/default/menu/07_rest_api_ver1.php?no=2100000213', headers=header, data=json_data)
-        #     if dialog_response.status_code != 200:
-        #         raise Exception
+            # リクエスト送信
+            dialog_response = requests.post('http://' + host + '/default/menu/07_rest_api_ver1.php?no=2100000213', headers=header, data=json_data)
+            if dialog_response.status_code != 200:
+                raise Exception
 
-        #     print(dialog_response.text)
+            # ファイルがあるメニューのため、response.textをデバッグ出力すると酷い目にあう
+            # print(dialog_response.text)
 
-        #     dialog_resp_data = json.loads(dialog_response.text)
-        #     if dialog_resp_data["status"] != "SUCCEED" or dialog_resp_data["CONTENTS"]["RECORD_LENGTH"] != 1:
-        #         raise Exception(dialog_response.text)
+            dialog_resp_data = json.loads(dialog_response.text)
+            if dialog_resp_data["status"] != "SUCCEED" or dialog_resp_data["resultdata"]["CONTENTS"]["RECORD_LENGTH"] != 1:
+                raise Exception(dialog_response.text)
 
-        #     if dialog_resp_data["CONTENTS"]
+            record = dialog_resp_data["resultdata"]["CONTENTS"]["BODY"][1]
+            print(json.dumps(record))
+            if record[3] == u"完了(異常)":
+                raise Exception("ITAのメニューインポートに失敗しました")
+            if record[3] == u"完了":
+                break
 
-        #     # dev safety break
-        #     if i > 100:
-        #         break
-
+            # timeout
+            current_time = time.time()
+            if (current_time - start_time) > 60:
+                response = {
+                    "result": "500",
+                    "output": "ITAメニューインポート状況確認 Time out",
+                    "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
+                }
+                return JsonResponse(response, status=500)
 
         # *-*-*-* 結果 *-*-*-*
 
         response = {
             "result": "200",
-            "output": task_id,
+            "output": "",
             "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
         }
         return JsonResponse(response, status=200)
