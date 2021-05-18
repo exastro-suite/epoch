@@ -25,14 +25,9 @@ from django.http import HttpResponse
 from django.http.response import JsonResponse
 
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 
-@csrf_exempt
-def index(request):
-    if request.method == 'POST':
-        return post(request)
-    else:
-        return ""
-
+@require_http_methods(['POST'])
 @csrf_exempt    
 def post(request):
     try:
@@ -56,13 +51,13 @@ def post(request):
         request_response = requests.post( apiInfo + "github/webhooks", headers=post_headers, data=post_data)
         print("github/webhooks:" + request_response.text)
         ret = json.loads(request_response.text)
-        #ret = request_response.text
         print(ret["result"])
         if ret["result"] == "200" or ret["result"] == "201":
             output.append(ret["output"])
         else:
             return (request_response.text)
 
+        # # 再有効化は、後日
         # # パイプライン設定(TEKTON)
         # request_response = requests.post( apiInfo + "tekton/pipeline", headers=post_headers, data=post_data)
         # print("tekton/pipeline:response:" + request_response.text)
@@ -74,11 +69,20 @@ def post(request):
         # else:
         #     return (request_response.text)
 
-        # パイプライン設定(ITA)
+        # パイプライン設定(ITA - 初期化設定)
+        request_response = requests.post( apiInfo + "ita/initialize", headers=post_headers, data=post_data)
+        print("ita/initialize:response:" + request_response.text)
+        ret = json.loads(request_response.text)
+        print(ret["result"])
+        if ret["result"] == "200" or ret["result"] == "201":
+            output.append(ret["output"])
+        else:
+            return (request_response.text)
+
+        # パイプライン設定(ITA - Git環境情報設定)
         request_response = requests.post( apiInfo + "ita/manifestGitEnv", headers=post_headers, data=post_data)
         print("ita/manifestGitEnv:response:" + request_response.text)
         ret = json.loads(request_response.text)
-        #ret = request_response.text
         print(ret["result"])
         if ret["result"] == "200" or ret["result"] == "201":
             output.append(ret["items"])
@@ -98,7 +102,7 @@ def post(request):
             "result":"200",
             "output" : output,
         }
-        return JsonResponse(response)
+        return JsonResponse(response, status=200)
 
     except Exception as e:
         response = {
@@ -108,6 +112,6 @@ def post(request):
             "output": e.args,
             "traceback": traceback.format_exc(),
         }
-        return JsonResponse(response)
+        return JsonResponse(response, status=500)
 
 

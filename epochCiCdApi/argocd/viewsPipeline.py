@@ -46,7 +46,7 @@ def post(request):
         # 引数で指定されたCD環境を取得
         print (request.body)
         request_json = json.loads(request.body)
-        print (request_json)
+        #print (request_json)
         request_workspace = request_json["workspace"]
         gitUsername = request_workspace["manifest"]["git"]["username"]
         gitPassword = request_workspace["manifest"]["git"]["password"]
@@ -139,7 +139,7 @@ def get(request):
         # 引数で指定されたCD環境を取得
         print (request.body)
         request_json = json.loads(request.body)
-        print (request_json)
+        #print (request_json)
         request_workspace = request_json["workspace"]
         gitUsername = request_workspace["manifest"]["git"]["username"]
         gitPassword = request_workspace["manifest"]["git"]["password"]

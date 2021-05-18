@@ -11,14 +11,21 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from django.urls import path, include
-from . import views
 
-urlpatterns = [
-    # get workspaces information
-    path('info/', views.info_all),
-    # get a workspace information
-    path('info/<int:workspace_id>/', views.info),
-    # create a workspace
-    path('pod/', views.post),
-]
+from pytz import timezone
+
+config = None
+TZ = None
+logger = None
+
+def init(app):
+    """共通変数初期化
+    """
+    global config
+    global TZ
+    global logger
+
+    config = app.config
+    TZ = timezone(config['TZ'])
+    logger = app.logger
+

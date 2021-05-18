@@ -41,6 +41,8 @@ def post(request):
     try:
         v1 = client.CoreV1Api()
         
+        print("argocd pod create")
+
         resource_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource"
 
         name = "argocd"
@@ -63,10 +65,14 @@ def post(request):
 
         output = ""
 
+        print("argocd pod kubectl apply")
+
         #stdout_ns = subprocess.check_output(["kubectl","create","namespace","argocd"],stderr=subprocess.STDOUT)
         stdout_cd = subprocess.check_output(["kubectl","apply","-n",name,"-f",(resource_dir + "/install.yaml")],stderr=subprocess.STDOUT)
 
         output += "argocd" + "{" + stdout_cd.decode('utf-8') + "},"
+
+        print("argocd pod output:" + output)
 
         # 対象となるdeploymentを定義
         deployments = [ "deployment/argocd-server",
@@ -88,12 +94,16 @@ def post(request):
 
                 output += deployment_name + "." + env_name + "{" + stdout_cd.decode('utf-8') + "},"
 
+        print("argocd pod password reset")
+
         # argo CDのパスワード
         datenow = datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y-%m-%dT%H:%M:%S%z')
-        pdata ='{"stringData": { "admin.password": ' + os.environ['EPOCH_ARGOCD_LOGIN'] + ', "admin.passwordMtime": "\'' + datenow + '\'" }}'
+        pdata ='{"stringData": { "admin.password": "' + os.environ['EPOCH_ARGOCD_LOGIN'] + '", "admin.passwordMtime": "\'' + datenow + '\'" }}'
         stdout_cd = subprocess.check_output(["kubectl","-n",name,"patch","secret","argocd-secret","-p",pdata],stderr=subprocess.STDOUT)
 
         output += "argocd_pwchg" + "{" + stdout_cd.decode('utf-8') + "},"
+
+        print("argocd pod password complete")
 
         response = {
             "result":"OK",

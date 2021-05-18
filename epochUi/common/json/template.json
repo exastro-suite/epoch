@@ -1,0 +1,14 @@
+{[
+  {
+    'path': 'test1.yaml',
+    'note': 'test 1.'
+  },
+  {
+    'path': 'test2.yaml',
+    'note': 'test 2.'
+  },
+  {
+    'path': 'test2.yaml',
+    'note': 'test 2.'
+  }
+]}

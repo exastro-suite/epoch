@@ -42,7 +42,6 @@ def post(request):
         # 引数で指定されたCD環境を取得
         print (request.body)
         request_json = json.loads(request.body)
-        print (request_json)
         request_build = request_json["build"]
         gitRepos = request_build["git"]["repos"]
         webHooksUrl = request_build["git"]["WebHooksUrl"]

@@ -16,9 +16,15 @@ from django.urls import path, include
 from . import views
 from . import viewsManifestGitEnv
 from . import viewsConductorExec
+from . import viewsInitialize
 
 urlpatterns = [
+    # create ITA pod
     path('', views.index),
+    # 
+    path('initialize', viewsInitialize.post),
+    # set parameter
     path('manifestGitEnv', viewsManifestGitEnv.index),
+    # execute conductor
     path('cdExec', viewsConductorExec.index),
 ]

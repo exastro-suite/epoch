@@ -88,7 +88,7 @@ def postCommon(request):
         # 引数で指定されたCD環境を取得
         print (request.body)
         request_json = json.loads(request.body)
-        print (request_json)
+        #print (request_json)
         request_build = request_json["build"]
 
         templates_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource/templates/tekton-common"
@@ -152,7 +152,7 @@ def postPipeline(request):
         # 引数で指定されたCD環境を取得
         print (request.body)
         request_json = json.loads(request.body)
-        print (request_json)
+        #print (request_json)
         request_build = request_json["build"]
 
         templates_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource/templates/tekton-pipeline"
@@ -215,7 +215,7 @@ def postTrigger(request):
         # 引数で指定されたCD環境を取得
         print (request.body)
         request_json = json.loads(request.body)
-        print (request_json)
+        #print (request_json)
         request_build = request_json["build"]
 
         templates_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource/templates/tekton-trigger"
