@@ -54,36 +54,23 @@ def post(request):
         print ("apiInfo:" + apiInfo)
 
         output = []
-        # # Manifestパラメータ設定(ITA)
-        # request_response = requests.post( apiInfo + "ita/manifestParameter", headers=post_headers, data=post_data)
-        # print("ita/manifestParameter:response:" + request_response.text)
-        # ret = json.loads(request_response.text)
-        # #ret = request_response.text
-        # print(ret["result"])
-        # if ret["result"] == "200" or ret["result"] == "201":
-        #     output.append(ret["items"])
-        # else:
-        #     raise Exception(request_response.text)
-
-        # パイプラインパラメータ設定(ArgoCD)
-        request_response = requests.post( apiInfo + "argocd/pipelineParameter", headers=post_headers, data=post_data)
-        print("argocd/pipelineParameter:response:" + request_response.text)
+        # Manifestパラメータ設定(ITA)
+        request_response = requests.post( apiInfo + "ita/manifestParameter", headers=post_headers, data=post_data)
+        print("ita/manifestParameter:response:" + request_response.text)
         ret = json.loads(request_response.text)
-        if ret["result"] == "200" or ret["result"] == "201":
-            output.append(ret["output"])
+        #ret = request_response.text
+        print(ret["result"])
+        if request_response.status_code == 200:
+            output.append(ret["items"])
         else:
             raise Exception(request_response.text)
 
-        response = {
-            "result":"200",
-            "output" : output,
-        }
         return JsonResponse(response, status=200)
 
     except Exception as e:
         response = {
             "result":"500",
-            "returncode": "0201",
+            "returncode": "0601",
             "args": e.args,
             "output": e.args,
             "traceback": traceback.format_exc(),
