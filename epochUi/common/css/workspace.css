@@ -22,6 +22,12 @@
   --cd-color: #335581;
 }
 
+
+/* Content header size*/
+.content-title { max-width: calc( 50% - 40px ); }
+#content[data-mode="running"] .content-title { max-width: 50%; }
+.content-note { max-width: 50%; }
+
 /* -------------------------------------------------- *
 
    ワークスペース作成画面
@@ -139,7 +145,7 @@ color: #999;
 .workspace-tab-link:hover {
 color: #333;
 }
-.workspace-tab-current {
+.workspace-tab-link.current {
 border-bottom-color: #1F8C78!important;
 border-bottom-width: 2px;
 color: #333!important;
@@ -253,6 +259,16 @@ background-color: var(--cd-color);
 }
 #ws-cd-user .workspace-point-name {
 color: var(--cd-color);
+}
+.workspace-point-setting {
+position: absolute;
+right: -8px; bottom: -8px;
+width: 36px; height: 36px;
+padding: 5px;
+background-color: #FFF;
+box-shadow: 1px 1px 1px rgb(0 0 0 / 10%);
+border: 1px solid #CCC;
+border-radius: 4px;
 }
 
 .workspace-main {
@@ -444,6 +460,15 @@ margin: 24px 0 0 0;
 .workspace-document-wrap[data-multiple="3"] { margin: 24px 12px 0 0; }
 .workspace-document-wrap[data-multiple="4"] { margin: 24px 18px 0 0; }
 .workspace-document-wrap[data-multiple="5"] { margin: 24px 24px 0 0; }
+
+.workspace-document-wrap.no-title {
+margin-top: 0!important;
+}
+.workspace-document-wrap.no-title[data-multiple="2"] { margin-top: 4px!important; }
+.workspace-document-wrap.no-title[data-multiple="3"] { margin-top: 8px!important; }
+.workspace-document-wrap.no-title[data-multiple="4"] { margin-top: 12px!important; }
+.workspace-document-wrap.no-title[data-multiple="5"] { margin-top: 16px!important; }
+
 .multiple-name,
 .multiple-number {
 position: absolute;
@@ -475,6 +500,9 @@ color: #FFF;
 #ws-git-epoch .multiple-number,
 #ws-system .multiple-number {
 background-color: #3371e3;
+}
+#ws-kubernetes-manifest-template .multiple-number {
+background-color: #6E255D;
 }
 .multiple-arrow {
 position: relative;
@@ -598,45 +626,176 @@ width: 100%; height: 100%;
 }
 
 .item-parameter-block {
+overflow: hidden;
 display: flex;
+background-color: #F2F2F2;
+border: 1px solid #CCC;
+border-radius: 4px;
 }
 .item-parameter-select {
 width: 40%;
+background-color: #F2F2F2;
+border-left: 1px dashed #CCC;
 }
 .item-parameter-code {
-overflow: auto;
+overflow: scroll;
 width: 60%;
-margin: 0!important; padding: 8px 16px;
-border-radius: 4px;
+margin: 8px;
+border: 1px solid #AAA;
 }
+.item-parameter-pre.prettyprint {
+min-height: 100%;
+margin: 0; padding: 0;
+border: none;
+}
+.item-parameter-pre .linenums > li {
+position: relative;
+height: 20px;
+padding-left: 5em;
+background-color: #FFF;
+border-bottom: 1px solid #EEE;
+line-height: 20px;
+}
+.item-parameter-pre .linenums {
+counter-reset: row-number 0;
+}
+.item-parameter-pre .linenums > li::before {
+counter-increment: row-number 1;
+content: counter(row-number);
+display: inline-block;
+position: absolute;
+left: 0; top: 0;
+width: 4em; height: 100%;
+padding: 0 4px;
+background-color: #F8F8F8;
+border-right: 1px solid #DDD;
+text-align: right;
+color: #999;
+}
+.item-parameter-pre .linenums .com {
+color: #AAA;
+}
+.item-parameter-pre .linenums .kwd {
+color: #1F8C78;
+}
+
 .item-parameter {
 display: inline-block;
-margin: 2px 0; padding: 2px 1px;
-background-color: #FFB733;
-border-radius: 2px;
+margin: 2px 0; padding: 2px 4px;
+background-color: rgba( 255,255,0,.2 );
+border-bottom: 1px solid transparent;
 line-height: 1;
-vertical-align: baseline;
+vertical-align: middle;
 cursor: pointer;
+transition-duration: .3s;
 }
 .item-parameter,
 .item-parameter > * {
-color: #333!important;
+color: #FFB733!important;
 }
 .item-parameter:hover {
-background-color: #FFC966;
+opacity: .8;
+border-bottom-color: transparent;
 }
 .item-parameter.parameter-open {
-background-color: #FFF;
+background-color: rgba( 255,255,0,.1 );
+border-color: #FFB733;
 cursor: default;
+opacity: 1!important;
 }
+
 .item-parameter-area {
 display: none;
-padding-left: 16px;
+height: 100%;
+padding: 8px;
 }
 .item-parameter-area.parameter-open {
 display: block;
 }
 .item-parameter-name {
-margin-bottom: 8px; padding: 4px;
-border-bottom: 2px solid #CCC;
+height: 64px;
+background-color: #FFF;
+border: 1px solid #CCC;
+border-radius: 4px 4px 0 0;
+white-space: nowrap;
+text-overflow: ellipsis;
+line-height: 60px;
+text-align: center;
+font-weight: bold;
+color: #666;
+}
+.item-parameter-input-area {
+overflow: auto;
+height: calc( 100% - 64px );
+padding: 8px;
+background-color: #F8F8F8;
+border: 1px solid #CCC;
+border-top: none;
+border-radius: 0 0 4px 4px;
+}
+
+.adjust-text {
+display: inline-block;
+transform-origin: left;
+}
+
+/* Conductor */
+.conductor-area {
+position: relative;
+z-index: 0;
+width: 100%; height: 160px;
+background: linear-gradient( transparent, transparent 99px, #CCC 99px, #CCC 100px ),
+linear-gradient( 90deg, transparent, transparent 99px, #CCC 99px, #CCC 100px ),
+linear-gradient( transparent, transparent 49px, #D0D0D0 49px, #D0D0D0 50px ),
+linear-gradient( 90deg, transparent, transparent 49px, #D0D0D0 49px, #D0D0D0 50px ),
+linear-gradient( transparent, transparent 9px, #DDD 9px, #DDD 10px ),
+linear-gradient( 90deg, transparent, transparent 9px, #DDD 9px, #DDD 10px ), #EEE;
+background-size: 100px 100px, 100px 100px, 50px 50px, 50px 50px, 10px 10px, 10px 10px;
+border: 1px solid #AAA;
+border-radius: 4px;
+}
+.conductor-area > .node {
+position: absolute;
+top: 50%;
+}
+.conductor-start {
+left: 16px;
+transform: translateY(-50%);
+}
+.conductor-end {
+right: 16px;
+transform: translateY(-50%);
+}
+.conductor-epoch {
+left: 50%;
+transform: translate(-50%,-50%);
+}
+.conductor-line {
+position: absolute;
+z-index: -1;
+left: 32px; top: 50%;
+transform: translateY(-50%);
+width: calc( 100% - 64px ); height: 3px;
+background-color: #002B62;
+}
+
+
+/* モード切替用 */
+.workspace-mode-setting,
+.workspace-mode-running {
+display: none!important;
+}
+#content[data-mode="setting"] .content-setting.workspace-mode-setting,
+#content[data-mode="setting"] .workspace-block-setting.workspace-mode-setting,
+#content[data-mode="running"] .workspace-block-setting.workspace-mode-running,
+#content[data-mode="setting"] .workspace-document-setting.workspace-mode-setting,
+#content[data-mode="running"] .workspace-document-setting.workspace-mode-running{
+display: table-cell!important;
+}
+#content[data-mode="setting"] .workspace-point-setting.workspace-mode-setting,
+#content[data-mode="running"] .workspace-point-setting.workspace-mode-running {
+display: block!important;
+}
+#content[data-mode="setting"] .workspace-footer-menu-item.workspace-mode-setting {
+display: inline-block!important;
 }
