@@ -131,12 +131,26 @@ def post(request):
 
     # マニフェスト環境パラメータのデータ成型
     maniparam_edit = []
-    for idx_manifile, row_manifile in enumerate(json.loads(request.body)['ci_config']['manifests']):
+    for environment in json.loads(request.body)['ci_config']['environments']:
 
-        for environment in row_manifile['environments']:
+        idx_ope = search_opration(opelist_json['resultdata']['CONTENTS']['BODY'], column_indexes_opelist, environment['git_url'])
+
+        # ITAからオペレーション(=環境)が取得できなければ異常
+        if idx_ope == -1:
+            response = {
+                "result": "400",
+                "output": "CD環境が設定されていません。",
+                "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
+            }
+            return JsonResponse(response, status=400)
+
+            
+        req_maniparam_operation_id = opelist_json['resultdata']['CONTENTS']['BODY'][idx_ope][column_indexes_common['record_no']]
+
+        for idx_manifile, row_manifile in enumerate(environment['manifests']):
 
             # parameters成型
-            for key, value in environment['parameters'].items():
+            for key, value in row_manifile['parameters'].items():
                 if key == 'replicas':
                     replicas = value
                 elif key == 'image':
@@ -144,23 +158,11 @@ def post(request):
                 elif key == 'image_tag':
                     image_tag = value
 
-            idx_ope = search_opration(opelist_json['resultdata']['CONTENTS']['BODY'], column_indexes_opelist, environment['git_url'])
-
-            # ITAからオペレーション(=環境)が取得できなければ異常
-            if idx_ope == -1:
-                response = {
-                    "result": "400",
-                    "output": "CD環境が設定されていません。",
-                    "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
-                }
-                return JsonResponse(response, status=400)
-
             # 既存データ確認
             maniparam_id = -1
             for idx_maniparam, row_maniparam in enumerate(maniparam_json['resultdata']['CONTENTS']['BODY']):
                 current_maniparam_operation_id = row_maniparam[column_indexes_maniparam['operation_id']]
                 current_maniparam_include_index = row_maniparam[column_indexes_maniparam['indexes']]
-                req_maniparam_operation_id = opelist_json['resultdata']['CONTENTS']['BODY'][idx_ope][column_indexes_common['record_no']]
                 if current_maniparam_operation_id == req_maniparam_operation_id and \
                         current_maniparam_include_index == str(idx_manifile + 1):
                     maniparam_id = row_maniparam[column_indexes_common['record_no']]
