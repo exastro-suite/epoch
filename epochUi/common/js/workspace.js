@@ -2025,9 +2025,14 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
           'file'            : wsDataJSON['template-file'][flid]['name'],
           'parameters'      : {},
         };
-        for(var prm in wsDataJSON['environment'][env]['parameter'][flid]) {
-          var prmname = prm.replace(new RegExp('^'+flid+'-'),'');   
-          prmmani['parameters'][prmname] = wsDataJSON['environment'][env]['parameter'][flid][prm];
+        console.log('env:'+env);
+        if(wsDataJSON['environment'][env]['parameter']) {
+          // マニフェストパラメータの指定をしている時、パラメータを設定する
+          // 環境を追加してパラメータ指定を行わない時は上記if文でスキップする
+          for(var prm in wsDataJSON['environment'][env]['parameter'][flid]) {
+            var prmname = prm.replace(new RegExp('^'+flid+'-'),'');   
+            prmmani['parameters'][prmname] = wsDataJSON['environment'][env]['parameter'][flid][prm];
+          }
         }
         prmenv['manifests'][prmenv['manifests'].length] = prmmani;
       }
