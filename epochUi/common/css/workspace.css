@@ -53,6 +53,9 @@ display: flex;
 align-items: center;
 height: 59px;
 }
+.workspace-footer-menu-item {
+margin-right: 16px;
+}
 .workspace-tab {
 height: 48px;
 background-color: #FFF;
@@ -166,7 +169,7 @@ stroke: var(--cd-color);
 stroke: var(--ci-color);
 }
 .svg-path-back {
-stroke: rgba( 255,255,255,.5 );
+stroke: rgba( 255,255,255,1 );
 stroke-width: 7px;
 fill: none;
 stroke-linejoin: round;
@@ -349,7 +352,7 @@ margin: 0 auto;
 }
 .workspace-epoch-setting {
 overflow: hidden;
-background-color: rgba( 255,255,255,.5 );
+background-color: #62AFA1;
 border-radius: 4px;
 }
 .workspace-epoch-label {
@@ -358,6 +361,14 @@ text-align: center;
 font-weight: bold;
 font-size: 24px;
 color: var(--main-color);
+}
+.workspace-block-logo {
+padding: 4px;
+}
+.workspace-block-logo-image {
+display: block;
+width: auto; height: 48px;
+margin: 0 auto;
 }
 .workspace-block[data-service="none"] .workspace-block-icon {
 filter: grayscale(1);
@@ -437,7 +448,6 @@ width: 100%; height: 100%;
 .workspace-area {
 position: relative;
 z-index: 0;
-opacity: .8;
 }
 .workspace-area-name {
 position: absolute;
@@ -474,11 +484,14 @@ margin-top: 0!important;
 position: absolute;
 z-index: 1;
 line-height: 1;
-font-weight: bold;
 }
 .multiple-name {
 left: 6px; top: -16px;
-text-shadow: 1px 1px 0 #F2F2F2;
+padding: 2px 8px;
+background-color: #FFF;
+border: 1px solid #CCC;
+border-bottom-color: #EEE;
+border-radius: 4px 4px 0 0;
 letter-spacing: .025em;
 font-size: 11px;
 color: #555;
@@ -494,11 +507,10 @@ text-align: center;
 line-height: 20px;
 font-family: Consolas, "メイリオ", Meiryo, Osaka, "ＭＳ Ｐゴシック", "MS PGothic", "sans-serif";
 font-size: 12px;
+font-weight: bold;
 color: #FFF;
 }
-#ws-ita-parameter .multiple-number,
-#ws-git-epoch .multiple-number,
-#ws-system .multiple-number {
+.environment .multiple-number {
 background-color: #3371e3;
 }
 #ws-kubernetes-manifest-template .multiple-number {
@@ -524,8 +536,7 @@ border-left-color: transparent;
 border-right-color: #00A99D;;
 border-bottom-color: #00A99D;;
 }
-#ws-ita-parameter .multiple-arrow::after,
-#ws-git-epoch .multiple-arrow::after {
+.environment .multiple-arrow::after {
 border-right-color: #3371e3;
 border-bottom-color: #3371e3;
 }
@@ -625,6 +636,53 @@ display: block;
 width: 100%; height: 100%;
 }
 
+.item-file-list {
+display: none;
+}
+
+.item-file-block {
+position: relative;
+}
+#template-files {
+position: absolute;
+left: 0; top: 0;
+visibility: hidden;
+}
+.item-file-droparea {
+width: 100%;
+height: 160px;
+padding: 8px;
+background-color: #FFF;
+border: 1px solid #CCC;
+cursor: pointer;
+}
+.item-file-droparea.enter {
+padding: 12px;
+background-color: #E6F1FF;
+border-color: #0070FF;
+}
+.item-file-droparea-text {
+display: flex;
+align-items: center;
+justify-content: center;
+width: 100%; height: 100%;
+background-image: linear-gradient( 45deg, #FFF 25%, #F2F2F2 25%, #F2F2F2 50%, #FFF 50%, #FFF 75%, #F2F2F2 75%);
+background-size: 20px 20px;
+background-clip: content-box;
+border: 4px solid #F2F2F2;
+border-radius: 8px;
+color: #888;
+font-weight: bold;
+pointer-events: none;
+}
+.item-file-droparea:active {
+padding: 12px;
+}
+.item-file-droparea.enter .item-file-droparea-text {
+background-image: none;
+border-color: transparent;
+}
+
 .item-parameter-block {
 overflow: hidden;
 display: flex;
@@ -648,60 +706,87 @@ min-height: 100%;
 margin: 0; padding: 0;
 border: none;
 }
+.item-parameter-pre .linenums {
+display: inline-block;
+min-width: 100%;
+vertical-align: top;
+}
 .item-parameter-pre .linenums > li {
 position: relative;
 height: 20px;
-padding-left: 5em;
+padding: 0 16px 0 5em;
 background-color: #FFF;
-border-bottom: 1px solid #EEE;
+border-bottom: 1px solid rgba( 0,0,0,.05 );
 line-height: 20px;
 }
 .item-parameter-pre .linenums {
 counter-reset: row-number 0;
 }
 .item-parameter-pre .linenums > li::before {
+direction: rtl;
+overflow: hidden;
 counter-increment: row-number 1;
 content: counter(row-number);
-display: inline-block;
 position: absolute;
 left: 0; top: 0;
-width: 4em; height: 100%;
+width: 4em; height: calc( 100% + 1px );
 padding: 0 4px;
-background-color: #F8F8F8;
-border-right: 1px solid #DDD;
+background-color: rgba( 0,0,0,.1 );
+border-right: 1px solid rgba( 0,0,0,.15 );
 text-align: right;
+text-overflow: ellipsis;
+white-space: nowrap;
 color: #999;
 }
 .item-parameter-pre .linenums .com {
 color: #AAA;
 }
+.item-parameter-pre .linenums .pun {
+color: #79BAAE;
+}
 .item-parameter-pre .linenums .kwd {
-color: #1F8C78;
+color: #4CA393;
+}
+.item-parameter-pre .linenums .pln {
+color: #333;
+}
+.item-parameter-pre .linenums .dec {
+font-weight: bold;
+color: #8A2BE2;
 }
 
-.item-parameter {
+.item-parameter,
+.preview-parameter {
+position: relative;
 display: inline-block;
-margin: 2px 0; padding: 2px 4px;
-background-color: rgba( 255,255,0,.2 );
-border-bottom: 1px solid transparent;
+padding: 0px 4px;
+border-bottom: 1px solid #FF7423;
 line-height: 1;
 vertical-align: middle;
 cursor: pointer;
-transition-duration: .3s;
+}
+.preview-parameter {
+border-bottom: none;
+cursor: default;
 }
 .item-parameter,
-.item-parameter > * {
-color: #FFB733!important;
+.item-parameter > *,
+.preview-parameter,
+.preview-parameter > * {
+color: #FF7423!important;
 }
 .item-parameter:hover {
-opacity: .8;
 border-bottom-color: transparent;
 }
 .item-parameter.parameter-open {
-background-color: rgba( 255,255,0,.1 );
-border-color: #FFB733;
+border-bottom-color: transparent;
+font-weight: bold;
 cursor: default;
-opacity: 1!important;
+letter-spacing: -.07em;
+}
+.item-parameter.parameter-open,
+.item-parameter.parameter-open > * {
+color: #FF640A!important;
 }
 
 .item-parameter-area {
@@ -779,6 +864,23 @@ width: calc( 100% - 64px ); height: 3px;
 background-color: #002B62;
 }
 
+
+#yaml-preview .modal-body {
+padding: 0;
+}
+/* Table 列幅 */
+#kubernetes-manifest-template .template-name { flex: 0 0 16%; max-width: 16%; }
+#kubernetes-manifest-template .template-date { flex: 0 0 16%; max-width: 16%; }
+#kubernetes-manifest-template .template-user { flex: 0 0 16%; max-width: 16%; }
+#kubernetes-manifest-template .template-note { flex: 1 1 auto; min-width: 0; }
+#kubernetes-manifest-template .template-menu { display: none; }
+
+#kubernetes-manifest-template-upload .template-name { flex: 0 0 50%; max-width: 50%; }
+#kubernetes-manifest-template-upload .template-type { flex: 0 0 15%; max-width: 15%; }
+#kubernetes-manifest-template-upload .template-size { flex: 0 0 10%; max-width: 10%; }
+#kubernetes-manifest-template-upload tbody .template-size { text-align: right;}
+#kubernetes-manifest-template-upload .template-date { flex: 1 1 auto; min-width: 0; }
+#kubernetes-manifest-template-upload .template-menu { display: none; }
 
 /* モード切替用 */
 .workspace-mode-setting,
