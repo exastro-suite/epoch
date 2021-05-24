@@ -94,11 +94,10 @@ modalFunction.prototype = {
     /* -------------------------------------------------- *\
        モーダルを開く
     \* -------------------------------------------------- */
-    'open': function( target, okFunction, cancelFunction, callback ){
+    'open': function( target, funcs, width ){
         const modal = this,
               $modalContainer = $('#modal-container'),
-              $modal = modal.createMain( modal.modalJSON[target] );
-        
+              $modal = modal.createMain( modal.modalJSON[target], width );
         $('body').addClass('modal-open');
         $modalContainer.html( $modal ).css('display','flex');
         
@@ -107,14 +106,14 @@ modalFunction.prototype = {
           const type = $( this ).attr('data-button');
           switch( type ) {
             case 'cancel':
-              if ( cancelFunction !== undefined && cancelFunction !== null ) {
-                cancelFunction();
+              if ( funcs.cancel !== undefined ) {
+                funcs.cancel();
               } else {
                 modal.close();
               }
               break;
             case 'ok':
-              okFunction( $modal );
+              funcs.ok( $modal );
               modal.close();
               break;
           }
@@ -142,18 +141,11 @@ modalFunction.prototype = {
             }, '.modal-tab-item');
           });
         }
-        
-        // ハイライト
-        const $parameter = $modal.find('.item-parameter');
-        if ( $parameter.length ) {
-          if ( PR !== undefined ) {
-            PR.prettyPrint();
-          }
+               
+        if ( funcs.callback !== undefined ) {
+          funcs.callback();
         }
-        
-        if ( callback !== undefined ) {
-          callback();
-        }
+
     },
     /* -------------------------------------------------- *\
        モーダルを閉じる
@@ -165,16 +157,20 @@ modalFunction.prototype = {
     /* -------------------------------------------------- *\
        モーダルを切り替える
     \* -------------------------------------------------- */
-    'change': function( modalJSON, type, callback, okFunction, cancelFunction ){
-      this.open( modalJSON, type, callback, okFunction, cancelFunction );
+    'change': function( type, funcs, width ){
+      $('#modal-container').empty();
+      this.open( type, funcs, width );
     },
     /* -------------------------------------------------- *\
        main
     \* -------------------------------------------------- */
-    'createMain': function createModal( main ){
+    'createMain': function createModal( main, width ){
+      if ( width === undefined ) width = 800;
+      if ( main.class === undefined ) main.class = '';
       const $modal = $('<div/>', {
         'id': main.id,
-        'class': 'modal'
+        'class': 'modal ' + main.class,
+        'style': 'max-width:' + width + 'px'
       });
       $modal.append(
         $('<div/>', {'class': 'modal-header'}).append(
@@ -187,24 +183,27 @@ modalFunction.prototype = {
             })
           )
         ),
-        $('<div/>', {'class': 'modal-main'}).append( this.createBody( main['block'] ) ),
-        $('<div/>', {'class': 'modal-footer'}).append( this.createFooter() )
+        $('<div/>', {'class': 'modal-main'}).append( this.createBody( main.block ) ),
+        $('<div/>', {'class': 'modal-footer'}).append( this.createFooter( main.footer ) )
       );
       return $modal;
     },
     /* -------------------------------------------------- *\
        footer
     \* -------------------------------------------------- */
-    'createFooter': function createModal(){
+    'createFooter': function createModal( footer ){
       const $footer = $('<ul/>', {'class': 'modal-menu-list'});
-      $footer.append(
-        $('<li/>', {'class': 'modal-menu-item'}).append(
-          $('<button/>', {'class': 'epoch-button modal-menu-button positive', 'text': '決定', 'data-button': 'ok'})
-        ),
-        $('<li/>', {'class': 'modal-menu-item'}).append(
-          $('<button/>', {'class': 'epoch-button modal-menu-button negative', 'text': 'キャンセル', 'data-button': 'cancel'})
-        )
-      );
+      for ( let key in footer ) {
+        $footer.append(
+          $('<li/>', {'class': 'modal-menu-item'}).append(
+            $('<button/>', {
+              'class': 'epoch-button modal-menu-button ' + footer[key].type ,
+              'text': footer[key].text,
+              'data-button': key
+            })
+          )
+        );
+      }
       return $footer;
     },
     /* -------------------------------------------------- *\
@@ -213,9 +212,7 @@ modalFunction.prototype = {
     'createBody': function createModalBlock( block ) {
       if ( block !== undefined ) {
         const modal = this ,
-              $modalBody = $('<div/>', {'class': 'modal-body'}).append(
-                $('<form/>', {'class': 'modal-form'})
-              );
+              $modalBody = $('<div/>', {'class': 'modal-body'});
         for ( const key in block ) {
           const buttonCheck = function( blockI ){
             if ( blockI.button !== undefined ) {
@@ -231,7 +228,7 @@ modalFunction.prototype = {
             }
           };
           const $button = buttonCheck( block[key] );
-          $modalBody.find('.modal-form').append(
+          $modalBody.append(
             $('<div/>', {'class': 'modal-block'}).append(
               $('<div/>', {'class': 'modal-block-header'}).append(
                 $('<div/>', {'class': 'modal-block-title', 'text': block[key].title }),
@@ -249,7 +246,7 @@ modalFunction.prototype = {
             $modalBody.find('.modal-tab-add-button').on('click', function(){
               if ( $modalBody.find('.modal-tab-empty').length ) {
                 $modalBody.find('.modal-tab-empty').removeClass('modal-tab-empty');
-                $modalBody.find('.modal-tab-empty-block').remove();
+                $modalBody.find('.modal-empty-block').remove();
               }
               const tabID = modal.getUniqueTabID();
               
@@ -296,7 +293,7 @@ modalFunction.prototype = {
         $tab.addClass('modal-tab-empty');
         $tabBody.html(
           $('<div/>', {
-            'class': 'modal-tab-empty-block',
+            'class': 'modal-empty-block',
             'text': tab.emptyText
           })
         );
@@ -376,6 +373,9 @@ modalFunction.prototype = {
       $tabBlock.find('.modal-tab-body-block').eq( tabNumber ).addClass('open');
       this.tabSize( $tab );
     },
+    /* -------------------------------------------------- *\
+       タブのサイズを調整する
+    \* -------------------------------------------------- */
     'tabSize': function( $tab ){
       const padding = 32,
             offsetWidth = $tab.find('.modal-tab-text').get(0).offsetWidth,
@@ -390,17 +390,16 @@ modalFunction.prototype = {
     'createItem': function( item, tabNumber ){
       if ( item !== undefined ) {
         const modal = this,
-              $item = $('<div/>', {'class': 'modal-input'});
+              $item = $('<div/>', {'class': 'modal-item'});
         for ( const key in item ) {
           const itemType = function( data ){
             switch( data.type ) {
               case 'input': return modal.createInput( data, tabNumber );
+              case 'textarea': return modal.createTextarea( data, tabNumber );
               case 'password': return modal.createPassword( data, tabNumber );
               case 'radio': return modal.createRadio( data );
-              case 'file': return modal.createFile( data );
-              case 'table': return modal.createTable( data );
+              case 'loading': return modal.createLoadingBlock( data, tabNumber );
               case 'reference': return modal.createReference( data, tabNumber );
-              case 'parameter': return modal.createParameter( data, tabNumber );
             }
           };
           $item.append( itemType( item[key] ) );
@@ -409,16 +408,30 @@ modalFunction.prototype = {
       }
     },
     /* -------------------------------------------------- *\
+       loading
+    \* -------------------------------------------------- */
+    'createLoadingBlock': function( loading, tabNumber ){
+      if ( loading !== undefined ) {
+        const $loading = $('<div/>', {
+          'id': ( tabNumber !== undefined )? tabNumber + '-' + loading.id: loading.id
+        }).append(
+          $('<div/>', {'class': 'modal-loading-inner'})
+        );
+        return $loading;
+      }
+    },
+    /* -------------------------------------------------- *\
        input TEXT
     \* -------------------------------------------------- */
     'createInput': function( text, tabNumber ){
-      const $input = $('<dl/>', {'class': 'item-text-block'}),
+      const $input = $('<dl/>', {'class': 'item-text-block item-block'}),
             name = ( tabNumber !== undefined )? tabNumber + '-' + text.name: text.name,
             value = this.searchValue( this.valueJSON, name ),
             className = ( text.class !== undefined )? ' ' + text.class: '';
+      if ( text.max === undefined ) text.max = 0;
       $input.append(
-        $('<dd/>', {'class': 'item-text-title', 'text': text.title }),
-        $('<dd/>', {'class': 'item-text-length', 'text': '000/000' }),
+        $('<dt/>', {'class': 'item-text-title item-title', 'text': text.title }),
+        ( text.max > 0 )? $('<dd/>', {'class': 'item-text-length', 'text': '000/000' }): '',
         $('<dd/>', {'class': 'item-text-area'}).append(
           $('<input>', {
             'type': 'text',
@@ -429,7 +442,7 @@ modalFunction.prototype = {
             'value': value        
           })
         ),
-        $('<dd/>', {'class': 'item-text-note'})
+        ( text.note !== undefined )? $('<dd/>', {'class': 'item-text-note'}): ''
       );
       // タブ名と入力を合わせる
       const $tabNameInput = $input.find('.tab-name-link');
@@ -453,16 +466,39 @@ modalFunction.prototype = {
       return $input;
     },
     /* -------------------------------------------------- *\
+       Textarea
+    \* -------------------------------------------------- */
+    'createTextarea': function( textarea, tabNumber ){
+      const $textarea = $('<dl/>', {'class': 'item-textarea-block item-block'}),
+            name = ( tabNumber !== undefined )? tabNumber + '-' + textarea.name: textarea.name,
+            value = this.searchValue( this.valueJSON, name ),
+            className = ( textarea.class !== undefined )? ' ' + textarea.class: '';
+      $textarea.append(
+        $('<dt/>', {'class': 'item-textarea-title item-title', 'text': textarea.title }),
+        $('<dd/>', {'class': 'item-textarea-area'}).append(
+          $('<textarea/>', {
+            'name': name,
+            'data-name': textarea.name,
+            'class': 'item-textarea ' + textarea.name + className,
+            'placeholder' : textarea.placeholder,
+            'text': value        
+          })
+        )
+      );
+      return $textarea;
+    },
+    /* -------------------------------------------------- *\
        Reference
     \* -------------------------------------------------- */
     'createReference': function( reference, tabNumber ){
-      const $input = $('<dl/>', {'class': 'item-reference-block'}),
+      const $input = $('<dl/>', {'class': 'item-reference-block item-block'}),
             value = this.searchValue( this.valueJSON, tabNumber + '-' + reference.target );
       $input.append(
-        $('<dd/>', {'class': 'item-reference-title', 'text': reference.title }),
+        $('<dt/>', {'class': 'item-reference-title item-title', 'text': reference.title }),
         $('<dd/>', {'class': 'item-reference-area'}).append(
           $('<span/>', {
-            'text': value
+            'text': value,
+            'class': 'item-reference'
           })
         )
       );
@@ -472,11 +508,11 @@ modalFunction.prototype = {
        input PASSWORD
     \* -------------------------------------------------- */
     'createPassword': function( password, tabNumber ){
-      const $input = $('<dl/>', {'class': 'item-password-block'}),
+      const $input = $('<dl/>', {'class': 'item-password-block item-block'}),
             value = this.searchValue( this.valueJSON, password.name ),
             name = ( tabNumber !== undefined )? tabNumber + '-' + password.name: password.name;
       $input.append(
-        $('<dd/>', {'class': 'item-password-title', 'text': password.title }),
+        $('<dt/>', {'class': 'item-password-title item-title', 'text': password.title }),
         $('<dd/>', {'class': 'item-password-area'}).append(
           $('<input>', {
             'type': 'password',
@@ -497,10 +533,16 @@ modalFunction.prototype = {
        input RADIO
     \* -------------------------------------------------- */
     'createRadio': function( radio ){
-      const $radio = $('<ul/>', {'class': 'item-radio-block'}),
+      const $radio = $('<dl/>', {'class': 'item-radio-block item-block'}).prepend(
+              ( radio.title !== undefined )? $('<dt/>', {'class': 'item-radio-title item-title', 'text': radio.title }): '',
+              $('<dd/>', {'class': 'item-radio-area'}).append(
+                $('<ul/>', {'class': 'item-radio-list'})
+              ),
+              ( radio.note !== undefined )? $('<dd/>', {'class': 'item-radio-note'}): ''
+            ),
             checked = radio.name + '-' + this.searchValue( this.valueJSON, radio.name );
       for ( let key in radio.item ) {
-        $radio.append(
+        $radio.find('.item-radio-list').append(
           $('<li/>', {'class': 'item-radio-item'}).append(
             $('<input>', {
               'class': 'item-radio',
@@ -519,241 +561,5 @@ modalFunction.prototype = {
       }
       $radio.find('#' + checked ).prop('checked', true );
       return $radio;
-    },
-    /* -------------------------------------------------- *\
-       File
-    \* -------------------------------------------------- */
-    'createFile': function(){
-      const modal = this,
-            $file = $('<div/>', {'class': 'item-file-block'});
-      $file.append(
-        $('<input>', {
-          'class': 'item-file',
-          'type': 'file',
-          'multiple': 'multiple'
-        }),
-        $('<div/>', {'class': 'item-file-list'}),
-        $('<div/>', {'class': 'item-file-droparea'})
-      );
-      const uploadFile = function( files ){
-        const fileLength = files.length,
-              fileTable = new Array();
-        const createTable = function() {
-          fileCount++;
-          if ( fileCount >= fileLength ) {
-            const tableData = {
-              'type': 'table',
-              'value': {
-                'data': fileTable
-              }
-            }
-            $file.find('.item-file-list').show().html( modal.createTable( tableData ) );
-          }
-        }
-        let fileCount = 0;
-        for ( let i = 0; i < fileLength; i++ ) {
-          fileTable[i] = new Array();
-          if ( files[i].type === 'text/plain') {
-            const reader = new FileReader();
-            $( reader ).on('load', function(){
-              fileTable[i].push(
-                {'type': 'link', 'text': files[i].name, 'href': this.result },
-                {'type': 'text', 'text': files[i].size },
-                {'type': 'text', 'text': files[i].type },
-                {'type': 'text', 'text': files[i].lastModifiedDate }
-              );
-              createTable();              
-            });
-            reader.readAsDataURL(files[i]);
-          } else {
-            fileTable[i].push(
-              {'type': 'text', 'text': files[i].name },
-              {'type': 'text', 'text': '-' },
-              {'type': 'text', 'text': '-' },
-              {'type': 'text', 'text': '-' }
-            );
-            createTable();
-          }
-        }
-      };
-      // ファイル選択
-      $file.find('.item-file').on('change', function(){
-        const $inputFile = $( this );
-        if ( $inputFile.val() !== '') {
-          uploadFile( $inputFile.prop('files') );
-        }
-      });
-      
-      // Drop
-      $file.find('.item-file-droparea').on({
-        'dragover': function(e){
-          e.preventDefault();
-        },
-        'dragenter': function(){
-          $(this).addClass('enter');
-        },
-        'dragleave': function(){
-          $(this).removeClass('enter');
-        },
-        'drop': function(e){
-          e.preventDefault();
-          $(this).removeClass('enter');
-          uploadFile( e.originalEvent.dataTransfer.files );
-        }
-      });
-      return $file;
-    },
-    /* -------------------------------------------------- *\
-       Table
-    \* -------------------------------------------------- */
-    'createTable': function( table ){
-      const $table = $('<table/>', {'class': 'item-table'}),
-            rowLength = table.value.data.length;
-      const content = function( data ) {
-        switch( data.type ) {
-          case 'link':
-            return $('<a/>', {
-              'class': 'item-table-link',
-              'href': data.href,
-              'target': '_blank',
-              'text': data.text
-            });
-          case 'text':
-            return $('<span/>', {
-              'class': 'item-table-text',
-              'text': data.text
-            });
-          case 'button':
-            return $('<div/>', {'class': 'item-table-button-warp'}).append(
-              $('<button/>', {
-                'class': 'item-table-button epoch-button',
-                'type': 'button',
-                'text': data.text
-              })
-            );
-        }
-      };
-      for ( let i = 0; i < rowLength; i++ ) {
-        const $row = $('<tr/>', {'class': 'item-table-row'}),
-              colLength = table.value.data[i].length;              
-        for ( let j = 0; j < colLength; j++ ) {
-          $row.append(
-            $('<td/>', {'class': 'item-table-col'}).append( content(table.value.data[i][j]) )
-          );
-        }
-        $table.append($row);
-      }
-      return $table;
-    },
-    /* -------------------------------------------------- *\
-       パラメータ入力
-    \* -------------------------------------------------- */
-    'createParameter': function createModalInputParameter( parameter, tabNumber ){
-      const modal = this;
-
-
-
-
-
-const dummyYaml = '# epoch-template => ' + tabNumber + '\n'
-+ 'apiVersion: apps/v1\n'
-+ 'kind: Deployment\n'
-+ 'metadata:\n'
-+ '  name: catalogue\n'
-+ '  labels:\n'
-+ '    name: catalogue\n'
-+ 'spec:\n'
-+ '  replicas: {{ replicas }}\n'
-+ '  selector:\n'
-+ '    matchLabels:\n'
-+ '      name: catalogue\n'
-+ '  template:\n'
-+ '    metadata:\n'
-+ '      labels:\n'
-+ '        name: catalogue\n'
-+ '    spec:\n'
-+ '      containers:\n'
-+ '      - name: catalogue\n'
-+ '        image: {{ image }} : {{ image_tag }}\n'
-+ '        ports:\n'
-+ '        - containerPort: 8000\n'
-+ '      nodeSelector:\n'
-+ '        beta.kubernetes.io/os: linux\n'
-+ '---\n'
-+ 'apiVersion: v1\n'
-+ 'kind: Service\n'
-+ 'metadata:\n'
-+ '  name: catalogue\n'
-+ '  labels:\n'
-+ '    name: catalogue\n'
-+ 'spec:\n'
-+ '  ports:\n'
-+ '    # the port that this service should serve on\n'
-+ '  - port: 80\n'
-+ '    targetPort: 8000\n'
-+ '  selector:\n'
-+ '    name: catalogue\n';
-
-const $parameter = $('<div/>', {'class': 'item-parameter-block'});
-
-
-
-$parameter.append(
-  $('<pre/>', {
-    'class': 'item-parameter-code prettyprint lang-yaml',
-    'html': dummyYaml.replace(/({{\s(.*?)\s}})/g, '<span class="item-parameter" data-value="tab' + tabNumber + '-$2">$1</span>')
-  })
-);
-
-// 入力ブロック作成
-const $inputParameter = $('<div/>',{'class': 'item-parameter-select'}).append(
-  $('<div/>', {'class': 'item-parameter-navi'}).append(
-    $('<div/>', {'class': 'item-parameter-navi-prev'}),
-    $('<div/>', {'class': 'item-parameter-navi-next'})
-  )
-);
-
-const inputEnvironment = function(){
-  const $inputArea = $('<div/>', {'class': 'item-parameter-input-area'}),
-        envLength = 1;
-  for ( let i = 0; i < envLength; i++ ) {
-    $inputArea.append(
-      modal.createInput({'title':'a','value':''})
-    );
-  }
-  return $inputArea;
-};
-
-$parameter.find('.item-parameter').each(function(){
-  const $parameter = $( this );
-  $inputParameter.append(
-    $('<div/>', {
-      'id': $parameter.attr('data-value'),
-      'class': 'item-parameter-area'
-    }).append(
-      $('<div/>', {
-        'text': $parameter.text(),
-        'class': 'item-parameter-name'
-      }),
-      inputEnvironment()
-    )
-  );
-});
-
-$parameter.find('.item-parameter').on('click', function(){
-  const $clickParameter = $( this ),
-        $parameterArea = $clickParameter.closest('.item-parameter-block'),
-        $targetBlock = $('#' + $clickParameter.attr('data-value') );
-  $parameterArea.find('.parameter-open').removeClass('parameter-open');
-  $clickParameter.add( $targetBlock ).addClass('parameter-open');
-});
-
-return $parameter.append( $inputParameter );
-}
-
-
-
-
-
-
+    }
 };

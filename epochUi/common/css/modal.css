@@ -44,8 +44,7 @@ background-color: rgba(0,0,0,.5);
   width: 100%; height: 100%;
   padding: 16px;
   background-color: rgba(0,0,0,.5);
-  }
-
+}
 .modal {
 width: 100%; max-width: 800px;
 height: auto; max-height: 100%;
@@ -78,6 +77,7 @@ position: relative;
 width: 100%; height: 100%;
 background-color: #FFF;
 border: none;
+border-radius: 0 4px 0 0;
 cursor: pointer;
 }
 .modal-close-button:hover {
@@ -204,78 +204,19 @@ color: #FFF;
 
 
 
-.item-radio-block {
-padding: 8px 12px;
-border: 1px solid #DDD;
-border-radius: 4px;
-letter-spacing: -0.4em;
-}
-.item-radio-item {
-display: inline-block;
-position: relative;
-letter-spacing: normal;
-vertical-align: top;
-}
-.item-radio {
-position: absolute;
-left: 0; top: 0;
-z-index: -1;
-visibility: hidden;
-}
-.item-radio-label {
-display: block;
-padding: 8px 16px 8px 32px;
-border: 1px solid transparent;
-border-radius: 2px;
-letter-spacing: 0.05em;
-font-size: 12px;
-color: #666;
-cursor: pointer;
-}
-.item-radio-label:hover {
-border-color: #DDD;
-}
-.item-radio-label::before,
-.item-radio-label::after {
-content: '';
-display: block;
-position: absolute;
-}
-.item-radio-label::before {
-left: 14px; top: 50%;
-transform: translateY(-50%);
-width: 12px; height: 12px;
-border: 2px solid #CCC;
-border-radius: 50%;
-}
-.item-radio:checked ~ .item-radio-label::before {
-border-color: #1783BF;
-border-width: 1px;
-}
-.item-radio:checked ~ .item-radio-label::after {
-left: 16px; top: 50%;
-transform: translateY(-50%);
-width: 8px; height: 8px;
-background-color: #1783BF;
-border-radius: 50%;
-}
 
-.item-text-block,
-.item-password-block,
-.item-reference-block {
+
+.item-block {
 position: relative;
 margin-bottom: 8px; padding: 8px 12px;
+background-color: #FFF;
 border: 1px solid #DDD;
 border-radius: 4px;
 }
-.item-text-block:last-child,
-.item-password-block:last-child,
-.item-reference-block:last-child {
+.item-block:last-child {
 margin-bottom: 0;
 }
-.item-text-title,
-.item-password-title,
-.item-reference-title {
+.item-title {
 overflow: hidden;
 display: block;
 width: 100%;
@@ -294,7 +235,8 @@ text-align: right;
 color: #666;
 }
 .item-text,
-.item-password {
+.item-password,
+.item-textarea {
 width: 100%;
 padding: 8px;
 background-color: #F2F2F2;
@@ -303,13 +245,29 @@ outline: none;
 font-size: 100%;
 color: #333;
 }
+.item-textarea {
+resize: vertical;
+min-height: 120px;
+}
+.item-reference {
+display: block;
+min-height: 32px;
+padding: 0 8px;
+background-color: #FFF;
+border-bottom: 1px solid #DDD;
+line-height: 31px;
+font-size: 100%;
+color: #666;
+}
 .item-text:focus,
-.item-password:focus {
+.item-password:focus,
+.item-textarea:focus {
 background-color: #E5F1FF;
 border-color: #0070FF;
 }
 .item-text::placeholder,
-.item-password::placeholder {
+.item-password::placeholder,
+.item-textarea::placeholder {
 font-size: 80%;
 color: #999;
 }
@@ -321,7 +279,6 @@ display: inline-block;
 width: 32px; height: 32px;
 vertical-align: middle;
 }
-
 .item-file-list {
 display: none;
 }
@@ -332,20 +289,68 @@ background-color: #F2F2F2;
 border: 1px solid #CCC;
 }
 
-.item-table {
-width: 100%;
-border-collapse: collapse;
-border-top: 1px solid #DDD;
+/* Radio */
+.item-radio-list {
+border-radius: 4px;
+letter-spacing: -0.4em;
 }
-.item-table-col {
-border-bottom: 1px solid #DDD;
-color: #333;
+.item-radio-item {
+display: inline-block;
+position: relative;
+letter-spacing: normal;
+vertical-align: top;
 }
-.item-table-col > * {
+.item-radio {
+position: absolute;
+left: 0; top: 0;
+z-index: -1;
+visibility: hidden;
+}
+.item-radio-label {
 display: block;
-padding: 8px 16px;
+margin-right: 4px; padding: 6px 12px 6px 32px;
+background-color: #F2F2F2;
+border: 1px solid transparent;
+border-radius: 2px;
+letter-spacing: 0.05em;
+font-size: 12px;
+color: #666;
+cursor: pointer;
 }
-
+.item-radio-label:hover {
+background-color: transparent;
+border-color: #DDD;
+}
+.item-radio-label::before,
+.item-radio-label::after {
+content: '';
+display: block;
+position: absolute;
+}
+.item-radio-label::before {
+left: 12px; top: 50%;
+transform: translateY(-50%);
+width: 16px; height: 16px;
+background-color: #FFF;
+border: 2px solid #CCC;
+border-radius: 50%;
+}
+.item-radio:checked ~ .item-radio-label {
+cursor: default;
+background-color: transparent;
+border-color: #DDD;
+}
+.item-radio:checked ~ .item-radio-label::before {
+border-color: #1783BF;
+border-width: 1px;
+}
+.item-radio:checked ~ .item-radio-label::after {
+left: 16px; top: 50%;
+transform: translateY(-50%);
+width: 8px; height: 8px;
+background-color: #1783BF;
+border-radius: 50%;
+}
 
 
 
@@ -475,10 +480,68 @@ display: none;
 padding: 0;
 border: none;
 }
-.modal-tab-empty-block {
+.modal-empty-block {
 padding: 16px 24px;
 background-color: #EAF7FC;
 border: 2px solid #94D5F1;
 border-radius: 4px;
 color: #333;
+}
+
+
+
+.modal-loading-inner {
+overflow: hidden;
+display: flex;
+align-items: center;
+justify-content: center;
+position: relative;
+z-index: 1;
+width: 100%; height: 80px;
+}
+.modal-loading-inner::after {
+content: '';
+display: block;
+position: absolute;
+left: 50%; top: 50%;
+z-index: 2;
+transform: translate(-50%,-50%);
+width: calc( 100% - 128px ); height: 16px;
+background-color: #EEE;
+background-image: linear-gradient( -45deg, transparent 25%, rgba( 0,0,0,.1 ) 25%, rgba( 0,0,0,.1 ) 50%, transparent 50%, transparent 75%, rgba( 0,0,0,.1 ) 75% );
+background-size: 32px 32px;
+box-shadow: 0 0 0 2px #CCC;
+border-radius: 8px;
+animation: modalLoadingBar .5s linear infinite;
+}
+@keyframes modalLoadingBar {
+to { background-position: 32px 0; }
+}
+
+
+/* 固定用レイアウト */
+.layout-tab-fixed.modal,
+.layout-tab-fixed .modal-main,
+.layout-tab-fixed .modal-body,
+.layout-tab-fixed .modal-block,
+.layout-tab-fixed .modal-tab-block,
+.layout-tab-fixed .modal-tab-body-block,
+.layout-tab-fixed .modal-item,
+.layout-tab-fixed .item-parameter-block {
+height: 100%;
+}
+.layout-tab-fixed .modal-main {
+overflow: hidden;
+}
+.layout-tab-fixed .modal-block-header {
+height: 30px;
+}
+.layout-tab-fixed .modal-block-main {
+height: calc( 100% - 30px );
+}
+.layout-tab-fixed .modal-tab-menu {
+height: 33px;
+}
+.layout-tab-fixed .modal-tab-body {
+height: calc( 100% - 33px );
 }

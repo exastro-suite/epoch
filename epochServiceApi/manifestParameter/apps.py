@@ -11,23 +11,9 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+from django.apps import AppConfig
 
-from django.urls import path, include
-from . import views
-from . import viewsManifestParameter
-from . import viewsManifestGitEnv
-from . import viewsConductorExec
-from . import viewsInitialize
 
-urlpatterns = [
-    # create ITA pod
-    path('', views.index),
-    # 
-    path('initialize', viewsInitialize.post),
-    # GitEnv
-    path('manifestGitEnv', viewsManifestGitEnv.index),
-    # Parameter
-    path('manifestParameter', viewsManifestParameter.post),
-    # execute conductor
-    path('cdExec', viewsConductorExec.index),
-]
+class ManifestparameterConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'manifestParameter'
