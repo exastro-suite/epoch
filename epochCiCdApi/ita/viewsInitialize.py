@@ -73,9 +73,11 @@ def post(request):
         # json文字列に変換（"utf-8"形式に自動エンコードされる）
         json_data = json.dumps(data)
 
+        print('---- ita file upload ---- HOST:' + host)
         # リクエスト送信
         upload_response = requests.post('http://' + host + '/default/menu/07_rest_api_ver1.php?no=2100000212', headers=header, data=json_data)
         if upload_response.status_code != 200:
+            print(upload_response.text)
             raise Exception(upload_response)
 
         # print(upload_response.text)
@@ -205,6 +207,7 @@ def post(request):
 
     except Exception as e:
         print(e)
+        print("traceback:" + traceback.format_exc())
         response = {
             "result": "500",
             "output": traceback.format_exc(),
