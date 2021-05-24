@@ -21,8 +21,8 @@
 // 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 function modalFunction( modalJSON, valueJSON ){
-    this.modalJSON = modalJSON,
-    this.valueJSON = valueJSON;    
+    this.modalJSON = modalJSON;
+    this.valueJSON = valueJSON;
     /* -------------------------------------------------- *\
        モーダル用div
     \* -------------------------------------------------- */
@@ -94,51 +94,65 @@ modalFunction.prototype = {
     /* -------------------------------------------------- *\
        モーダルを開く
     \* -------------------------------------------------- */
-    'open': function( target, funcs, width ){
+    'open': function( target, funcs, width, type ){
         const modal = this,
-              $modalContainer = $('#modal-container'),
               $modal = modal.createMain( modal.modalJSON[target], width );
-        $('body').addClass('modal-open');
-        $modalContainer.html( $modal ).css('display','flex');
+        if ( type === undefined ) type = 'main';
         
-        // ボタン
-        $modal.find('.modal-menu-button, .modal-close-button').on('click', function(){
-          const type = $( this ).attr('data-button');
-          switch( type ) {
-            case 'cancel':
-              if ( funcs.cancel !== undefined ) {
-                funcs.cancel();
-              } else {
-                modal.close();
-              }
-              break;
-            case 'ok':
-              funcs.ok( $modal );
-              modal.close();
-              break;
-          }
-        });
-        
-        // タブ
-        if ( $modal.find('.modal-tab-block').length ) {
-          $modal.find('.modal-tab-block').each(function(){
-            const $tabBlock = $( this );
-
-            // タブ切り替え、幅調整
-            $tabBlock.on({
-              'click': function(){
-                modal.openTab( $(this) );
-              },
-              'mouseenter': function(){
-                modal.tabSize( $(this) );
-              },
-              'mouseleave': function(){
-                const $item = $( this );
-                if ( !$item.is('.open') ) {
-                  $( this ).css('width', 'auto');
+        if ( type === 'main') {
+          $('body').addClass('modal-open');
+          $('#modal-container').html( $modal ).css('display','flex');
+          
+          // ボタン
+          $modal.find('.modal-menu-button, .modal-close-button').on('click', function(){
+            const type = $( this ).attr('data-button');
+            switch( type ) {
+              case 'cancel':
+                if ( funcs.cancel !== undefined ) {
+                  funcs.cancel();
+                } else {
+                  modal.close();
                 }
-              }
-            }, '.modal-tab-item');
+                break;
+              case 'ok':
+                if ( funcs.ok !== undefined ) {
+                  funcs.ok( $modal );
+                  modal.close();
+                }
+                break;
+            }
+          });
+
+          // タブ
+          if ( $modal.find('.modal-tab-block').length ) {
+            $modal.find('.modal-tab-block').each(function(){
+              const $tabBlock = $( this );
+
+              // タブ切り替え、幅調整
+              $tabBlock.on({
+                'click': function(){
+                  modal.openTab( $(this) );
+                },
+                'mouseenter': function(){
+                  modal.tabSize( $(this) );
+                },
+                'mouseleave': function(){
+                  const $item = $( this );
+                  if ( !$item.is('.open') ) {
+                    $( this ).css('width', 'auto');
+                  }
+                }
+              }, '.modal-tab-item');
+            });
+          }          
+          
+        } else if ( type === 'sub') {
+          $('body').addClass('sub-modal-open');
+          $('#sub-modal-container').html( $modal ).css('display','flex');
+          
+          $modal.find('.modal-menu-button, .modal-close-button').on('click', function(){
+            $('#sub-modal-container').empty().css('display','none');
+            $('body').removeClass('sub-modal-open');
           });
         }
                
@@ -193,7 +207,7 @@ modalFunction.prototype = {
     \* -------------------------------------------------- */
     'createFooter': function createModal( footer ){
       const $footer = $('<ul/>', {'class': 'modal-menu-list'});
-      for ( let key in footer ) {
+      for ( const key in footer ) {
         $footer.append(
           $('<li/>', {'class': 'modal-menu-item'}).append(
             $('<button/>', {
@@ -230,10 +244,11 @@ modalFunction.prototype = {
           const $button = buttonCheck( block[key] );
           $modalBody.append(
             $('<div/>', {'class': 'modal-block'}).append(
+              ( block[key].title !== undefined )?
               $('<div/>', {'class': 'modal-block-header'}).append(
                 $('<div/>', {'class': 'modal-block-title', 'text': block[key].title }),
                 ( $button !== false )? $button: ''
-              ),
+              ): '',
               $('<div/>', {'class': 'modal-block-main'}).append(
                 ( block[key].tab !== undefined )?
                   modal.createTabBody( block[key].tab ):
@@ -252,7 +267,8 @@ modalFunction.prototype = {
               
               const $item = $('<li/>', {
                 'class': 'modal-tab-item',
-                'data-id': tabID
+                'data-id': tabID,
+                'data-default': block[key].tab.defaultTitle
               }).append(
                 $('<div/>', {'class': 'modal-tab-name'}).append(
                   $('<span/>', {'class': 'modal-tab-text', 'text': block[key].tab.defaultTitle }),
@@ -397,7 +413,7 @@ modalFunction.prototype = {
               case 'input': return modal.createInput( data, tabNumber );
               case 'textarea': return modal.createTextarea( data, tabNumber );
               case 'password': return modal.createPassword( data, tabNumber );
-              case 'radio': return modal.createRadio( data );
+              case 'radio': return modal.createRadio( data, tabNumber );
               case 'loading': return modal.createLoadingBlock( data, tabNumber );
               case 'reference': return modal.createReference( data, tabNumber );
             }
@@ -450,6 +466,8 @@ modalFunction.prototype = {
         $tabNameInput.on({
           'input': function(){
             const $input = $( this ),
+                  $tab = $input.closest('.modal-tab-block'),
+                  defaultTitle = $tab.find('.odal-tab-item').attr('data-default-title'),
                   id = $input.closest('.modal-tab-body-block').attr('id'),
                   val = $input.val(),
                   reg = new RegExp( text.regexp );
@@ -457,9 +475,9 @@ modalFunction.prototype = {
             if ( val.match( reg ) ) {
               repositoryName = val.replace( reg, '$1');    
             } else {
-              repositoryName = '';
+              repositoryName = defaultTitle;
             }
-            $('[data-id="' + id + '"]').find('.modal-tab-text').text(repositoryName);
+            $tab.find('[data-id="' + id + '"]').find('.modal-tab-text').text(repositoryName);
           }
         });
       }
@@ -509,8 +527,8 @@ modalFunction.prototype = {
     \* -------------------------------------------------- */
     'createPassword': function( password, tabNumber ){
       const $input = $('<dl/>', {'class': 'item-password-block item-block'}),
-            value = this.searchValue( this.valueJSON, password.name ),
-            name = ( tabNumber !== undefined )? tabNumber + '-' + password.name: password.name;
+            name = ( tabNumber !== undefined )? tabNumber + '-' + password.name: password.name,
+            value = this.searchValue( this.valueJSON, name );
       $input.append(
         $('<dt/>', {'class': 'item-password-title item-title', 'text': password.title }),
         $('<dd/>', {'class': 'item-password-area'}).append(
@@ -532,7 +550,7 @@ modalFunction.prototype = {
     /* -------------------------------------------------- *\
        input RADIO
     \* -------------------------------------------------- */
-    'createRadio': function( radio ){
+    'createRadio': function( radio, tabNumber ){
       const $radio = $('<dl/>', {'class': 'item-radio-block item-block'}).prepend(
               ( radio.title !== undefined )? $('<dt/>', {'class': 'item-radio-title item-title', 'text': radio.title }): '',
               $('<dd/>', {'class': 'item-radio-area'}).append(
@@ -540,26 +558,77 @@ modalFunction.prototype = {
               ),
               ( radio.note !== undefined )? $('<dd/>', {'class': 'item-radio-note'}): ''
             ),
-            checked = radio.name + '-' + this.searchValue( this.valueJSON, radio.name );
-      for ( let key in radio.item ) {
+            checkedValue = this.searchValue( this.valueJSON, radio.name ),
+            name = ( tabNumber !== undefined )? tabNumber + '-' + radio.name: radio.name,
+            checked = ( checkedValue !== undefined )? radio.name + '-' + checkedValue: undefined;
+      for ( const key in radio.item ) {
         $radio.find('.item-radio-list').append(
           $('<li/>', {'class': 'item-radio-item'}).append(
             $('<input>', {
               'class': 'item-radio',
               'type': 'radio',
-              'id': radio.name + '-' + key,
+              'id': name + '-' + key,
               'value': key,
-              'name': radio.name
+              'name': name
             }),
             $('<label/>', {
               'class': 'item-radio-label',
-              'for': radio.name + '-' + key,
+              'for': name + '-' + key,
               'text': radio.item[key]
             })
           )
         );
       }
-      $radio.find('#' + checked ).prop('checked', true );
+      if ( checked !== undefined ) {
+        $radio.find('#' + checked ).prop('checked', true );
+      } else {
+        $radio.find('.item-radio').eq(0).prop('checked', true );
+      }
       return $radio;
+    },
+    /* -------------------------------------------------- *\
+       対象のモーダル内のinputがすべて入力されているか
+    \* -------------------------------------------------- */
+    'inputCheck': function( target ){
+      let emptyNumber = 0;
+      const modal = this,
+            block = this.modalJSON[target].block;
+      
+      const inputF = function( text, tabNumber ){
+        const name = ( tabNumber !== undefined )? tabNumber + '-' + text.name: text.name,
+              value = modal.searchValue( modal.valueJSON, name );
+        if ( value === undefined || value === '' || value === null ) emptyNumber++;      
+      };
+      const tabF = function( tab ){
+        const  type = tab.type;
+        if ( type === 'add' || type === 'reference') {
+        const target = modal.valueJSON[ tab.target.key1 ];
+        if ( Object.keys( target ).length > 0 ) {
+          for ( const key in target ) {
+            itemF( tab.item, key );
+          }
+        }
+      }
+      };
+      const itemF = function( item, tabNumber ){
+        if ( item !== undefined ) {
+          for ( const key in item ) {
+            switch( item[key].type ) {
+              case 'input':
+              case 'password': inputF( item[key], tabNumber ); break;
+            }
+          }
+        }
+      };
+      
+      for ( const key in block ) {
+        if ( block[key].tab !== undefined ) {
+          tabF( block[key].tab );
+        } else {
+          itemF( block[key].item );
+        }
+      }
+      
+      return ( emptyNumber === 0 )? true: false;
     }
 };
