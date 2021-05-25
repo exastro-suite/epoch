@@ -15,6 +15,7 @@
 from django.urls import path, include
 from . import views
 from . import viewsManifestParameter
+from . import viewsManifestTemplates
 from . import viewsManifestGitEnv
 from . import viewsConductorExec
 from . import viewsInitialize
@@ -28,6 +29,8 @@ urlpatterns = [
     path('manifestGitEnv', viewsManifestGitEnv.index),
     # Parameter
     path('manifestParameter', viewsManifestParameter.post),
+    # Template
+    path('manifestTemplates', viewsManifestTemplates.post),
     # execute conductor
     path('cdExec', viewsConductorExec.index),
 ]
