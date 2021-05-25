@@ -277,8 +277,8 @@ def manifest_file_registration(workspace_id):
 #     except Exception as e:
 #         return common.serverError(e)
 
-@app.route('/workspace/<int:workspace_id>/manifests/<int:file_id>', methods=['DELETE'])
-def manifest_file_delete(workspace_id, file_id):
+@app.route('/workspace/<int:workspace_id>/manifests/<int:manifest_id>', methods=['DELETE'])
+def manifest_file_delete(workspace_id, manifest_id):
     """マニフェストテンプレートファイル削除
 
     Args:
@@ -288,31 +288,19 @@ def manifest_file_delete(workspace_id, file_id):
     Returns:
         response: HTTP Respose
     """
-    globals.logger.debug("CALL manifest_file_delete:{}".format(workspace_id))
+    globals.logger.debug("CALL manifest_file_delete:workspace_id:{}, manifest_id:{}".format(workspace_id, manifest_id))
 
     try:
-        # # Requestからspecification項目を生成する
-        # specification = convert_workspace_specification(request.json)
-      
-        # with dbconnector() as db, dbcursor(db) as cursor:
-        #     # workspace情報 update実行
-        #     upd_cnt = da_workspace.update_workspace(cursor, specification, workspace_id)
+        with dbconnector() as db, dbcursor(db) as cursor:
+            # manifests情報 delete実行
+            upd_cnt = da_manifest.delete_manifest(cursor, workspace_id, manifest_id)
+    
+            globals.logger.debug("delete_manifest:ret:{}".format(upd_cnt))
 
-        #     if upd_cnt == 0:
-        #         # データがないときは404応答
-        #         db.rollback()
-        #         return jsonify({"result": "404" }), 404
-
-        #     # workspace履歴追加
-        #     da_workspace.insert_history(cursor, workspace_id)
-
-        #     # workspace情報の再取得
-        #     fetch_rows = da_workspace.select_workspace_id(cursor, workspace_id)
-
-        # # Response用のjsonに変換
-        # response_rows = fetch_rows
-
-        # return jsonify({"result": "200", "rows": response_rows })
+            if upd_cnt == 0:
+                # データがないときは404応答
+                db.rollback()
+                return jsonify({"result": "404" }), 404
 
         return jsonify({"result": "200"})
 

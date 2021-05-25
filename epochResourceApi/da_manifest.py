@@ -47,6 +47,7 @@ def update_manifest(cursor, workspace_id, spec):
 
     Args:
         cursor (mysql.connector.cursor): カーソル
+        workspace_id (int): ワークスペースID
         spec (Dict)): manifest情報のJson形式
 
     Returns:
@@ -54,7 +55,7 @@ def update_manifest(cursor, workspace_id, spec):
         
     """
     # manifest情報 update実行
-    upd_cnt = cursor.execute('UPDATE manifest' \
+    cursor.execute('UPDATE manifest' \
                              ' SET file_name = %(file_name)s' \
                                ' , file_text = %(file_text)s' \
                                ' WHERE workspace_id = %(workspace_id)s',
@@ -67,7 +68,31 @@ def update_manifest(cursor, workspace_id, spec):
         }
     )
     # 更新した件数をreturn
-    return upd_cnt
+    return cursor.rowcount
+
+def delete_manifest(cursor, workspace_id, manifest_id):
+    """manifest情報削除
+
+    Args:
+        cursor (mysql.connector.cursor): カーソル
+        workspace_id (Int)): ワークスペースID
+        manifest_id (Int)): manifest ID
+
+    Returns:
+        int: 削除件数
+        
+    """
+    # manifest情報 delete実行
+    cursor.execute('DELETE FROM manifest' \
+                               ' WHERE workspace_id = %(workspace_id)s'\
+                                 ' AND id = %(manifest_id)s',
+        {
+            'workspace_id' : workspace_id,
+            'manifest_id' : manifest_id
+        }
+    )
+    # 削除した件数をreturn
+    return cursor.rowcount
 
 def select_manifest_id(cursor, workspace_id, manifest_id):
     """manifest情報取得(id指定)
