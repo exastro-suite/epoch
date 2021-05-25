@@ -225,18 +225,18 @@
         <ul class="workspace-tab-list">
           <li class="workspace-tab-item"><a href="#" class="workspace-tab-link">一覧に戻る</a></li>
           <li class="workspace-tab-item"><a href="#setting" class="workspace-tab-link current">ワークスペース設定</a></li>
-          <li class="workspace-tab-item"><a href="#running" class="workspace-tab-link">ワークスペース</a></li>
+          <li class="workspace-tab-item"><a href="#running" class="workspace-tab-link">CI/CD実行</a></li>
 
           <li class="workspace-tab-item"><a href="#" id="load-workspace-button" style="color:blue">【テスト用】登録済ワークスペース読込</a></li>
         </ul>
         <ul class="workspace-status-list">
+          <li class="workspace-status-item workspace-mode-running" data-button="kubernetesManifestTemplate">
+            <div class="workspace-status-item-name">Kubernetes Manifest<br>テンプレート</div>
+            <div class="workspace-status-item-number template"></div>
+          </li>
           <li class="workspace-status-item" data-button="gitService">
             <div class="workspace-status-item-name">アプリケーション<br>コード</div>
             <div class="workspace-status-item-number application"></div>
-          </li>
-          <li class="workspace-status-item" data-button="kubernetesManifestTemplate">
-            <div class="workspace-status-item-name">Kubernetes Manifest<br>テンプレート</div>
-            <div class="workspace-status-item-number template"></div>
           </li>
           <li class="workspace-status-item" data-button="pipelineArgo">
             <div class="workspace-status-item-name">環境</div>
@@ -436,14 +436,8 @@
             <!-- EPOCH -->
             <div class="workspace-epoch-setting" id="ws-epoch-setting">
               <div class="workspace-epoch-info">
-                <div class="workspace-block-icon">
-                  <svg viewBox="0 0 64 64" class="workspace-block-icon-svg">
-                    <use xlink:href="#icon-ita-mark" />
-                  </svg>
-                </div>
-                <div class="workspace-block-label">
-                  <div class="workspace-block-type">Exastro</div>
-                  <div class="workspace-block-name">EPOCH</div>
+                <div class="workspace-block-logo">
+                  <img class="workspace-block-logo-image" src="./common/img/ws_epoch_logo.svg" alt="Exastro EPOCH">
                 </div>
               </div>
             </div>
@@ -458,7 +452,7 @@
                     </svg>
                   </div>
                   <div class="workspace-block-label">
-                    <div class="workspace-block-type">Gitサービス</div>
+                    <div class="workspace-block-type">TEKTON Gitサービス</div>
                     <div class="workspace-block-name"><span class="workspace-block-name-inner adjust-text"></span></div>
                   </div>
                   <div class="workspace-block-setting workspace-mode-setting">
@@ -583,44 +577,54 @@
                 </div>
               </div>
             </div>
-              
-            <!-- Gitサービス -->
-            <div class="workspace-block-wrap" id="ws-git-epoch">
-              <div class="workspace-block">
-                <div class="workspace-block-main">
-                  <div class="workspace-block-info">
-                    <div class="workspace-block-icon">
-                      <svg viewBox="0 0 64 64" class="workspace-block-icon-svg">
-                        <use xlink:href="#icon-git"></use>
+            
+            <!-- Gitサービス Argo CD -->
+            <div class="workspace-block" id="ws-git-argo" data-service="">
+              <div class="workspace-block-main">
+                <div class="workspace-block-info">
+                  <div class="workspace-block-icon">
+                    <svg viewBox="0 0 64 64" class="workspace-block-icon-svg">
+                      <use xlink:href="#icon-git" />
+                    </svg>
+                  </div>
+                  <div class="workspace-block-label">
+                    <div class="workspace-block-type">Argo CD Gitサービス</div>
+                    <div class="workspace-block-name"><span class="workspace-block-name-inner adjust-text"></span></div>
+                  </div>
+                  <div class="workspace-block-setting workspace-mode-setting">
+                    <button class="modal-open workspace-button epoch-popup" data-button="gitServiceArgo" data-status="unentered" title="">
+                      <svg viewBox="0 0 64 64" class="workspace-button-svg">
+                        <use xlink:href="#icon-gear" />
+                      </svg>
+                    </button>
+                  </div>
+                  <div class="workspace-block-setting workspace-mode-running">
+                    <button class="modal-open workspace-button" data-button="gitServiceArgoCheck">
+                      <svg viewBox="0 0 64 64" class="workspace-button-svg">
+                        <use xlink:href="#icon-status" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="workspace-block-sub">
+                <div class="workspace-document-wrap environment" id="ws-kubernetes-manifest">
+                  <div class="multiple-name"><span class="multiple-arrow"></span>環境毎</div>
+                  <div class="multiple-number"></div>
+                  <div class="multiple-block"></div>
+                  <div class="workspace-document" >
+                    <div class="workspace-document-icon">
+                      <svg viewBox="0 0 64 64" class="workspace-document-icon-svg">
+                        <use xlink:href="#icon-document" />
                       </svg>
                     </div>
-                    <div class="workspace-block-sub">
-                      <div class="workspace-document" id="ws-kubernetes-manifest">
-                        <div class="workspace-document-icon">
-                          <svg viewBox="0 0 64 64" class="workspace-document-icon-svg">
-                            <use xlink:href="#icon-document"></use>
-                          </svg>
-                        </div>
-                        <div class="workspace-document-label">
-                          <div class="workspace-document-name">Kubernetes<br>Manifest</div>
-                        </div>
-                        <div class="workspace-block-setting workspace-mode-running">
-                          <button class="modal-open workspace-button" data-button="kubernetesManifestCheck">
-                            <svg viewBox="0 0 64 64" class="workspace-button-svg">
-                              <use xlink:href="#icon-status" />
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
+                    <div class="workspace-document-label">
+                      <div class="workspace-document-name">Kubernetes Manifest</div>
                     </div>
                   </div>
                 </div>
               </div>
-              <div class="multiple-name"><span class="multiple-arrow"></span>環境毎</div>
-              <div class="multiple-number"></div>
-              <div class="multiple-block"></div>
-            </div>
-                
+            </div>              
 
             <!-- Exastro IT Automatin -->
             <div class="workspace-block" id="ws-ita">
@@ -651,7 +655,7 @@
                         <span class="workspace-document-name-inner adjust-text">Kubernetes Manifest<br>テンプレート</span>
                       </div>
                     </div>
-                    <div class="workspace-document-setting workspace-mode-setting">
+                    <div class="workspace-document-setting workspace-mode-running">
                       <button class="modal-open workspace-document-button" data-button="kubernetesManifestTemplate" data-status="unentered">
                         <svg viewBox="0 0 64 64" class="workspace-document-button-svg">
                           <use xlink:href="#icon-upload" />
@@ -662,7 +666,7 @@
                   <div class="multiple-number"></div>
                   <div class="multiple-block"></div>
                 </div>
-                <div class="workspace-document-wrap" id="ws-ita-parameter">
+                <div class="workspace-document-wrap environment" id="ws-ita-parameter">
                   <div class="workspace-document">
                     <div class="workspace-document-icon">
                       <svg viewBox="0 0 64 64" class="workspace-document-icon-svg">
@@ -672,7 +676,7 @@
                     <div class="workspace-document-label">
                       <div class="workspace-document-name">Manifest<br>パラメータ</div>
                     </div>
-                    <div class="workspace-document-setting workspace-mode-setting">
+                    <div class="workspace-document-setting workspace-mode-running">
                       <button class="modal-open workspace-document-button" data-button="manifestParametar" data-status="unentered">
                         <svg viewBox="0 0 64 64" class="workspace-button-svg">
                           <use xlink:href="#icon-gear" />
@@ -704,7 +708,7 @@
 
 
             <!-- システム -->
-            <div class="workspace-point" id="ws-system">
+            <div class="workspace-point environment" id="ws-system">
               <div class="workspace-point-inner">
                 <svg viewBox="0 0 64 64" class="workspace-point-svg">
                   <use xlink:href="#icon-system" />

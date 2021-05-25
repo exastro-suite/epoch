@@ -146,12 +146,27 @@ epochCommon.prototype = {
       ['<', 'lt'],
       ['>', 'gt'],
     ];
-    if ( text !== undefined ) {
+    if ( text !== undefined && text !== null && typeof text === 'string') {
       for ( var i = 0; i < entities.length; i++ ) {
         text = text.replace( new RegExp( entities[i][0], 'g'), '&' + entities[i][1] + ';' );
       }
     }
     return text;
+  },
+  // 日時フォーマット
+  'formatDate': function( date, format ) {
+    format = format.replace(/yyyy/g, date.getFullYear());
+    format = format.replace(/MM/g, ('0' + (date.getMonth() + 1)).slice(-2));
+    format = format.replace(/dd/g, ('0' + date.getDate()).slice(-2));
+    format = format.replace(/HH/g, ('0' + date.getHours()).slice(-2));
+    format = format.replace(/mm/g, ('0' + date.getMinutes()).slice(-2));
+    format = format.replace(/ss/g, ('0' + date.getSeconds()).slice(-2));
+    format = format.replace(/SSS/g, ('00' + date.getMilliseconds()).slice(-3));
+    return format;
+  },
+  // isset
+  'isset': function( data ) {
+    return ( data === undefined || data === null || data === '')? false: true;
   }
 };
 
