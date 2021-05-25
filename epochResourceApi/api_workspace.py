@@ -235,7 +235,7 @@ def manifest_file_registration(workspace_id):
 
         # return jsonify({"result": "200", "rows": response_rows })
 
-        return jsonify({"result": "200")
+        return jsonify({"result": "200"})
 
     except Exception as e:
         return common.serverError(e)
@@ -277,7 +277,7 @@ def manifest_file_update(workspace_id):
 
         # return jsonify({"result": "200", "rows": response_rows })
 
-        return jsonify({"result": "200")
+        return jsonify({"result": "200"})
 
     except Exception as e:
         return common.serverError(e)
@@ -319,7 +319,7 @@ def manifest_file_delete(workspace_id):
 
         # return jsonify({"result": "200", "rows": response_rows })
 
-        return jsonify({"result": "200")
+        return jsonify({"result": "200"})
 
     except Exception as e:
         return common.serverError(e)
@@ -360,7 +360,7 @@ def manifest_file_get(workspace_id):
 
         # return jsonify({"result": "200", "rows": response_rows })
 
-        return jsonify({"result": "200")
+        return jsonify({"result": "200"})
 
     except Exception as e:
         return common.serverError(e)
@@ -402,7 +402,7 @@ def manifest_file_get(workspace_id):
 
         # return jsonify({"result": "200", "rows": response_rows })
 
-        return jsonify({"result": "200")
+        return jsonify({"result": "200"})
 
     except Exception as e:
         return common.serverError(e)
