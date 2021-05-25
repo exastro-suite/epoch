@@ -12,17 +12,12 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import cgi # CGIモジュールのインポート
-import cgitb
-import sys
 import requests
 import json
-import subprocess
 import traceback
 import os
 import datetime, pytz
 import base64
-import io
 
 from django.shortcuts import render
 from django.http import HttpResponse
@@ -39,35 +34,6 @@ ita_pass = os.environ['EPOCH_ITA_PASSWORD']
 # メニューID
 ite_menu_operation = '2100000304'
 ita_menu_manifest_template = '2100040704'
-
-# 共通項目
-column_indexes_common = {
-    "method": 0,    # 実行処理種別
-    "delete": 1,    # 廃止
-    "record_no": 2, # No
-}
-column_names_opelist = {
-    'operation_id': 'オペレーションID',
-    'operation_name': 'オペレーション名',
-    'operation_date': '実施予定日時',
-    'remarks': '備考',
-}
-# 項目名リスト
-column_names_manifest_param = {
-    'host' : 'ホスト名',
-    'operation_id' : 'オペレーション/ID',
-    'operation' : 'オペレーション/オペレーション',
-    'indexes' : '代入順序',
-    'replicas' : 'パラメータ/replicas',
-    'image' : 'パラメータ/image',
-    'image_tag' : 'パラメータ/image_tag',
-    'template_name' : 'パラメータ/template_name',
-    'lastupdate' : '更新用の最終更新日時',
-}
-
-param_value_host= os.environ['EPOCH_ITA_WORKER_HOST']
-param_value_method_entry='登録'
-param_value_method_update='更新'
 
 ita_restapi_endpoint='http://' + ita_host + ':' + ita_port + '/default/menu/07_rest_api_ver1.php'
 
@@ -180,91 +146,3 @@ def post(request):
     }
 
     return JsonResponse(response, status=200)
-
-#
-# 項目位置の取得
-#
-def column_indexes(column_names, row_header):
-    column_indexes = {}
-    for idx in column_names:
-        column_indexes[idx] = row_header.index(column_names[idx])
-    return column_indexes
-
-#
-# オペレーションの検索
-#
-def search_opration(opelist, column_indexes, git_url):
-    for idx, row in enumerate(opelist):
-        if idx == 0:
-            # 1行目はヘッダなので読み飛ばし
-            continue
-
-        if row[column_indexes_common["delete"]] != "":
-            # 削除は無視
-            continue
-
-        if row[column_indexes['remarks']] is None:
-            # 備考設定なしは無視
-            continue
-
-        print('git_url:' + git_url)
-        print('row[column_indexes[remarks]]:' + row[column_indexes['remarks']])
-        if git_url == row[column_indexes['remarks']]:
-            # 備考にgit_urlが含まれているとき
-            print('find: (idx) ' + str(idx))
-            return idx
-
-    # 存在しないとき
-    print('not found: -1')
-    return -1
-
-#
-# GitUrlの検索
-#
-def search_git_url(opelist, column_indexes, operation_id):
-    for idx, row in enumerate(opelist):
-        if idx == 0:
-            # 1行目はヘッダなので読み飛ばし
-            continue
-
-        if row[column_indexes_common["delete"]] != "":
-            # 削除は無視
-            continue
-
-        # print('operation_id:')
-        # print(operation_id)
-        # print('row[column_indexes[remarks]]:')
-        # print(row[column_indexes['remarks']])
-        if operation_id == row[column_indexes['operation_id']]:
-            # 備考にgit_urlが含まれているとき
-            print('find:' + str(idx))
-            return row[column_indexes['remarks']]
-
-    # 存在しないとき
-    return -1
-
-#
-# オペレーション選択文字列の生成
-#
-def format_opration_info(operow, column_indexes):
-    return operow[column_indexes['operation_date']] + '_' + operow[column_indexes['operation_id']] + ':' + operow[column_indexes['operation_name']]
-
-#
-# git情報の検索
-#
-def search_manitpl(manitpl, column_indexes, git_url):
-    for idx, row in enumerate(manitpl):
-        if idx == 0:
-            # 1行目はヘッダなので読み飛ばし
-            continue
-
-        if row[column_indexes_common["delete"]] != "":
-            # 削除は無視
-            continue
-
-        if git_url == row[column_indexes['git_url']]:
-            # git_urlが存在したとき
-            return idx
-
-    # 存在しないとき
-    return -1
