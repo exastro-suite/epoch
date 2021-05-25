@@ -22,6 +22,7 @@ import common
 from dbconnector import dbconnector
 from dbconnector import dbcursor
 import da_workspace
+import da_manifest
 
 # 設定ファイル読み込み・globals初期化
 app = Flask(__name__)
@@ -212,36 +213,28 @@ def manifest_file_registration(workspace_id):
     globals.logger.debug("CALL manifest_file_registration:{}".format(workspace_id))
 
     try:
-        # # Requestからspecification項目を生成する
-        # specification = convert_workspace_specification(request.json)
+        # 登録内容は基本的に、引数のJsonの値を使用する(追加項目があればここで記載)
+        specification = request.json
       
-        # with dbconnector() as db, dbcursor(db) as cursor:
-        #     # workspace情報 update実行
-        #     upd_cnt = da_workspace.update_workspace(cursor, specification, workspace_id)
+        with dbconnector() as db, dbcursor(db) as cursor:
+            # manifest情報 insert実行
+            manifest_id = da_manifest.insert_manifest(cursor, specification, workspace_id)
 
-        #     if upd_cnt == 0:
-        #         # データがないときは404応答
-        #         db.rollback()
-        #         return jsonify({"result": "404" }), 404
+            globals.logger.debug('insert manifest_id:{}'.format(str(manifest_id)))
 
-        #     # workspace履歴追加
-        #     da_workspace.insert_history(cursor, workspace_id)
+            # workspace情報の再取得
+            fetch_rows = da_manifest.select_manifest_id(cursor, workspace_id, manifest_id)
 
-        #     # workspace情報の再取得
-        #     fetch_rows = da_workspace.select_workspace_id(cursor, workspace_id)
+        # Response用のjsonに変換
+        response_rows = fetch_rows
 
-        # # Response用のjsonに変換
-        # response_rows = fetch_rows
-
-        # return jsonify({"result": "200", "rows": response_rows })
-
-        return jsonify({"result": "200")
+        return jsonify({"result": "200", "rows": response_rows })
 
     except Exception as e:
         return common.serverError(e)
 
 @app.route('/workspace/<int:workspace_id>/manifests/<int:file_id>', methods=['PUT'])
-def manifest_file_update(workspace_id):
+def manifest_file_update(workspace_id, file_id):
     """マニフェストテンプレートファイル更新
 
     Args:
@@ -277,13 +270,13 @@ def manifest_file_update(workspace_id):
 
         # return jsonify({"result": "200", "rows": response_rows })
 
-        return jsonify({"result": "200")
+        return jsonify({"result": "200"})
 
     except Exception as e:
         return common.serverError(e)
 
 @app.route('/workspace/<int:workspace_id>/manifests/<int:file_id>', methods=['DELETE'])
-def manifest_file_delete(workspace_id):
+def manifest_file_delete(workspace_id, file_id):
     """マニフェストテンプレートファイル削除
 
     Args:
@@ -319,13 +312,13 @@ def manifest_file_delete(workspace_id):
 
         # return jsonify({"result": "200", "rows": response_rows })
 
-        return jsonify({"result": "200")
+        return jsonify({"result": "200"})
 
     except Exception as e:
         return common.serverError(e)
 
 @app.route('/workspace/<int:workspace_id>/manifests', methods=['GET'])
-def manifest_file_get(workspace_id):
+def manifest_file_get_list(workspace_id):
     """マニフェストテンプレートファイル取得(全件)
 
     Args:
@@ -360,13 +353,13 @@ def manifest_file_get(workspace_id):
 
         # return jsonify({"result": "200", "rows": response_rows })
 
-        return jsonify({"result": "200")
+        return jsonify({"result": "200"})
 
     except Exception as e:
         return common.serverError(e)
 
 @app.route('/workspace/<int:workspace_id>/manifests/<int:file_id>', methods=['GET'])
-def manifest_file_get(workspace_id):
+def manifest_file_get(workspace_id, file_id):
     """マニフェストテンプレートファイル取得
 
     Args:
@@ -402,7 +395,7 @@ def manifest_file_get(workspace_id):
 
         # return jsonify({"result": "200", "rows": response_rows })
 
-        return jsonify({"result": "200")
+        return jsonify({"result": "200"})
 
     except Exception as e:
         return common.serverError(e)
