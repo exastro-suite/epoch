@@ -99,6 +99,6 @@ def select_manifest(cursor, workspace_id):
         dict: select結果
     """
     # select実行
-    cursor.execute('SELECT * FROM workspace ORDER BY workspace_id')
+    cursor.execute('SELECT * FROM manifest WHERE workspace_id = %(workspace_id)s ORDER BY manifest_id')
     rows = cursor.fetchall()
     return rows
