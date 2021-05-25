@@ -27,19 +27,26 @@ from django.http.response import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
-@require_http_methods(['POST'])
+@require_http_methods(['POST', 'GET'])
 @csrf_exempt    
-def regist(request):
+def file_id_not_assign(request, workspace_id):
+    
+    response = {
+            "result":"200",
+            "workspace_id" :workspace_id,
+    }
+
+    return JsonResponse(response, status=200)
 
 
-@require_http_methods(['GET'])
+@require_http_methods(['GET', 'DELETE'])
 @csrf_exempt    
-def get(request):
+def file_id_assign(request, workspace_id, file_id):
 
+    response = {
+            "result":"200",
+            "workspace_id": workspace_id, 
+            "file_id" :file_id,
+    }
 
-@require_http_methods(['DELETE'])
-@csrf_exempt    
-def delete(request):
-
-
-
+    return JsonResponse(response, status=200)
