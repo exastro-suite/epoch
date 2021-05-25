@@ -30,7 +30,23 @@ from django.views.decorators.http import require_http_methods
 @require_http_methods(['POST', 'GET'])
 @csrf_exempt    
 def file_id_not_assign(request, workspace_id):
-    
+
+    if request.method == 'POST':
+        return post(request, workspace_id)
+    else:
+        return index(request, workspace_id)
+
+
+def post(request, workspace_id):
+    response = {
+            "result":"200",
+            "workspace_id" :workspace_id,
+    }
+
+    return JsonResponse(response, status=200)
+
+
+def index(request, workspace_id):
     response = {
             "result":"200",
             "workspace_id" :workspace_id,
@@ -42,6 +58,25 @@ def file_id_not_assign(request, workspace_id):
 @require_http_methods(['GET', 'DELETE'])
 @csrf_exempt    
 def file_id_assign(request, workspace_id, file_id):
+
+    if request.method == 'GET':
+        return get(request, workspace_id, file_id)
+    else:
+        return delete(request, workspace_id, file_id)
+
+
+def get(request, workspace_id, file_id):
+
+    response = {
+            "result":"200",
+            "workspace_id": workspace_id, 
+            "file_id" :file_id,
+    }
+
+    return JsonResponse(response, status=200)
+
+
+def delete(request, workspace_id, file_id):
 
     response = {
             "result":"200",
