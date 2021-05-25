@@ -332,30 +332,15 @@ def manifest_file_get_list(workspace_id):
     globals.logger.debug("CALL manifest_file_get:{}".format(workspace_id))
 
     try:
-        # # Requestからspecification項目を生成する
-        # specification = convert_workspace_specification(request.json)
-      
-        # with dbconnector() as db, dbcursor(db) as cursor:
-        #     # workspace情報 update実行
-        #     upd_cnt = da_workspace.update_workspace(cursor, specification, workspace_id)
+        with dbconnector() as db, dbcursor(db) as cursor:
 
-        #     if upd_cnt == 0:
-        #         # データがないときは404応答
-        #         db.rollback()
-        #         return jsonify({"result": "404" }), 404
+            # manifest情報の取得
+            fetch_rows = da_manifest.select_manifest(cursor, workspace_id)
 
-        #     # workspace履歴追加
-        #     da_workspace.insert_history(cursor, workspace_id)
+        # Response用のjsonに変換
+        response_rows = fetch_rows
 
-        #     # workspace情報の再取得
-        #     fetch_rows = da_workspace.select_workspace_id(cursor, workspace_id)
-
-        # # Response用のjsonに変換
-        # response_rows = fetch_rows
-
-        # return jsonify({"result": "200", "rows": response_rows })
-
-        return jsonify({"result": "200"})
+        return jsonify({"result": "200", "rows": response_rows })
 
     except Exception as e:
         return common.serverError(e)
@@ -371,33 +356,18 @@ def manifest_file_get(workspace_id, file_id):
     Returns:
         response: HTTP Respose
     """
-    globals.logger.debug("CALL manifest_file_get:{}".format(workspace_id))
+    globals.logger.debug("CALL manifest_file_get: [ workspace_id: {}, manifest_id: {} ]".format(workspace_id, file_id))
 
     try:
-        # # Requestからspecification項目を生成する
-        # specification = convert_workspace_specification(request.json)
-      
-        # with dbconnector() as db, dbcursor(db) as cursor:
-        #     # workspace情報 update実行
-        #     upd_cnt = da_workspace.update_workspace(cursor, specification, workspace_id)
+        with dbconnector() as db, dbcursor(db) as cursor:
 
-        #     if upd_cnt == 0:
-        #         # データがないときは404応答
-        #         db.rollback()
-        #         return jsonify({"result": "404" }), 404
+            # manifest情報の取得
+            fetch_rows = da_workspace.select_workspace_id(cursor, workspace_id, file_id)
 
-        #     # workspace履歴追加
-        #     da_workspace.insert_history(cursor, workspace_id)
+        # Response用のjsonに変換
+        response_rows = fetch_rows
 
-        #     # workspace情報の再取得
-        #     fetch_rows = da_workspace.select_workspace_id(cursor, workspace_id)
-
-        # # Response用のjsonに変換
-        # response_rows = fetch_rows
-
-        # return jsonify({"result": "200", "rows": response_rows })
-
-        return jsonify({"result": "200"})
+        return jsonify({"result": "200", "rows": response_rows })
 
     except Exception as e:
         return common.serverError(e)

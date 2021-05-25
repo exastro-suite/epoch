@@ -15,5 +15,6 @@ from django.urls import path, include
 from . import views
 
 urlpatterns = [
-    path('', views.index),
+    path('', views.file_id_not_assign),
+    path('/<int:file_id>', views.file_id_assign),
 ]
