@@ -362,7 +362,12 @@ def manifest_file_get(workspace_id, file_id):
         with dbconnector() as db, dbcursor(db) as cursor:
 
             # manifest情報の取得
-            fetch_rows = da_workspace.select_workspace_id(cursor, workspace_id, file_id)
+            fetch_rows = da_manifest.select_manifest_id(cursor, workspace_id, file_id)
+
+            if len(fetch_rows) == 0:
+                # データがないときは404応答
+                db.rollback()
+                return jsonify({"result": "404" }), 404
 
         # Response用のjsonに変換
         response_rows = fetch_rows
