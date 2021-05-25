@@ -82,7 +82,7 @@ def select_manifest_id(cursor, workspace_id, manifest_id):
     # select実行
     cursor.execute('SELECT * FROM manifest WHERE workspace_id = %(workspace_id)s and manifest_id = %(manifest_id)s ORDER BY manifest_id',
         {
-            'workspace_id' : workspace_id
+            'workspace_id' : workspace_id,
             'manifest_id' : manifest_id
         }
     )
