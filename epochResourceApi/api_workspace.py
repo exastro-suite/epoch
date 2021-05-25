@@ -199,6 +199,214 @@ def convert_workspace_specification(json):
     
     return result
 
+@app.route('/workspace/<int:workspace_id>/manifests', methods=['POST'])
+def manifest_file_registration(workspace_id):
+    """マニフェストテンプレートファイル登録
+
+    Args:
+        workspace_id (int): ワークスペースID
+
+    Returns:
+        response: HTTP Respose
+    """
+    globals.logger.debug("CALL manifest_file_registration:{}".format(workspace_id))
+
+    try:
+        # # Requestからspecification項目を生成する
+        # specification = convert_workspace_specification(request.json)
+      
+        # with dbconnector() as db, dbcursor(db) as cursor:
+        #     # workspace情報 update実行
+        #     upd_cnt = da_workspace.update_workspace(cursor, specification, workspace_id)
+
+        #     if upd_cnt == 0:
+        #         # データがないときは404応答
+        #         db.rollback()
+        #         return jsonify({"result": "404" }), 404
+
+        #     # workspace履歴追加
+        #     da_workspace.insert_history(cursor, workspace_id)
+
+        #     # workspace情報の再取得
+        #     fetch_rows = da_workspace.select_workspace_id(cursor, workspace_id)
+
+        # # Response用のjsonに変換
+        # response_rows = fetch_rows
+
+        # return jsonify({"result": "200", "rows": response_rows })
+
+        return jsonify({"result": "200")
+
+    except Exception as e:
+        return common.serverError(e)
+
+@app.route('/workspace/<int:workspace_id>/manifests/<int:file_id>', methods=['PUT'])
+def manifest_file_update(workspace_id):
+    """マニフェストテンプレートファイル更新
+
+    Args:
+        workspace_id (int): ワークスペースID
+        file_id (int): ファイルID
+
+    Returns:
+        response: HTTP Respose
+    """
+    globals.logger.debug("CALL manifest_file_update:{}".format(workspace_id))
+
+    try:
+        # # Requestからspecification項目を生成する
+        # specification = convert_workspace_specification(request.json)
+      
+        # with dbconnector() as db, dbcursor(db) as cursor:
+        #     # workspace情報 update実行
+        #     upd_cnt = da_workspace.update_workspace(cursor, specification, workspace_id)
+
+        #     if upd_cnt == 0:
+        #         # データがないときは404応答
+        #         db.rollback()
+        #         return jsonify({"result": "404" }), 404
+
+        #     # workspace履歴追加
+        #     da_workspace.insert_history(cursor, workspace_id)
+
+        #     # workspace情報の再取得
+        #     fetch_rows = da_workspace.select_workspace_id(cursor, workspace_id)
+
+        # # Response用のjsonに変換
+        # response_rows = fetch_rows
+
+        # return jsonify({"result": "200", "rows": response_rows })
+
+        return jsonify({"result": "200")
+
+    except Exception as e:
+        return common.serverError(e)
+
+@app.route('/workspace/<int:workspace_id>/manifests/<int:file_id>', methods=['DELETE'])
+def manifest_file_delete(workspace_id):
+    """マニフェストテンプレートファイル削除
+
+    Args:
+        workspace_id (int): ワークスペースID
+        file_id (int): ファイルID
+
+    Returns:
+        response: HTTP Respose
+    """
+    globals.logger.debug("CALL manifest_file_delete:{}".format(workspace_id))
+
+    try:
+        # # Requestからspecification項目を生成する
+        # specification = convert_workspace_specification(request.json)
+      
+        # with dbconnector() as db, dbcursor(db) as cursor:
+        #     # workspace情報 update実行
+        #     upd_cnt = da_workspace.update_workspace(cursor, specification, workspace_id)
+
+        #     if upd_cnt == 0:
+        #         # データがないときは404応答
+        #         db.rollback()
+        #         return jsonify({"result": "404" }), 404
+
+        #     # workspace履歴追加
+        #     da_workspace.insert_history(cursor, workspace_id)
+
+        #     # workspace情報の再取得
+        #     fetch_rows = da_workspace.select_workspace_id(cursor, workspace_id)
+
+        # # Response用のjsonに変換
+        # response_rows = fetch_rows
+
+        # return jsonify({"result": "200", "rows": response_rows })
+
+        return jsonify({"result": "200")
+
+    except Exception as e:
+        return common.serverError(e)
+
+@app.route('/workspace/<int:workspace_id>/manifests', methods=['GET'])
+def manifest_file_get(workspace_id):
+    """マニフェストテンプレートファイル取得(全件)
+
+    Args:
+        workspace_id (int): ワークスペースID
+
+    Returns:
+        response: HTTP Respose
+    """
+    globals.logger.debug("CALL manifest_file_get:{}".format(workspace_id))
+
+    try:
+        # # Requestからspecification項目を生成する
+        # specification = convert_workspace_specification(request.json)
+      
+        # with dbconnector() as db, dbcursor(db) as cursor:
+        #     # workspace情報 update実行
+        #     upd_cnt = da_workspace.update_workspace(cursor, specification, workspace_id)
+
+        #     if upd_cnt == 0:
+        #         # データがないときは404応答
+        #         db.rollback()
+        #         return jsonify({"result": "404" }), 404
+
+        #     # workspace履歴追加
+        #     da_workspace.insert_history(cursor, workspace_id)
+
+        #     # workspace情報の再取得
+        #     fetch_rows = da_workspace.select_workspace_id(cursor, workspace_id)
+
+        # # Response用のjsonに変換
+        # response_rows = fetch_rows
+
+        # return jsonify({"result": "200", "rows": response_rows })
+
+        return jsonify({"result": "200")
+
+    except Exception as e:
+        return common.serverError(e)
+
+@app.route('/workspace/<int:workspace_id>/manifests/<int:file_id>', methods=['GET'])
+def manifest_file_get(workspace_id):
+    """マニフェストテンプレートファイル取得
+
+    Args:
+        workspace_id (int): ワークスペースID
+        file_id (int): ファイルID
+
+    Returns:
+        response: HTTP Respose
+    """
+    globals.logger.debug("CALL manifest_file_get:{}".format(workspace_id))
+
+    try:
+        # # Requestからspecification項目を生成する
+        # specification = convert_workspace_specification(request.json)
+      
+        # with dbconnector() as db, dbcursor(db) as cursor:
+        #     # workspace情報 update実行
+        #     upd_cnt = da_workspace.update_workspace(cursor, specification, workspace_id)
+
+        #     if upd_cnt == 0:
+        #         # データがないときは404応答
+        #         db.rollback()
+        #         return jsonify({"result": "404" }), 404
+
+        #     # workspace履歴追加
+        #     da_workspace.insert_history(cursor, workspace_id)
+
+        #     # workspace情報の再取得
+        #     fetch_rows = da_workspace.select_workspace_id(cursor, workspace_id)
+
+        # # Response用のjsonに変換
+        # response_rows = fetch_rows
+
+        # return jsonify({"result": "200", "rows": response_rows })
+
+        return jsonify({"result": "200")
+
+    except Exception as e:
+        return common.serverError(e)
+
 def convert_workspace_response(fetch_rows):
     """レスポンス用JSON変換
         workspace情報のselect(fetch)した結果をレスポンス用のjsonに変換する
