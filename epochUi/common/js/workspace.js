@@ -1411,7 +1411,7 @@ const templateFileSelect = function( type ){
   let uploadHtml = ''
   + '<div class="item-file-block">'
     + '<form id="template-files" method="post" enctype="multipart/form-data">'
-      + '<input type="file" name="file[]" class="item-file"' + type + '>'
+      + '<input type="file" name="manifest_files[]" class="item-file"' + type + '>'
     + '</form>'
     + '<div class="item-file-list">'
       + '<table class="c-table c-table-fixed">'
@@ -1462,7 +1462,7 @@ const templateFileSelect = function( type ){
                 const formData = new FormData( $('#template-files').get(0) );
                 // 送信
                 $.ajax({
-                  'url': 'test.php',
+                  'url': workspace_api_conf.api.manifestTemplate.post,
                   'type': 'post',
                   'data': formData,
                   'processData': false,
@@ -1470,6 +1470,8 @@ const templateFileSelect = function( type ){
                   'cache': false,
                 }).done(function( data, textStatus ){
                   if ( textStatus === 'success') {
+
+                    console.log('data:' + JSON.stringify(data))
                     // アップロードが完了したら
                     $file.find('.item-file-list').html('<pre>' + data + '</pre>');
                   }
@@ -1486,15 +1488,16 @@ const templateFileSelect = function( type ){
               }
             });
           } else {
-            alert('テキストファイル以外が選択されました。');
+            alert('yamlファイル以外が選択されました。');
           }
         }
       }
       
       // ファイル数分FileReaderで処理する
       for ( let i = 0; i < fileLength; i++ ) {
-        if ( files[i].type === 'text/plain') {
-          const reader = new FileReader();
+        //if ( files[i].type === 'text/plain') {
+        if ( files[i].name.match(/\.yaml$/) ) {
+            const reader = new FileReader();
           $( reader ).on('load', function( data ){
             
             const filename = fn.textEntities(files[i].name),
