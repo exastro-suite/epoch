@@ -264,6 +264,11 @@ def delete(request, workspace_id, file_id):
 
         response = requests.delete(apiurl, headers=headers)
 
+        # ITA呼び出し
+        print("CALL ita_registration Start")
+        response = ita_registration(request, workspace_id)
+        print("CALL ita_registration End response:{}", response)
+
         output = []
         if response.status_code == 200 and isJsonFormat(response.text):
             # 取得したJSON結果が正常でない場合、例外を返す
