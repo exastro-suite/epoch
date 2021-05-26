@@ -2374,16 +2374,10 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
     for(var env in wsDataJSON['environment']) {
       var prmenv = {
         'environment_id'    : env,
-
-        // TODO
-        // workspace_api_conf → wsDataJSONから取得に変更
-        'git_url'           : ( envidx == 0? workspace_api_conf['parameter']['manifest-ita'][0]['git_url'] : workspace_api_conf['parameter']['manifest-ita'][0]['git_url'].replace('.git','_'+envidx+'.git')),
-
-        // TODO
-        // wsDataJSONから取得に変更
-        'git_user'          : null,
-        'git_password'      : null,
-
+        'git_url'           : wsDataJSON['environment'][env][env + '-git-service-argo-repository-url'],
+        'git_user'          : wsDataJSON['git-service-argo']['git-service-argo-user'],
+        'git_password'      : wsDataJSON['git-service-argo']['git-service-argo-password'],
+        'git_token'         : wsDataJSON['git-service-argo']['git-service-argo-token'],
         'manifests'         : [],
       }
       for(var flid in wsDataJSON['template-file']) {
@@ -2437,16 +2431,17 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
     };
     reqbody['workspace']['manifest'] = workspace_api_conf['parameter']['manifest'];
 
-    // TODO
-    // 以下の形式(wsDataJSONから取り出して)で書き出す
-    /*
-    "manifest-ita" : [{
-      "git_url" : "https://github.com/epoch-team/argocd_manifest.git",
-      "git_user" : "epoch_member@omcs.jp.nec.com",
-      "git_password" : "20110903kyay",
-    }],
-    */
-    reqbody['workspace']['manifest-ita'] = workspace_api_conf['parameter']['manifest-ita'];
+
+    reqbody['workspace']['manifest-ita'] = [];
+    for(var env in wsDataJSON['environment']) {
+      var prmenv = {
+        'git_url'           : wsDataJSON['environment'][env][env + '-git-service-argo-repository-url'],
+        'git_user'          : wsDataJSON['git-service-argo']['git-service-argo-user'],
+        'git_password'      : wsDataJSON['git-service-argo']['git-service-argo-password'],
+      }
+      reqbody['workspace']['manifest-ita'][reqbody['workspace']['manifest-ita'].length] = prmenv;
+    }
+    
 
     reqbody['build'] = {
       'git': {
