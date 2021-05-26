@@ -89,15 +89,13 @@ def post(request, workspace_id):
         # ITA呼び出し
         print("CALL ita_registration Start")
         response = ita_registration(request, workspace_id)
-        print("CALL ita_registration End")
+        print("CALL ita_registration End response:{}", response)
 
         # 正常時はmanifest情報取得した内容を返却
         response = {
-            "result": {
-                "code": "200",
-                "rows": response,
-                "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
-            }
+            "result": "200",
+            "rows": response,
+            "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
         }
         return JsonResponse(response, status=200)
 
@@ -141,7 +139,7 @@ def ita_registration(request, workspace_id):
         print("CALL responseAPI : url:{}".format(apiurl))
         # Resource API呼び出し
         response = requests.get(apiurl, headers=post_headers)
-        print("CALL responseAPI : response:{}, text:{}".format(response, response.text))
+#        print("CALL responseAPI : response:{}, text:{}".format(response, response.text))
 
         # 戻り値が正常値以外の場合は、処理を終了
         if response.status_code != 200:
