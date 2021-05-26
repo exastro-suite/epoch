@@ -1477,6 +1477,7 @@ const templateFileSelect = function( type ){
                     // 暫定実装 -----
                     wsDataJSON['template-file'] = {};
                     var disp = "";
+/*
                     for(var fileidx = 0; fileidx < data['manifests'].length; fileidx++ ) {
                       disp += data['manifests'][fileidx]['file_name'] + '\n';
                       wsDataJSON['template-file']['file'+("000"+(fileidx+1)).slice(-3)] = {
@@ -1486,6 +1487,18 @@ const templateFileSelect = function( type ){
                         'user' : 'epoch-user',
                         'note' : '<a>' + data['manifests'][fileidx]['file_name'] + '</a>',
                         "text" : data['manifests'][fileidx]['file_text'],
+                      }
+                    }
+*/
+                    for(var fileidx = 0; fileidx < data['rows'].length; fileidx++ ) {
+                      disp += data['rows'][fileidx]['file_name'] + '\n';
+                      wsDataJSON['template-file']['file'+("000"+(fileidx+1)).slice(-3)] = {
+                        'name' : data['rows'][fileidx]['file_name'],
+                        'path' : 'exsample/' + data['rows'][fileidx]['file_name'],
+                        'date' : '2021/05/12 09:00:00',
+                        'user' : 'epoch-user',
+                        'note' : '<a>' + data['rows'][fileidx]['file_name'] + '</a>',
+                        "text" : data['rows'][fileidx]['file_text'],
                       }
                     }
                     // 暫定実装 -----
@@ -2266,6 +2279,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         // 暫定実装 -----
         wsDataJSON['template-file'] = {};
         var disp = "";
+/*
         for(var fileidx = 0; fileidx < data['manifests'].length; fileidx++ ) {
           disp += data['manifests'][fileidx]['file_name'] + '\n';
           wsDataJSON['template-file']['file'+("000"+(fileidx+1)).slice(-3)] = {
@@ -2275,6 +2289,18 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
             'user' : 'epoch-user',
             'note' : '<a>' + data['manifests'][fileidx]['file_name'] + '</a>',
             "text" : data['manifests'][fileidx]['file_text'],
+          }
+        }
+*/
+        for(var fileidx = 0; fileidx < data['rows'].length; fileidx++ ) {
+          disp += data['rows'][fileidx]['file_name'] + '\n';
+          wsDataJSON['template-file']['file'+("000"+(fileidx+1)).slice(-3)] = {
+            'name' : data['rows'][fileidx]['file_name'],
+            'path' : 'exsample/' + data['rows'][fileidx]['file_name'],
+            'date' : '2021/05/12 09:00:00',
+            'user' : 'epoch-user',
+            'note' : '<a>' + data['rows'][fileidx]['file_name'] + '</a>',
+            "text" : data['rows'][fileidx]['file_text'],
           }
         }
         // 暫定実装 -----
