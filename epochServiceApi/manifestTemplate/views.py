@@ -19,6 +19,7 @@ import json
 import subprocess
 import traceback
 import os
+import datetime, pytz
 
 from django.shortcuts import render
 from django.http import HttpResponse
@@ -38,12 +39,63 @@ def file_id_not_assign(request, workspace_id):
 
 
 def post(request, workspace_id):
-    response = {
-            "result":"200",
-            "workspace_id" :workspace_id,
-    }
+    try:
+        apiInfo = os.environ['EPOCH_RESOURCE_PROTOCOL'] + "://" + os.environ['EPOCH_RESOURCE_HOST'] + ":" + os.environ['EPOCH_RESOURCE_PORT'] 
 
-    return JsonResponse(response, status=200)
+        # ヘッダ情報
+        post_headers = {
+            'Content-Type': 'application/json',
+        }
+
+        # データ情報
+        post_data = {
+            "manifests": [
+
+            ]
+        }
+
+        for manifest_file in request.FILES.getlist('manifest_files'):
+
+            with manifest_file.file as f:
+
+                file_text = ''
+
+                # ↓ 2重改行になっているので、変更するかも ↓
+                for line in f.readlines():
+
+                    file_text += line.decode('utf-8')
+
+            # データ情報(manifest_data)
+            manifest_data = {
+                "file_name": manifest_file.name,
+                "file_text": file_text
+            }
+
+            # データ情報(manifest_dataと結合)
+            post_data['manifests'].append(manifest_data)
+        
+        # JSON形式に変換
+        post_data = json.dumps(post_data)
+
+        # Resource API呼び出し
+        response = requests.post( apiInfo + "/workspace/" + str(workspace_id) + "/manifests", headers=post_headers, data=post_data)
+
+        
+
+        return JsonResponse(response, status=200)
+        # return  get_manifests(apiurl)
+
+    except Exception as e:
+        print(traceback.format_exc())
+        response = {
+            "result": {
+                "code": "500",
+                "detailcode": "",
+                "output": traceback.format_exc(),
+                "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
+            }
+        }
+        return JsonResponse(response, status=500)
 
 
 def index(request, workspace_id):
@@ -203,4 +255,5 @@ def get_manifests(url):
             }
         }
         return JsonResponse(response, status=500)
+
 
