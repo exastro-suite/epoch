@@ -47,6 +47,7 @@ const wsDataJSON = {
     }
   },
   */
+  /*
   'template-file': {
     'file001': {
       'name': 'front-end.yaml',
@@ -63,6 +64,8 @@ const wsDataJSON = {
       'note': '<a>test2</a>memomemomemomemomemomemomemomemomemomemomemomemomemomemomemo'
     }
   },
+  */
+  'template-file': {},
   'git-service': {
     'git-service-select': 'epoch'
   },
@@ -1411,7 +1414,7 @@ const templateFileSelect = function( type ){
   let uploadHtml = ''
   + '<div class="item-file-block">'
     + '<form id="template-files" method="post" enctype="multipart/form-data">'
-      + '<input type="file" name="manifest_files[]" class="item-file"' + type + '>'
+      + '<input type="file" name="manifest_files" class="item-file"' + type + '>'
     + '</form>'
     + '<div class="item-file-list">'
       + '<table class="c-table c-table-fixed">'
@@ -1462,7 +1465,7 @@ const templateFileSelect = function( type ){
                 const formData = new FormData( $('#template-files').get(0) );
                 // 送信
                 $.ajax({
-                  'url': workspace_api_conf.api.manifestTemplate.post,
+                  'url': workspace_api_conf.api.manifestTemplate.post.replace('{workspace_id}', workspace_id),
                   'type': 'post',
                   'data': formData,
                   'processData': false,
@@ -1471,9 +1474,26 @@ const templateFileSelect = function( type ){
                 }).done(function( data, textStatus ){
                   if ( textStatus === 'success') {
 
-                    console.log('data:' + JSON.stringify(data))
+                    // 暫定実装 -----
+                    wsDataJSON['template-file'] = {};
+                    var disp = "";
+                    for(var fileidx = 0; fileidx < data['manifests'].length; fileidx++ ) {
+                      disp += data['manifests'][fileidx]['file_name'] + '\n';
+                      wsDataJSON['template-file']['file'+("000"+(fileidx+1)).slice(-3)] = {
+                        'name' : data['manifests'][fileidx]['file_name'],
+                        'path' : 'exsample/' + data['manifests'][fileidx]['file_name'],
+                        'date' : '2021/05/12 09:00:00',
+                        'user' : 'epoch-user',
+                        'note' : '<a>' + data['manifests'][fileidx]['file_name'] + '</a>',
+                        "text" : data['manifests'][fileidx]['file_text'],
+                      }
+                    }
+                    // 暫定実装 -----
+
                     // アップロードが完了したら
-                    $file.find('.item-file-list').html('<pre>' + data + '</pre>');
+                    $file.find('.item-file-list').html('<pre>' + disp + '</pre>');
+
+                    workspaceImageUpdate();
                   }
                 }).fail(function( jqXHR, textStatus, errorThrown ){
                   // エラー
@@ -1646,6 +1666,7 @@ const inputParameter = function(){
     + '  selector:\n'
     + '    name: catalogue\n';
 */
+/*
 const dummyYaml = '# epoch-template => No.' + i + '\n'
 + 'apiVersion: apps/v1\n'
 + 'kind: Deployment\n'
@@ -1684,7 +1705,11 @@ const dummyYaml = '# epoch-template => No.' + i + '\n'
 + '    targetPort: 8000\n'
 + '  selector:\n'
 + '    name: front-end\n';
-    
+*/
+    // 暫定実装 -----
+    const dummyYaml = wsDataJSON['template-file']['file'+("000"+(i+1)).slice(-3)]['text'];
+    // 暫定実装 -----
+
     // 読み込みが完了したら
     const $tabBlock = $( this ),
           tabID = $tabBlock.attr('id'),
@@ -2224,24 +2249,54 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
             "note"    : "",
           };
         }
-
-        // ボタン名変更
-        $('#apply-workspace-button').html('ワークスペース更新');
-
-        workspaceImageUpdate();
         resolve();
       }).fail(function() {
         console.log("FAIL : ワークスペース情報取得");
         workspace_id = null;
         // 失敗
         reject();
-      }).then(() => {
-        console.log('Complite !!');
-      }).catch(() => {
-        console.log('Fail !!');
-      });
+      });        
+
+    }).then(() => {return new Promise((resolve, reject) => {
+
+      $.ajax({
+        "type": "GET",
+        "url": workspace_api_conf.api.manifestTemplate.get.replace('{workspace_id}', workspace_id),
+      }).done(function(data) {
+        // 暫定実装 -----
+        wsDataJSON['template-file'] = {};
+        var disp = "";
+        for(var fileidx = 0; fileidx < data['manifests'].length; fileidx++ ) {
+          disp += data['manifests'][fileidx]['file_name'] + '\n';
+          wsDataJSON['template-file']['file'+("000"+(fileidx+1)).slice(-3)] = {
+            'name' : data['manifests'][fileidx]['file_name'],
+            'path' : 'exsample/' + data['manifests'][fileidx]['file_name'],
+            'date' : '2021/05/12 09:00:00',
+            'user' : 'epoch-user',
+            'note' : '<a>' + data['manifests'][fileidx]['file_name'] + '</a>',
+            "text" : data['manifests'][fileidx]['file_text'],
+          }
+        }
+        // 暫定実装 -----
+
+        resolve();
+
+      }).fail(function() {
+        console.log("FAIL : テンプレート情報取得");
+        // 失敗
+        reject();
+      });        
+
+    })}).then(() => {
+      // ボタン名変更
+      $('#apply-workspace-button').html('ワークスペース更新');
+      workspaceImageUpdate();
+      alert("ワークスペース情報を読み込みました");
+      console.log('Complite !!');
+    }).catch(() => {
+      alert("ワークスペース情報を読み込みに失敗しました");
+      console.log('Fail !!');
     });
-  
   });
   
   $('#apply-workspace-button').on('click',apply_workspace);
