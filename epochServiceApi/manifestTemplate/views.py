@@ -267,8 +267,9 @@ def delete(request, workspace_id, file_id):
 
         if response.status_code == 200 and isJsonFormat(response.text):
             # 取得したJSON結果が正常でない場合、例外を返す
-            ret = json.loads(response.text)
-            return JsonResponse(ret, status=200)
+            # ret = json.loads(response.text)
+            # return JsonResponse(ret, status=200)
+            pass
 
         elif response.status_code == 404:
             response = {
