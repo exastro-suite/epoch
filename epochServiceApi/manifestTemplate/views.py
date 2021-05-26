@@ -90,12 +90,24 @@ def post(request, workspace_id):
 
 
 def index(request, workspace_id):
-    response = {
-            "result":"200",
-            "workspace_id" :workspace_id,
-    }
+    try:
+        resourceProtocol = os.environ['EPOCH_RESOURCE_PROTOCOL']
+        resourceHost = os.environ['EPOCH_RESOURCE_HOST']
+        resourcePort = os.environ['EPOCH_RESOURCE_PORT']
+        apiurl = "{}://{}:{}/workspace/{}/manifests".format(resourceProtocol, resourceHost, resourcePort, workspace_id)
 
-    return JsonResponse(response, status=200)
+        return  get_manifests(apiurl)
+
+    except Exception as e:
+        response = {
+            "result": {
+                "code": "500",
+                "detailcode": "",
+                "output": traceback.format_exc(),
+                "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
+            }
+        }
+        return JsonResponse(response, status=500)
 
 
 @require_http_methods(['GET', 'DELETE'])
@@ -110,21 +122,128 @@ def file_id_assign(request, workspace_id, file_id):
 
 def get(request, workspace_id, file_id):
 
-    response = {
-            "result":"200",
-            "workspace_id": workspace_id, 
-            "file_id" :file_id,
-    }
+    try:
+        resourceProtocol = os.environ['EPOCH_RESOURCE_PROTOCOL']
+        resourceHost = os.environ['EPOCH_RESOURCE_HOST']
+        resourcePort = os.environ['EPOCH_RESOURCE_PORT']
+        apiurl = "{}://{}:{}/workspace/{}/manifests/{}".format(resourceProtocol, resourceHost, resourcePort, workspace_id, file_id)
 
-    return JsonResponse(response, status=200)
+        return  get_manifests(apiurl)
+
+    except Exception as e:
+        response = {
+            "result": {
+                "code": "500",
+                "detailcode": "",
+                "output": traceback.format_exc(),
+                "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
+            }
+        }
+        return JsonResponse(response, status=500)
 
 
 def delete(request, workspace_id, file_id):
+    """マニフェスト削除API
 
-    response = {
-            "result":"200",
-            "workspace_id": workspace_id, 
-            "file_id" :file_id,
+    Args:
+        request (request): HTTPリクエスト
+        workspace_id (int): workspace_id
+        file_id (int): file_id
+
+    Returns:
+        response: API Response
+    """
+
+    try:
+        # ヘッダ情報
+        headers = {
+            'Content-Type': 'application/json',
+        }
+
+        # DELETE送信（作成）
+        resourceProtocol = os.environ['EPOCH_RESOURCE_PROTOCOL']
+        resourceHost = os.environ['EPOCH_RESOURCE_HOST']
+        resourcePort = os.environ['EPOCH_RESOURCE_PORT']
+        apiurl = "{}://{}:{}/workspace/{}/manifests/{}".format(resourceProtocol, resourceHost, resourcePort, workspace_id, file_id)
+
+        response = requests.delete(apiurl, headers=headers)
+
+        output = []
+        if response.status_code == 200 and isJsonFormat(response.text):
+            # 取得したJSON結果が正常でない場合、例外を返す
+            ret = json.loads(response.text)
+            return JsonResponse(ret, status=200)
+
+        elif response.status_code == 404:
+            response = {
+                "result": {
+                    "detailcode": "",
+                    "output": response.text,
+                    "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
+                }
+            }
+            return JsonResponse(response, status=404)
+        else:
+            response = {
+                "result": {
+                    "detailcode": "",
+                    "output": response.text,
+                    "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
+                }
+            }
+            return JsonResponse(response, status=500)
+
+    except Exception as e:
+        response = {
+            "result": {
+                "code": "500",
+                "detailcode": "",
+                "output": traceback.format_exc(),
+                "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
+            }
+        }
+        return JsonResponse(response, status=500)
+
+
+def get_manifests(url):
+    """manifest 取得共通
+
+    Args:
+        url (str): HTTP Get URL
+
+    Returns:
+        response: API Response
+    """
+    # ヘッダ情報
+    headers = {
+        'Content-Type': 'application/json',
     }
 
-    return JsonResponse(response, status=200)
+    # GET送信（作成）
+    response = requests.get(url, headers=headers)
+
+    output = []
+    if response.status_code == 200 and isJsonFormat(response.text):
+        # 取得したJSON結果が正常でない場合、例外を返す
+        ret = json.loads(response.text)
+        return JsonResponse(ret, status=200)
+
+    elif response.status_code == 404:
+        response = {
+            "result": {
+                "detailcode": "",
+                "output": response.text,
+                "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
+            }
+        }
+        return JsonResponse(response, status=404)
+    else:
+        response = {
+            "result": {
+                "detailcode": "",
+                "output": response.text,
+                "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
+            }
+        }
+        return JsonResponse(response, status=500)
+

@@ -18,55 +18,81 @@ import json
 import globals
 from dbconnector import dbcursor
 
-def insert_manifest(cursor, specification):
+def insert_manifest(cursor, workspace_id, spec):
     """manifest情報登録
 
     Args:
         cursor (mysql.connector.cursor): カーソル
-        specification (Dict)): ワークスペース情報のJson形式
+        workspace_id (int): ワークスペースID
+        spec (Dict)): manifest情報のJson形式
 
     Returns:
-        int: ワークスペースID
+        int: manifest_id
         
     """
     # insert実行
-    cursor.execute('INSERT INTO manifest ( specification ) VALUES ( %(specification)s )',
+    cursor.execute('INSERT INTO manifest ( workspace_id, file_name, file_text  )' \
+                   ' VALUES ( %(workspace_id)s, %(file_name)s, %(file_text)s )',
         {
-            'specification' : json.dumps(specification)
+            'workspace_id' : workspace_id,
+            'file_name' : spec['file_name'],
+            'file_text' : spec['file_text']
         }
     )
     # 追加したワークスペースIDをreturn
     return cursor.lastrowid
 
-def update_manifest(cursor, specification, workspace_id, manifest_id):
+def update_manifest(cursor, workspace_id, spec):
     """manifest情報更新
 
     Args:
         cursor (mysql.connector.cursor): カーソル
-        specification (Dict)): manifest情報のJson形式
+        workspace_id (int): ワークスペースID
+        spec (Dict)): manifest情報のJson形式
 
     Returns:
         int: アップデート件数
         
     """
-    # 更新内容を展開
-    upd = json.dumps(specification)
-
     # manifest情報 update実行
-    upd_cnt = cursor.execute('UPDATE manifest' \
+    cursor.execute('UPDATE manifest' \
                              ' SET file_name = %(file_name)s' \
                                ' , file_text = %(file_text)s' \
                                ' WHERE workspace_id = %(workspace_id)s',
-                                 ' AND manifest_id = %(manifest_id)s',
+                                 ' AND id = %(manifest_id)s',
         {
             'workspace_id' : workspace_id,
-            'manifest_id' : manifest_id,
-            'file_name': upd['file_name'],
-            'file_text': upd['file_text']
+            'manifest_id' : spec['manifest_id'],
+            'file_name': spec['file_name'],
+            'file_text': spec['file_text']
         }
     )
     # 更新した件数をreturn
-    return upd_cnt
+    return cursor.rowcount
+
+def delete_manifest(cursor, workspace_id, manifest_id):
+    """manifest情報削除
+
+    Args:
+        cursor (mysql.connector.cursor): カーソル
+        workspace_id (Int)): ワークスペースID
+        manifest_id (Int)): manifest ID
+
+    Returns:
+        int: 削除件数
+        
+    """
+    # manifest情報 delete実行
+    cursor.execute('DELETE FROM manifest' \
+                               ' WHERE workspace_id = %(workspace_id)s'\
+                                 ' AND id = %(manifest_id)s',
+        {
+            'workspace_id' : workspace_id,
+            'manifest_id' : manifest_id
+        }
+    )
+    # 削除した件数をreturn
+    return cursor.rowcount
 
 def select_manifest_id(cursor, workspace_id, manifest_id):
     """manifest情報取得(id指定)
@@ -80,7 +106,7 @@ def select_manifest_id(cursor, workspace_id, manifest_id):
         dict: select結果
     """
     # select実行
-    cursor.execute('SELECT * FROM manifest WHERE workspace_id = %(workspace_id)s and manifest_id = %(manifest_id)s ORDER BY manifest_id',
+    cursor.execute('SELECT * FROM manifest WHERE workspace_id = %(workspace_id)s and id = %(manifest_id)s ORDER BY id',
         {
             'workspace_id' : workspace_id,
             'manifest_id' : manifest_id
@@ -94,11 +120,17 @@ def select_manifest(cursor, workspace_id):
 
     Args:
         cursor (mysql.connector.cursor): カーソル
+        workspace_id (int): ワークスペースID
 
     Returns:
         dict: select結果
     """
     # select実行
-    cursor.execute('SELECT * FROM workspace ORDER BY workspace_id')
+    cursor.execute('SELECT * FROM manifest WHERE workspace_id = %(workspace_id)s ORDER BY id',
+        {
+            'workspace_id' : workspace_id
+        }
+    )
+
     rows = cursor.fetchall()
     return rows
