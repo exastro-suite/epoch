@@ -1490,6 +1490,7 @@ const templateFileSelect = function( type ){
                       }
                     }
 */
+                    console.log("manifest response:" + JSON.stringify(data));
                     for(var fileidx = 0; fileidx < data['rows'].length; fileidx++ ) {
                       disp += data['rows'][fileidx]['file_name'] + '\n';
                       wsDataJSON['template-file']['file'+("000"+(fileidx+1)).slice(-3)] = {
@@ -2292,6 +2293,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
           }
         }
 */
+        console.log("manifest data:" + JSON.stringify(data));
         for(var fileidx = 0; fileidx < data['rows'].length; fileidx++ ) {
           disp += data['rows'][fileidx]['file_name'] + '\n';
           wsDataJSON['template-file']['file'+("000"+(fileidx+1)).slice(-3)] = {
