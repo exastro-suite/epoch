@@ -264,12 +264,7 @@ def delete(request, workspace_id, file_id):
 
         response = requests.delete(apiurl, headers=headers)
 
-        # ITA呼び出し
-        print("CALL ita_registration Start")
-        response = ita_registration(request, workspace_id)
-        print("CALL ita_registration End response:{}", response)
 
-        output = []
         if response.status_code == 200 and isJsonFormat(response.text):
             # 取得したJSON結果が正常でない場合、例外を返す
             ret = json.loads(response.text)
@@ -293,6 +288,19 @@ def delete(request, workspace_id, file_id):
                 }
             }
             return JsonResponse(response, status=500)
+
+        # ITA呼び出し
+        print("CALL ita_registration Start")
+        response = ita_registration(request, workspace_id)
+        print("CALL ita_registration End response:{}", response)
+
+        # 正常時はmanifest情報取得した内容を返却
+        response = {
+            "result": "200",
+            "rows": response,
+            "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
+        }
+        return JsonResponse(response, status=200)
 
     except Exception as e:
         response = {
