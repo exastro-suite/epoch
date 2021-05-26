@@ -277,6 +277,35 @@ def manifest_file_registration(workspace_id):
 #     except Exception as e:
 #         return common.serverError(e)
 
+@app.route('/workspace/<int:workspace_id>/manifests', methods=['DELETE'])
+def manifest_file_delete_all(workspace_id):
+    """マニフェストテンプレートファイル削除
+
+    Args:
+        workspace_id (int): ワークスペースID
+
+    Returns:
+        response: HTTP Respose
+    """
+    globals.logger.debug("CALL manifest_file_delete_all:workspace_id:{}".format(workspace_id))
+
+    try:
+        with dbconnector() as db, dbcursor(db) as cursor:
+            # manifests情報 delete実行
+            upd_cnt = da_manifest.delete_manifests(cursor, workspace_id)
+    
+            globals.logger.debug("delete_manifests:ret:{}".format(upd_cnt))
+
+            if upd_cnt == 0:
+                # データがないときは404応答
+                db.rollback()
+                return jsonify({"result": "404" }), 404
+
+        return jsonify({"result": "200"})
+
+    except Exception as e:
+        return common.serverError(e)
+
 @app.route('/workspace/<int:workspace_id>/manifests/<int:manifest_id>', methods=['DELETE'])
 def manifest_file_delete(workspace_id, manifest_id):
     """マニフェストテンプレートファイル削除

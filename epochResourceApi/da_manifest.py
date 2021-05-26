@@ -94,6 +94,27 @@ def delete_manifest(cursor, workspace_id, manifest_id):
     # 削除した件数をreturn
     return cursor.rowcount
 
+def delete_manifests(cursor, workspace_id):
+    """manifest情報削除(ワークスペース単位)
+
+    Args:
+        cursor (mysql.connector.cursor): カーソル
+        workspace_id (Int)): ワークスペースID
+
+    Returns:
+        int: 削除件数
+        
+    """
+    # manifest情報 delete実行
+    cursor.execute('DELETE FROM manifest' \
+                               ' WHERE workspace_id = %(workspace_id)s',
+        {
+            'workspace_id' : workspace_id,
+        }
+    )
+    # 削除した件数をreturn
+    return cursor.rowcount
+
 def select_manifest_id(cursor, workspace_id, manifest_id):
     """manifest情報取得(id指定)
 

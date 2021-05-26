@@ -40,6 +40,9 @@ def file_id_not_assign(request, workspace_id):
 
 def post(request, workspace_id):
     try:
+
+        print("CALL FilePost:{}".format(workspace_id))
+
         apiInfo = os.environ['EPOCH_RESOURCE_PROTOCOL'] + "://" + os.environ['EPOCH_RESOURCE_HOST'] + ":" + os.environ['EPOCH_RESOURCE_PORT'] 
 
         # ヘッダ情報
@@ -74,16 +77,29 @@ def post(request, workspace_id):
             # データ情報(manifest_dataと結合)
             post_data['manifests'].append(manifest_data)
         
+        # Resource API呼び出し(削除)
+        response = requests.delete( apiInfo + "/workspace/" + str(workspace_id) + "/manifests", headers=post_headers)
+
         # JSON形式に変換
         post_data = json.dumps(post_data)
 
-        # Resource API呼び出し
+        # Resource API呼び出し(登録)
         response = requests.post( apiInfo + "/workspace/" + str(workspace_id) + "/manifests", headers=post_headers, data=post_data)
 
-        
+        # ITA呼び出し
+        print("CALL ita_registration Start")
+        response = ita_registration(request, workspace_id)
+        print("CALL ita_registration End")
 
+        # 正常時はmanifest情報取得した内容を返却
+        response = {
+            "result": {
+                "code": "200",
+                "rows": response,
+                "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
+            }
+        }
         return JsonResponse(response, status=200)
-        # return  get_manifests(apiurl)
 
     except Exception as e:
         print(traceback.format_exc())
@@ -96,6 +112,79 @@ def post(request, workspace_id):
             }
         }
         return JsonResponse(response, status=500)
+
+def ita_registration(request, workspace_id):
+    """ITA登録
+
+    Args:
+        workspace_id (Int): ワークスペースID
+
+    Returns:
+        Json: 設定したManifest情報
+    """
+
+    try:
+
+        print("CALL ita_registration")
+
+        # post先のURL初期化
+        resourceProtocol = os.environ['EPOCH_RESOURCE_PROTOCOL']
+        resourceHost = os.environ['EPOCH_RESOURCE_HOST']
+        resourcePort = os.environ['EPOCH_RESOURCE_PORT']
+        apiurl = "{}://{}:{}/workspace/{}/manifests".format(resourceProtocol, resourceHost, resourcePort, workspace_id)
+
+        # ヘッダ情報
+        post_headers = {
+            'Content-Type': 'application/json',
+        }
+
+        print("CALL responseAPI : url:{}".format(apiurl))
+        # Resource API呼び出し
+        response = requests.get(apiurl, headers=post_headers)
+        print("CALL responseAPI : response:{}, text:{}".format(response, response.text))
+
+        # 戻り値が正常値以外の場合は、処理を終了
+        if response.status_code != 200:
+            raise Exception("CALL responseAPI Error")
+
+        # json形式変換
+        ret_manifests = json.loads(response.text)
+        # print("--------------------------")
+        # print("manifest Json")
+        # print(response.text)
+        # print(ret_manifests['rows'])
+#        print(json.loads(manifest_data))
+        # print("--------------------------")
+
+        # パラメータ情報(JSON形式)
+        cicdProtocol = os.environ['EPOCH_CICD_PROTOCOL']
+        cicdHost = os.environ['EPOCH_CICD_HOST']
+        cicdPort = os.environ['EPOCH_CICD_PORT']
+
+        send_data = { "manifests": 
+            ret_manifests['rows']
+        }
+        print("--------------------------")
+        print("send_data:")
+        print(send_data)
+        print("--------------------------")
+
+        send_data = json.dumps(send_data)
+
+        apiurl = "{}://{}:{}/ita/manifestTemplates".format(cicdProtocol, cicdHost, cicdPort)
+
+        # Resource API呼び出し
+        response = requests.post( apiurl, headers=post_headers, data=send_data)
+        print("CALL manifestTemplates : status:{}".format(response.status_code))
+
+        # 正常時はmanifest情報取得した内容を返却
+        if response.status_code == 200:
+            return ret_manifests['rows']
+        else:
+            raise Exception("post manifestTemplates Error")
+
+    except Exception:
+        raise
 
 
 def index(request, workspace_id):
@@ -233,8 +322,11 @@ def get_manifests(url):
 
     output = []
     if response.status_code == 200 and isJsonFormat(response.text):
+        print("get_manifests return --------------------")
         # 取得したJSON結果が正常でない場合、例外を返す
         ret = json.loads(response.text)
+        print(ret)
+        print("--------------------")
         return JsonResponse(ret, status=200)
 
     elif response.status_code == 404:
@@ -255,5 +347,31 @@ def get_manifests(url):
             }
         }
         return JsonResponse(response, status=500)
+
+def isJsonFormat(line):
+    """Jsonフォーマットチェック
+
+    Args:
+        line (Json): Json値を確かめる値
+
+    Returns:
+        bool: True:Json, False:Json形式以外
+    """
+    try:
+        json.loads(line)
+    except json.JSONDecodeError as e:
+        print(sys.exc_info())
+        print(e)
+        return False
+    # 以下の例外でも捕まえるので注意
+    except ValueError as e:
+        print(sys.exc_info())
+        print(e)
+        return False
+    except Exception as e:
+        print(sys.exc_info())
+        print(e)
+        return False
+    return True
 
 
