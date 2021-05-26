@@ -2187,10 +2187,12 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
   
         data_workspace = data['result']['output'][0];
 
-        wsDataJSON['workspace'] = {
-          'workspace-name' :                    data_workspace['common']['name'],
-          'workspace-note' :                    data_workspace['common']['note'],
-        };
+        if(data_workspace['common']) {
+          wsDataJSON['workspace'] = {
+            'workspace-name' :                    data_workspace['common']['name'],
+            'workspace-note' :                    data_workspace['common']['note'],
+          };
+        }
         wsDataJSON['git-service'] = {
           'git-service-select' :                data_workspace['ci_config']['pipelines_common']['git_repositry']['housing'] == 'inner'? 'epoch': data_workspace['ci_config']['pipelines_common']['git_repositry']['interface'],
           'git-service-user' :                  data_workspace['ci_config']['pipelines_common']['git_repositry']['user'],
@@ -2229,6 +2231,9 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
           wsDataJSON['environment'][item][item + '-environment-authentication-token']= data_environments[i]['deploy_destination']['authentication_token'];
           wsDataJSON['environment'][item][item + '-environment-certificate']= data_environments[i]['deploy_destination']['base64_encoded_certificate'];
 
+          // マニフェストgitリポジトリ情報の設定
+          wsDataJSON['environment'][item][item + '-git-service-argo-repository-url']= data_workspace['ci_config']['environments'][i]['git_url'];
+
           // マニフェストパラメータの設定
           wsDataJSON['environment'][item]['parameter'] =  {};
           for(var fl in data_workspace['ci_config']['environments'][i]['manifests']) {
@@ -2240,22 +2245,13 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
           }
         }
 
-        // TODO
-        // 多分いらない
-        // マニフェストファイルの設定
-        wsDataJSON['template-file'] = {};
-        for(var fl in data_workspace['ci_config']['environments'][0]['manifests']) {
-          wsDataJSON['template-file'][data_workspace['ci_config']['environments'][0]['manifests'][fl]['file_id']] = {
-            "name"    : data_workspace['ci_config']['environments'][0]['manifests'][fl]['file'],
-            "path"    : data_workspace['ci_config']['environments'][0]['manifests'][fl]['file'],
-            "date"    : "2021/05/12 09:00:00",
-            "user"    : "administrator",
-            "note"    : "",
-          };
-        }
-
-        // TODO
         // data_workspaceからwsDataJSONのマニフェストgitリポジトリ情報へ書き出す
+        wsDataJSON['git-service-argo'] = {};
+        if(data_workspace['ci_config']['environments'][0]) {
+          wsDataJSON['git-service-argo']['git-service-argo-user'] = data_workspace['ci_config']['environments'][0]['git_user'];
+          wsDataJSON['git-service-argo']['git-service-argo-password'] = data_workspace['ci_config']['environments'][0]['git_password'];
+          wsDataJSON['git-service-argo']['git-service-argo-token'] = data_workspace['ci_config']['environments'][0]['git_token'];
+        }
 
         resolve();
       }).fail(function() {
