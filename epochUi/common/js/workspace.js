@@ -2240,6 +2240,8 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
           }
         }
 
+        // TODO
+        // 多分いらない
         // マニフェストファイルの設定
         wsDataJSON['template-file'] = {};
         for(var fl in data_workspace['ci_config']['environments'][0]['manifests']) {
@@ -2251,6 +2253,10 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
             "note"    : "",
           };
         }
+
+        // TODO
+        // data_workspaceからwsDataJSONのマニフェストgitリポジトリ情報へ書き出す
+
         resolve();
       }).fail(function() {
         console.log("FAIL : ワークスペース情報取得");
@@ -2368,7 +2374,16 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
     for(var env in wsDataJSON['environment']) {
       var prmenv = {
         'environment_id'    : env,
+
+        // TODO
+        // workspace_api_conf → wsDataJSONから取得に変更
         'git_url'           : ( envidx == 0? workspace_api_conf['parameter']['manifest-ita'][0]['git_url'] : workspace_api_conf['parameter']['manifest-ita'][0]['git_url'].replace('.git','_'+envidx+'.git')),
+
+        // TODO
+        // wsDataJSONから取得に変更
+        'git_user'          : null,
+        'git_password'      : null,
+
         'manifests'         : [],
       }
       for(var flid in wsDataJSON['template-file']) {
@@ -2421,8 +2436,18 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         "password": (wsDataJSON['registry-service']['registry-service-account-password']? wsDataJSON['registry-service']['registry-service-account-password']: ""),
     };
     reqbody['workspace']['manifest'] = workspace_api_conf['parameter']['manifest'];
+
+    // TODO
+    // 以下の形式(wsDataJSONから取り出して)で書き出す
+    /*
+    "manifest-ita" : [{
+      "git_url" : "https://github.com/epoch-team/argocd_manifest.git",
+      "git_user" : "epoch_member@omcs.jp.nec.com",
+      "git_password" : "20110903kyay",
+    }],
+    */
     reqbody['workspace']['manifest-ita'] = workspace_api_conf['parameter']['manifest-ita'];
-  
+
     reqbody['build'] = {
       'git': {
         "username": (wsDataJSON['git-service']['git-service-user']? wsDataJSON['git-service']['git-service-user']: ""),
