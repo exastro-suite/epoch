@@ -19,6 +19,7 @@ import json
 import subprocess
 import traceback
 import os
+import datetime, pytz
 
 from django.shortcuts import render
 from django.http import HttpResponse
@@ -26,7 +27,6 @@ from django.http.response import JsonResponse
 
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from django.core.files.storage import FileSystemStorage
 
 @require_http_methods(['POST', 'GET'])
 @csrf_exempt    
@@ -39,54 +39,63 @@ def file_id_not_assign(request, workspace_id):
 
 
 def post(request, workspace_id):
+    try:
+        apiInfo = os.environ['EPOCH_RESOURCE_PROTOCOL'] + "://" + os.environ['EPOCH_RESOURCE_HOST'] + ":" + os.environ['EPOCH_RESOURCE_PORT'] 
 
-    # ヘッダ情報
-    post_headers = {
-        'Content-Type': 'application/json',
-    }
+        # ヘッダ情報
+        post_headers = {
+            'Content-Type': 'application/json',
+        }
 
-    print("******************************************")
-    print("request.FILES :  ")
-    print(request.FILES)
-    print("******************************************")
-    print("request.FILES['manifest_files'] : ")
-    print(request.FILES['manifest_files'])
-    print("******************************************")
+        # データ情報
+        post_data = {
+            "manifests": [
 
+            ]
+        }
 
-    for manifest_file in request.FILES.getlist('manifest_files'):
-        with manifest_file.file as f:
-            # ↓ 2重改行になっているので、変更するかも ↓
-            for line in f.readlines():
-                print(line.decode())
+        for manifest_file in request.FILES.getlist('manifest_files'):
 
-    # for manifest_file in request.FILES['manifest_files']:
+            with manifest_file.file as f:
 
-    #     print("manifest_file : ")
-    #     print(manifest_file)
-        # with manifest_file.file as f:
-        #     for line in f.readlines():
-        #         print(line.decode())
-        # htmlfile = request.FILES['manifest_files'].file.readlines().decode()
-        # print(htmlfile)
+                file_text = ''
 
-        # fileobject = FileSystemStorage()
+                # ↓ 2重改行になっているので、変更するかも ↓
+                for line in f.readlines():
 
-        # # filedata = fileobject.save(htmlfile.name, htmlfile )
+                    file_text += line.decode('utf-8')
 
-        # upload_url = fileobject.url(data)
+            # データ情報(manifest_data)
+            manifest_data = {
+                "file_name": manifest_file.name,
+                "file_text": file_text
+            }
 
-        # return render(request, 'upload.html')
+            # データ情報(manifest_dataと結合)
+            post_data['manifests'].append(manifest_data)
+        
+        # JSON形式に変換
+        post_data = json.dumps(post_data)
 
-    # 
-    # request_response = requests.post( apiInfo + "ita/cdExec", headers=post_headers, data=post_data)
+        # Resource API呼び出し
+        response = requests.post( apiInfo + "/workspace/" + str(workspace_id) + "/manifests", headers=post_headers, data=post_data)
 
-    response = {
-            "result":"200",
-            "workspace_id" :workspace_id,
-    }
+        
 
-    return JsonResponse(response, status=200)
+        return JsonResponse(response, status=200)
+        # return  get_manifests(apiurl)
+
+    except Exception as e:
+        print(traceback.format_exc())
+        response = {
+            "result": {
+                "code": "500",
+                "detailcode": "",
+                "output": traceback.format_exc(),
+                "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
+            }
+        }
+        return JsonResponse(response, status=500)
 
 
 def index(request, workspace_id):
@@ -246,4 +255,5 @@ def get_manifests(url):
             }
         }
         return JsonResponse(response, status=500)
+
 
