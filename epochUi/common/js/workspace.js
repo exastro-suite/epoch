@@ -679,6 +679,17 @@ const wsModalJSON = {
         'text': '閉じる',
         'type': 'negative'
       }
+    },
+    'block': {
+      'imageList': {
+        'title': '実行状況',
+        'item': {
+          'comitList': {
+            'type': 'loading',
+            'id': 'image-list'            
+          }
+        }
+      }
     }
   },
   /* -------------------------------------------------- *\
@@ -1928,6 +1939,9 @@ $content.find('.modal-open, .workspace-status-item').on('click', function(){
   
   let ok, cancel, callback, width = 800;
 
+  // TODO
+  console.log('modal target:' + target);
+
   switch( target ) {
     // Workspace
     case 'workspace': {
@@ -2002,6 +2016,23 @@ $content.find('.modal-open, .workspace-status-item').on('click', function(){
     'callback': callback
   }, width );
   
+  console.log($('.modal-block-main'));
+  switch(target) {
+    case 'gitServiceCheck':
+      break;
+    case 'pipelineTektonCheck':
+      $('.modal-block-main').html('<a href="' + workspace_api_conf.links.tekton + '" target="_blank">確認</a>');
+      break;
+    case 'registryServiceCheck':
+      $('.modal-block-main').html('<a href="' + workspace_api_conf.links.registry + '" target="_blank">確認</a>');
+      break;
+    case 'arogCdResultCheck':
+      $('.modal-block-main').html('<a href="' + workspace_api_conf.links.argo + '" target="_blank">確認</a>');
+      break;
+    case 'exastroItAutomationResultCheck':
+      $('.modal-block-main').html('<a href="' + workspace_api_conf.links.ita + '" target="_blank">確認</a>');
+      break;
+  }
 });
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
