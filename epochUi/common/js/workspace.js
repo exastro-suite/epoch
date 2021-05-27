@@ -2084,7 +2084,14 @@ $content.find('.modal-open, .workspace-status-item').on('click', function(){
   console.log($('.modal-block-main'));
   switch(target) {
     case 'gitServiceCheck':
+      data_pipelines = data_workspace['ci_config']['pipelines'];
+      for(var i in data_pipelines) {
+        var item = data_pipelines[i]['pipeline_id'];
+        $('.modal-block-main').html('<a href="' + wsDataJSON['application-code'][item][item + '-git-repository-url'] + '" target="_blank">確認</a>');
+        break;
+      };
       break;
+
     case 'pipelineTektonCheck':
       $('.modal-block-main').html('<a href="' + workspace_api_conf.links.tekton + '" target="_blank">確認</a>');
       break;
