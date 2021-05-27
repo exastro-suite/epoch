@@ -815,11 +815,11 @@ const wsModalJSON = {
     }
   },
   /* -------------------------------------------------- *\
-     IaC Gitサービス確認
+     IaC リポジトリ確認
   \* -------------------------------------------------- */
   'gitServiceArgoCheck': {
     'id': 'git-service-argo-check',
-    'title': 'Gitサービス',
+    'title': 'IaC リポジトリ',
     'footer': {
       'cancel': {
         'text': '閉じる',
@@ -828,7 +828,7 @@ const wsModalJSON = {
     },
     'block': {
       'commitList': {
-        'title': 'Commit一覧',
+        'title': 'リポジトリ一覧',
         'item': {
           'comitList': {
             'type': 'loading',
@@ -2115,7 +2115,17 @@ $content.find('.modal-open, .workspace-status-item').on('click', function(){
         break;
       };
       break;
+    case 'gitServiceArgoCheck':
+      var link = "";
+      const $commitList = $('#commit-list');
+      $commitList.html('');
+      for(var env in wsDataJSON['environment']) {
+        link = wsDataJSON['environment'][env][env + '-git-service-argo-repository-url'];
 
+        // EPOCH_LINK
+        $commitList.append('<a href="' + link + '" target="_blank" text="aaa">' + link + '</a><br />')
+      };
+      break;
     case 'pipelineTektonCheck':
       $('.modal-block-main').html('<a href="' + workspace_api_conf.links.tekton + '" target="_blank">確認</a>');
       break;
