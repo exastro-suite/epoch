@@ -61,10 +61,15 @@ def post(request):
         #ret = request_response.text
         print(ret["result"])
         if request_response.status_code == 200:
-            output.append(ret["items"])
+            output.append(ret["output"])
         else:
             raise Exception(request_response.text)
 
+        response = {
+            "result":"200",
+            "output" : output,
+        }
+        
         return JsonResponse(response, status=200)
 
     except Exception as e:
