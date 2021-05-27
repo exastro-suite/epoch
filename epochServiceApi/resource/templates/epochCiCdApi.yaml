@@ -67,6 +67,6 @@ spec:
   - name: http
     port: 8089
     targetPort: 8089
-    nodePort: <__epoch_cicd_api_port__>
+#    nodePort: <__epoch_cicd_api_port__>
   selector:
     name: cicd-api
