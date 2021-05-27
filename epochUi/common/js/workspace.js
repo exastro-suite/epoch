@@ -2755,13 +2755,13 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
     })}).then(() => {
       // 実行中ダイアログ表示
       if(workspace_id == null) {
-        $('#progress_message').html('COMPLITE :  ワークスペースを作成しました（ワークスペースID:'+created_workspace_id+'）');
+        $('#progress_message').html('COMPLETE :  ワークスペースを作成しました（ワークスペースID:'+created_workspace_id+'）');
         workspace_id = created_workspace_id;
       } else {
-        $('#progress_message').html('COMPLITE :  ワークスペースを更新しました（ワークスペースID:'+workspace_id+'）');
+        $('#progress_message').html('COMPLETE :  ワークスペースを更新しました（ワークスペースID:'+workspace_id+'）');
       }
       $('#progress-message-ok').prop("disabled", false);
-      console.log('Complite !!');
+      console.log('Complete !!');
     }).catch(() => {
       // 実行中ダイアログ表示
       
