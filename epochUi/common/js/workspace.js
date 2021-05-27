@@ -2108,12 +2108,15 @@ $content.find('.modal-open, .workspace-status-item').on('click', function(){
   console.log($('.modal-block-main'));
   switch(target) {
     case 'gitServiceCheck':
+      var link_append = "";
       data_pipelines = data_workspace['ci_config']['pipelines'];
       for(var i in data_pipelines) {
         var item = data_pipelines[i]['pipeline_id'];
-        $('.modal-block-main').html('<a href="' + wsDataJSON['application-code'][item][item + '-git-repository-url'] + '" target="_blank">確認</a>');
-        break;
+
+        var link = wsDataJSON['application-code'][item][item + '-git-repository-url'];
+        link_append += '<a href="' + link + '" target="_blank">' + link + '</a><br />';
       };
+      $('.modal-block-main').html(link_append);
       break;
     case 'gitServiceArgoCheck':
       var link = "";
@@ -2123,7 +2126,7 @@ $content.find('.modal-open, .workspace-status-item').on('click', function(){
         link = wsDataJSON['environment'][env][env + '-git-service-argo-repository-url'];
 
         // EPOCH_LINK
-        $commitList.append('<a href="' + link + '" target="_blank" text="aaa">' + link + '</a><br />')
+        $commitList.append('<a href="' + link + '" target="_blank">' + link + '</a><br />')
       };
       break;
     case 'pipelineTektonCheck':
