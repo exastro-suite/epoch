@@ -645,7 +645,7 @@ const wsModalJSON = {
     }
   },
   /* -------------------------------------------------- *\
-     Gitサービス確認
+     TEKTON Gitサービス確認
   \* -------------------------------------------------- */
   'gitServiceCheck': {
     'id': 'git-service-check',
@@ -809,6 +809,30 @@ const wsModalJSON = {
               'type': 'loading',
               'id': 'commit-list-body'
             }
+          }
+        }
+      }
+    }
+  },
+  /* -------------------------------------------------- *\
+     IaC Gitサービス確認
+  \* -------------------------------------------------- */
+  'gitServiceArgoCheck': {
+    'id': 'git-service-argo-check',
+    'title': 'Gitサービス',
+    'footer': {
+      'cancel': {
+        'text': '閉じる',
+        'type': 'negative'
+      }
+    },
+    'block': {
+      'commitList': {
+        'title': 'Commit一覧',
+        'item': {
+          'comitList': {
+            'type': 'loading',
+            'id': 'commit-list'
           }
         }
       }
