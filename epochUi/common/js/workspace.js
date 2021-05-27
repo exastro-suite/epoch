@@ -2114,6 +2114,7 @@ $content.find('.modal-open, .workspace-status-item').on('click', function(){
         var item = data_pipelines[i]['pipeline_id'];
 
         var link = wsDataJSON['application-code'][item][item + '-git-repository-url'];
+        link = link.replace(".git","") + "/commits";
         link_append += '<a href="' + link + '" target="_blank">' + link + '</a><br />';
       };
       $('.modal-block-main').html(link_append);
@@ -2124,6 +2125,7 @@ $content.find('.modal-open, .workspace-status-item').on('click', function(){
       $commitList.html('');
       for(var env in wsDataJSON['environment']) {
         link = wsDataJSON['environment'][env][env + '-git-service-argo-repository-url'];
+        link = link.replace(".git","") + "/commits";
 
         // EPOCH_LINK
         $commitList.append('<a href="' + link + '" target="_blank">' + link + '</a><br />')
