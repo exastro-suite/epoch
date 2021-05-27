@@ -67,6 +67,13 @@ def post(request):
             "PRESERVE_DATETIME": preserve_datetime,
         }
 
+        print("-------------------------")
+        print("header:")
+        print(header)
+        print("-------------------------")
+        print("data:")
+        print(data)
+        print("-------------------------")
         # json文字列に変換（"utf-8"形式に自動エンコードされる）
         json_data = json.dumps(data)
 
