@@ -2457,8 +2457,20 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       }
     };
    
-    reqbody['deploy'] = workspace_api_conf['parameter']['deploy'];
-    reqbody['deploy']['enviroments']['test']['namespace'] = (reqbody['cd_config']['environments'][0]? reqbody['cd_config']['environments'][0]['deploy_destination']['namespace']: "");
+    reqbody['deploy'] = {
+      "enviroments" : {}
+    };
+    for(var env in wsDataJSON['environment']) {
+      var env_name = wsDataJSON['environment'][env][env + '-environment-name'];
+      var prmenv = {
+        "git": {
+          "url" : wsDataJSON['environment'][env][env + '-git-service-argo-repository-url'],
+        },
+        "cluster" : wsDataJSON['environment'][env][env + '-environment-url'],
+        "namespace" : wsDataJSON['environment'][env][env + '-environment-namespace'],
+      }
+      reqbody['deploy']['enviroments'][env_name] = prmenv;
+    }
   
     console.log('---- reqbody ----');
     console.log(JSON.stringify(reqbody));
