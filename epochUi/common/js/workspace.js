@@ -1829,7 +1829,11 @@ const dummyYaml = '# epoch-template => No.' + i + '\n'
 const itaResultList = function(){
   const $resultList = $('#result-list');
   
-  $resultList.html('<button class="running-status">実行状況</button>')
+  var link = workspace_api_conf.links.ita;
+
+  // EPOCH_LINK
+  $resultList.html('<a href="' + link + '" target="_blank">Click to Exastro IT Automation</a>')
+//  $resultList.html('<button class="running-status">実行状況</button>')
   
   const cancel = function(){
     //const callback = itaResultList;
