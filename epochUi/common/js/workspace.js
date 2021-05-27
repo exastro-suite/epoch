@@ -1882,7 +1882,15 @@ const itaStatusList = function(){
 const arogCdResultList = function(){
   const $resultList = $('#result-list');
   
-  $resultList.html('<button class="running-status">実行状況</button>')
+  var link = "";
+  for(var env in wsDataJSON['environment']) {
+    link = wsDataJSON['environment'][env][env + '-git-service-argo-repository-url'];
+    break;
+  };
+
+  // EPOCH_LINK
+  $resultList.html('<a href="' + link + '" target="_blank" text="aaa">' + link + '</a>')
+//  $resultList.html('<button class="running-status">実行状況</button>')
   
   $resultList.find('.running-status').on('click', function(){
     modal.change('arogCdStatusCheck', {
