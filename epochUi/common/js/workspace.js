@@ -1919,6 +1919,65 @@ const arogCdStatusList = function(){
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
+//   CD実行
+// 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+const cdRunning = function(){
+  
+    // API呼び出し
+    new Promise(function(resolve, reject) {
+      // 実行中ダイアログ表示
+      $('#modal-progress-container').css('display','flex');
+      $('#progress-message-ok').prop("disabled", true);
+      //
+      // CD実行APIの呼び出し
+      //
+      $('#progress_message').html('CD実行開始');
+            
+      // API Body生成
+      reqbody = {};
+
+      // 旧形式の付与
+      reqbody['clusterInfo'] = workspace_api_conf['parameter']['clusterInfo'];
+      reqbody['operationId'] = workspace_api_conf['parameter']['operationId'];
+      reqbody['conductorClassNo'] = workspace_api_conf['parameter']['conductorClassNo'];
+      reqbody['preserveDatetime'] = workspace_api_conf['parameter']['preserveDatetime'];
+      reqbody['itaInfo'] = workspace_api_conf['parameter']['itaInfo'];
+
+      console.log("CALL : CD実行開始");
+      api_param = {
+        "type": "POST",
+        "url": workspace_api_conf.api.cdExecDesignation.post,
+        "data": JSON.stringify(reqbody),
+        dataType: "json",
+      }
+  
+      $.ajax(api_param).done(function(data) {
+        console.log("DONE : CD実行");
+        console.log("--- data ----");
+        console.log(JSON.stringify(data));
+        // 成功
+        resolve();
+      }).fail(function() {
+        console.log("FAIL : CD実行");
+        // 失敗
+        reject();
+      });
+
+    }).then(() => {
+      $('#progress_message').html('CD実行開始しました');
+      console.log('Complete !!');
+      $('#progress-message-ok').prop("disabled", false);
+    }).catch(() => {
+      // 実行中ダイアログ表示
+      $('#progress_message').html('CD実行失敗しました');
+      $('#progress-message-ok').prop("disabled", false);
+      console.log('Fail !!');
+    });
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
 //   モーダルオープン
 // 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1993,6 +2052,12 @@ $content.find('.modal-open, .workspace-status-item').on('click', function(){
     // Argo CD 実行結果一覧
     case 'arogCdResultCheck': {
       callback = arogCdResultList;
+    } break;
+    // CD実行
+    case 'cdRunning': {
+      ok = function( ){
+        cdRunning( );
+      };
     } break;
   }
 
@@ -2306,7 +2371,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       $('#apply-workspace-button').html('ワークスペース更新');
       workspaceImageUpdate();
       alert("ワークスペース情報を読み込みました");
-      console.log('Complite !!');
+      console.log('Complete !!');
     }).catch(() => {
       alert("ワークスペース情報を読み込みに失敗しました");
       console.log('Fail !!');
