@@ -41,59 +41,61 @@ def post(request):
             'Content-Type': 'application/json',
         }
 
-        templates_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource/templates"
-        resource_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource/conv"
+        # templates_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource/templates"
+        # resource_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource/conv"
 
         # データ情報
         data = '{}'
 
-        temp_yaml_name = templates_dir + "/epochCiCdApi.yaml"
-        conv_yaml_name = resource_dir + "/epochCiCdApi.yaml"
-        deploy_config = "/etc/epoch/deploy-config/deployconfig.yaml"
+        # temp_yaml_name = templates_dir + "/epochCiCdApi.yaml"
+        # conv_yaml_name = resource_dir + "/epochCiCdApi.yaml"
+        # deploy_config = "/etc/epoch/deploy-config/deployconfig.yaml"
         #deploy_config = "/etc/epoch/deploy-config/deployconfig"
 
         # パラメータ情報(JSON形式)
         payload = json.loads(request.body)
 
         # テンプレートの文字列置き換え
-        conv(temp_yaml_name, conv_yaml_name)
+        # conv(temp_yaml_name, conv_yaml_name)
 
-        apiInfo = payload["clusterInfo"]["apiInfo"]
+        # CiCd Api の呼び先設定
+        # apiInfo = payload["clusterInfo"]["apiInfo"]
+        apiInfo = "{}://{}:{}".format(os.environ["EPOCH_CICD_PROTOCOL"], os.environ["EPOCH_CICD_HOST"], os.environ["EPOCH_CICD_PORT"])
         output = []
 
         # CI/CD APIコンテナ作成
-        stdout = subprocess.check_output(["kubectl","apply","-f",conv_yaml_name, "--kubeconfig=" + deploy_config],stderr=subprocess.STDOUT)
+        # stdout = subprocess.check_output(["kubectl","apply","-f",conv_yaml_name, "--kubeconfig=" + deploy_config],stderr=subprocess.STDOUT)
 
         # CI/CD API Pod状態確認
-        config.load_kube_config(deploy_config)
-        v1 = client.CoreV1Api()
+        # config.load_kube_config(deploy_config)
+        # v1 = client.CoreV1Api()
 
-        namespace = 'epoch-system'
+        # namespace = 'epoch-system'
         # label = 'app=cicd-api'
 
-        start = time.time()
-        floop = True
-        while floop:
-            try:
-                time.sleep(1)
-                pod_list = v1.list_namespaced_pod(namespace)
-                # pod_list = v1.list_namespaced_pod(namespace, label_selector=label)
-            except ApiException as e:
-                print('Exception when calling CoreV1Api->list_namespaced_pod: %s\n' % e)
+        # start = time.time()
+        # floop = True
+        # while floop:
+        #     try:
+        #         time.sleep(1)
+        #         pod_list = v1.list_namespaced_pod(namespace)
+        #         # pod_list = v1.list_namespaced_pod(namespace, label_selector=label)
+        #     except ApiException as e:
+        #         print('Exception when calling CoreV1Api->list_namespaced_pod: %s\n' % e)
 
-            time.sleep(1)
-            count = 0
-            for pod in pod_list.items:
-                if pod.status.phase == 'Running':
-                    print('status : ' + pod.status.phase)
-                    floop=False
-                    break
-                elif (time.time() - start) > 60:
-                    print('count : ' + count)
-                    floop=False
-                    break
+        #     time.sleep(1)
+        #     count = 0
+        #     for pod in pod_list.items:
+        #         if pod.status.phase == 'Running':
+        #             print('status : ' + pod.status.phase)
+        #             floop=False
+        #             break
+        #         elif (time.time() - start) > 60:
+        #             print('count : ' + count)
+        #             floop=False
+        #             break
 
-        time.sleep(10)
+        # time.sleep(10)
 
         # post送信（tekton/pod作成）
         print('apiInfo : ' + apiInfo)
@@ -187,26 +189,26 @@ def isJsonFormat(line):
         return False
     return True
 
-@csrf_exempt
-def conv(template_yaml, dest_yaml):
+# @csrf_exempt
+# def conv(template_yaml, dest_yaml):
 
-    # 実行yamlの保存
-    shutil.copy(template_yaml, dest_yaml)
+#     # 実行yamlの保存
+#     shutil.copy(template_yaml, dest_yaml)
 
-    # 実行yamlを読み込む
-    with open(dest_yaml, encoding="utf-8") as f:
-        data_lines = f.read()
+#     # 実行yamlを読み込む
+#     with open(dest_yaml, encoding="utf-8") as f:
+#         data_lines = f.read()
 
-    epochImage = os.environ['EPOCH_CICD_IMAGE']
-    epochPort = os.environ['EPOCH_CICD_PORT']
+#     epochImage = os.environ['EPOCH_CICD_IMAGE']
+#     epochPort = os.environ['EPOCH_CICD_PORT']
 
-    # 文字列置換
-    data_lines = data_lines.replace("<__epoch_cicd_api_image__>", epochImage)
-    data_lines = data_lines.replace("<__epoch_cicd_api_port__>", epochPort)
+#     # 文字列置換
+#     data_lines = data_lines.replace("<__epoch_cicd_api_image__>", epochImage)
+#     data_lines = data_lines.replace("<__epoch_cicd_api_port__>", epochPort)
 
-    # 同じファイル名で保存
-    with open(dest_yaml, mode="w", encoding="utf-8") as f:
-        f.write(data_lines)
+#     # 同じファイル名で保存
+#     with open(dest_yaml, mode="w", encoding="utf-8") as f:
+#         f.write(data_lines)
 
 
 @require_http_methods(['GET','POST'])
