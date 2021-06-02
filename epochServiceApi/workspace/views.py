@@ -60,7 +60,7 @@ def post(request):
 
         # CiCd Api の呼び先設定
         # apiInfo = payload["clusterInfo"]["apiInfo"]
-        apiInfo = "{}://{}:{}".format(os.environ["EPOCH_CICD_PROTOCOL"], os.environ["EPOCH_CICD_HOST"], os.environ["EPOCH_CICD_PORT"])
+        apiInfo = "{}://{}:{}/".format(os.environ["EPOCH_CICD_PROTOCOL"], os.environ["EPOCH_CICD_HOST"], os.environ["EPOCH_CICD_PORT"])
         output = []
 
         # CI/CD APIコンテナ作成
