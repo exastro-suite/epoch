@@ -98,26 +98,26 @@ def post(request):
         # time.sleep(10)
 
         # post送信（tekton/pod作成）
-        print('apiInfo : ' + apiInfo)
-        response = requests.post(apiInfo + 'tekton/', headers=headers, data=data, params=payload)
+        # print('apiInfo : ' + apiInfo)
+        # response = requests.post(apiInfo + 'tekton/', headers=headers, data=data, params=payload)
 
-        if isJsonFormat(response.text):
-            # 取得したJSON結果が正常でない場合、例外を返す
-            ret = json.loads(response.text)
-            if ret["result"] == "OK":
-                output.append(ret["output"])
-            else:
-                raise Exception
-        else:
-            response = {
-                "result": {
-                    "code": "500",
-                    "detailcode": "",
-                    "output": response.text,
-                    "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
-                }
-            }
-            return JsonResponse(response)
+        # if isJsonFormat(response.text):
+        #     # 取得したJSON結果が正常でない場合、例外を返す
+        #     ret = json.loads(response.text)
+        #     if ret["result"] == "OK":
+        #         output.append(ret["output"])
+        #     else:
+        #         raise Exception
+        # else:
+        #     response = {
+        #         "result": {
+        #             "code": "500",
+        #             "detailcode": "",
+        #             "output": response.text,
+        #             "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
+        #         }
+        #     }
+        #     return JsonResponse(response)
 
         # post送信（argocd/pod作成）
         response = requests.post(apiInfo + 'argocd/pod', headers=headers, data=data, params=payload)
