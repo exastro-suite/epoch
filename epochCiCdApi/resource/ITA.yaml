@@ -15,7 +15,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: it-automation
-  namespace: epoch-ita
 spec:
   selector:
     matchLabels:
@@ -39,7 +38,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: it-automation
-  namespace: epoch-ita
 spec:
   type: LoadBalancer
   selector:
@@ -48,6 +46,7 @@ spec:
     - name: "8084"
       port: 8084
       targetPort: 80
+      nodeport: 30905
     - name: "10483"
       port: 10483
       targetPort: 443
