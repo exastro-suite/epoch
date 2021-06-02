@@ -45,7 +45,8 @@ def post(request):
 
         resource_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource"
 
-        name = "argocd"
+        # namespace定義
+        name = "epoch-workspace"
         # namespaceの存在チェック
         ret = getNamespace(name)
         if ret is None:
