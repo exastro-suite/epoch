@@ -2396,8 +2396,6 @@ spec:
     port: 80
     protocol: TCP
     targetPort: 8080
-# add 
-    nodeport: 30906
   - name: https
     port: 443
     protocol: TCP
@@ -2739,3 +2737,25 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 10
       serviceAccountName: argocd-application-controller
+
+
+---
+# ADD EPOCH
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: server
+    app.kubernetes.io/name: argocd-server
+    app.kubernetes.io/part-of: argocd
+  name: argocd-server-nodeport
+spec:
+  type: NodePort
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 8080
+    nodePort: 30906
+  selector:
+    app.kubernetes.io/name: argocd-server
