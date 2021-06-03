@@ -161,6 +161,7 @@ def postPipeline(request):
 
         # 対象となるYamlを定義
         yamls = [ "pipeline-build-and-push.yaml",
+                  "pipeline-task-start.yaml",
                   "pipeline-task-git-clone.yaml",
                   "pipeline-task-kaniko.yaml" ]
 
