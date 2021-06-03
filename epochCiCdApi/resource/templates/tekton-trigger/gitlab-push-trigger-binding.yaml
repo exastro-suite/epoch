@@ -22,3 +22,5 @@ spec:
     value: $(body.checkout_sha)
   - name: gitrepositoryurl
     value: $(body.repository.git_http_url)
+  - name: git_ref
+    value: $(body.ref)

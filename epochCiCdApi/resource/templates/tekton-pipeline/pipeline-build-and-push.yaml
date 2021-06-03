@@ -38,13 +38,26 @@ spec:
     - name: imageTag
       description: Image tag
       default: "latest"
+    - name: git_ref
   tasks:
-
+    # ステップ #0
+    # 初期処理
+    - name: task-start
+      taskRef:
+        name: pipeline-task-start
+      workspaces:
+        - name: output
+          workspace: git-source
+      params:
+        - name: git_ref
+          value: "$(params.git_ref)"
     # ステップ #1
     # GitHubからソースコードをワークスペースにクローン（取得）する
     - name: task-git-clone
       taskRef:
         name: pipeline-task-git-clone
+      runAfter:
+        - task-start
       workspaces:
         - name: output
           workspace: git-source
@@ -76,4 +89,4 @@ spec:
         - name: DOCKERFILE
           value: $(params.pathToDockerfile)
         - name: IMAGE
-          value: $(params.imageUrl):$(params.imageTag)
+          value: $(params.imageUrl):$(tasks.task-start.results.container_registry_image_tag)
