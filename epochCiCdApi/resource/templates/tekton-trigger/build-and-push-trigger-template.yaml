@@ -26,6 +26,7 @@ spec:
   - name: imageUrl
   - name: imageTag
     default: v.99.99
+  - name: git_ref
   resourcetemplates:
   - apiVersion: tekton.dev/v1beta1
     kind: PipelineRun
@@ -45,6 +46,8 @@ spec:
         value: $(tt.params.imageUrl)
       - name: imageTag
         value: $(tt.params.imageTag)
+      - name: git_ref
+        value: $(tt.params.git_ref)
       serviceAccountName: pipeline-account
       workspaces:
         - name: git-source
