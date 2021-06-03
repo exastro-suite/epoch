@@ -46,7 +46,7 @@ spec:
     - name: "8084"
       port: 8084
       targetPort: 80
-      nodeport: 30905
+      nodePort: 30905
     - name: "10483"
       port: 10483
       targetPort: 443
