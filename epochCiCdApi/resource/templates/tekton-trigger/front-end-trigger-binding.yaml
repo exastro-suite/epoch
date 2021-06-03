@@ -25,5 +25,5 @@ spec:
     - name: imageUrl
       value: <__build_registry_url__>
     - name: imageTag
-      value: <__build_registry_imageTag__>
+      value: "<__build_registry_imageTag__>"
   
