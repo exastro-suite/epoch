@@ -1,0 +1,38 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: pipeline-task-start
+  namespace: epoch-tekton-pipelines
+  labels:
+    app.kubernetes.io/version: "0.1"
+  annotations:
+    tekton.dev/pipelines.minVersion: "0.12.1"
+    tekton.dev/tags: start
+    tekton.dev/displayName: "pipeline start"
+spec:
+  params:
+    - name: git_ref
+  workspaces:
+  - name: output
+    description: Holds the context and docker file
+  results:
+    - name: container_registry_image_tag
+  steps:
+    - name: pipeline-start-task
+      image: python
+      #
+      #   「results.container_registry_image_tag」に {branch or tag} + {yyyymmdd-hhmmss}形式で値を書き出す
+      #     git_refには、gitのwebhookのrefが格納
+      #     refには"refs/heads/branch-name" or "refs/tags/tag-name"が入るので、頭から"/"までの文字を削除し結合
+      #
+      script: |
+        #!/bin/bash
+        export TZ="Asia/Tokyo"
+        python - <<EOF
+        import time
+        import re
+        from datetime import datetime
+        image_tag = '{}.{}'.format(re.sub(r'.*/', '', '$(params.git_ref)'), datetime.now().strftime("%Y%m%d-%H%M%S"))
+        with open('$(results.container_registry_image_tag.path)', mode='w') as fp:
+            fp.write(image_tag)
+        EOF
