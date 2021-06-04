@@ -22,3 +22,5 @@ spec:
     value: "<__build_git_branch__>"
   - name: gitrepositoryurl
     value: $(body.repository.clone_url)
+  - name: git_ref
+    value: $(body.ref)
