@@ -44,7 +44,7 @@
     - 以下のコマンドでkubernetes環境へ反映してください。
 
         ```bash
-        kubectl apply –f epoch-pv.yaml
+        kubectl apply -f epoch-pv.yaml
         ```
 
 これでEPOCHを使用する準備が整いました。
