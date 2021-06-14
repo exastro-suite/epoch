@@ -85,6 +85,25 @@ def post(request):
 def postCommon(request):
     try:
 
+        # namespace定義
+        name = "epoch-tekton-pipelines"
+        # namespaceの存在チェック
+        ret = getNamespace(name)
+        if ret is None:
+            # namespaceの作成
+            ret = createNamespace(name)
+
+        # namespaceの作成に失敗した場合
+        if ret is None:
+            response = {
+                "result":"500",
+                "returncode": "0108",
+                "args": e.args,
+                "output": e.args,
+                "traceback": traceback.format_exc(),
+            }
+            return JsonResponse(response)
+
         # 引数で指定されたCD環境を取得
         print (request.body)
         request_json = json.loads(request.body)
@@ -301,3 +320,57 @@ def conv(template_yaml, dest_yaml, json_build):
     with open(dest_yaml, mode="w", encoding="utf-8") as f:
         f.write(data_lines)
 
+
+# namespaceの情報取得
+# 戻り値：namespaceの情報、存在しない場合はNone
+def getNamespace(name):
+    try:
+
+        config.load_incluster_config()
+        # 使用するAPIの宣言
+        v1 = client.CoreV1Api()
+        
+        # 引数の設定
+        pretty = '' # str | If 'true', then the output is pretty printed. (optional)
+        exact = True # bool | Should the export be exact.  Exact export maintains cluster-specific fields like 'Namespace'. Deprecated. Planned for removal in 1.18. (optional)
+        export = True # bool | Should this value be exported.  Export strips fields that a user can not specify. Deprecated. Planned for removal in 1.18. (optional)
+
+        # namespaceの情報取得
+        ret = v1.read_namespace(name=name)
+        print("ret: %s" % (ret))
+
+        return ret 
+
+    except Exception as e:
+        print("Except: %s" % (e))
+        return None 
+      
+# namespaceの作成
+# 戻り値：作成時の情報、失敗時はNone
+def createNamespace(name):
+    try:
+
+        config.load_incluster_config()
+        # 使用するAPIの宣言
+        v1 = client.CoreV1Api()
+        
+        # 引数の設定
+        body = client.V1Namespace(metadata=client.V1ObjectMeta(name=name))
+        # api_instance = kubernetes.client.CoreV1Api(api_client)
+        # body = kubernetes.client.V1Namespace() # V1Namespace | 
+        #pretty = '' # str | If 'true', then the output is pretty printed. (optional)
+        #dry_run = '' # str | When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed (optional)
+        #field_manager = '' # str | fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. (optional)
+
+        # namespaceの作成
+        #ret = v1.create_namespace(body=body, pretty=pretty, dry_run=dry_run, field_manager=field_manager)
+        ret = v1.create_namespace(body=body)
+
+        print("ret: %s" % (ret))
+
+        return ret 
+
+    except Exception as e:
+        print("Except: %s" % (e))
+        return None 
+     
