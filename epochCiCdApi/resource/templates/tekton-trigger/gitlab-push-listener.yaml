@@ -28,3 +28,21 @@ spec:
       interceptors:
         - cel:
             filter: "body.repository.clone_url == '<__build_git_url__>'"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: el-gitlab-push-listener-nodeport
+  labels:
+    name: el-gitlab-push-listener-nodeport
+  namespace: epoch-tekton-pipelines
+spec:
+  type: NodePort
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+    nodePort: 30904
+  selector:
+    name: el-gitlab-push-listener
