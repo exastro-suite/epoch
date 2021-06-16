@@ -41,8 +41,10 @@ spec:
   type: NodePort
   ports:
   - name: http
-    port: 8080
-    targetPort: 8080
+    port: 8000
+    targetPort: 8000
     nodePort: 30904
   selector:
-    name: el-gitlab-push-listener
+    app.kubernetes.io/managed-by: EventListener
+    app.kubernetes.io/part-of: Triggers
+    eventlistener: gitlab-push-listener
