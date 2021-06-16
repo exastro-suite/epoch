@@ -76,153 +76,164 @@ ita_restapi_endpoint='http://' + ita_host + ':' + ita_port + '/default/menu/07_r
 @csrf_exempt
 def post(request):
 
-    # HTTPヘッダの生成
-    filter_headers = {
-        'host': ita_host + ':' + ita_port,
-        'Content-Type': 'application/json',
-        'Authorization': base64.b64encode((ita_user + ':' + ita_pass).encode()),
-        'X-Command': 'FILTER',
-    }
-
-    edit_headers = {
-        'host': ita_host + ':' + ita_port,
-        'Content-Type': 'application/json',
-        'Authorization': base64.b64encode((ita_user + ':' + ita_pass).encode()),
-        'X-Command': 'EDIT',
-    }
-
-    print(json.loads(request.body))
-
-    #
-    # オペレーションの取得
-    #
-    opelist_resp = requests.post(ita_restapi_endpoint + '?no=' + ite_menu_operation, headers=filter_headers)
-    opelist_json = json.loads(opelist_resp.text)
-    print('---- Operation ----')
-    # print(opelist_resp.text)
-    print(opelist_json)
-
-    # 項目位置の取得
-    column_indexes_opelist = column_indexes(column_names_opelist, opelist_json['resultdata']['CONTENTS']['BODY'][0])
-    print('---- Operation Index ----')
-    print(column_indexes_opelist)
-
-    #
-    # マニフェスト環境パラメータの取得
-    #
-    content = {
-        "1": {
-            "NORMAL": "0"
+    try:
+        # HTTPヘッダの生成
+        filter_headers = {
+            'host': ita_host + ':' + ita_port,
+            'Content-Type': 'application/json',
+            'Authorization': base64.b64encode((ita_user + ':' + ita_pass).encode()),
+            'X-Command': 'FILTER',
         }
-    }
-    maniparam_resp = requests.post(ita_restapi_endpoint + '?no=' + ita_menu_manifest_param, headers=filter_headers, data=json.dumps(content))
-    maniparam_json = json.loads(maniparam_resp.text)
-    print('---- Current Manifest Parameters ----')
-    # print(maniparam_resp.text)
-    print(maniparam_json)
 
-    # 項目位置の取得
-    column_indexes_maniparam = column_indexes(column_names_manifest_param, maniparam_json['resultdata']['CONTENTS']['BODY'][0])
-    print('---- Manifest Parameters Index ----')
-    print(column_indexes_maniparam)
+        edit_headers = {
+            'host': ita_host + ':' + ita_port,
+            'Content-Type': 'application/json',
+            'Authorization': base64.b64encode((ita_user + ':' + ita_pass).encode()),
+            'X-Command': 'EDIT',
+        }
 
-    # Responseデータの初期化
-    response = {"result":"200",}
+        print(json.loads(request.body))
 
-    # マニフェスト環境パラメータのデータ成型
-    maniparam_edit = []
-    for environment in json.loads(request.body)['ci_config']['environments']:
+        #
+        # オペレーションの取得
+        #
+        opelist_resp = requests.post(ita_restapi_endpoint + '?no=' + ite_menu_operation, headers=filter_headers)
+        opelist_json = json.loads(opelist_resp.text)
+        print('---- Operation ----')
+        # print(opelist_resp.text)
+        # print(opelist_json)
 
-        idx_ope = search_opration(opelist_json['resultdata']['CONTENTS']['BODY'], column_indexes_opelist, environment['git_url'])
+        # 項目位置の取得
+        column_indexes_opelist = column_indexes(column_names_opelist, opelist_json['resultdata']['CONTENTS']['BODY'][0])
+        print('---- Operation Index ----')
+        # print(column_indexes_opelist)
 
-        # ITAからオペレーション(=環境)が取得できなければ異常
-        if idx_ope == -1:
-            response = {
-                "result": "400",
-                "output": "CD環境が設定されていません。",
-                "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
+        #
+        # マニフェスト環境パラメータの取得
+        #
+        content = {
+            "1": {
+                "NORMAL": "0"
             }
-            return JsonResponse(response, status=400)
+        }
+        maniparam_resp = requests.post(ita_restapi_endpoint + '?no=' + ita_menu_manifest_param, headers=filter_headers, data=json.dumps(content))
+        maniparam_json = json.loads(maniparam_resp.text)
+        print('---- Current Manifest Parameters ----')
+        # print(maniparam_resp.text)
+        # print(maniparam_json)
 
-            
-        req_maniparam_operation_id = opelist_json['resultdata']['CONTENTS']['BODY'][idx_ope][column_indexes_common['record_no']]
+        # 項目位置の取得
+        column_indexes_maniparam = column_indexes(column_names_manifest_param, maniparam_json['resultdata']['CONTENTS']['BODY'][0])
+        print('---- Manifest Parameters Index ----')
+        # print(column_indexes_maniparam)
 
-        for idx_manifile, row_manifile in enumerate(environment['manifests']):
+        # Responseデータの初期化
+        response = {"result":"200",}
 
-            # parameters成型
-            for key, value in row_manifile['parameters'].items():
-                if key == 'replicas':
-                    replicas = value
-                elif key == 'image':
-                    image = value
-                elif key == 'image_tag':
-                    image_tag = value
+        # マニフェスト環境パラメータのデータ成型
+        maniparam_edit = []
+        for environment in json.loads(request.body)['ci_config']['environments']:
 
-            # 既存データ確認
-            maniparam_id = -1
-            for idx_maniparam, row_maniparam in enumerate(maniparam_json['resultdata']['CONTENTS']['BODY']):
-                current_maniparam_operation_id = row_maniparam[column_indexes_maniparam['operation_id']]
-                current_maniparam_include_index = row_maniparam[column_indexes_maniparam['indexes']]
-                if current_maniparam_operation_id == req_maniparam_operation_id and \
-                        current_maniparam_include_index == str(idx_manifile + 1):
-                    maniparam_id = row_maniparam[column_indexes_common['record_no']]
-                    break
+            idx_ope = search_opration(opelist_json['resultdata']['CONTENTS']['BODY'], column_indexes_opelist, environment['git_url'])
 
-            if maniparam_id == -1:
-                # 追加処理データの設定
-                maniparam_edit.append(
-                    {
-                        str(column_indexes_common['method']) : param_value_method_entry,
-                        str(column_indexes_maniparam['host']) : param_value_host,
-                        str(column_indexes_maniparam['operation']) : format_opration_info(opelist_json['resultdata']['CONTENTS']['BODY'][idx_ope], column_indexes_opelist),
-                        str(column_indexes_maniparam['indexes']) : idx_manifile + 1,
-                        str(column_indexes_maniparam['replicas']) : replicas,
-                        str(column_indexes_maniparam['image']) : image,
-                        str(column_indexes_maniparam['image_tag']) : image_tag,
-                        str(column_indexes_maniparam['template_name']) : '"{{ TPF_epoch_template_yaml' + str(idx_manifile + 1) + ' }}"',
-                    }
-                )
-                print('---- Manifest Parameters Item(Add) ----')
-                print(maniparam_edit[len(maniparam_edit) -1])
+            # ITAからオペレーション(=環境)が取得できなければ異常
+            if idx_ope == -1:
+                response = {
+                    "result": "400",
+                    "output": "CD環境が設定されていません。",
+                    "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
+                }
+                return JsonResponse(response, status=400)
 
-            else:
-                # 更新処理
-                maniparam_edit.append(
-                    {
-                        str(column_indexes_common['method']) : param_value_method_update,
-                        str(column_indexes_common['record_no']) : maniparam_id,
-                        str(column_indexes_maniparam['host']) : maniparam_json['resultdata']['CONTENTS']['BODY'][idx_maniparam][column_indexes_maniparam['host']],
-                        str(column_indexes_maniparam['operation']) : maniparam_json['resultdata']['CONTENTS']['BODY'][idx_maniparam][column_indexes_maniparam['operation']],
-                        str(column_indexes_maniparam['indexes']) : maniparam_json['resultdata']['CONTENTS']['BODY'][idx_maniparam][column_indexes_maniparam['indexes']],
-                        str(column_indexes_maniparam['replicas']) : replicas,
-                        str(column_indexes_maniparam['image']) : image,
-                        str(column_indexes_maniparam['image_tag']) : image_tag,
-                        str(column_indexes_maniparam['template_name']) : maniparam_json['resultdata']['CONTENTS']['BODY'][idx_maniparam][column_indexes_maniparam['template_name']],
-                        str(column_indexes_maniparam['lastupdate']) : maniparam_json['resultdata']['CONTENTS']['BODY'][idx_maniparam][column_indexes_maniparam['lastupdate']],
-                    }
-                )
-                print('---- Manifest Parameters Item(Update) ----')
-                print(maniparam_edit[len(maniparam_edit) -1])
+                
+            req_maniparam_operation_id = opelist_json['resultdata']['CONTENTS']['BODY'][idx_ope][column_indexes_common['record_no']]
 
-    print('---- Updating Manifest Parameters ----')
-    print(json.dumps(maniparam_edit))
+            for idx_manifile, row_manifile in enumerate(environment['manifests']):
 
-    manuparam_edit_resp = requests.post(ita_restapi_endpoint + '?no=' + ita_menu_manifest_param, headers=edit_headers, data=json.dumps(maniparam_edit))
-    maniparam_json = json.loads(manuparam_edit_resp.text)
+                # parameters成型
+                for key, value in row_manifile['parameters'].items():
+                    if key == 'replicas':
+                        replicas = value
+                    elif key == 'image':
+                        image = value
+                    elif key == 'image_tag':
+                        image_tag = value
 
-    print('---- Manifest Parameters Post Response ----')
-    # print(manuparam_edit_resp.text)
-    print(maniparam_json)
+                # 既存データ確認
+                maniparam_id = -1
+                for idx_maniparam, row_maniparam in enumerate(maniparam_json['resultdata']['CONTENTS']['BODY']):
+                    current_maniparam_operation_id = row_maniparam[column_indexes_maniparam['operation_id']]
+                    current_maniparam_include_index = row_maniparam[column_indexes_maniparam['indexes']]
+                    if current_maniparam_operation_id == req_maniparam_operation_id and \
+                            current_maniparam_include_index == str(idx_manifile + 1):
+                        maniparam_id = row_maniparam[column_indexes_common['record_no']]
+                        break
 
-    # response['ita_response'] = maniparam_json
-    response = {
-        "result": "200",
-        # "output": maniparam_json['resultdata'],
-        "output": "登録に成功しました。",
-        "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
-    }
+                if maniparam_id == -1:
+                    # 追加処理データの設定
+                    maniparam_edit.append(
+                        {
+                            str(column_indexes_common['method']) : param_value_method_entry,
+                            str(column_indexes_maniparam['host']) : param_value_host,
+                            str(column_indexes_maniparam['operation']) : format_opration_info(opelist_json['resultdata']['CONTENTS']['BODY'][idx_ope], column_indexes_opelist),
+                            str(column_indexes_maniparam['indexes']) : idx_manifile + 1,
+                            str(column_indexes_maniparam['replicas']) : replicas,
+                            str(column_indexes_maniparam['image']) : image,
+                            str(column_indexes_maniparam['image_tag']) : image_tag,
+                            str(column_indexes_maniparam['template_name']) : '"{{ TPF_epoch_template_yaml' + str(idx_manifile + 1) + ' }}"',
+                        }
+                    )
+                    print('---- Manifest Parameters Item(Add) ----')
+                    # print(maniparam_edit[len(maniparam_edit) -1])
 
-    return JsonResponse(response, status=200)
+                else:
+                    # 更新処理
+                    maniparam_edit.append(
+                        {
+                            str(column_indexes_common['method']) : param_value_method_update,
+                            str(column_indexes_common['record_no']) : maniparam_id,
+                            str(column_indexes_maniparam['host']) : maniparam_json['resultdata']['CONTENTS']['BODY'][idx_maniparam][column_indexes_maniparam['host']],
+                            str(column_indexes_maniparam['operation']) : maniparam_json['resultdata']['CONTENTS']['BODY'][idx_maniparam][column_indexes_maniparam['operation']],
+                            str(column_indexes_maniparam['indexes']) : maniparam_json['resultdata']['CONTENTS']['BODY'][idx_maniparam][column_indexes_maniparam['indexes']],
+                            str(column_indexes_maniparam['replicas']) : replicas,
+                            str(column_indexes_maniparam['image']) : image,
+                            str(column_indexes_maniparam['image_tag']) : image_tag,
+                            str(column_indexes_maniparam['template_name']) : maniparam_json['resultdata']['CONTENTS']['BODY'][idx_maniparam][column_indexes_maniparam['template_name']],
+                            str(column_indexes_maniparam['lastupdate']) : maniparam_json['resultdata']['CONTENTS']['BODY'][idx_maniparam][column_indexes_maniparam['lastupdate']],
+                        }
+                    )
+                    print('---- Manifest Parameters Item(Update) ----')
+                    # print(maniparam_edit[len(maniparam_edit) -1])
+
+        print('---- Updating Manifest Parameters ----')
+        # print(json.dumps(maniparam_edit))
+
+        manuparam_edit_resp = requests.post(ita_restapi_endpoint + '?no=' + ita_menu_manifest_param, headers=edit_headers, data=json.dumps(maniparam_edit))
+        maniparam_json = json.loads(manuparam_edit_resp.text)
+
+        print('---- Manifest Parameters Post Response ----')
+        # print(manuparam_edit_resp.text)
+        # print(maniparam_json)
+
+        # response['ita_response'] = maniparam_json
+        response = {
+            "result": "200",
+            # "output": maniparam_json['resultdata'],
+            "output": "登録に成功しました。",
+            "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
+        }
+
+        return JsonResponse(response, status=200)
+
+    except Exception as e:
+        print(e)
+        print("traceback:" + traceback.format_exc())
+        response = {
+            "result": "500",
+            "output": traceback.format_exc(),
+            "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
+        }
+        return JsonResponse(response, status=500)
 
 #
 # 項目位置の取得
