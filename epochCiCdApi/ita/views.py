@@ -60,12 +60,33 @@ def post(request):
             }
             return JsonResponse(response)
 
+        output = ""
+        print("ita-pod create:" + output)
         stdout_ita = subprocess.check_output(["kubectl","apply","-f",(resource_dir + "/ITA.yaml"),"-n",name],stderr=subprocess.STDOUT)
+
+        output += "ita_pod create" + "{" + stdout_ita.decode('utf-8') + "},"
+
+        print("ita_pod create:" + output)
+
+        # 対象となるdeploymentを定義
+        deployments = [ "deployment/ita-worker" ]
+
+        envs = [ "HTTP_PROXY=" + os.environ['EPOCH_HTTP_PROXY'],
+                 "HTTPS_PROXY=" + os.environ['EPOCH_HTTPS_PROXY'],
+                 "http_proxy=" + os.environ['EPOCH_HTTP_PROXY'],
+                 "https_proxy=" + os.environ['EPOCH_HTTPS_PROXY'] ]
+
+        for deployment_name in deployments:
+            for env_name in envs:
+                # 環境変数の設定
+                stdout_cd = subprocess.check_output(["kubectl","set","env",deployment_name,"-n",name,env_name],stderr=subprocess.STDOUT)
+
+                output += deployment_name + "." + env_name + "{" + stdout_cd.decode('utf-8') + "},"
 
         response = {
             "result":"OK",
             "output" : [
-                stdout_ita.decode('utf-8'),
+                output,
             ],
         }
         return JsonResponse(response)
