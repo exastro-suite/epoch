@@ -154,3 +154,30 @@ CORS_ORIGIN_ALLOW_ALL = True
 
 # レスポンスを公開する
 CORS_ALLOW_CREDENTIALS = True
+
+LOGGING = {
+    'version': 1,
+    'formatters': {
+        'all': {
+            'format': '\t'.join([
+                "[%(levelname)s]",
+                "asctime:%(asctime)s",
+                "module:%(module)s",
+                "message:%(message)s",
+            ])
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler', 
+            'formatter': 'all'
+        },
+    },
+    'loggers': {
+        'apilog': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
+    },
+}
