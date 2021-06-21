@@ -2390,7 +2390,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
             var flid = data_workspace['ci_config']['environments'][i]['manifests'][fl]['file_id'];
             wsDataJSON['environment'][item]['parameter'][flid] = {};
             for(var prm in data_workspace['ci_config']['environments'][i]['manifests'][fl]['parameters']) {
-              wsDataJSON['environment'][item]['parameter'][flid][flid + '-' + prm] = data_workspace['ci_config']['environments'][i]['manifests'][fl]['parameters'][prm];
+              wsDataJSON['environment'][item]['parameter'][flid][flid + '-' + item + '-' + prm] = data_workspace['ci_config']['environments'][i]['manifests'][fl]['parameters'][prm];
             }
           }
         }
@@ -2537,7 +2537,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
           // マニフェストパラメータの指定をしている時、パラメータを設定する
           // 環境を追加してパラメータ指定を行わない時は上記if文でスキップする
           for(var prm in wsDataJSON['environment'][env]['parameter'][flid]) {
-            var prmname = prm.replace(new RegExp('^'+flid+'-'),'');   
+            var prmname = prm.replace(new RegExp('^'+flid+'-'+env+'-'),'');
             prmmani['parameters'][prmname] = wsDataJSON['environment'][env]['parameter'][flid][prm];
           }
         }

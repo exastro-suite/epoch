@@ -50,3 +50,44 @@ spec:
     - name: "10483"
       port: 10483
       targetPort: 443
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ita-worker
+spec:
+  selector:
+    matchLabels:
+      name: ita-worker
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: ita-worker
+    spec:
+      containers:
+      - name: ita-worker
+        image: epochdemo/ita-worker:0.1.0_20210601_1558
+        ports:
+        - containerPort: 22
+        command: ["sh", "-c"]
+        args:
+        - |
+          /usr/sbin/sshd -De
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ita-worker
+  labels:
+    name: ita-worker
+spec:
+  type: NodePort
+  ports:
+  - name: ssh
+    port: 22
+    targetPort: 22
+  selector:
+    name: ita-worker
