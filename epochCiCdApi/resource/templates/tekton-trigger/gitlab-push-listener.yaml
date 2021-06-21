@@ -28,3 +28,23 @@ spec:
       interceptors:
         - cel:
             filter: "body.repository.clone_url == '<__build_git_url__>'"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: el-gitlab-push-listener-nodeport
+  labels:
+    name: el-gitlab-push-listener-nodeport
+  namespace: epoch-tekton-pipelines
+spec:
+  type: NodePort
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+    nodePort: 30904
+  selector:
+    app.kubernetes.io/managed-by: EventListener
+    app.kubernetes.io/part-of: Triggers
+    eventlistener: gitlab-push-listener
