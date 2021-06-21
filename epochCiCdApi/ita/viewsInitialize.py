@@ -45,6 +45,13 @@ def post(request):
 
         auth = base64.b64encode((user_id + ':' + user_pass).encode())
 
+        # *-*-*-* パスワード更新済み判定とする *-*-*-*
+        ita_db_name = "ita_db"
+        ita_db_user = "ita_db_user"
+        ita_db_password = "ita_db_password"
+        command = "mysql -u %s -p%s %s < /app/epoch/tmp/ita_table_update.sql" % (ita_db_user, ita_db_password, ita_db_name)
+        stdout_ita = subprocess.check_output(["kubectl", "exec", "-i", "-n", "epoch-workspace", "deployment/it-automation", "--", "bash", "-c", command], stderr=subprocess.STDOUT)
+
         # *-*-*-* ファイルアップロード *-*-*-*
         print('---- upload kym file ----')
         kym_file_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource/ita_kym/epoch_initialize.kym"
