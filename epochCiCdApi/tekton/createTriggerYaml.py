@@ -42,7 +42,8 @@ def post(request):
         print (request.body)
         request_json = json.loads(request.body)
         print (request_json)
-        request_build = request_json["build"]
+        # 現在はアプリケーションコードのgitは１つのみ対応
+        request_pipeline = request_json["pipelines"][0]
 
         templates_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource/templates/tekton-trigger"
         resource_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource/conv/tekton-trigger"
@@ -59,7 +60,7 @@ def post(request):
         for yaml_name in yamls:
             conv(templates_dir + "/" + yaml_name,
                 resource_dir + "/" + yaml_name,
-                request_build)
+                request_pipeline)
 
             try:
                 stdout = subprocess.check_output(["kubectl","apply","-f",resource_dir +  "/" + yaml_name],stderr=subprocess.STDOUT)
@@ -103,8 +104,8 @@ def conv(template_yaml, dest_yaml, json_build):
         data_lines = f.read()
 
     # 文字列置換
-    data_lines = data_lines.replace("<__registry_imagetag__>", json_build["registry"]["imageTag"])
-    data_lines = data_lines.replace("<__registry_url__>", json_build["registry"]["url"])
+    # data_lines = data_lines.replace("<__registry_imagetag__>", json_build["registry"]["imageTag"]) # imageTagは不要に
+    data_lines = data_lines.replace("<__registry_url__>", json_build["contaier_registry"]["image"])
   
     # 同じファイル名で保存
     with open(dest_yaml, mode="w", encoding="utf-8") as f:

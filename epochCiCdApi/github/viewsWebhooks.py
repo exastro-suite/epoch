@@ -20,6 +20,7 @@ import json
 import subprocess
 import traceback
 import os
+import logging
 
 from django.shortcuts import render
 from django.http import HttpResponse
@@ -27,8 +28,18 @@ from django.http.response import JsonResponse
 
 from django.views.decorators.csrf import csrf_exempt
 
+logger = logging.getLogger('apilog')
+
+# github webhook base url
+github_webhook_base_url = 'https://api.github.com/repos/'
+github_webhook_base_hooks = '/hooks'
+
+
 @csrf_exempt
 def index(request):
+
+    logger.debug ("CALL github.webhooks : {}".format(request.method))
+
     if request.method == 'POST':
         return post(request)
     elif request.method == 'GET':
@@ -39,39 +50,46 @@ def index(request):
 @csrf_exempt    
 def post(request):
     try:
+
         # 引数で指定されたCD環境を取得
-        print (request.body)
+        logger.debug (request.body)
         request_json = json.loads(request.body)
-        request_build = request_json["build"]
-        gitRepos = request_build["git"]["repos"]
-        webHooksUrl = request_build["git"]["WebHooksUrl"]
-        token = request_build["git"]["token"]
+        request_ci_confg = request_json["ci_config"]
 
-        # GitHubへPOST送信
-        # ヘッダ情報
-        post_headers = {
-            'Authorization': 'token ' + token,
-            'Accept': 'application/vnd.github.v3+json',
-        }
+        output = ""
+        # パイプライン数分繰り返し
+        for pipeline in request_ci_confg["pipelines"]:
+            gitRepos = pipeline["git_repositry"]["url"].lstrip("https://github.com/").rstrip(".git")
+            webHooksUrl = pipeline["webhooks_url"]
+            token = request_ci_confg["pipelines_common"]["git_repositry"]["token"]
 
-        # 引数をJSON形式で構築
-        post_data = json.dumps({
-            "config":{
-                "url": webHooksUrl,
-                "content_type":"json",
-                "secret":"",
-                "insecure_ssl":"0",
-                "token":"token",
-                "digest":"digest",
+            # GitHubへPOST送信
+            # ヘッダ情報
+            post_headers = {
+                'Authorization': 'token ' + token,
+                'Accept': 'application/vnd.github.v3+json',
             }
-        })
 
-        # hooksのPOST送信
-        request_response = requests.post( "https://api.github.com/repos/" + gitRepos + "/hooks", headers=post_headers, data=post_data)
+            # 引数をJSON形式で構築
+            post_data = json.dumps({
+                "config":{
+                    "url": webHooksUrl,
+                    "content_type":"json",
+                    "secret":"",
+                    "insecure_ssl":"0",
+                    "token":"token",
+                    "digest":"digest",
+                }
+            })
+
+            # hooksのPOST送信
+            request_response = requests.post( github_webhook_base_url + gitRepos + github_webhook_base_hooks, headers=post_headers, data=post_data)
+
+            output += "{" + request_response.text + "},"
 
         response = {
             "result":"201",
-            "output": request_response.text,
+            "output": output,
         }
         return JsonResponse(response)
 
@@ -89,28 +107,33 @@ def post(request):
 def get(request):
     try:
         # 引数で指定されたCD環境を取得
-        print (request.body)
+        logger.debug (request.body)
         request_json = json.loads(request.body)
-        print (request_json)
-        request_build = request_json["build"]
-        gitRepos = request_build["git"]["repos"]
-        webHooksUrl = request_build["git"]["WebHooksurl"]
-        token = request_build["git"]["token"]
+        request_ci_confg = request_json["ci_config"]
 
-        # GitHubへGET送信
-        # ヘッダ情報
-        request_headers = {
-            'Authorization': 'token ' + token,
-            'Accept': 'application/vnd.github.v3+json',
-        }
+        output = ""
+        # パイプライン数分繰り返し
+        for pipeline in request_ci_confg["pipelines"]:
+            gitRepos = pipeline["git_repositry"]["url"].lstrip("https://github.com/").rstrip(".git")
+            webHooksUrl = pipeline["webhooks_url"]
+            token = request_ci_confg["pipelines_common"]["git_repositry"]["token"]
 
-        print (gitRepos)
-        # GETリクエスト送信
-        request_response = requests.get( "https://api.github.com/repos/" + gitRepos + "/hooks", headers=request_headers)
+            # GitHubへGET送信
+            # ヘッダ情報
+            request_headers = {
+                'Authorization': 'token ' + token,
+                'Accept': 'application/vnd.github.v3+json',
+            }
+
+            logger.debug (gitRepos)
+            # GETリクエスト送信
+            request_response = requests.get( github_webhook_base_url + gitRepos + github_webhook_base_hooks, headers=request_headers)
+
+            output += "{" + request_response.text + "},"
 
         response = {
             "result":"200",
-            "output" : request_response.text,
+            "output" : output,
         }
         return JsonResponse(response)
 
