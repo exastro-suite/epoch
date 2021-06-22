@@ -18,22 +18,6 @@ from . import viewsPipeline
 
 urlpatterns = [
     path('', views.index),
-    path('common/registry/Secret', views.createComRegistrySecret),
-    path('common/ServiceAccount', views.createComServiceAccount),
-    path('common/Secret', views.createComSecret),
-    path('common/Pv', views.createComPv),
-    path('common/Pvc', views.createComPvc),
-    path('common/StorageClass', views.createComStorageClass),
-    path('common/Role', views.createComRole),
-    path('common/RoleBinding', views.createComRoleBinding),
-
     # パイプライン設定
     path('pipeline', viewsPipeline.index),
-#    path('trigger', createTriggerYaml.index),
-    path('trigger/ClusterRole', views.createTriggerClusterRole),
-    path('trigger/ClusterRoleBinding', views.createTriggerClusterRoleBinding),
-    path('trigger/Role', views.createTiggerRole),
-    path('trigger/RoleBinding', views.createTiggerRoleBinding),
-    path('trigger/ServiceAccount', views.createTiggerServiceAccount),
-    path('trigger/Secret', views.createTiggerSecret),
 ]
