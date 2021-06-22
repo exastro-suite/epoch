@@ -1977,7 +1977,7 @@ const cdRunning = function(){
       reqbody['operationId'] = workspace_api_conf['parameter']['operationId'];
       reqbody['conductorClassNo'] = workspace_api_conf['parameter']['conductorClassNo'];
       reqbody['preserveDatetime'] = workspace_api_conf['parameter']['preserveDatetime'];
-      reqbody['itaInfo'] = workspace_api_conf['parameter']['itaInfo'];
+      // reqbody['itaInfo'] = workspace_api_conf['parameter']['itaInfo'];
 
       console.log("CALL : CD実行開始");
       api_param = {

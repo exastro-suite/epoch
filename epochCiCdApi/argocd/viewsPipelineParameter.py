@@ -87,7 +87,7 @@ def post(request):
             gitUrl = ""
             # manifest git urlは、ci_configより取得
             for ci_env in request_ci_env:
-                if ci_env["environment_id"] = env["environment_id"]:
+                if ci_env["environment_id"] == env["environment_id"]:
                     gitUrl = ci_env["git_url"]
                     break
 

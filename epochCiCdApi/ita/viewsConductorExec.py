@@ -23,11 +23,14 @@ import os
 import datetime, pytz
 import time
 import base64
+import logging
 
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.http.response import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+
+logger = logging.getLogger('apilog')
 
 @csrf_exempt
 def index(request):
@@ -45,11 +48,8 @@ def post(request):
         operation_id = payload["operationId"]
         conductor_class_no = payload["conductorClassNo"]
         preserve_datetime = payload["preserveDatetime"]
-        host = payload["itaInfo"]["host"]
-        user_id = payload["itaInfo"]["userId"]
-        user_pass = payload["itaInfo"]["userPass"]
-        
-        auth = base64.b64encode((user_id + ':' + user_pass).encode())
+        host = os.environ['ITA_HOST'] + os.environ['ITA_PORT']
+        auth = base64.b64encode((os.environ['ITA_USER'] + ':' + os.environ['ITA_PASSWORD']).encode())
 
         # POST送信する
         # ヘッダ情報
@@ -67,13 +67,13 @@ def post(request):
             "PRESERVE_DATETIME": preserve_datetime,
         }
 
-        print("-------------------------")
-        print("header:")
-        print(header)
-        print("-------------------------")
-        print("data:")
-        print(data)
-        print("-------------------------")
+        logger.debug("-------------------------")
+        logger.debug("header:")
+        logger.debug(header)
+        logger.debug("-------------------------")
+        logger.debug("data:")
+        logger.debug(data)
+        logger.debug("-------------------------")
         # json文字列に変換（"utf-8"形式に自動エンコードされる）
         json_data = json.dumps(data)
 
