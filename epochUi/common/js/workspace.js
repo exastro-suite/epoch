@@ -2500,6 +2500,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         'git_repositry' :  {
           'url' :             (wsDataJSON['application-code'][i][i+'-git-repository-url']? wsDataJSON['application-code'][i][i+'-git-repository-url'] : ""),
         },
+        'webhooks_url'   :  location.protocol + "//" + location.hostname,
         'build' : {
           'branch' :          (wsDataJSON['application-code'][i][i+'-pipeline-tekton-branch']? wsDataJSON['application-code'][i][i+'-pipeline-tekton-branch'].split(','): []),
           'context_path' :    (wsDataJSON['application-code'][i][i+'-pipeline-tekton-context-path']? wsDataJSON['application-code'][i][i+'-pipeline-tekton-context-path'] : ""),
@@ -2589,23 +2590,23 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
     // }
     
 
-    reqbody['build'] = {
-      'git': {
-        "username": (wsDataJSON['git-service']['git-service-user']? wsDataJSON['git-service']['git-service-user']: ""),
-        "password": (wsDataJSON['git-service']['git-service-password']? wsDataJSON['git-service']['git-service-password']: ""),
-        "url":  reqbody['ci_config']['pipelines'][0]? reqbody['ci_config']['pipelines'][0]['git_repositry']['url']: "",
-        "branch": reqbody['ci_config']['pipelines'][0]? reqbody['ci_config']['pipelines'][0]['build']['branch'].join(','): "",
-        "repos" : reqbody['ci_config']['pipelines'][0]? reqbody['ci_config']['pipelines'][0]['git_repositry']['url'].replace("https://github.com/","").replace(".git",""): "",
-        "WebHooksUrl": "http://example.com/",
-        "token": (wsDataJSON['git-service']['git-service-token']? wsDataJSON['git-service']['git-service-token']: ""),
-      },
-      "pathToContext": reqbody['ci_config']['pipelines'][0]? reqbody['ci_config']['pipelines'][0]['build']['context_path']: "",
-      "pathToDockerfile": reqbody['ci_config']['pipelines'][0]? reqbody['ci_config']['pipelines'][0]['build']['dockerfile_path']: "",
-      "registry" : {
-        "url" : reqbody['ci_config']['pipelines'][0]? reqbody['ci_config']['pipelines'][0]['contaier_registry']['image']: "",
-        "imageTag" : date.getFullYear() + ('0' + (date.getMonth() + 1)).slice(-2) + ('0' + date.getDate()).slice(-2) + '.' + ('0' + date.getHours()).slice(-2) + ('0' + date.getMinutes()).slice(-2) + ('0' + date.getSeconds()).slice(-2),
-      }
-    };
+    // reqbody['build'] = {
+    //   'git': {
+    //     "username": (wsDataJSON['git-service']['git-service-user']? wsDataJSON['git-service']['git-service-user']: ""),
+    //     "password": (wsDataJSON['git-service']['git-service-password']? wsDataJSON['git-service']['git-service-password']: ""),
+    //     "url":  reqbody['ci_config']['pipelines'][0]? reqbody['ci_config']['pipelines'][0]['git_repositry']['url']: "",
+    //     "branch": reqbody['ci_config']['pipelines'][0]? reqbody['ci_config']['pipelines'][0]['build']['branch'].join(','): "",
+    //     "repos" : reqbody['ci_config']['pipelines'][0]? reqbody['ci_config']['pipelines'][0]['git_repositry']['url'].replace("https://github.com/","").replace(".git",""): "",
+    //     "WebHooksUrl": "http://example.com/",
+    //     "token": (wsDataJSON['git-service']['git-service-token']? wsDataJSON['git-service']['git-service-token']: ""),
+    //   },
+    //   "pathToContext": reqbody['ci_config']['pipelines'][0]? reqbody['ci_config']['pipelines'][0]['build']['context_path']: "",
+    //   "pathToDockerfile": reqbody['ci_config']['pipelines'][0]? reqbody['ci_config']['pipelines'][0]['build']['dockerfile_path']: "",
+    //   "registry" : {
+    //     "url" : reqbody['ci_config']['pipelines'][0]? reqbody['ci_config']['pipelines'][0]['contaier_registry']['image']: "",
+    //     "imageTag" : date.getFullYear() + ('0' + (date.getMonth() + 1)).slice(-2) + ('0' + date.getDate()).slice(-2) + '.' + ('0' + date.getHours()).slice(-2) + ('0' + date.getMinutes()).slice(-2) + ('0' + date.getSeconds()).slice(-2),
+    //   }
+    // };
    
     // reqbody['deploy'] = {
     //   "enviroments" : {}
