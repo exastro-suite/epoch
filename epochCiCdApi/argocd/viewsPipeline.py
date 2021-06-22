@@ -86,7 +86,7 @@ def post(request):
             # ci_configのenvironmentsからgit urlを取得(検索)
             gitUrl = ""
             for ci_env in request_ci_env:
-                if ci_env["environment_id"] = env["environment_id"]:
+                if ci_env["environment_id"] == env["environment_id"]:
                     gitUrl = ci_env["git_url"]
                     break
             
@@ -193,7 +193,7 @@ def get(request):
             # ci_configのenvironmentsからgit urlを取得(検索)
             gitUrl = ""
             for ci_env in request_ci_env:
-                if ci_env["environment_id"] = env["environment_id"]:
+                if ci_env["environment_id"] == env["environment_id"]:
                     gitUrl = ci_env["git_url"]
                     break
 
