@@ -54,7 +54,7 @@ def post(request):
             output_data.append(output["output"])
         else:
             # エラーの場合は、そのまま返す
-            return JsonResponse(output)
+            return JsonResponse(output, status=500)
 
         # Pipelineの設定
         output = postPipeline(request)
@@ -62,7 +62,7 @@ def post(request):
             output_data.append(output["output"])
         else:
             # エラーの場合は、そのまま返す
-            return JsonResponse(output)
+            return JsonResponse(output, status=500)
 
         # Triggerの設定
         output = postTrigger(request)
@@ -70,13 +70,13 @@ def post(request):
             output_data.append(output["output"])
         else:
             # エラーの場合は、そのまま返す
-            return JsonResponse(output)
+            return JsonResponse(output, status=500)
 
         response = {
             "result":"201",
             "output" : output_data,
         }
-        return JsonResponse(response)
+        return JsonResponse(response, status=200)
 
     except Exception as e:
         logger.debug (e)
@@ -87,11 +87,13 @@ def post(request):
             "output": e.args,
             "traceback": traceback.format_exc(),
         }
-        return JsonResponse(response)
+        return JsonResponse(response, status=500)
 
 @csrf_exempt    
 def postCommon(request):
     try:
+
+        logger.debug("CALL postCommon")
 
         # namespace定義
         name = "epoch-tekton-pipelines"
@@ -113,10 +115,9 @@ def postCommon(request):
             return JsonResponse(response)
 
         # 引数で指定されたCD環境を取得
-        logger.debug (request.body)
-        request_json = json.loads(request.body)
-        #print (request_json)
-        request_ci_config = request_json["ci_config"]
+        request_ci_config = json.loads(request.body)
+        #print (request_ci_config)
+        request_ci_config = request_ci_config["ci_config"]
 
         templates_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource/templates/tekton-common"
         resource_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource/conv/tekton-common"
@@ -176,11 +177,12 @@ def postCommon(request):
 def postPipeline(request):
     try:
 
+        logger.debug("CALL postPipeline")
+
         # 引数で指定されたCD環境を取得
-        print (request.body)
-        request_json = json.loads(request.body)
-        #print (request_json)
-        request_ci_config = request_json["ci_config"]
+        request_ci_config = json.loads(request.body)
+        #print (request_ci_config)
+        request_ci_config = request_ci_config["ci_config"]
 
         templates_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource/templates/tekton-pipeline"
         resource_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource/conv/tekton-pipeline"
@@ -240,11 +242,12 @@ def postPipeline(request):
 def postTrigger(request):
     try:
 
+        logger.debug("CALL postTrigger")
+
         # 引数で指定されたCD環境を取得
-        logger.debug (request.body)
-        request_json = json.loads(request.body)
-        #print (request_json)
-        request_ci_config = request_json["ci_config"]
+        request_ci_config = json.loads(request.body)
+        #print (request_ci_config)
+        request_ci_config = request_ci_config["ci_config"]
 
         templates_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource/templates/tekton-trigger"
         resource_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource/conv/tekton-trigger"
@@ -311,7 +314,7 @@ def conv(template_yaml, dest_yaml, json_ci_config):
         data_lines = f.read()
 
     # アプリケーションコードは１つのみ有効(複数対応待ち)
-    json_pipelines = json_ci_config["pipelines"]["0"]
+    json_pipelines = json_ci_config["pipelines"][0]
 
     # 文字列置換
     # data_lines = data_lines.replace("<__build_registry_imageTag__>", json_ci_config["registry"]["imageTag"])  # imageTagは自動化で不要
@@ -319,7 +322,7 @@ def conv(template_yaml, dest_yaml, json_ci_config):
     data_lines = data_lines.replace("<__build_pathToContext__>", json_pipelines["build"]["context_path"])
     data_lines = data_lines.replace("<__build_pathToDockerfile__>", json_pipelines["build"]["dockerfile_path"])
     data_lines = data_lines.replace("<__build_git_url__>", json_pipelines["git_repositry"]["url"])
-    data_lines = data_lines.replace("<__build_git_branch__>", json_pipelines["build"]["branch"])
+    data_lines = data_lines.replace("<__build_git_branch__>", ",".join(json_pipelines["build"]["branch"]))
 
     data_lines = data_lines.replace("<__http_proxy__>", os.environ['EPOCH_HTTP_PROXY'])
     data_lines = data_lines.replace("<__https_proxy__>", os.environ['EPOCH_HTTPS_PROXY'])

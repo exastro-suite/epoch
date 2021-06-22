@@ -60,7 +60,10 @@ def post(request):
         # パイプライン数分繰り返し
         for pipeline in request_ci_confg["pipelines"]:
             gitRepos = pipeline["git_repositry"]["url"].lstrip("https://github.com/").rstrip(".git")
-            webHooksUrl = pipeline["webhooks_url"]
+            logger.debug ("git_repos:{}".format(gitRepos))
+            
+            webHooksUrl = "{}:{}/".format(pipeline["webhooks_url"], os.environ["EPOCH_WEBHOOK_PORT"])
+            logger.debug ("webhooks_url:{}".format(webHooksUrl))
             token = request_ci_confg["pipelines_common"]["git_repositry"]["token"]
 
             # GitHubへPOST送信
@@ -82,18 +85,21 @@ def post(request):
                 }
             })
 
+            logger.debug ("webhooks set url:{}".format(github_webhook_base_url + gitRepos + github_webhook_base_hooks))
             # hooksのPOST送信
             request_response = requests.post( github_webhook_base_url + gitRepos + github_webhook_base_hooks, headers=post_headers, data=post_data)
 
+            logger.debug ("webhooks set complete:{}".format(request_response.text))
             output += "{" + request_response.text + "},"
 
         response = {
             "result":"201",
             "output": output,
         }
-        return JsonResponse(response)
+        return JsonResponse(response, status=200)
 
     except Exception as e:
+        logger.debug (e)
         response = {
             "result": e.returncode,
             "returncode": "0801",
@@ -101,7 +107,7 @@ def post(request):
             "output": e.args,
             "traceback": traceback.format_exc(),
         }
-        return JsonResponse(response)
+        return JsonResponse(response, status=500)
 
 @csrf_exempt    
 def get(request):
