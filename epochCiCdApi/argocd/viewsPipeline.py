@@ -47,10 +47,10 @@ def post(request):
         print (request.body)
         request_json = json.loads(request.body)
         #print (request_json)
-        request_workspace = request_json["workspace"]
-        gitUsername = request_workspace["manifest"]["git"]["username"]
-        gitPassword = request_workspace["manifest"]["git"]["password"]
-        request_deploy = request_json["deploy"]
+        request_environments = request_json["ci_config"]["environments"]
+        gitUsername = request_environments["git_user"]
+        gitPassword = request_environments["git_password"]
+        request_deploy = request_json["cd_config"]["environments"]
 
         try:
             # argocdにloginする
@@ -140,9 +140,9 @@ def get(request):
         print (request.body)
         request_json = json.loads(request.body)
         #print (request_json)
-        request_workspace = request_json["workspace"]
-        gitUsername = request_workspace["manifest"]["git"]["username"]
-        gitPassword = request_workspace["manifest"]["git"]["password"]
+        request_environments = request_json["ci_config"]["environments"]
+        gitUsername = request_environments["git_user"]
+        gitPassword = request_environments["git_password"]
         request_deploy = request_json["deploy"]
 
         try:
