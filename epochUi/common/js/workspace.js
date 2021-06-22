@@ -1973,7 +1973,7 @@ const cdRunning = function(){
       reqbody = {};
 
       // 旧形式の付与
-      reqbody['clusterInfo'] = workspace_api_conf['parameter']['clusterInfo'];
+      // reqbody['clusterInfo'] = workspace_api_conf['parameter']['clusterInfo'];
       reqbody['operationId'] = workspace_api_conf['parameter']['operationId'];
       reqbody['conductorClassNo'] = workspace_api_conf['parameter']['conductorClassNo'];
       reqbody['preserveDatetime'] = workspace_api_conf['parameter']['preserveDatetime'];
@@ -2569,13 +2569,13 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
     //  ※現時点では保留※
   
     // 旧形式の付与
-    reqbody['clusterInfo'] = workspace_api_conf['parameter']['clusterInfo'];
+    // reqbody['clusterInfo'] = workspace_api_conf['parameter']['clusterInfo'];
     reqbody['workspace'] = {};
     reqbody['workspace']['registry'] = {
         "username": (wsDataJSON['registry-service']['registry-service-account-user']? wsDataJSON['registry-service']['registry-service-account-user']: ""),
         "password": (wsDataJSON['registry-service']['registry-service-account-password']? wsDataJSON['registry-service']['registry-service-account-password']: ""),
     };
-    reqbody['workspace']['manifest'] = workspace_api_conf['parameter']['manifest'];
+    // reqbody['workspace']['manifest'] = workspace_api_conf['parameter']['manifest'];
 
 
     reqbody['workspace']['manifest-ita'] = [];
