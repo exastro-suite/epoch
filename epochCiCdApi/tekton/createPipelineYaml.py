@@ -42,7 +42,6 @@ def post(request):
         print (request.body)
         request_json = json.loads(request.body)
         print (request_json)
-        request_build = request_json["build"]
 
         templates_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource/templates/tekton-pipeline"
         resource_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource/conv/tekton-pipeline"
