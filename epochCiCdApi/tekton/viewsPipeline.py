@@ -20,6 +20,8 @@ import subprocess
 import traceback
 import os
 import shutil
+import logging
+
 from kubernetes import client, config
 
 from django.shortcuts import render
@@ -28,8 +30,13 @@ from django.http.response import JsonResponse
 
 from django.views.decorators.csrf import csrf_exempt
 
+logger = logging.getLogger('apilog')
+
 @csrf_exempt
 def index(request):
+
+    logger.debug ("CALL tekton.pipeline : {}".format(request.method))
+
     if request.method == 'POST':
         return post(request)
     else:
@@ -72,7 +79,7 @@ def post(request):
         return JsonResponse(response)
 
     except Exception as e:
-        print (e)
+        logger.debug (e)
         response = {
             "result":"500",
             "returncode": "0101",
@@ -106,7 +113,7 @@ def postCommon(request):
             return JsonResponse(response)
 
         # 引数で指定されたCD環境を取得
-        print (request.body)
+        logger.debug (request.body)
         request_json = json.loads(request.body)
         #print (request_json)
         request_ci_config = request_json["ci_config"]
@@ -155,7 +162,7 @@ def postCommon(request):
         return (response)
 
     except Exception as e:
-        print (e)
+        logger.debug (e)
         response = {
             "result":"500",
             "returncode": "0106",
@@ -219,7 +226,7 @@ def postPipeline(request):
         return (response)
 
     except Exception as e:
-        print (e)
+        logger.debug (e)
         response = {
             "result":"500",
             "returncode": "0102",
@@ -234,7 +241,7 @@ def postTrigger(request):
     try:
 
         # 引数で指定されたCD環境を取得
-        print (request.body)
+        logger.debug (request.body)
         request_json = json.loads(request.body)
         #print (request_json)
         request_ci_config = request_json["ci_config"]
@@ -283,7 +290,7 @@ def postTrigger(request):
         return (response)
 
     except Exception as e:
-        print (e)
+        logger.debug (e)
         response = {
             "result":"500",
             "returncode": "0104",
@@ -341,12 +348,12 @@ def getNamespace(name):
 
         # namespaceの情報取得
         ret = v1.read_namespace(name=name)
-        print("ret: %s" % (ret))
+        logger.debug("ret: %s" % (ret))
 
         return ret 
 
     except Exception as e:
-        print("Except: %s" % (e))
+        logger.debug("Except: %s" % (e))
         return None 
       
 # namespaceの作成
@@ -370,11 +377,11 @@ def createNamespace(name):
         #ret = v1.create_namespace(body=body, pretty=pretty, dry_run=dry_run, field_manager=field_manager)
         ret = v1.create_namespace(body=body)
 
-        print("ret: %s" % (ret))
+        logger.debug("ret: %s" % (ret))
 
         return ret 
 
     except Exception as e:
-        print("Except: %s" % (e))
+        logger.debug("Except: %s" % (e))
         return None 
      
