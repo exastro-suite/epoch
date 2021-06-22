@@ -2571,11 +2571,11 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
   
     // 旧形式の付与
     // reqbody['clusterInfo'] = workspace_api_conf['parameter']['clusterInfo'];
-    reqbody['workspace'] = {};
-    reqbody['workspace']['registry'] = {
-        "username": (wsDataJSON['registry-service']['registry-service-account-user']? wsDataJSON['registry-service']['registry-service-account-user']: ""),
-        "password": (wsDataJSON['registry-service']['registry-service-account-password']? wsDataJSON['registry-service']['registry-service-account-password']: ""),
-    };
+    // reqbody['workspace'] = {};
+    // reqbody['workspace']['registry'] = {
+    //     "username": (wsDataJSON['registry-service']['registry-service-account-user']? wsDataJSON['registry-service']['registry-service-account-user']: ""),
+    //     "password": (wsDataJSON['registry-service']['registry-service-account-password']? wsDataJSON['registry-service']['registry-service-account-password']: ""),
+    // };
     // reqbody['workspace']['manifest'] = workspace_api_conf['parameter']['manifest'];
 
 
