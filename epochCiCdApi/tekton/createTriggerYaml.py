@@ -42,8 +42,7 @@ def post(request):
         print (request.body)
         request_json = json.loads(request.body)
         print (request_json)
-        # 現在はアプリケーションコードのgitは１つのみ対応
-        request_pipeline = request_json["pipelines"][0]
+        request_ci_config = request_json["ci_config"]
 
         templates_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource/templates/tekton-trigger"
         resource_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource/conv/tekton-trigger"
@@ -60,7 +59,7 @@ def post(request):
         for yaml_name in yamls:
             conv(templates_dir + "/" + yaml_name,
                 resource_dir + "/" + yaml_name,
-                request_pipeline)
+                request_ci_config)
 
             try:
                 stdout = subprocess.check_output(["kubectl","apply","-f",resource_dir +  "/" + yaml_name],stderr=subprocess.STDOUT)
@@ -94,7 +93,7 @@ def post(request):
         return JsonResponse(response)
 
 @csrf_exempt    
-def conv(template_yaml, dest_yaml, json_build):
+def conv(template_yaml, dest_yaml, json_ci_config):
 
     # 実行yamlの保存
     shutil.copy(template_yaml, dest_yaml)
@@ -103,9 +102,12 @@ def conv(template_yaml, dest_yaml, json_build):
     with open(dest_yaml, encoding="utf-8") as f:
         data_lines = f.read()
 
+    # アプリケーションコードは１つのみ有効(複数対応待ち)
+    json_pipelines = json_ci_config["pipelines"]["0"]
+
     # 文字列置換
-    # data_lines = data_lines.replace("<__registry_imagetag__>", json_build["registry"]["imageTag"]) # imageTagは不要に
-    data_lines = data_lines.replace("<__registry_url__>", json_build["contaier_registry"]["image"])
+    # data_lines = data_lines.replace("<__registry_imagetag__>", json_ci_config["registry"]["imageTag"]) # imageTagは不要に
+    data_lines = data_lines.replace("<__registry_url__>", json_pipelines["contaier_registry"]["image"])
   
     # 同じファイル名で保存
     with open(dest_yaml, mode="w", encoding="utf-8") as f:
