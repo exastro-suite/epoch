@@ -1977,7 +1977,7 @@ const cdRunning = function(){
       reqbody['operationId'] = workspace_api_conf['parameter']['operationId'];
       reqbody['conductorClassNo'] = workspace_api_conf['parameter']['conductorClassNo'];
       reqbody['preserveDatetime'] = workspace_api_conf['parameter']['preserveDatetime'];
-      reqbody['itaInfo'] = workspace_api_conf['parameter']['itaInfo'];
+      // reqbody['itaInfo'] = workspace_api_conf['parameter']['itaInfo'];
 
       console.log("CALL : CD実行開始");
       api_param = {
@@ -2579,15 +2579,15 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
     // reqbody['workspace']['manifest'] = workspace_api_conf['parameter']['manifest'];
 
 
-    reqbody['workspace']['manifest-ita'] = [];
-    for(var env in wsDataJSON['environment']) {
-      var prmenv = {
-        'git_url'           : wsDataJSON['environment'][env][env + '-git-service-argo-repository-url'],
-        'git_user'          : wsDataJSON['git-service-argo']['git-service-argo-user'],
-        'git_password'      : wsDataJSON['git-service-argo']['git-service-argo-password'],
-      }
-      reqbody['workspace']['manifest-ita'][reqbody['workspace']['manifest-ita'].length] = prmenv;
-    }
+    // reqbody['workspace']['manifest-ita'] = [];
+    // for(var env in wsDataJSON['environment']) {
+    //   var prmenv = {
+    //     'git_url'           : wsDataJSON['environment'][env][env + '-git-service-argo-repository-url'],
+    //     'git_user'          : wsDataJSON['git-service-argo']['git-service-argo-user'],
+    //     'git_password'      : wsDataJSON['git-service-argo']['git-service-argo-password'],
+    //   }
+    //   reqbody['workspace']['manifest-ita'][reqbody['workspace']['manifest-ita'].length] = prmenv;
+    // }
     
 
     // reqbody['build'] = {

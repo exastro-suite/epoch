@@ -22,6 +22,7 @@ import traceback
 import os
 import base64
 import io
+import logging
 
 from django.shortcuts import render
 from django.http import HttpResponse
@@ -70,6 +71,8 @@ param_value_operation_name_prefix='CD実行:'
 
 ita_restapi_endpoint='http://' + ita_host + ':' + ita_port + '/default/menu/07_rest_api_ver1.php'
 
+logger = logging.getLogger('apilog')
+
 @csrf_exempt
 def index(request):
 #   sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
@@ -102,20 +105,20 @@ def post(request):
     #
     opelist_resp = requests.post(ita_restapi_endpoint + '?no=' + ite_menu_operation, headers=filter_headers)
     opelist_json = json.loads(opelist_resp.text)
-    print('---- Operation ----')
-    #print(opelist_resp.text.encode().decode('unicode-escape'))
-    print(opelist_resp.text)
+    logger.debug('---- Operation ----')
+    #logger.debug(opelist_resp.text.encode().decode('unicode-escape'))
+    logger.debug(opelist_resp.text)
 
     # 項目位置の取得
     column_indexes_opelist = column_indexes(column_names_opelist, opelist_json['resultdata']['CONTENTS']['BODY'][0])
-    print('---- Operation Index ----')
-    print(column_indexes_opelist)
+    logger.debug('---- Operation Index ----')
+    logger.debug(column_indexes_opelist)
 
     #
     # オペレーションの追加処理
     #
     opelist_edit = []
-    for idx_req, row_req in enumerate(json.loads(request.body)['workspace']['manifest-ita']):
+    for idx_req, row_req in enumerate(json.loads(request.body)['ci_config']['environments']):
         if search_opration(opelist_json['resultdata']['CONTENTS']['BODY'], column_indexes_opelist, row_req['git_url']) == -1:
             # オペレーションになければ、追加データを設定
             opelist_edit.append(
@@ -133,35 +136,35 @@ def post(request):
         #
         ope_add_resp = requests.post(ita_restapi_endpoint + '?no=' + ite_menu_operation, headers=edit_headers, data=json.dumps(opelist_edit))
 
-        print('---- ope_add_resp ----')
-        #print(ope_add_resp.text.encode().decode('unicode-escape'))
-        print(ope_add_resp.text)
+        logger.debug('---- ope_add_resp ----')
+        #logger.debug(ope_add_resp.text.encode().decode('unicode-escape'))
+        logger.debug(ope_add_resp.text)
 
         # 追加後再取得(オペレーションIDが決定する)
         opelist_resp = requests.post(ita_restapi_endpoint + '?no=' + ite_menu_operation, headers=filter_headers)        
         opelist_json = json.loads(opelist_resp.text)
-        print('---- Operation ----')
-        #print(opelist_resp.text.encode().decode('unicode-escape'))
+        logger.debug('---- Operation ----')
+        #logger.debug(opelist_resp.text.encode().decode('unicode-escape'))
 
     #
     # Git環境情報の取得
     #
     gitlist_resp = requests.post(ita_restapi_endpoint + '?no=' + ita_menu_gitenv_param, headers=filter_headers)
     gitlist_json = json.loads(gitlist_resp.text)
-    print('---- Git Environments ----')
-    #print(gitlist_resp.text.encode().decode('unicode-escape'))
-    print(gitlist_resp.text)
+    logger.debug('---- Git Environments ----')
+    #logger.debug(gitlist_resp.text.encode().decode('unicode-escape'))
+    logger.debug(gitlist_resp.text)
 
     # 項目位置の取得
     column_indexes_gitlist = column_indexes(column_names_gitlist, gitlist_json['resultdata']['CONTENTS']['BODY'][0])
-    print('---- Git Environments Index ----')
-    print(column_indexes_gitlist)
+    logger.debug('---- Git Environments Index ----')
+    logger.debug(column_indexes_gitlist)
 
     # Responseデータの初期化
     response = {"result":"200", "items":[]}
     # Git環境情報の追加・更新
     gitlist_edit = []
-    for idx_req, row_req in enumerate(json.loads(request.body)['workspace']['manifest-ita']):
+    for idx_req, row_req in enumerate(json.loads(request.body)['ci_config']['environments']):
         idx_git = search_gitlist(gitlist_json['resultdata']['CONTENTS']['BODY'], column_indexes_gitlist, row_req['git_url'])
         if idx_git == -1:
             # リストになければ、追加データを設定
@@ -216,15 +219,15 @@ def post(request):
                 }
             )
 
-    print('---- Git Environments Post ----')
-    #print(json.dumps(gitlist_edit).encode().decode('unicode-escape'))
-    print(json.dumps(gitlist_edit))
+    logger.debug('---- Git Environments Post ----')
+    #logger.debug(json.dumps(gitlist_edit).encode().decode('unicode-escape'))
+    logger.debug(json.dumps(gitlist_edit))
 
     gitlist_edit_resp = requests.post(ita_restapi_endpoint + '?no=' + ita_menu_gitenv_param, headers=edit_headers, data=json.dumps(gitlist_edit))
 
-    print('---- Git Environments Post Response ----')
-    #print(gitlist_edit_resp.text.encode().decode('unicode-escape'))
-    print(gitlist_edit_resp.text)
+    logger.debug('---- Git Environments Post Response ----')
+    #logger.debug(gitlist_edit_resp.text.encode().decode('unicode-escape'))
+    logger.debug(gitlist_edit_resp.text)
 
     return JsonResponse(response)
 
@@ -254,11 +257,11 @@ def search_opration(opelist, column_indexes, git_url):
             # 備考設定なしは無視
             continue
 
-        print('git_url:'+git_url)
-        print('row[column_indexes[remarks]]:'+row[column_indexes['remarks']])
+        logger.debug('git_url:'+git_url)
+        logger.debug('row[column_indexes[remarks]]:'+row[column_indexes['remarks']])
         if git_url == row[column_indexes['remarks']]:
             # 備考にgit_urlが含まれているとき
-            print('find:' + str(idx))
+            logger.debug('find:' + str(idx))
             return idx
 
     # 存在しないとき
