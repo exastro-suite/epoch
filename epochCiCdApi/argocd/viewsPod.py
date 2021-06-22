@@ -97,9 +97,10 @@ def post(request):
 
         print("argocd pod password reset")
 
-        # argo CDのパスワード
+        # argo CDのパスワード初期化
+        argoLogin = base64.b64encode((os.environ['EPOCH_ARGOCD_USER'] + '.' + os.environ['EPOCH_ARGOCD_PASSWORD']).encode())
         datenow = datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y-%m-%dT%H:%M:%S%z')
-        pdata ='{"stringData": { "admin.password": "' + os.environ['EPOCH_ARGOCD_LOGIN'] + '", "admin.passwordMtime": "\'' + datenow + '\'" }}'
+        pdata ='{"stringData": { "admin.password": "' + argoLogin + '", "admin.passwordMtime": "\'' + datenow + '\'" }}'
         stdout_cd = subprocess.check_output(["kubectl","-n",name,"patch","secret","argocd-secret","-p",pdata],stderr=subprocess.STDOUT)
 
         output += "argocd_pwchg" + "{" + stdout_cd.decode('utf-8') + "},"
