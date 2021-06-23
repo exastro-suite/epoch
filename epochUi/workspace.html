@@ -226,8 +226,6 @@
           <!--<li class="workspace-tab-item"><a href="#" class="workspace-tab-link">一覧に戻る</a></li>-->
           <li class="workspace-tab-item"><a href="#setting" class="workspace-tab-link current">ワークスペース設定</a></li>
           <li class="workspace-tab-item"><a href="#running" class="workspace-tab-link">CI/CD実行</a></li>
-
-          <li class="workspace-tab-item"><a href="#" id="load-workspace-button" style="color:blue">【テスト用】登録済ワークスペース読込</a></li>
         </ul>
         <ul class="workspace-status-list">
           <li class="workspace-status-item workspace-mode-running" data-button="kubernetesManifestTemplate">
@@ -736,6 +734,9 @@
         <ul class="workspace-footer-menu-list">
           <li class="workspace-footer-menu-item workspace-mode-setting">
             <button id="apply-workspace-button" class="epoch-button workspace-footer-menu-button positive">ワークスペース作成</button>
+          </li>
+          <li class="workspace-footer-menu-item workspace-mode-setting">
+            <button id="reset-button" class="epoch-button workspace-footer-menu-button positive">リセット</button>
           </li>
         </ul>
       </div>
