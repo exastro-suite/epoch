@@ -60,7 +60,7 @@ spec:
     image: $(params.BUILDER_IMAGE)
     env:
     - name: DOCKER_CONFIG
-      value: /tekton/home/.docker
+      value: /kaniko/.docker
     - name: HTTP_PROXY
       value: "<__http_proxy__>"
     - name: http_proxy
