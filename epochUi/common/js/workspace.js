@@ -2446,6 +2446,9 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
     })}).then(() => {
       // ボタン名変更
       $('#apply-workspace-button').html('ワークスペース更新');
+      // CI/CD実行タブを表示
+      document.getElementById("cicd-tab-item").style.visibility = "visible";
+      
       workspaceImageUpdate();
       alert("ワークスペース情報を読み込みました");
       console.log('Complete !!');
