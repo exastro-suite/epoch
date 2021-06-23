@@ -2482,7 +2482,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       //
       // ワークスペース情報登録API
       //
-      $('#progress_message').html('STEP 1/5 : ワークスペース情報を登録しています');
+      $('#progress_message').html('STEP 1/4 : ワークスペース情報を登録しています');
   
       console.log("CALL : ワークスペース情報登録");
       if (workspace_id == null) {
@@ -2518,9 +2518,9 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       //  ワークスペース作成API
       //
       if(workspace_id == null) {
-        $('#progress_message').html('STEP 2/5 : ワークスペースを作成しています');
+        $('#progress_message').html('STEP 2/4 : ワークスペースを作成しています');
       } else {
-        $('#progress_message').html('STEP 2/5 : ワークスペースを更新しています');
+        $('#progress_message').html('STEP 2/4 : ワークスペースを更新しています');
       }
       console.log("CALL : ワークスペース作成");
   
@@ -2554,9 +2554,9 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       // パイプライン作成API
       //
       if(workspace_id == null) {
-        $('#progress_message').html('STEP 3/5 :   パイプラインを作成しています');
+        $('#progress_message').html('STEP 3/4 :   パイプラインを作成しています');
       } else {
-        $('#progress_message').html('STEP 3/5 :   パイプラインを更新しています');
+        $('#progress_message').html('STEP 3/4 :   パイプラインを更新しています');
       }
       console.log("CALL : パイプライン作成");
   
@@ -2587,7 +2587,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       //
       // パイプラインパラメータ設定API
       //
-      $('#progress_message').html('STEP 4/5 :   パイプラインを設定しています');
+      $('#progress_message').html('STEP 4/4 :   パイプラインを設定しています');
       console.log("CALL : パイプラインパラメータ設定");
   
       $.ajax({
@@ -2817,18 +2817,15 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
     console.log('---- reqbody ----');
     console.log(JSON.stringify(reqbody));
   
-    created_workspace_id = null;
-  
     // API呼び出し
     new Promise(function(resolve, reject) {
       // 実行中ダイアログ表示
-      $('#modal-progress-container').css('display','flex');
+      // $('#modal-progress-container').css('display','flex');
       $('#progress-message-ok').prop("disabled", true);
 
       //
       // マニフェストパラメータ設定API
       //
-      $('#progress_message').html('STEP 5/5 :   マニフェストパラメータを設定しています');
       console.log("CALL : マニフェストパラメータ設定");
 
       $.ajax({
@@ -2854,26 +2851,13 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       });
 
     }).then(() => {
-      // 実行中ダイアログ表示
-      if(workspace_id == null) {
-        $('#progress_message').html('COMPLETE :  ワークスペースを作成しました（ワークスペースID:'+created_workspace_id+'）');
-        workspace_id = created_workspace_id;
-      } else {
-        $('#progress_message').html('COMPLETE :  ワークスペースを更新しました（ワークスペースID:'+workspace_id+'）');
-      }
-      $('#progress-message-ok').prop("disabled", false);
+
       console.log('Complete !!');
+
     }).catch(() => {
       // 実行中ダイアログ表示
-      
-      if(created_workspace_id != null) {
-        $('#progress_message').html('ERROR :  ワークスペースの作成に失敗しました（ワークスペースID:'+created_workspace_id+'）');
-        workspace_id = created_workspace_id;
-      } else if(workspace_id == null) {
-        $('#progress_message').html('ERROR :  ワークスペースの作成に失敗しました');
-      } else {
-        $('#progress_message').html('ERROR :  ワークスペースの更新に失敗しました（ワークスペースID:'+workspace_id+'）');
-      }
+      $('#modal-progress-container').css('display','flex');
+      $('#progress_message').html('ERROR :  マニフェストパラメータの設定に失敗しました');
   
       $('#progress-message-ok').prop("disabled", false);
       console.log('Fail !!');
