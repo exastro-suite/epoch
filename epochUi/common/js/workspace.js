@@ -494,9 +494,9 @@ const wsModalJSON = {
             },
             'environmentURL': {
               'type': 'input',
-              'title': 'Kubernetes API Serer URL',
+              'title': 'Kubernetes API Server URL',
               'name': 'environment-url',
-              'placeholder': '実行環境のKubernetes API Serer URLを入力してください'
+              'placeholder': '実行環境のKubernetes API Server URLを入力してください'
             },
             'environmentNamespace': {
               'type': 'input',
@@ -556,21 +556,21 @@ const wsModalJSON = {
         'item': {
           'gitServiceArgoAccountUser': {
             'type': 'input',
-            'title': 'Gitリポジトリ(ソース)　ユーザ名',
+            'title': 'Gitリポジトリ(Manifest)　ユーザ名',
             'name': 'git-service-argo-user',
-            'placeholder': 'Gitリポジトリ(ソース)　ユーザ名を入力してください'
+            'placeholder': 'Gitリポジトリ(Manifest)　ユーザ名を入力してください'
           },
           'gitServiceArgoAccountPassword': {
             'type': 'password',
-            'title': 'Gitリポジトリ(ソース)　パスワード',
+            'title': 'Gitリポジトリ(Manifest)　パスワード',
             'name': 'git-service-argo-password',
-            'placeholder': 'Gitリポジトリ(ソース)　パスワードを入力してください'
+            'placeholder': 'Gitリポジトリ(Manifest)　パスワードを入力してください'
           },
           'gitServiceArgoAccountToken': {
             'type': 'password',
-            'title': 'Gitリポジトリ(ソース)　トークン',
+            'title': 'Gitリポジトリ(Manifest)　トークン',
             'name': 'git-service-argo-token',
-            'placeholder': 'Gitリポジトリ(ソース)　トークンを入力してください'
+            'placeholder': 'Gitリポジトリ(Manifest)　トークンを入力してください'
           }
         }
       },
@@ -587,11 +587,11 @@ const wsModalJSON = {
           'item' : {
             'gitServiceArgoRepositorySource': {
               'type': 'input',
-              'title': 'Gitリポジトリ(ソース)　URL',
+              'title': 'Gitリポジトリ(Manifest)　URL',
               'name': 'git-service-argo-repository-url',
               'class': 'tab-name-link',
               'regexp': '^https:\/\/github.com\/[^\/]+\/([^\/]+).git$',
-              'placeholder': 'Gitリポジトリ(ソース)　URLを入力してください'
+              'placeholder': 'Gitリポジトリ(Manifest)　URLを入力してください'
             }
           }
         }
