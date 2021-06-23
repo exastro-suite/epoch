@@ -176,7 +176,7 @@ def ita_registration(request, workspace_id):
 
         # Resource API呼び出し
         response = requests.post( apiurl, headers=post_headers, data=send_data)
-        prlogger.debugint("CALL manifestTemplates : status:{}".format(response.status_code))
+        logger.debug("CALL manifestTemplates : status:{}".format(response.status_code))
 
         # 正常時はmanifest情報取得した内容を返却
         if response.status_code == 200:
