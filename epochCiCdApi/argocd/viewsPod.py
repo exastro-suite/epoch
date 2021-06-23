@@ -28,6 +28,7 @@ import logging
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.http.response import JsonResponse
+from django.conf import settings
 
 from django.views.decorators.csrf import csrf_exempt
 from kubernetes import client, config
@@ -107,7 +108,7 @@ def post(request):
 
         # argo CDのパスワード初期化
         salt = bcrypt.gensalt(rounds=10, prefix=b'2a')
-        password = b'password'
+        password = settings.ARGO_PASSWORD.encode("ascii")
         argoLogin = bcrypt.hashpw(password, salt).decode("ascii")
         logger.debug("argocd pod password : {}".format(argoLogin))
 

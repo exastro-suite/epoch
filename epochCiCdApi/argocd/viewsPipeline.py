@@ -53,8 +53,6 @@ def post(request):
         request_json = json.loads(request.body)
         #print (request_json)
         request_ci_env = request_json["ci_config"]["environments"]
-        gitUsername = request_ci_env["git_user"]
-        gitPassword = request_ci_env["git_password"]
         request_cd_env = request_json["cd_config"]["environments"]
 
         try:
@@ -88,6 +86,8 @@ def post(request):
             for ci_env in request_ci_env:
                 if ci_env["environment_id"] == env["environment_id"]:
                     gitUrl = ci_env["git_url"]
+                    gitUsername = ci_env["git_user"]
+                    gitPassword = ci_env["git_password"]
                     break
             
             try:
@@ -157,8 +157,6 @@ def get(request):
         request_json = json.loads(request.body)
         #print (request_json)
         request_ci_env = request_json["ci_config"]["environments"]
-        gitUsername = request_ci_env["git_user"]
-        gitPassword = request_ci_env["git_password"]
         request_cd_env = request_json["cd_config"]["environments"]
 
         try:
