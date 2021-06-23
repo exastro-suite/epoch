@@ -68,11 +68,11 @@ stringData:
   config.json: |-
     {
       "auths": {
-        "http://index.docker.io/v1/" : {
+        "https://index.docker.io/v1/" : {
           "auth": "<__build_registry_auth__>"
         },
         "http://index.docker.io/v1/" : {
-          "auth": "ZXBvY2hkZW1vOjIwMTEwOTAza3lheQ=="
+          "auth": "<__build_registry_auth__>"
         }
       }
     }
