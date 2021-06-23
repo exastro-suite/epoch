@@ -49,9 +49,9 @@ def post(request):
 
         resource_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource"
 
-        stdout_pl = subprocess.check_output(["kubectl","apply","-f",(resource_dir + "/pipeline-release.yaml")],stderr=subprocess.STDOUT)
-        stdout_tg = subprocess.check_output(["kubectl","apply","-f",(resource_dir + "/trigger-release.yaml")],stderr=subprocess.STDOUT)
-        stdout_db = subprocess.check_output(["kubectl","apply","-f",(resource_dir + "/dashbord-release.yaml")],stderr=subprocess.STDOUT)
+        stdout_pl = subprocess.check_output(["kubectl","apply","-f",(resource_dir + "/tekton_pipeline-release.yaml")],stderr=subprocess.STDOUT)
+        stdout_tg = subprocess.check_output(["kubectl","apply","-f",(resource_dir + "/tekton_trigger-release.yaml")],stderr=subprocess.STDOUT)
+        stdout_db = subprocess.check_output(["kubectl","apply","-f",(resource_dir + "/tekton_dashbord-release.yaml")],stderr=subprocess.STDOUT)
 
         response = {
             "result":"OK",

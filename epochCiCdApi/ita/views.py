@@ -62,7 +62,7 @@ def post(request):
 
         output = ""
         print("ita-pod create:" + output)
-        stdout_ita = subprocess.check_output(["kubectl","apply","-f",(resource_dir + "/ITA.yaml"),"-n",name],stderr=subprocess.STDOUT)
+        stdout_ita = subprocess.check_output(["kubectl","apply","-f",(resource_dir + "/ita_install.yaml"),"-n",name],stderr=subprocess.STDOUT)
 
         output += "ita_pod create" + "{" + stdout_ita.decode('utf-8') + "},"
 
