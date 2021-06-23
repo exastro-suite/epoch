@@ -51,7 +51,6 @@ def post(request):
         # 引数で指定されたCD環境を取得
         logger.debug (request.body)
         request_json = json.loads(request.body)
-        #print (request_json)
         request_ci_env = request_json["ci_config"]["environments"]
         request_cd_env = request_json["cd_config"]["environments"]
 
@@ -70,18 +69,12 @@ def post(request):
                 "traceback": traceback.format_exc(),
             }
             logger.debug (response)
-            return JsonResponse(response)
+            return JsonResponse(response, status=500)
 
         # 環境群数分処理を実行
         output = ""
-        # keyList = request_cd_env["enviroments"].keys()
-        # for key in keyList:
         for env in request_cd_env:
-            # env_name = key
             env_name = env["name"]
-            # env_value = request_cd_env["enviroments"][key]
-            # gitUrl = env_value["git"]["url"]
-            # ci_configのenvironmentsからgit urlを取得(検索)
             gitUrl = ""
             for ci_env in request_ci_env:
                 if ci_env["environment_id"] == env["environment_id"]:
@@ -106,7 +99,7 @@ def post(request):
                     "traceback": traceback.format_exc(),
                 }
                 logger.debug (response)
-                return JsonResponse(response)
+                return JsonResponse(response, status=500)
 
         response = {
             "result":"201",
@@ -116,7 +109,7 @@ def post(request):
             ],
         }
         logger.debug (response)
-        return JsonResponse(response)
+        return JsonResponse(response, status=200)
 
     except Exception as e:
         response = {
@@ -126,7 +119,7 @@ def post(request):
             "output": e.args,
             "traceback": traceback.format_exc(),
         }
-        return JsonResponse(response)
+        return JsonResponse(response, status=500)
 
 # subprocess.check_outputの実行
 # 戻り値
@@ -155,7 +148,6 @@ def get(request):
         # 引数で指定されたCD環境を取得
         logger.debug (request.body)
         request_json = json.loads(request.body)
-        #print (request_json)
         request_ci_env = request_json["ci_config"]["environments"]
         request_cd_env = request_json["cd_config"]["environments"]
 
@@ -177,18 +169,8 @@ def get(request):
 
         # 環境群数分処理を実行
         output = ""
-        # keyList = request_cd_env["enviroments"].keys()
-        # for key in keyList:
-        #     print ("KEY:" + key)
-        #     env_name = key
-        #     env_value = request_cd_env["enviroments"][key]
-        #     gitUrl = env_value["git"]["url"]
         for env in request_cd_env:
-            # env_name = key
             env_name = env["name"]
-            # env_value = request_cd_env["enviroments"][key]
-            # gitUrl = env_value["git"]["url"]
-            # ci_configのenvironmentsからgit urlを取得(検索)
             gitUrl = ""
             for ci_env in request_ci_env:
                 if ci_env["environment_id"] == env["environment_id"]:
