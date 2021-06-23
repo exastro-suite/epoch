@@ -2316,7 +2316,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
   var workspace_id = null;
   
   //$(document).ready(function(){
-  $('#load-workspace-button').on('click', function(){
+  $('#reset-button').on('click', function(){
   
     // 試験用実装
     {
