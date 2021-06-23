@@ -21,6 +21,7 @@ import traceback
 import os
 import shutil
 import logging
+import base64
 
 from kubernetes import client, config
 
@@ -310,8 +311,18 @@ def conv(template_yaml, dest_yaml, json_ci_config):
     with open(dest_yaml, encoding="utf-8") as f:
         data_lines = f.read()
 
+    # pipelines共通設定
+    json_pipelines_common = json_ci_config["pipelines_common"]
+
+    # レジストリの認証情報("user:password"をbase64でencode化)
+    registry_auth = base64.b64encode((json_pipelines_common["container_registry"]["user"] + ':' + json_pipelines_common["container_registry"]["password"]).encode())
+
+    # 文字列置換
+    data_lines = data_lines.replace("<__build_registry_auth__>", str(registry_auth.decode('utf-8')))
+
+    # pipelines設定
     # アプリケーションコードは１つのみ有効(複数対応待ち)
-    json_pipelines = json_ci_config["pipelines"]["0"]
+    json_pipelines = json_ci_config["pipelines"][0]
 
     # 文字列置換
     # data_lines = data_lines.replace("<__build_registry_imageTag__>", json_ci_config["registry"]["imageTag"])  # imageTagは自動化で不要
@@ -319,7 +330,7 @@ def conv(template_yaml, dest_yaml, json_ci_config):
     data_lines = data_lines.replace("<__build_pathToContext__>", json_pipelines["build"]["context_path"])
     data_lines = data_lines.replace("<__build_pathToDockerfile__>", json_pipelines["build"]["dockerfile_path"])
     data_lines = data_lines.replace("<__build_git_url__>", json_pipelines["git_repositry"]["url"])
-    data_lines = data_lines.replace("<__build_git_branch__>", json_pipelines["build"]["branch"])
+    data_lines = data_lines.replace("<__build_git_branch__>", json_pipelines["build"]["branch"][0])
 
     data_lines = data_lines.replace("<__http_proxy__>", os.environ['EPOCH_HTTP_PROXY'])
     data_lines = data_lines.replace("<__https_proxy__>", os.environ['EPOCH_HTTPS_PROXY'])

@@ -46,6 +46,10 @@ spec:
     default: gcr.io/kaniko-project/executor
   workspaces:
   - name: source
+  - name: dockerconfig
+    description: Includes a docker `config.json`
+    optional: true
+    mountPath: /kaniko/.docker
   results:
   - name: IMAGE-DIGEST
     description: Digest of the image just built.
