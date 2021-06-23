@@ -76,9 +76,8 @@ def post(request):
         output = ""
 
         logger.debug("argocd pod kubectl apply")
-
-        #stdout_ns = subprocess.check_output(["kubectl","create","namespace","argocd"],stderr=subprocess.STDOUT)
-        stdout_cd = subprocess.check_output(["kubectl","apply","-n",name,"-f",(resource_dir + "/install.yaml")],stderr=subprocess.STDOUT)
+        # argocd pod create
+        stdout_cd = subprocess.check_output(["kubectl","apply","-n",name,"-f",(resource_dir + "/argocd_install.yaml")],stderr=subprocess.STDOUT)
 
         output += "argocd" + "{" + stdout_cd.decode('utf-8') + "},"
 
@@ -103,6 +102,15 @@ def post(request):
                 stdout_cd = subprocess.check_output(["kubectl","set","env",deployment_name,"-n",name,env_name],stderr=subprocess.STDOUT)
 
                 output += deployment_name + "." + env_name + "{" + stdout_cd.decode('utf-8') + "},"
+
+
+        logger.debug("argocd rolesetting kubectl apply")
+        # role bindingの再設定 (ns:epoch-workspace用)
+        stdout_cd = subprocess.check_output(["kubectl","apply","-n",name,"-f",(resource_dir + "/argocd_rolebinding.yaml")],stderr=subprocess.STDOUT)
+
+        output += "argocd" + "{" + stdout_cd.decode('utf-8') + "},"
+
+        logger.debug("argocd rolesetting complete")
 
         logger.debug("argocd pod password reset")
 
