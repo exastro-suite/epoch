@@ -2326,8 +2326,10 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
   //$(document).ready(function(){
   // リセットボタン処理
   $('#reset-button').on('click', function(){
-    // ワークスペース情報の読み込み
-    getWorksapce();
+    // 確認メッセージ
+    if (confirm("入力値をリセットしてもよろしいですか？"))
+      // ワークスペース情報の読み込み
+      getWorksapce();
   });
 
   // ワークスペース情報の読み込み
