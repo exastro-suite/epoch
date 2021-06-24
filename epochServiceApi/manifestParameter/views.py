@@ -57,7 +57,7 @@ def post(request):
         output = []
         # Manifestパラメータ設定(ITA)
         request_response = requests.post( apiInfo + "ita/manifestParameter", headers=post_headers, data=post_data)
-        logger.debug("ita/manifestParameter:response:" + request_response.text)
+        logger.debug("ita/manifestParameter:response:" + request_response.text.encode().decode('unicode-escape'))
         ret = json.loads(request_response.text)
         #ret = request_response.text
         logger.debug(ret["result"])
