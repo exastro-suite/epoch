@@ -76,6 +76,7 @@ logger = logging.getLogger('apilog')
 @csrf_exempt
 def index(request):
 #   sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    logger.debug("CALL " + __name__ + ":{}".format(request.method))
 
     if request.method == 'POST':
         return post(request)
