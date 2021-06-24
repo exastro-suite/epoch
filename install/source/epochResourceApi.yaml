@@ -48,7 +48,7 @@ spec:
           name: epoch-resource-conf
       containers:
       - name: epoch-resource-api
-        image: epochdemo/epochresourceapi:0.1.0_20210623_1500
+        image: exastro/epochresourceapi:0.1.0_20210624_1200
         env:
         - name: CONFIG_API_WORKSPACE_PATH
           value: "/etc/epoch/epochResoure/api_workspace.conf"
