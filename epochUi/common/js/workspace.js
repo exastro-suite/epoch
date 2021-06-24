@@ -2315,14 +2315,25 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
   // API呼び出し関連
   //-----------------------------------------------------------------------
   var workspace_id = null;
-  
+
+  // window onloadイベント
+  window.onload = function()
+  {
+    // ワークスペース情報の読み込み
+    getWorksapce();
+  }
+
   //$(document).ready(function(){
+  // リセットボタン処理
   $('#reset-button').on('click', function(){
-  
-    // 試験用実装
-    {
-      workspace_id = parseInt(window.prompt('読み込むワークスペースIDを指定してください', workspace_api_conf.test.default_workspace_id));
-    }
+    // ワークスペース情報の読み込み
+    getWorksapce();
+  });
+
+  // ワークスペース情報の読み込み
+  function getWorksapce(){
+
+    workspace_id = 1;
   
     new Promise((resolve, reject) => {
   
@@ -2451,13 +2462,13 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       document.getElementById("cicd-tab-item").style.visibility = "visible";
       
       workspaceImageUpdate();
-      alert("ワークスペース情報を読み込みました");
+      // alert("ワークスペース情報を読み込みました");
       console.log('Complete !!');
     }).catch(() => {
-      alert("ワークスペース情報を読み込みに失敗しました");
+      // alert("ワークスペース情報を読み込みに失敗しました");
       console.log('Fail !!');
     });
-  });
+  }
   
   $('#apply-workspace-button').on('click',apply_workspace);
   function apply_workspace() {
@@ -2506,6 +2517,8 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         console.log("--- data ----");
         console.log(JSON.stringify(data));
         created_workspace_id = data['rows'][0]['workspace_id'];
+        workspace_id = created_workspace_id;
+
         // 成功
         resolve();
       }).fail(function() {
@@ -2616,7 +2629,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       // 実行中ダイアログ表示
       if(workspace_id == null) {
         $('#progress_message').html('COMPLETE :  ワークスペースを作成しました（ワークスペースID:'+created_workspace_id+'）');
-        workspace_id = created_workspace_id;
+        // workspace_id = created_workspace_id;
       } else {
         $('#progress_message').html('COMPLETE :  ワークスペースを更新しました（ワークスペースID:'+workspace_id+'）');
       }
@@ -2627,7 +2640,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       
       if(created_workspace_id != null) {
         $('#progress_message').html('ERROR :  ワークスペースの作成に失敗しました（ワークスペースID:'+created_workspace_id+'）');
-        workspace_id = created_workspace_id;
+        // workspace_id = created_workspace_id;
       } else if(workspace_id == null) {
         $('#progress_message').html('ERROR :  ワークスペースの作成に失敗しました');
       } else {
@@ -2743,63 +2756,6 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
           },
       }
     }
-  
-    // パラメータ設定 - マニフェスト
-    //  ※現時点では保留※
-  
-    // 旧形式の付与
-    // reqbody['clusterInfo'] = workspace_api_conf['parameter']['clusterInfo'];
-    // reqbody['workspace'] = {};
-    // reqbody['workspace']['registry'] = {
-    //     "username": (wsDataJSON['registry-service']['registry-service-account-user']? wsDataJSON['registry-service']['registry-service-account-user']: ""),
-    //     "password": (wsDataJSON['registry-service']['registry-service-account-password']? wsDataJSON['registry-service']['registry-service-account-password']: ""),
-    // };
-    // reqbody['workspace']['manifest'] = workspace_api_conf['parameter']['manifest'];
-
-
-    // reqbody['workspace']['manifest-ita'] = [];
-    // for(var env in wsDataJSON['environment']) {
-    //   var prmenv = {
-    //     'git_url'           : wsDataJSON['environment'][env][env + '-git-service-argo-repository-url'],
-    //     'git_user'          : wsDataJSON['git-service-argo']['git-service-argo-user'],
-    //     'git_password'      : wsDataJSON['git-service-argo']['git-service-argo-password'],
-    //   }
-    //   reqbody['workspace']['manifest-ita'][reqbody['workspace']['manifest-ita'].length] = prmenv;
-    // }
-    
-
-    // reqbody['build'] = {
-    //   'git': {
-    //     "username": (wsDataJSON['git-service']['git-service-user']? wsDataJSON['git-service']['git-service-user']: ""),
-    //     "password": (wsDataJSON['git-service']['git-service-password']? wsDataJSON['git-service']['git-service-password']: ""),
-    //     "url":  reqbody['ci_config']['pipelines'][0]? reqbody['ci_config']['pipelines'][0]['git_repositry']['url']: "",
-    //     "branch": reqbody['ci_config']['pipelines'][0]? reqbody['ci_config']['pipelines'][0]['build']['branch'].join(','): "",
-    //     "repos" : reqbody['ci_config']['pipelines'][0]? reqbody['ci_config']['pipelines'][0]['git_repositry']['url'].replace("https://github.com/","").replace(".git",""): "",
-    //     "WebHooksUrl": "http://example.com/",
-    //     "token": (wsDataJSON['git-service']['git-service-token']? wsDataJSON['git-service']['git-service-token']: ""),
-    //   },
-    //   "pathToContext": reqbody['ci_config']['pipelines'][0]? reqbody['ci_config']['pipelines'][0]['build']['context_path']: "",
-    //   "pathToDockerfile": reqbody['ci_config']['pipelines'][0]? reqbody['ci_config']['pipelines'][0]['build']['dockerfile_path']: "",
-    //   "registry" : {
-    //     "url" : reqbody['ci_config']['pipelines'][0]? reqbody['ci_config']['pipelines'][0]['contaier_registry']['image']: "",
-    //     "imageTag" : date.getFullYear() + ('0' + (date.getMonth() + 1)).slice(-2) + ('0' + date.getDate()).slice(-2) + '.' + ('0' + date.getHours()).slice(-2) + ('0' + date.getMinutes()).slice(-2) + ('0' + date.getSeconds()).slice(-2),
-    //   }
-    // };
-   
-    // reqbody['deploy'] = {
-    //   "enviroments" : {}
-    // };
-    // for(var env in wsDataJSON['environment']) {
-    //   var env_name = wsDataJSON['environment'][env][env + '-environment-name'];
-    //   var prmenv = {
-    //     "git": {
-    //       "url" : wsDataJSON['environment'][env][env + '-git-service-argo-repository-url'],
-    //     },
-    //     "cluster" : wsDataJSON['environment'][env][env + '-environment-url'],
-    //     "namespace" : wsDataJSON['environment'][env][env + '-environment-namespace'],
-    //   }
-    //   reqbody['deploy']['enviroments'][env_name] = prmenv;
-    // }
 
     return reqbody;
   }
