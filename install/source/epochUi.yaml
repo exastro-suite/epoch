@@ -1,0 +1,107 @@
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: epoch-ui-conf
+  namespace: epoch-system
+data:
+  workspace_api_conf.js: |
+    var location_host = window.location.hostname;
+    var location_prot = window.location.protocol;
+    var api_port = "30081";
+    var api_url_base = location_prot + "//" + location_host + ":" + api_port
+    var workspace_api_conf = {
+        "links" : {
+            "tekton"    : location_prot + "//" + location_host + ":30901/",
+            "registry"  : "https://hub.docker.com/repositories",
+            "argo"      : location_prot + "//" + location_host + ":30906/",
+            "ita"       : location_prot + "//" + location_host + ":30905/",
+        },
+        "test": {
+            "default_workspace_id": 1
+        },
+        "api" : {
+            "resource": {
+                "get" :     api_url_base + "/workspace/info/{workspace_id}/",
+                "post" :    api_url_base + "/workspace/info/",
+                "put" :     api_url_base + "/workspace/info/{workspace_id}/",
+            },
+            "workspace": {
+                "post":     api_url_base + "/workspace/pod/",
+                "wait": 30000,
+            },
+            "pipeline": {
+                "post":     api_url_base + "/pipeline/",
+            },
+            "pipelineParameter": {
+                "post":     api_url_base + "/pipelineParameter/",
+            },
+            "manifestParameter": {
+                "post":     api_url_base + "/manifestParameter",
+            },
+            "manifestTemplate": {
+                "post" :    api_url_base + "/workspace/{workspace_id}/manifests",
+                "get" :     api_url_base + "/workspace/{workspace_id}/manifests",
+            },
+            "cdExecDesignation": {
+                "post" :    api_url_base + "/cdExecDesignation/",
+            }
+        }
+    }
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: epoch-ui
+  namespace: epoch-system
+spec:
+  selector:
+    matchLabels:
+      name: epoch-ui
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: epoch-ui
+    spec:
+      volumes:
+      - name: epoch-ui-conf
+        configMap:
+          name: epoch-ui-conf
+      containers:
+      - name: epoch-ui
+        image: epochdemo/epochui:0.1.0_20210623_1500
+        volumeMounts:
+        - name: epoch-ui-conf
+          mountPath: /app/epoch/epochUi/common/js/config
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: epoch-ui
+  labels:
+    name: epoch-ui
+  namespace: epoch-system
+spec:
+  type: NodePort
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+    nodePort: 30080
+  selector:
+    name: epoch-ui

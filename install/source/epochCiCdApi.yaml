@@ -1,0 +1,86 @@
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: epoch-system-crb
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: epoch-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: epoch-cicd-api
+  namespace: epoch-system
+spec:
+  selector:
+    matchLabels:
+      name: epoch-cicd-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: epoch-cicd-api
+    spec:
+      containers:
+      - name: epoch-cicd-api
+        image: epochdemo/epochcicdapi:0.1.0_20210623_1750
+        env:
+          - name: HTTP_PROXY
+            valueFrom:
+              configMapKeyRef:
+                name: proxy-setting-config
+                key: HTTP_PROXY
+          - name: HTTPS_PROXY
+            valueFrom:
+              configMapKeyRef:
+                name: proxy-setting-config
+                key: HTTPS_PROXY
+          - name: NO_PROXY
+            value: localhost,127.0.0.1,10.96.0.1,kurbernetes.default.svc,kurbernetes.default.svc.cluster.local,it-automation.epoch-workspace.svc,argocd-server.epoch-workspace.svc
+          - name: PYTHONIOENCODING
+            value: utf-8
+        envFrom:
+          - prefix: EPOCH_
+            configMapRef:
+              name: epoch-cicd-api-config
+          - prefix: EPOCH_
+            secretRef:
+              name: epoch-cicd-api-secret
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: epoch-cicd-api
+  labels:
+    name: epoch-cicd-api
+  namespace: epoch-system
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+  selector:
+    name: epoch-cicd-api
