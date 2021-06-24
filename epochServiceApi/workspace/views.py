@@ -185,7 +185,7 @@ def info_all_post(request):
         post_data = request.body
 
         # 呼び出すapiInfoは、環境変数より取得
-        apiInfo = "{}://{}:{}/".format(os.environ["EPOCH_CICD_PROTOCOL"], os.environ["EPOCH_CICD_HOST"], os.environ["EPOCH_CICD_PORT"])
+        apiInfo = "{}://{}:{}/".format(os.environ["EPOCH_RESOURCE_PROTOCOL"], os.environ["EPOCH_RESOURCE_HOST"], os.environ["EPOCH_RESOURCE_PORT"])
 
         # ワークスペース情報保存
         request_response = requests.post( apiInfo + "workspace", headers=post_headers, data=post_data)
