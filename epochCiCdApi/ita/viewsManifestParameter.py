@@ -145,7 +145,6 @@ def post(request):
                 }
                 return JsonResponse(response, status=400)
 
-                
             req_maniparam_operation_id = opelist_json['resultdata']['CONTENTS']['BODY'][idx_ope][column_indexes_common['record_no']]
 
             for idx_manifile, row_manifile in enumerate(environment['manifests']):
@@ -184,7 +183,7 @@ def post(request):
                         }
                     )
                     print('---- Manifest Parameters Item(Add) ----')
-                    # print(maniparam_edit[len(maniparam_edit) -1])
+                    print(maniparam_edit[len(maniparam_edit) -1])
 
                 else:
                     # 更新処理
@@ -203,7 +202,7 @@ def post(request):
                         }
                     )
                     print('---- Manifest Parameters Item(Update) ----')
-                    # print(maniparam_edit[len(maniparam_edit) -1])
+                    print(maniparam_edit[len(maniparam_edit) -1])
 
         print('---- Updating Manifest Parameters ----')
         # print(json.dumps(maniparam_edit))
@@ -213,7 +212,10 @@ def post(request):
 
         print('---- Manifest Parameters Post Response ----')
         # print(manuparam_edit_resp.text)
-        # print(maniparam_json)
+        print(maniparam_json)
+
+        if maniparam_json["status"] != "SUCCEED" or maniparam_json["resultdata"]["LIST"]["NORMAL"]["error"]["ct"] != 0:
+            raise Exception(manuparam_edit_resp.text.encode().decode('unicode-escape'))
 
         # response['ita_response'] = maniparam_json
         response = {
