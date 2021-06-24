@@ -97,7 +97,7 @@ spec:
     spec:
       containers:
       - name: epoch-cicd-api
-        image: epochdemo/epochcicdapi:0.1.0_20210623_1750
+        image: exastro/epochcicdapi:0.1.0_20210624_1200
         env:
           - name: HTTP_PROXY
             valueFrom:
@@ -250,7 +250,7 @@ spec:
           name: epoch-resource-conf
       containers:
       - name: epoch-resource-api
-        image: epochdemo/epochresourceapi:0.1.0_20210623_1500
+        image: exastro/epochresourceapi:0.1.0_20210624_1200
         env:
         - name: CONFIG_API_WORKSPACE_PATH
           value: "/etc/epoch/epochResoure/api_workspace.conf"
@@ -357,7 +357,7 @@ spec:
     spec:
       containers:
       - name: epoch-service-api
-        image: epochdemo/epochserviceapi:0.1.0_20210623_1710
+        image: exastro/epochserviceapi:0.1.0_20210624_1200
         env:
         - name: PYTHONIOENCODING
           value: utf-8
@@ -474,7 +474,7 @@ spec:
           name: epoch-ui-conf
       containers:
       - name: epoch-ui
-        image: epochdemo/epochui:0.1.0_20210623_1500
+        image: exastro/epochui:0.1.0_20210624_1200
         volumeMounts:
         - name: epoch-ui-conf
           mountPath: /app/epoch/epochUi/common/js/config
