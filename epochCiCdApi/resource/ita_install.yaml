@@ -11,6 +11,17 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: epoch-ita-conf
+  namespace: epoch-workspace
+data:
+  ita_table_update.sql: |
+    UPDATE A_ACCOUNT_LIST SET PW_LAST_UPDATE_TIME = '2999-12-31 23:59:58' WHERE USER_ID = 1;
+
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -25,6 +36,10 @@ spec:
       labels:
         app: it-automation
     spec:
+      volumes:
+      - name: epoch-ita-conf
+        configMap:
+          name: epoch-ita-conf
       containers:
       - name: it-automation
         image: exastro/it-automation:1.6.3-ja
@@ -33,6 +48,9 @@ spec:
         - containerPort: 443
         securityContext:
           privileged: true
+        volumeMounts:
+        - name: epoch-ita-conf
+          mountPath: /app/epoch/tmp
 ---
 apiVersion: v1
 kind: Service
@@ -68,7 +86,7 @@ spec:
     spec:
       containers:
       - name: ita-worker
-        image: epochdemo/ita-worker:0.1.0_20210601_1558
+        image: exastro/epoch-ita-worker:0.1.0_20210624_1421
         ports:
         - containerPort: 22
         command: ["sh", "-c"]

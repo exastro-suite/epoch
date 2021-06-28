@@ -20,6 +20,7 @@ import subprocess
 import traceback
 import os
 import datetime, pytz
+import logging
 
 from django.shortcuts import render
 from django.http import HttpResponse
@@ -27,6 +28,8 @@ from django.http.response import JsonResponse
 
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+
+logger = logging.getLogger('apilog')
 
 @require_http_methods(['POST', 'GET'])
 @csrf_exempt    
@@ -41,7 +44,7 @@ def file_id_not_assign(request, workspace_id):
 def post(request, workspace_id):
     try:
 
-        print("CALL FilePost:{}".format(workspace_id))
+        logger.debug("CALL FilePost:{}".format(workspace_id))
 
         apiInfo = os.environ['EPOCH_RESOURCE_PROTOCOL'] + "://" + os.environ['EPOCH_RESOURCE_HOST'] + ":" + os.environ['EPOCH_RESOURCE_PORT'] 
 
@@ -87,9 +90,9 @@ def post(request, workspace_id):
         response = requests.post( apiInfo + "/workspace/" + str(workspace_id) + "/manifests", headers=post_headers, data=post_data)
 
         # ITA呼び出し
-        print("CALL ita_registration Start")
+        logger.debug("CALL ita_registration Start")
         response = ita_registration(request, workspace_id)
-        print("CALL ita_registration End response:{}", response)
+        logger.debug("CALL ita_registration End response:{}", response)
 
         # 正常時はmanifest情報取得した内容を返却
         response = {
@@ -100,7 +103,7 @@ def post(request, workspace_id):
         return JsonResponse(response, status=200)
 
     except Exception as e:
-        print(traceback.format_exc())
+        logger.debug(traceback.format_exc())
         response = {
             "result": {
                 "code": "500",
@@ -123,7 +126,7 @@ def ita_registration(request, workspace_id):
 
     try:
 
-        print("CALL ita_registration")
+        logger.debug("CALL ita_registration")
 
         # post先のURL初期化
         resourceProtocol = os.environ['EPOCH_RESOURCE_PROTOCOL']
@@ -136,7 +139,7 @@ def ita_registration(request, workspace_id):
             'Content-Type': 'application/json',
         }
 
-        print("CALL responseAPI : url:{}".format(apiurl))
+        logger.debug("CALL responseAPI : url:{}".format(apiurl))
         # Resource API呼び出し
         response = requests.get(apiurl, headers=post_headers)
 #        print("CALL responseAPI : response:{}, text:{}".format(response, response.text))
@@ -162,10 +165,10 @@ def ita_registration(request, workspace_id):
         send_data = { "manifests": 
             ret_manifests['rows']
         }
-        print("--------------------------")
-        print("send_data:")
-        print(send_data)
-        print("--------------------------")
+        logger.debug("--------------------------")
+        logger.debug("send_data:")
+        logger.debug(send_data)
+        logger.debug("--------------------------")
 
         send_data = json.dumps(send_data)
 
@@ -173,7 +176,7 @@ def ita_registration(request, workspace_id):
 
         # Resource API呼び出し
         response = requests.post( apiurl, headers=post_headers, data=send_data)
-        print("CALL manifestTemplates : status:{}".format(response.status_code))
+        logger.debug("CALL manifestTemplates : status:{}".format(response.status_code))
 
         # 正常時はmanifest情報取得した内容を返却
         if response.status_code == 200:
@@ -291,9 +294,9 @@ def delete(request, workspace_id, file_id):
             return JsonResponse(response, status=500)
 
         # ITA呼び出し
-        print("CALL ita_registration Start")
+        logger.debug("CALL ita_registration Start")
         response = ita_registration(request, workspace_id)
-        print("CALL ita_registration End response:{}", response)
+        logger.debug("CALL ita_registration End response:{}", response)
 
         # 正常時はmanifest情報取得した内容を返却
         response = {
@@ -334,11 +337,11 @@ def get_manifests(url):
 
     output = []
     if response.status_code == 200 and isJsonFormat(response.text):
-        print("get_manifests return --------------------")
+        logger.debug("get_manifests return --------------------")
         # 取得したJSON結果が正常でない場合、例外を返す
         ret = json.loads(response.text)
-        print(ret)
-        print("--------------------")
+        logger.debug(ret)
+        logger.debug("--------------------")
         return JsonResponse(ret, status=200)
 
     elif response.status_code == 404:
@@ -372,17 +375,17 @@ def isJsonFormat(line):
     try:
         json.loads(line)
     except json.JSONDecodeError as e:
-        print(sys.exc_info())
-        print(e)
+        logger.debug(sys.exc_info())
+        logger.debug(e)
         return False
     # 以下の例外でも捕まえるので注意
     except ValueError as e:
-        print(sys.exc_info())
-        print(e)
+        logger.debug(sys.exc_info())
+        logger.debug(e)
         return False
     except Exception as e:
-        print(sys.exc_info())
-        print(e)
+        logger.debug(sys.exc_info())
+        logger.debug(e)
         return False
     return True
 

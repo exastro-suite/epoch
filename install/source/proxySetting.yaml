@@ -11,13 +11,11 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from django.urls import path, include
-from . import views
-from . import viewsPipeline
-#from . import createTriggerYaml
-
-urlpatterns = [
-    path('', views.index),
-    # パイプライン設定
-    path('pipeline', viewsPipeline.index),
-]
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: proxy-setting-config
+  namespace: epoch-system
+data:
+  HTTP_PROXY: ""
+  HTTPS_PROXY: ""

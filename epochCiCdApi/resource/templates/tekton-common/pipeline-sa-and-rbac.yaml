@@ -55,3 +55,24 @@ subjects:
 - kind: ServiceAccount
   name: pipeline-account
   namespace: epoch-tekton-pipelines
+
+---
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pipeline-sa-container-registry
+  namespace: epoch-tekton-pipelines
+type: Opaque
+stringData:
+  config.json: |-
+    {
+      "auths": {
+        "https://index.docker.io/v1/" : {
+          "auth": "<__build_registry_auth__>"
+        },
+        "http://index.docker.io/v1/" : {
+          "auth": "<__build_registry_auth__>"
+        }
+      }
+    }

@@ -20,6 +20,7 @@ import json
 import subprocess
 import traceback
 import os
+import logging
 
 from django.conf import settings
 from django.shortcuts import render
@@ -29,6 +30,8 @@ from django.views.decorators.csrf import csrf_exempt
 
 from django.views.decorators.csrf import csrf_exempt
 from kubernetes import client, config
+
+logger = logging.getLogger('apilog')
 
 @csrf_exempt
 def index(request):
@@ -43,16 +46,19 @@ def index(request):
 def post(request):
     try:
 
+        logger.debug ("CALL argocd.pipelineParameter post")
+
         # 引数で指定されたCD環境を取得
-        print (request.body)
+        logger.debug (request.body)
         request_json = json.loads(request.body)
         #print (request_json)
-        request_deploy = request_json["deploy"]
+        request_ci_env = request_json["ci_config"]["environments"]
+        request_cd_env = request_json["cd_config"]["environments"]
 
         try:
             # argocdにloginする
             stdout_cd = subprocess.check_output(["argocd","login",settings.ARGO_SVC,"--insecure","--username",settings.ARGO_ID,"--password",settings.ARGO_PASSWORD],stderr=subprocess.STDOUT)
-            print ("argocd login:" + str(stdout_cd))
+            logger.debug ("argocd login:" + str(stdout_cd))
 
         except subprocess.CalledProcessError as e:
             response = {
@@ -66,14 +72,24 @@ def post(request):
 
         # 環境群数分処理を実行
         output = ""
-        keyList = request_deploy["enviroments"].keys()
-        for key in keyList:
-            print ("KEY:" + key)
-            env_name = key
-            env_value = request_deploy["enviroments"][key]
-            gitUrl = env_value["git"]["url"]
-            cluster = env_value["cluster"]
-            namespace = env_value["namespace"]
+        # keyList = request_deploy["enviroments"].keys()
+        # for key in keyList:
+        #     logger.debug ("KEY:" + key)
+        #     env_name = key
+        #     env_value = request_deploy["enviroments"][key]
+        #     gitUrl = env_value["git"]["url"]
+        #     cluster = env_value["cluster"]
+        #     namespace = env_value["namespace"]
+        for env in request_cd_env:
+            env_name = env["name"]
+            cluster = env["deploy_destination"]["cluster_url"]
+            namespace = env["deploy_destination"]["namespace"]
+            gitUrl = ""
+            # manifest git urlは、ci_configより取得
+            for ci_env in request_ci_env:
+                if ci_env["environment_id"] == env["environment_id"]:
+                    gitUrl = ci_env["git_url"]
+                    break
 
             try:
                 # argocd app create catalogue \
@@ -93,7 +109,7 @@ def post(request):
                     "--sync-policy","automated",
                     ],stderr=subprocess.STDOUT)
 
-                print ("argocd app create:" + str(stdout_cd))
+                logger.debug ("argocd app create:" + str(stdout_cd))
 
                 output += env_name + "{" + stdout_cd.decode('utf-8') + "},"
 
@@ -148,17 +164,21 @@ def execCommand(*args):
 @csrf_exempt    
 def get(request):
     try:
+
+        logger.debug ("CALL argocd.pipelineParameter get")
+
         # 引数で指定されたCD環境を取得
-        print (request.body)
+        logger.debug (request.body)
         request_json = json.loads(request.body)
         #print (request_json)
-        request_deploy = request_json["deploy"]
+        request_ci_env = request_json["ci_config"]["environments"]
+        request_cd_env = request_json["cd_config"]["environments"]
 
         try:
             # argocdにloginする
             stdout_cd = subprocess.check_output(["argocd","login",settings.ARGO_SVC,"--insecure","--username",settings.ARGO_ID,"--password",settings.ARGO_PASSWORD],stderr=subprocess.STDOUT)
 
-            print ("argocd login:" + str(stdout_cd))
+            logger.debug ("argocd login:" + str(stdout_cd))
 
         except subprocess.CalledProcessError as e:
             response = {
@@ -172,20 +192,22 @@ def get(request):
 
         output = ""
         # 環境群数分処理を実行
-        keyList = request_deploy["enviroments"].keys()
-        for key in keyList:
-            print ("KEY:" + key)
-            env_name = key
-            env_value = request_deploy["enviroments"][key]
-            gitUrl = env_value["git"]["url"]
-            cluster = env_value["cluster"]
-            namespace = env_value["namespace"]
+        # keyList = request_deploy["enviroments"].keys()
+        # for key in keyList:
+        #     logger.debug ("KEY:" + key)
+        #     env_name = key
+        #     env_value = request_deploy["enviroments"][key]
+        #     gitUrl = env_value["git"]["url"]
+        #     cluster = env_value["cluster"]
+        #     namespace = env_value["namespace"]
+        for env in request_cd_env:
+            env_name = env["name"]
 
             try:
                 # レポジトリの情報を追加
                 stdout_cd = subprocess.check_output(["argocd","app","get",env_name],stderr=subprocess.STDOUT)
 
-                print ("argocd app get:" + str(stdout_cd))
+                logger.debug ("argocd app get:" + str(stdout_cd))
 
                 output += "{" + stdout_cd.decode('utf-8') + "},"
 

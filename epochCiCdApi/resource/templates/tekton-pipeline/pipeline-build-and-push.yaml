@@ -20,6 +20,7 @@ spec:
   workspaces:
     - name: git-source
       description: The git repo
+    - name: dockerconfig
   # パラメータセクション  実行時に Kind: PipelineRun から変数を与える。
   params:
     - name: gitUrl
@@ -83,6 +84,8 @@ spec:
       workspaces:
         - name: source
           workspace: git-source
+        - name: dockerconfig
+          workspace: dockerconfig
       params:
         - name: CONTEXT
           value: $(params.pathToContext)

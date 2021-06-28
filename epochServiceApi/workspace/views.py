@@ -22,6 +22,7 @@ import os
 import datetime, pytz
 import time
 import shutil
+import logging
 
 from django.shortcuts import render
 from django.http import HttpResponse
@@ -32,92 +33,28 @@ from django.views.decorators.csrf import csrf_exempt
 
 from kubernetes import client, config
 
+logger = logging.getLogger('apilog')
+
 @require_http_methods(['POST'])
 @csrf_exempt
 def post(request):
     try:
+        logger.debug("CALL workspace post")
+
         # ヘッダ情報
         headers = {
             'Content-Type': 'application/json',
         }
 
-        # templates_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource/templates"
-        # resource_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource/conv"
-
         # データ情報
         data = '{}'
-
-        # temp_yaml_name = templates_dir + "/epochCiCdApi.yaml"
-        # conv_yaml_name = resource_dir + "/epochCiCdApi.yaml"
-        # deploy_config = "/etc/epoch/deploy-config/deployconfig.yaml"
-        #deploy_config = "/etc/epoch/deploy-config/deployconfig"
 
         # パラメータ情報(JSON形式)
         payload = json.loads(request.body)
 
-        # テンプレートの文字列置き換え
-        # conv(temp_yaml_name, conv_yaml_name)
-
         # CiCd Api の呼び先設定
-        # apiInfo = payload["clusterInfo"]["apiInfo"]
         apiInfo = "{}://{}:{}/".format(os.environ["EPOCH_CICD_PROTOCOL"], os.environ["EPOCH_CICD_HOST"], os.environ["EPOCH_CICD_PORT"])
         output = []
-
-        # CI/CD APIコンテナ作成
-        # stdout = subprocess.check_output(["kubectl","apply","-f",conv_yaml_name, "--kubeconfig=" + deploy_config],stderr=subprocess.STDOUT)
-
-        # CI/CD API Pod状態確認
-        # config.load_kube_config(deploy_config)
-        # v1 = client.CoreV1Api()
-
-        # namespace = 'epoch-system'
-        # label = 'app=cicd-api'
-
-        # start = time.time()
-        # floop = True
-        # while floop:
-        #     try:
-        #         time.sleep(1)
-        #         pod_list = v1.list_namespaced_pod(namespace)
-        #         # pod_list = v1.list_namespaced_pod(namespace, label_selector=label)
-        #     except ApiException as e:
-        #         print('Exception when calling CoreV1Api->list_namespaced_pod: %s\n' % e)
-
-        #     time.sleep(1)
-        #     count = 0
-        #     for pod in pod_list.items:
-        #         if pod.status.phase == 'Running':
-        #             print('status : ' + pod.status.phase)
-        #             floop=False
-        #             break
-        #         elif (time.time() - start) > 60:
-        #             print('count : ' + count)
-        #             floop=False
-        #             break
-
-        # time.sleep(10)
-
-        # post送信（tekton/pod作成）
-        # print('apiInfo : ' + apiInfo)
-        # response = requests.post(apiInfo + 'tekton/', headers=headers, data=data, params=payload)
-
-        # if isJsonFormat(response.text):
-        #     # 取得したJSON結果が正常でない場合、例外を返す
-        #     ret = json.loads(response.text)
-        #     if ret["result"] == "OK":
-        #         output.append(ret["output"])
-        #     else:
-        #         raise Exception
-        # else:
-        #     response = {
-        #         "result": {
-        #             "code": "500",
-        #             "detailcode": "",
-        #             "output": response.text,
-        #             "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
-        #         }
-        #     }
-        #     return JsonResponse(response)
 
         # post送信（argocd/pod作成）
         response = requests.post(apiInfo + 'argocd/pod', headers=headers, data=data, params=payload)
@@ -175,17 +112,17 @@ def isJsonFormat(line):
     try:
         json.loads(line)
     except json.JSONDecodeError as e:
-        print(sys.exc_info())
-        print(e)
+        logger.debug(sys.exc_info())
+        logger.debug(e)
         return False
     # 以下の例外でも捕まえるので注意
     except ValueError as e:
-        print(sys.exc_info())
-        print(e)
+        logger.debug(sys.exc_info())
+        logger.debug(e)
         return False
     except Exception as e:
-        print(sys.exc_info())
-        print(e)
+        logger.debug(sys.exc_info())
+        logger.debug(e)
         return False
     return True
 
@@ -238,7 +175,7 @@ def info_all_post(request):
         dict : workspace情報
     """
     try:
-        print ("CALL " + __name__)
+        logger.debug ("CALL " + __name__)
         # ヘッダ情報
         post_headers = {
             'Content-Type': 'application/json',
@@ -248,12 +185,11 @@ def info_all_post(request):
         post_data = request.body
 
         # 呼び出すapiInfoは、環境変数より取得
-        request_json = json.loads(request.body)
-        apiInfo = os.environ['EPOCH_RESOURCE_PROTOCOL'] + "://" + os.environ['EPOCH_RESOURCE_HOST'] + ":" + os.environ['EPOCH_RESOURCE_PORT'] 
+        apiInfo = "{}://{}:{}/".format(os.environ["EPOCH_RESOURCE_PROTOCOL"], os.environ["EPOCH_RESOURCE_HOST"], os.environ["EPOCH_RESOURCE_PORT"])
 
         # ワークスペース情報保存
-        request_response = requests.post( apiInfo + "/workspace", headers=post_headers, data=post_data)
-        print("workspace:" + request_response.text)
+        request_response = requests.post( apiInfo + "workspace", headers=post_headers, data=post_data)
+        logger.debug("workspace:" + request_response.text)
         ret = json.loads(request_response.text)
         #print(ret)
         # 戻り値をそのまま返却        

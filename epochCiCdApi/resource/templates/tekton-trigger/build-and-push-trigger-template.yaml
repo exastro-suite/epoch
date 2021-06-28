@@ -53,3 +53,6 @@ spec:
         - name: git-source
           persistentVolumeClaim:
             claimName: workspace-source-pvc
+        - name: dockerconfig
+          secret:
+            secretName: pipeline-sa-container-registry

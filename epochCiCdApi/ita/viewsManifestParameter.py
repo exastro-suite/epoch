@@ -23,6 +23,7 @@ import os
 import datetime, pytz
 import base64
 import io
+import logging
 
 from django.shortcuts import render
 from django.http import HttpResponse
@@ -71,11 +72,13 @@ param_value_method_update='更新'
 
 ita_restapi_endpoint='http://' + ita_host + ':' + ita_port + '/default/menu/07_rest_api_ver1.php'
 
+logger = logging.getLogger('apilog')
 
 @require_http_methods(['POST'])
 @csrf_exempt
 def post(request):
 
+    logger.debug("CALL " + __name__)
     try:
         # HTTPヘッダの生成
         filter_headers = {
@@ -92,21 +95,21 @@ def post(request):
             'X-Command': 'EDIT',
         }
 
-        print(json.loads(request.body))
+        logger.debug(json.loads(request.body))
 
         #
         # オペレーションの取得
         #
         opelist_resp = requests.post(ita_restapi_endpoint + '?no=' + ite_menu_operation, headers=filter_headers)
         opelist_json = json.loads(opelist_resp.text)
-        print('---- Operation ----')
-        # print(opelist_resp.text)
-        # print(opelist_json)
+        logger.debug('---- Operation ----')
+        # logger.debug(opelist_resp.text)
+        # logger.debug(opelist_json)
 
         # 項目位置の取得
         column_indexes_opelist = column_indexes(column_names_opelist, opelist_json['resultdata']['CONTENTS']['BODY'][0])
-        print('---- Operation Index ----')
-        # print(column_indexes_opelist)
+        logger.debug('---- Operation Index ----')
+        # logger.debug(column_indexes_opelist)
 
         #
         # マニフェスト環境パラメータの取得
@@ -118,14 +121,14 @@ def post(request):
         }
         maniparam_resp = requests.post(ita_restapi_endpoint + '?no=' + ita_menu_manifest_param, headers=filter_headers, data=json.dumps(content))
         maniparam_json = json.loads(maniparam_resp.text)
-        print('---- Current Manifest Parameters ----')
-        # print(maniparam_resp.text)
-        # print(maniparam_json)
+        logger.debug('---- Current Manifest Parameters ----')
+        # logger.debug(maniparam_resp.text)
+        # logger.debug(maniparam_json)
 
         # 項目位置の取得
         column_indexes_maniparam = column_indexes(column_names_manifest_param, maniparam_json['resultdata']['CONTENTS']['BODY'][0])
-        print('---- Manifest Parameters Index ----')
-        # print(column_indexes_maniparam)
+        logger.debug('---- Manifest Parameters Index ----')
+        # logger.debug(column_indexes_maniparam)
 
         # Responseデータの初期化
         response = {"result":"200",}
@@ -145,7 +148,6 @@ def post(request):
                 }
                 return JsonResponse(response, status=400)
 
-                
             req_maniparam_operation_id = opelist_json['resultdata']['CONTENTS']['BODY'][idx_ope][column_indexes_common['record_no']]
 
             for idx_manifile, row_manifile in enumerate(environment['manifests']):
@@ -183,8 +185,8 @@ def post(request):
                             str(column_indexes_maniparam['template_name']) : '"{{ TPF_epoch_template_yaml' + str(idx_manifile + 1) + ' }}"',
                         }
                     )
-                    print('---- Manifest Parameters Item(Add) ----')
-                    # print(maniparam_edit[len(maniparam_edit) -1])
+                    logger.debug('---- Manifest Parameters Item(Add) ----')
+                    logger.debug(maniparam_edit[len(maniparam_edit) -1])
 
                 else:
                     # 更新処理
@@ -202,18 +204,21 @@ def post(request):
                             str(column_indexes_maniparam['lastupdate']) : maniparam_json['resultdata']['CONTENTS']['BODY'][idx_maniparam][column_indexes_maniparam['lastupdate']],
                         }
                     )
-                    print('---- Manifest Parameters Item(Update) ----')
-                    # print(maniparam_edit[len(maniparam_edit) -1])
+                    logger.debug('---- Manifest Parameters Item(Update) ----')
+                    logger.debug(maniparam_edit[len(maniparam_edit) -1])
 
-        print('---- Updating Manifest Parameters ----')
-        # print(json.dumps(maniparam_edit))
+        logger.debug('---- Updating Manifest Parameters ----')
+        # logger.debug(json.dumps(maniparam_edit))
 
         manuparam_edit_resp = requests.post(ita_restapi_endpoint + '?no=' + ita_menu_manifest_param, headers=edit_headers, data=json.dumps(maniparam_edit))
         maniparam_json = json.loads(manuparam_edit_resp.text)
 
-        print('---- Manifest Parameters Post Response ----')
-        # print(manuparam_edit_resp.text)
-        # print(maniparam_json)
+        logger.debug('---- Manifest Parameters Post Response ----')
+        # logger.debug(manuparam_edit_resp.text)
+        logger.debug(maniparam_json)
+
+        if maniparam_json["status"] != "SUCCEED" or maniparam_json["resultdata"]["LIST"]["NORMAL"]["error"]["ct"] != 0:
+            raise Exception(manuparam_edit_resp.text.encode().decode('unicode-escape'))
 
         # response['ita_response'] = maniparam_json
         response = {
@@ -226,8 +231,8 @@ def post(request):
         return JsonResponse(response, status=200)
 
     except Exception as e:
-        print(e)
-        print("traceback:" + traceback.format_exc())
+        logger.debug(e)
+        logger.debug("traceback:" + traceback.format_exc())
         response = {
             "result": "500",
             "output": traceback.format_exc(),
@@ -261,15 +266,15 @@ def search_opration(opelist, column_indexes, git_url):
             # 備考設定なしは無視
             continue
 
-        print('git_url:' + git_url)
-        print('row[column_indexes[remarks]]:' + row[column_indexes['remarks']])
+        logger.debug('git_url:' + git_url)
+        logger.debug('row[column_indexes[remarks]]:' + row[column_indexes['remarks']])
         if git_url == row[column_indexes['remarks']]:
             # 備考にgit_urlが含まれているとき
-            print('find: (idx) ' + str(idx))
+            logger.debug('find: (idx) ' + str(idx))
             return idx
 
     # 存在しないとき
-    print('not found: -1')
+    logger.debug('not found: -1')
     return -1
 
 #
@@ -285,13 +290,13 @@ def search_git_url(opelist, column_indexes, operation_id):
             # 削除は無視
             continue
 
-        # print('operation_id:')
-        # print(operation_id)
-        # print('row[column_indexes[remarks]]:')
-        # print(row[column_indexes['remarks']])
+        # logger.debug('operation_id:')
+        # logger.debug(operation_id)
+        # logger.debug('row[column_indexes[remarks]]:')
+        # logger.debug(row[column_indexes['remarks']])
         if operation_id == row[column_indexes['operation_id']]:
             # 備考にgit_urlが含まれているとき
-            print('find:' + str(idx))
+            logger.debug('find:' + str(idx))
             return row[column_indexes['remarks']]
 
     # 存在しないとき
