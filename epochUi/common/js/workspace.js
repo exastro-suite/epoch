@@ -494,9 +494,9 @@ const wsModalJSON = {
             },
             'environmentURL': {
               'type': 'input',
-              'title': 'Kubernetes API Serer URL',
+              'title': 'Kubernetes API Server URL',
               'name': 'environment-url',
-              'placeholder': '実行環境のKubernetes API Serer URLを入力してください'
+              'placeholder': '実行環境のKubernetes API Server URLを入力してください'
             },
             'environmentNamespace': {
               'type': 'input',
@@ -556,21 +556,21 @@ const wsModalJSON = {
         'item': {
           'gitServiceArgoAccountUser': {
             'type': 'input',
-            'title': 'Gitリポジトリ(ソース)　ユーザ名',
+            'title': 'Gitリポジトリ(Manifest)　ユーザ名',
             'name': 'git-service-argo-user',
-            'placeholder': 'Gitリポジトリ(ソース)　ユーザ名を入力してください'
+            'placeholder': 'Gitリポジトリ(Manifest)　ユーザ名を入力してください'
           },
           'gitServiceArgoAccountPassword': {
             'type': 'password',
-            'title': 'Gitリポジトリ(ソース)　パスワード',
+            'title': 'Gitリポジトリ(Manifest)　パスワード',
             'name': 'git-service-argo-password',
-            'placeholder': 'Gitリポジトリ(ソース)　パスワードを入力してください'
+            'placeholder': 'Gitリポジトリ(Manifest)　パスワードを入力してください'
           },
           'gitServiceArgoAccountToken': {
             'type': 'password',
-            'title': 'Gitリポジトリ(ソース)　トークン',
+            'title': 'Gitリポジトリ(Manifest)　トークン',
             'name': 'git-service-argo-token',
-            'placeholder': 'Gitリポジトリ(ソース)　トークンを入力してください'
+            'placeholder': 'Gitリポジトリ(Manifest)　トークンを入力してください'
           }
         }
       },
@@ -587,11 +587,11 @@ const wsModalJSON = {
           'item' : {
             'gitServiceArgoRepositorySource': {
               'type': 'input',
-              'title': 'Gitリポジトリ(ソース)　URL',
+              'title': 'Gitリポジトリ(Manifest)　URL',
               'name': 'git-service-argo-repository-url',
               'class': 'tab-name-link',
               'regexp': '^https:\/\/github.com\/[^\/]+\/([^\/]+).git$',
-              'placeholder': 'Gitリポジトリ(ソース)　URLを入力してください'
+              'placeholder': 'Gitリポジトリ(Manifest)　URLを入力してください'
             }
           }
         }
@@ -1973,11 +1973,11 @@ const cdRunning = function(){
       reqbody = {};
 
       // 旧形式の付与
-      reqbody['clusterInfo'] = workspace_api_conf['parameter']['clusterInfo'];
+      // reqbody['clusterInfo'] = workspace_api_conf['parameter']['clusterInfo'];
       reqbody['operationId'] = workspace_api_conf['parameter']['operationId'];
       reqbody['conductorClassNo'] = workspace_api_conf['parameter']['conductorClassNo'];
       reqbody['preserveDatetime'] = workspace_api_conf['parameter']['preserveDatetime'];
-      reqbody['itaInfo'] = workspace_api_conf['parameter']['itaInfo'];
+      // reqbody['itaInfo'] = workspace_api_conf['parameter']['itaInfo'];
 
       console.log("CALL : CD実行開始");
       api_param = {
@@ -2079,6 +2079,7 @@ $content.find('.modal-open, .workspace-status-item').on('click', function(){
     case 'manifestParametar': {
       ok = function( $modal ){
         setParameterData( $modal );
+        apply_manifest();
       };
       callback = inputParameter;
       width = 1160;
@@ -2314,14 +2315,27 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
   // API呼び出し関連
   //-----------------------------------------------------------------------
   var workspace_id = null;
-  
+
+  // window onloadイベント
+  window.onload = function()
+  {
+    // ワークスペース情報の読み込み
+    getWorksapce();
+  }
+
   //$(document).ready(function(){
-  $('#load-workspace-button').on('click', function(){
-  
-    // 試験用実装
-    {
-      workspace_id = parseInt(window.prompt('読み込むワークスペースIDを指定してください', workspace_api_conf.test.default_workspace_id));
-    }
+  // リセットボタン処理
+  $('#reset-button').on('click', function(){
+    // 確認メッセージ
+    if (confirm("入力値をリセットしてもよろしいですか？"))
+      // ワークスペース情報の読み込み
+      getWorksapce();
+  });
+
+  // ワークスペース情報の読み込み
+  function getWorksapce(){
+
+    workspace_id = 1;
   
     new Promise((resolve, reject) => {
   
@@ -2446,24 +2460,203 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
     })}).then(() => {
       // ボタン名変更
       $('#apply-workspace-button').html('ワークスペース更新');
+      // CI/CD実行タブを表示
+      document.getElementById("cicd-tab-item").style.visibility = "visible";
+      
       workspaceImageUpdate();
-      alert("ワークスペース情報を読み込みました");
+      // alert("ワークスペース情報を読み込みました");
       console.log('Complete !!');
     }).catch(() => {
-      alert("ワークスペース情報を読み込みに失敗しました");
+      // alert("ワークスペース情報を読み込みに失敗しました");
       console.log('Fail !!');
     });
-  });
+  }
   
   $('#apply-workspace-button').on('click',apply_workspace);
   function apply_workspace() {
-    var date = new Date();
   
     console.log('CALL apply_workspace()');
     console.log('---- wsDataJSON ----');
     console.log(JSON.stringify(wsDataJSON));
   
     // API Body生成
+    reqbody = create_api_body();
+  
+    console.log('---- reqbody ----');
+    console.log(JSON.stringify(reqbody));
+  
+    created_workspace_id = null;
+  
+    // API呼び出し
+    new Promise(function(resolve, reject) {
+      // 実行中ダイアログ表示
+      $('#modal-progress-container').css('display','flex');
+      $('#progress-message-ok').prop("disabled", true);
+      //
+      // ワークスペース情報登録API
+      //
+      $('#progress_message').html('STEP 1/4 : ワークスペース情報を登録しています');
+  
+      console.log("CALL : ワークスペース情報登録");
+      if (workspace_id == null) {
+        api_param = {
+          "type": "POST",
+          "url": workspace_api_conf.api.resource.post,
+          "data": JSON.stringify(reqbody),
+          dataType: "json",
+        }
+      } else {
+        api_param = {
+          "type": "PUT",
+          "url": workspace_api_conf.api.resource.put.replace('{workspace_id}', workspace_id),
+          "data": JSON.stringify(reqbody),
+          dataType: "json",
+        }
+      }
+  
+      $.ajax(api_param).done(function(data) {
+        console.log("DONE : ワークスペース情報登録");
+        console.log("--- data ----");
+        console.log(JSON.stringify(data));
+        created_workspace_id = data['rows'][0]['workspace_id'];
+        workspace_id = created_workspace_id;
+
+        // 成功
+        resolve();
+      }).fail(function() {
+        console.log("FAIL : ワークスペース情報登録");
+        // 失敗
+        reject();
+      });
+    }).then(() => { return new Promise((resolve, reject) => {
+      //
+      //  ワークスペース作成API
+      //
+      if(workspace_id == null) {
+        $('#progress_message').html('STEP 2/4 : ワークスペースを作成しています');
+      } else {
+        $('#progress_message').html('STEP 2/4 : ワークスペースを更新しています');
+      }
+      console.log("CALL : ワークスペース作成");
+  
+      $.ajax({
+        type:"POST",
+        url: workspace_api_conf.api.workspace.post,
+        data:JSON.stringify(reqbody),
+        dataType: "json",
+  
+      }).done((data) => {
+        console.log("DONE : ワークスペース作成");
+        console.log("--- data ----");
+        console.log(JSON.stringify(data));
+  
+        if(data.result.code == '200') {
+          // 成功
+          // TEKTON起動まで待つため、WAIT
+          setTimeout(function() { resolve(); }, workspace_api_conf.api.workspace.wait);
+        } else {
+          // 失敗
+          reject();
+        }
+      }).fail(() => {
+        console.log("FAIL : ワークスペース作成");
+        // 失敗
+        reject();
+      });
+  
+    })}).then(() => { return new Promise((resolve, reject) => {
+      //
+      // パイプライン作成API
+      //
+      if(workspace_id == null) {
+        $('#progress_message').html('STEP 3/4 :   パイプラインを作成しています');
+      } else {
+        $('#progress_message').html('STEP 3/4 :   パイプラインを更新しています');
+      }
+      console.log("CALL : パイプライン作成");
+  
+      $.ajax({
+        type:"POST",
+        url: workspace_api_conf.api.pipeline.post,
+        data:JSON.stringify(reqbody),
+        dataType: "json",
+      }).done(function(data) {
+        console.log("DONE : パイプライン作成");
+        console.log("--- data ----");
+        console.log(JSON.stringify(data));
+  
+        if(data.result == '200') {
+          // 成功
+          resolve();
+        } else {
+          // 失敗
+          reject();
+        }
+      }).fail(function() {
+        console.log("FAIL : パイプライン作成");
+        // 失敗
+        reject();
+      });
+  
+    })}).then(() => { return new Promise((resolve, reject) => {
+      //
+      // パイプラインパラメータ設定API
+      //
+      $('#progress_message').html('STEP 4/4 :   パイプラインを設定しています');
+      console.log("CALL : パイプラインパラメータ設定");
+  
+      $.ajax({
+        type:"POST",
+        url: workspace_api_conf.api.pipelineParameter.post,
+        data:JSON.stringify(reqbody),
+        dataType: "json",
+      }).done(function(data) {
+        console.log("DONE : パイプラインパラメータ設定");
+        console.log("--- data ----");
+        console.log(JSON.stringify(data));
+        if(data.result == '200') {
+          // 成功
+          resolve();
+        } else {
+          // 失敗
+          reject();
+        }
+      }).fail(function() {
+        console.log("FAIL : パイプラインパラメータ設定");
+        // 失敗
+        reject();
+      });
+
+    })}).then(() => {
+      // 実行中ダイアログ表示
+      if(workspace_id == null) {
+        $('#progress_message').html('COMPLETE :  ワークスペースを作成しました（ワークスペースID:'+created_workspace_id+'）');
+        // workspace_id = created_workspace_id;
+      } else {
+        $('#progress_message').html('COMPLETE :  ワークスペースを更新しました（ワークスペースID:'+workspace_id+'）');
+      }
+      $('#progress-message-ok').prop("disabled", false);
+      console.log('Complete !!');
+    }).catch(() => {
+      // 実行中ダイアログ表示
+      
+      if(created_workspace_id != null) {
+        $('#progress_message').html('ERROR :  ワークスペースの作成に失敗しました（ワークスペースID:'+created_workspace_id+'）');
+        // workspace_id = created_workspace_id;
+      } else if(workspace_id == null) {
+        $('#progress_message').html('ERROR :  ワークスペースの作成に失敗しました');
+      } else {
+        $('#progress_message').html('ERROR :  ワークスペースの更新に失敗しました（ワークスペースID:'+workspace_id+'）');
+      }
+  
+      $('#progress-message-ok').prop("disabled", false);
+      console.log('Fail !!');
+    });
+  }
+
+  function create_api_body() {
+    var date = new Date();
+
     reqbody = {};
   
     // 新IFの設定
@@ -2500,6 +2693,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         'git_repositry' :  {
           'url' :             (wsDataJSON['application-code'][i][i+'-git-repository-url']? wsDataJSON['application-code'][i][i+'-git-repository-url'] : ""),
         },
+        'webhooks_url'   :  location.protocol + "//" + location.hostname,
         'build' : {
           'branch' :          (wsDataJSON['application-code'][i][i+'-pipeline-tekton-branch']? wsDataJSON['application-code'][i][i+'-pipeline-tekton-branch'].split(','): []),
           'context_path' :    (wsDataJSON['application-code'][i][i+'-pipeline-tekton-context-path']? wsDataJSON['application-code'][i][i+'-pipeline-tekton-context-path'] : ""),
@@ -2564,212 +2758,32 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
           },
       }
     }
+
+    return reqbody;
+  }
+
+  function apply_manifest() {
+    var date = new Date();
   
-    // パラメータ設定 - マニフェスト
-    //  ※現時点では保留※
+    console.log('CALL apply_manifest()');
+    console.log('---- wsDataJSON ----');
+    console.log(JSON.stringify(wsDataJSON));
   
-    // 旧形式の付与
-    reqbody['clusterInfo'] = workspace_api_conf['parameter']['clusterInfo'];
-    reqbody['workspace'] = {};
-    reqbody['workspace']['registry'] = {
-        "username": (wsDataJSON['registry-service']['registry-service-account-user']? wsDataJSON['registry-service']['registry-service-account-user']: ""),
-        "password": (wsDataJSON['registry-service']['registry-service-account-password']? wsDataJSON['registry-service']['registry-service-account-password']: ""),
-    };
-    reqbody['workspace']['manifest'] = workspace_api_conf['parameter']['manifest'];
-
-
-    reqbody['workspace']['manifest-ita'] = [];
-    for(var env in wsDataJSON['environment']) {
-      var prmenv = {
-        'git_url'           : wsDataJSON['environment'][env][env + '-git-service-argo-repository-url'],
-        'git_user'          : wsDataJSON['git-service-argo']['git-service-argo-user'],
-        'git_password'      : wsDataJSON['git-service-argo']['git-service-argo-password'],
-      }
-      reqbody['workspace']['manifest-ita'][reqbody['workspace']['manifest-ita'].length] = prmenv;
-    }
-    
-
-    reqbody['build'] = {
-      'git': {
-        "username": (wsDataJSON['git-service']['git-service-user']? wsDataJSON['git-service']['git-service-user']: ""),
-        "password": (wsDataJSON['git-service']['git-service-password']? wsDataJSON['git-service']['git-service-password']: ""),
-        "url":  reqbody['ci_config']['pipelines'][0]? reqbody['ci_config']['pipelines'][0]['git_repositry']['url']: "",
-        "branch": reqbody['ci_config']['pipelines'][0]? reqbody['ci_config']['pipelines'][0]['build']['branch'].join(','): "",
-        "repos" : reqbody['ci_config']['pipelines'][0]? reqbody['ci_config']['pipelines'][0]['git_repositry']['url'].replace("https://github.com/","").replace(".git",""): "",
-        "WebHooksUrl": "http://example.com/",
-        "token": (wsDataJSON['git-service']['git-service-token']? wsDataJSON['git-service']['git-service-token']: ""),
-      },
-      "pathToContext": reqbody['ci_config']['pipelines'][0]? reqbody['ci_config']['pipelines'][0]['build']['context_path']: "",
-      "pathToDockerfile": reqbody['ci_config']['pipelines'][0]? reqbody['ci_config']['pipelines'][0]['build']['dockerfile_path']: "",
-      "registry" : {
-        "url" : reqbody['ci_config']['pipelines'][0]? reqbody['ci_config']['pipelines'][0]['contaier_registry']['image']: "",
-        "imageTag" : date.getFullYear() + ('0' + (date.getMonth() + 1)).slice(-2) + ('0' + date.getDate()).slice(-2) + '.' + ('0' + date.getHours()).slice(-2) + ('0' + date.getMinutes()).slice(-2) + ('0' + date.getSeconds()).slice(-2),
-      }
-    };
-   
-    reqbody['deploy'] = {
-      "enviroments" : {}
-    };
-    for(var env in wsDataJSON['environment']) {
-      var env_name = wsDataJSON['environment'][env][env + '-environment-name'];
-      var prmenv = {
-        "git": {
-          "url" : wsDataJSON['environment'][env][env + '-git-service-argo-repository-url'],
-        },
-        "cluster" : wsDataJSON['environment'][env][env + '-environment-url'],
-        "namespace" : wsDataJSON['environment'][env][env + '-environment-namespace'],
-      }
-      reqbody['deploy']['enviroments'][env_name] = prmenv;
-    }
+    // API Body生成
+    reqbody = create_api_body();
   
     console.log('---- reqbody ----');
     console.log(JSON.stringify(reqbody));
   
-    created_workspace_id = null;
-  
     // API呼び出し
     new Promise(function(resolve, reject) {
       // 実行中ダイアログ表示
-      $('#modal-progress-container').css('display','flex');
+      // $('#modal-progress-container').css('display','flex');
       $('#progress-message-ok').prop("disabled", true);
-      //
-      // ワークスペース情報登録API
-      //
-      $('#progress_message').html('STEP 1/5 : ワークスペース情報を登録しています');
-  
-      console.log("CALL : ワークスペース情報登録");
-      if (workspace_id == null) {
-        api_param = {
-          "type": "POST",
-          "url": workspace_api_conf.api.resource.post,
-          "data": JSON.stringify(reqbody),
-          dataType: "json",
-        }
-      } else {
-        api_param = {
-          "type": "PUT",
-          "url": workspace_api_conf.api.resource.put.replace('{workspace_id}', workspace_id),
-          "data": JSON.stringify(reqbody),
-          dataType: "json",
-        }
-      }
-  
-      $.ajax(api_param).done(function(data) {
-        console.log("DONE : ワークスペース情報登録");
-        console.log("--- data ----");
-        console.log(JSON.stringify(data));
-        created_workspace_id = data['rows'][0]['workspace_id'];
-        // 成功
-        resolve();
-      }).fail(function() {
-        console.log("FAIL : ワークスペース情報登録");
-        // 失敗
-        reject();
-      });
-    }).then(() => { return new Promise((resolve, reject) => {
-      //
-      //  ワークスペース作成API
-      //
-      if(workspace_id == null) {
-        $('#progress_message').html('STEP 2/5 : ワークスペースを作成しています');
-      } else {
-        $('#progress_message').html('STEP 2/5 : ワークスペースを更新しています');
-      }
-      console.log("CALL : ワークスペース作成");
-  
-      $.ajax({
-        type:"POST",
-        url: workspace_api_conf.api.workspace.post,
-        data:JSON.stringify(reqbody),
-        dataType: "json",
-  
-      }).done((data) => {
-        console.log("DONE : ワークスペース作成");
-        console.log("--- data ----");
-        console.log(JSON.stringify(data));
-  
-        if(data.result.code == '200') {
-          // 成功
-          // TEKTON起動まで待つため、WAIT
-          setTimeout(function() { resolve(); }, workspace_api_conf.api.workspace.wait);
-        } else {
-          // 失敗
-          reject();
-        }
-      }).fail(() => {
-        console.log("FAIL : ワークスペース作成");
-        // 失敗
-        reject();
-      });
-  
-    })}).then(() => { return new Promise((resolve, reject) => {
-      //
-      // パイプライン作成API
-      //
-      if(workspace_id == null) {
-        $('#progress_message').html('STEP 3/5 :   パイプラインを作成しています');
-      } else {
-        $('#progress_message').html('STEP 3/5 :   パイプラインを更新しています');
-      }
-      console.log("CALL : パイプライン作成");
-  
-      $.ajax({
-        type:"POST",
-        url: workspace_api_conf.api.pipeline.post,
-        data:JSON.stringify(reqbody),
-        dataType: "json",
-      }).done(function(data) {
-        console.log("DONE : パイプライン作成");
-        console.log("--- data ----");
-        console.log(JSON.stringify(data));
-  
-        if(data.result == '200') {
-          // 成功
-          resolve();
-        } else {
-          // 失敗
-          reject();
-        }
-      }).fail(function() {
-        console.log("FAIL : パイプライン作成");
-        // 失敗
-        reject();
-      });
-  
-    })}).then(() => { return new Promise((resolve, reject) => {
-      //
-      // パイプラインパラメータ設定API
-      //
-      $('#progress_message').html('STEP 4/5 :   パイプラインを設定しています');
-      console.log("CALL : パイプラインパラメータ設定");
-  
-      $.ajax({
-        type:"POST",
-        url: workspace_api_conf.api.pipelineParameter.post,
-        data:JSON.stringify(reqbody),
-        dataType: "json",
-      }).done(function(data) {
-        console.log("DONE : パイプラインパラメータ設定");
-        console.log("--- data ----");
-        console.log(JSON.stringify(data));
-        if(data.result == '200') {
-          // 成功
-          resolve();
-        } else {
-          // 失敗
-          reject();
-        }
-      }).fail(function() {
-        console.log("FAIL : パイプラインパラメータ設定");
-        // 失敗
-        reject();
-      });
 
-    })}).then(() => { return new Promise((resolve, reject) => {
       //
       // マニフェストパラメータ設定API
       //
-      $('#progress_message').html('STEP 5/5 :   マニフェストパラメータを設定しています');
       console.log("CALL : マニフェストパラメータ設定");
 
       $.ajax({
@@ -2794,33 +2808,20 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         reject();
       });
 
-    })}).then(() => {
-      // 実行中ダイアログ表示
-      if(workspace_id == null) {
-        $('#progress_message').html('COMPLETE :  ワークスペースを作成しました（ワークスペースID:'+created_workspace_id+'）');
-        workspace_id = created_workspace_id;
-      } else {
-        $('#progress_message').html('COMPLETE :  ワークスペースを更新しました（ワークスペースID:'+workspace_id+'）');
-      }
-      $('#progress-message-ok').prop("disabled", false);
+    }).then(() => {
+
       console.log('Complete !!');
+
     }).catch(() => {
       // 実行中ダイアログ表示
-      
-      if(created_workspace_id != null) {
-        $('#progress_message').html('ERROR :  ワークスペースの作成に失敗しました（ワークスペースID:'+created_workspace_id+'）');
-        workspace_id = created_workspace_id;
-      } else if(workspace_id == null) {
-        $('#progress_message').html('ERROR :  ワークスペースの作成に失敗しました');
-      } else {
-        $('#progress_message').html('ERROR :  ワークスペースの更新に失敗しました（ワークスペースID:'+workspace_id+'）');
-      }
+      $('#modal-progress-container').css('display','flex');
+      $('#progress_message').html('ERROR :  マニフェストパラメータの設定に失敗しました');
   
       $('#progress-message-ok').prop("disabled", false);
       console.log('Fail !!');
     });
   }
-  
+
   //
   // 処理中メッセージBOXのOKボタン
   //

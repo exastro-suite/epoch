@@ -20,6 +20,9 @@ import subprocess
 import traceback
 import os
 import shutil
+import logging
+import base64
+
 from kubernetes import client, config
 
 from django.shortcuts import render
@@ -28,8 +31,13 @@ from django.http.response import JsonResponse
 
 from django.views.decorators.csrf import csrf_exempt
 
+logger = logging.getLogger('apilog')
+
 @csrf_exempt
 def index(request):
+
+    logger.debug ("CALL tekton.pipeline : {}".format(request.method))
+
     if request.method == 'POST':
         return post(request)
     else:
@@ -47,7 +55,7 @@ def post(request):
             output_data.append(output["output"])
         else:
             # エラーの場合は、そのまま返す
-            return JsonResponse(output)
+            return JsonResponse(output, status=500)
 
         # Pipelineの設定
         output = postPipeline(request)
@@ -55,7 +63,7 @@ def post(request):
             output_data.append(output["output"])
         else:
             # エラーの場合は、そのまま返す
-            return JsonResponse(output)
+            return JsonResponse(output, status=500)
 
         # Triggerの設定
         output = postTrigger(request)
@@ -63,16 +71,16 @@ def post(request):
             output_data.append(output["output"])
         else:
             # エラーの場合は、そのまま返す
-            return JsonResponse(output)
+            return JsonResponse(output, status=500)
 
         response = {
             "result":"201",
             "output" : output_data,
         }
-        return JsonResponse(response)
+        return JsonResponse(response, status=200)
 
     except Exception as e:
-        print (e)
+        logger.debug (e)
         response = {
             "result":"500",
             "returncode": "0101",
@@ -80,11 +88,13 @@ def post(request):
             "output": e.args,
             "traceback": traceback.format_exc(),
         }
-        return JsonResponse(response)
+        return JsonResponse(response, status=500)
 
 @csrf_exempt    
 def postCommon(request):
     try:
+
+        logger.debug("CALL postCommon")
 
         # namespace定義
         name = "epoch-tekton-pipelines"
@@ -106,10 +116,9 @@ def postCommon(request):
             return JsonResponse(response)
 
         # 引数で指定されたCD環境を取得
-        print (request.body)
-        request_json = json.loads(request.body)
-        #print (request_json)
-        request_build = request_json["build"]
+        request_ci_config = json.loads(request.body)
+        #print (request_ci_config)
+        request_ci_config = request_ci_config["ci_config"]
 
         templates_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource/templates/tekton-common"
         resource_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource/conv/tekton-common"
@@ -131,7 +140,7 @@ def postCommon(request):
             # テンプレートの文字列置き換え
             conv(templates_dir + "/" + yaml_name,
                 resource_dir + "/" + yaml_name,
-                request_build)
+                request_ci_config)
         
             try:
                 stdout = subprocess.check_output(["kubectl","apply","-f",resource_dir +  "/" + yaml_name],stderr=subprocess.STDOUT)
@@ -155,7 +164,7 @@ def postCommon(request):
         return (response)
 
     except Exception as e:
-        print (e)
+        logger.debug (e)
         response = {
             "result":"500",
             "returncode": "0106",
@@ -169,11 +178,12 @@ def postCommon(request):
 def postPipeline(request):
     try:
 
+        logger.debug("CALL postPipeline")
+
         # 引数で指定されたCD環境を取得
-        print (request.body)
-        request_json = json.loads(request.body)
-        #print (request_json)
-        request_build = request_json["build"]
+        request_ci_config = json.loads(request.body)
+        #print (request_ci_config)
+        request_ci_config = request_ci_config["ci_config"]
 
         templates_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource/templates/tekton-pipeline"
         resource_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource/conv/tekton-pipeline"
@@ -195,7 +205,7 @@ def postPipeline(request):
             # テンプレートの文字列置き換え
             conv(templates_dir + "/" + yaml_name,
                 resource_dir + "/" + yaml_name,
-                request_build)
+                request_ci_config)
         
             try:
                 stdout = subprocess.check_output(["kubectl","apply","-f",resource_dir +  "/" + yaml_name],stderr=subprocess.STDOUT)
@@ -219,7 +229,7 @@ def postPipeline(request):
         return (response)
 
     except Exception as e:
-        print (e)
+        logger.debug (e)
         response = {
             "result":"500",
             "returncode": "0102",
@@ -233,11 +243,12 @@ def postPipeline(request):
 def postTrigger(request):
     try:
 
+        logger.debug("CALL postTrigger")
+
         # 引数で指定されたCD環境を取得
-        print (request.body)
-        request_json = json.loads(request.body)
-        #print (request_json)
-        request_build = request_json["build"]
+        request_ci_config = json.loads(request.body)
+        #print (request_ci_config)
+        request_ci_config = request_ci_config["ci_config"]
 
         templates_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource/templates/tekton-trigger"
         resource_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource/conv/tekton-trigger"
@@ -259,7 +270,7 @@ def postTrigger(request):
             # テンプレートの文字列置き換え
             conv(templates_dir + "/" + yaml_name,
                 resource_dir + "/" + yaml_name,
-                request_build)
+                request_ci_config)
 
             try:
                 stdout = subprocess.check_output(["kubectl","apply","-f",resource_dir +  "/" + yaml_name],stderr=subprocess.STDOUT)
@@ -283,7 +294,7 @@ def postTrigger(request):
         return (response)
 
     except Exception as e:
-        print (e)
+        logger.debug (e)
         response = {
             "result":"500",
             "returncode": "0104",
@@ -294,7 +305,7 @@ def postTrigger(request):
         return (response)
 
 @csrf_exempt    
-def conv(template_yaml, dest_yaml, json_build):
+def conv(template_yaml, dest_yaml, json_ci_config):
 
     # 実行yamlの保存
     shutil.copy(template_yaml, dest_yaml)
@@ -303,19 +314,32 @@ def conv(template_yaml, dest_yaml, json_build):
     with open(dest_yaml, encoding="utf-8") as f:
         data_lines = f.read()
 
+    # pipelines共通設定
+    json_pipelines_common = json_ci_config["pipelines_common"]
+
+    # レジストリの認証情報("user:password"をbase64でencode化)
+    registry_auth = base64.b64encode((json_pipelines_common["container_registry"]["user"] + ':' + json_pipelines_common["container_registry"]["password"]).encode())
+
     # 文字列置換
-    data_lines = data_lines.replace("<__build_registry_imageTag__>", json_build["registry"]["imageTag"])
-    data_lines = data_lines.replace("<__build_registry_url__>", json_build["registry"]["url"])
-    data_lines = data_lines.replace("<__build_pathToContext__>", json_build["pathToContext"])
-    data_lines = data_lines.replace("<__build_pathToDockerfile__>", json_build["pathToDockerfile"])
-    data_lines = data_lines.replace("<__build_git_url__>", json_build["git"]["url"])
-    data_lines = data_lines.replace("<__build_git_branch__>", json_build["git"]["branch"])
+    data_lines = data_lines.replace("<__build_registry_auth__>", str(registry_auth.decode('utf-8')))
+
+    # pipelines設定
+    # アプリケーションコードは１つのみ有効(複数対応待ち)
+    json_pipelines = json_ci_config["pipelines"][0]
+
+    # 文字列置換
+    # data_lines = data_lines.replace("<__build_registry_imageTag__>", json_ci_config["registry"]["imageTag"])  # imageTagは自動化で不要
+    data_lines = data_lines.replace("<__build_registry_url__>", json_pipelines["contaier_registry"]["image"])
+    data_lines = data_lines.replace("<__build_pathToContext__>", json_pipelines["build"]["context_path"])
+    data_lines = data_lines.replace("<__build_pathToDockerfile__>", json_pipelines["build"]["dockerfile_path"])
+    data_lines = data_lines.replace("<__build_git_url__>", json_pipelines["git_repositry"]["url"])
+    data_lines = data_lines.replace("<__build_git_branch__>", ",".join(json_pipelines["build"]["branch"]))
 
     data_lines = data_lines.replace("<__http_proxy__>", os.environ['EPOCH_HTTP_PROXY'])
     data_lines = data_lines.replace("<__https_proxy__>", os.environ['EPOCH_HTTPS_PROXY'])
     data_lines = data_lines.replace("<__no_proxy__>", os.environ['EPOCH_NO_PROXY'])
 
-    data_lines = data_lines.replace("<__webhook_token__>", os.environ['EPOCH_WEBHOOK_TOKEN'])
+    data_lines = data_lines.replace("<__webhook_token__>", json_ci_config["pipelines_common"]["git_repositry"]["token"])
 
     # 同じファイル名で保存
     with open(dest_yaml, mode="w", encoding="utf-8") as f:
@@ -338,12 +362,12 @@ def getNamespace(name):
 
         # namespaceの情報取得
         ret = v1.read_namespace(name=name)
-        print("ret: %s" % (ret))
+        logger.debug("ret: %s" % (ret))
 
         return ret 
 
     except Exception as e:
-        print("Except: %s" % (e))
+        logger.debug("Except: %s" % (e))
         return None 
       
 # namespaceの作成
@@ -367,11 +391,11 @@ def createNamespace(name):
         #ret = v1.create_namespace(body=body, pretty=pretty, dry_run=dry_run, field_manager=field_manager)
         ret = v1.create_namespace(body=body)
 
-        print("ret: %s" % (ret))
+        logger.debug("ret: %s" % (ret))
 
         return ret 
 
     except Exception as e:
-        print("Except: %s" % (e))
+        logger.debug("Except: %s" % (e))
         return None 
      

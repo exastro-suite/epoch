@@ -225,9 +225,7 @@
         <ul class="workspace-tab-list">
           <!--<li class="workspace-tab-item"><a href="#" class="workspace-tab-link">一覧に戻る</a></li>-->
           <li class="workspace-tab-item"><a href="#setting" class="workspace-tab-link current">ワークスペース設定</a></li>
-          <li class="workspace-tab-item"><a href="#running" class="workspace-tab-link">CI/CD実行</a></li>
-
-          <li class="workspace-tab-item"><a href="#" id="load-workspace-button" style="color:blue">【テスト用】登録済ワークスペース読込</a></li>
+          <li class="cicd-tab-item" id="cicd-tab-item" style="visibility:hidden;"><a href="#running" class="workspace-tab-link">CI/CD実行</a></li>
         </ul>
         <ul class="workspace-status-list">
           <li class="workspace-status-item workspace-mode-running" data-button="kubernetesManifestTemplate">
@@ -245,8 +243,12 @@
         </ul>
       </div>
       <div class="workspace-body">
+
+        <button id="reset-button" class="epoch-button negative" style="position:relative; top:10px; left:10px;font-size:80%;">リセット</button>
+        
         <div class="workspace-setting-image">
           
+
           <!-- SVG symbol -->
           <!-- ワークスペースで使用するアイコン -->
           <svg id="workspaceSVG">
@@ -452,7 +454,7 @@
                     </svg>
                   </div>
                   <div class="workspace-block-label">
-                    <div class="workspace-block-type">TEKTON Gitサービス</div>
+                    <div class="workspace-block-type"><span class="workspace-block-type-inner adjust-text">アプリケーションコードリポジトリ</span></div>
                     <div class="workspace-block-name"><span class="workspace-block-name-inner adjust-text"></span></div>
                   </div>
                   <div class="workspace-block-setting workspace-mode-setting">
@@ -588,7 +590,7 @@
                     </svg>
                   </div>
                   <div class="workspace-block-label">
-                    <div class="workspace-block-type">Argo CD Gitサービス</div>
+                    <div class="workspace-block-type"><span class="workspace-block-type-inner adjust-text">IaC リポジトリ</span></div>
                     <div class="workspace-block-name"><span class="workspace-block-name-inner adjust-text"></span></div>
                   </div>
                   <div class="workspace-block-setting workspace-mode-setting">

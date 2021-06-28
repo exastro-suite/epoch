@@ -152,3 +152,30 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
     ]
 }
+
+LOGGING = {
+    'version': 1,
+    'formatters': {
+        'all': {
+            'format': '\t'.join([
+                "[%(levelname)s]",
+                "asctime:%(asctime)s",
+                "module:%(module)s",
+                "message:%(message)s",
+            ])
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler', 
+            'formatter': 'all'
+        },
+    },
+    'loggers': {
+        'apilog': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
+    },
+}

@@ -18,6 +18,7 @@ import traceback
 import os
 import datetime, pytz
 import base64
+import logging
 
 from django.shortcuts import render
 from django.http import HttpResponse
@@ -37,11 +38,13 @@ ita_menu_manifest_template = '2100040704'
 
 ita_restapi_endpoint='http://' + ita_host + ':' + ita_port + '/default/menu/07_rest_api_ver1.php'
 
+logger = logging.getLogger('apilog')
 
 @require_http_methods(['POST'])
 @csrf_exempt
 def post(request):
 
+    logger.debug("CALL " + __name__)
     # HTTPヘッダの生成
     filter_headers = {
         'host': ita_host + ':' + ita_port,
@@ -57,7 +60,7 @@ def post(request):
         'X-Command': 'EDIT',
     }
 
-    print(json.loads(request.body))
+    logger.debug(json.loads(request.body))
 
     #
     # マニフェストテンプレートの取得
@@ -72,19 +75,19 @@ def post(request):
     }
     manitpl_resp = requests.post(ita_restapi_endpoint + '?no=' + ita_menu_manifest_template, headers=filter_headers, data=json.dumps(content))
     manitpl_json = json.loads(manitpl_resp.text)
-    print('---- Current Manifest Templates ----')
-    # print(manitpl_resp.text)
-    print(manitpl_json)
+    logger.debug('---- Current Manifest Templates ----')
+    # logger.debug(manitpl_resp.text)
+    logger.debug(manitpl_json)
 
     req_data = json.loads(request.body)['manifests']
     mani_req_len = len(req_data)
     mani_ita_len = manitpl_json['resultdata']['CONTENTS']['RECORD_LENGTH']
     max_loop_cnt = max(mani_req_len, mani_ita_len)
-    print("max_loop_cnt: " + str(max_loop_cnt))
+    logger.debug("max_loop_cnt: " + str(max_loop_cnt))
 
     ita_data = manitpl_json['resultdata']['CONTENTS']["BODY"]
     ita_data.pop(0)
-    print(ita_data)
+    logger.debug(ita_data)
 
     edit_data = {
         "UPLOAD_FILE": []
@@ -131,13 +134,13 @@ def post(request):
             edit_data[str(i)] = tmp_data
             edit_data["UPLOAD_FILE"].append({"4": base64.b64encode(req_data[i]["file_text"].encode()).decode()})
 
-    print(edit_data)
+    logger.debug(edit_data)
 
     # ITAへREST実行
     manutemplate_edit_resp = requests.post(ita_restapi_endpoint + '?no=' + ita_menu_manifest_template, headers=edit_headers, data=json.dumps(edit_data))
     manitemplate_json = json.loads(manutemplate_edit_resp.text)
 
-    print(manitemplate_json)
+    logger.debug(manitemplate_json)
 
     response = {
         "result": "200",

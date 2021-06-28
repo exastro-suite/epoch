@@ -19,12 +19,15 @@ import json
 import subprocess
 import traceback
 import os
+import logging
 
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.http.response import JsonResponse
 
 from django.views.decorators.csrf import csrf_exempt
+
+logger = logging.getLogger('apilog')
 
 @csrf_exempt
 def index(request):
@@ -37,7 +40,7 @@ def index(request):
 def post(request):
     try:
 
-        print ("pipelineParameter post")
+        logger.debug("pipelineParameter post")
 
         # ヘッダ情報
         post_headers = {
@@ -47,27 +50,14 @@ def post(request):
         # 引数をJSON形式で受け取りそのまま引数に設定
         post_data = request.body
 
-        # 呼び出すapiInfoは、clusterInfo情報より取得
-#        print (request.body)
-        request_json = json.loads(request.body)
-        apiInfo = request_json["clusterInfo"]["apiInfo"]
-        print ("apiInfo:" + apiInfo)
+        # 呼び出すapiInfoは、環境変数より取得
+        apiInfo = "{}://{}:{}/".format(os.environ["EPOCH_CICD_PROTOCOL"], os.environ["EPOCH_CICD_HOST"], os.environ["EPOCH_CICD_PORT"])
 
         output = []
-        # # Manifestパラメータ設定(ITA)
-        # request_response = requests.post( apiInfo + "ita/manifestParameter", headers=post_headers, data=post_data)
-        # print("ita/manifestParameter:response:" + request_response.text)
-        # ret = json.loads(request_response.text)
-        # #ret = request_response.text
-        # print(ret["result"])
-        # if ret["result"] == "200" or ret["result"] == "201":
-        #     output.append(ret["items"])
-        # else:
-        #     raise Exception(request_response.text)
 
         # パイプラインパラメータ設定(ArgoCD)
         request_response = requests.post( apiInfo + "argocd/pipelineParameter", headers=post_headers, data=post_data)
-        print("argocd/pipelineParameter:response:" + request_response.text)
+        logger.debug("argocd/pipelineParameter:response:" + request_response.text)
         ret = json.loads(request_response.text)
         if ret["result"] == "200" or ret["result"] == "201":
             output.append(ret["output"])

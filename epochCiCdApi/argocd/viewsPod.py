@@ -20,8 +20,12 @@ import json
 import subprocess
 import traceback
 import os
+import base64
+import bcrypt
 import datetime, pytz
+import logging
 
+from django.conf import settings
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.http.response import JsonResponse
@@ -29,8 +33,13 @@ from django.http.response import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from kubernetes import client, config
 
+logger = logging.getLogger('apilog')
+
 @csrf_exempt
 def index(request):
+
+    logger.debug ("CALL argocd.pod : {}".format(request.method))
+
     if request.method == 'POST':
         return post(request)
     else:
@@ -41,7 +50,7 @@ def post(request):
     try:
         v1 = client.CoreV1Api()
         
-        print("argocd pod create")
+        logger.debug("argocd pod create")
 
         resource_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource"
 
@@ -66,14 +75,13 @@ def post(request):
 
         output = ""
 
-        print("argocd pod kubectl apply")
-
-        #stdout_ns = subprocess.check_output(["kubectl","create","namespace","argocd"],stderr=subprocess.STDOUT)
-        stdout_cd = subprocess.check_output(["kubectl","apply","-n",name,"-f",(resource_dir + "/install.yaml")],stderr=subprocess.STDOUT)
+        logger.debug("argocd pod kubectl apply")
+        # argocd pod create
+        stdout_cd = subprocess.check_output(["kubectl","apply","-n",name,"-f",(resource_dir + "/argocd_install.yaml")],stderr=subprocess.STDOUT)
 
         output += "argocd" + "{" + stdout_cd.decode('utf-8') + "},"
 
-        print("argocd pod output:" + output)
+        logger.debug("argocd pod output:" + output)
 
         # 対象となるdeploymentを定義
         deployments = [ "deployment/argocd-server",
@@ -95,16 +103,30 @@ def post(request):
 
                 output += deployment_name + "." + env_name + "{" + stdout_cd.decode('utf-8') + "},"
 
-        print("argocd pod password reset")
 
-        # argo CDのパスワード
+        logger.debug("argocd rolesetting kubectl apply")
+        # role bindingの再設定 (ns:epoch-workspace用)
+        stdout_cd = subprocess.check_output(["kubectl","apply","-n",name,"-f",(resource_dir + "/argocd_rolebinding.yaml")],stderr=subprocess.STDOUT)
+
+        output += "argocd" + "{" + stdout_cd.decode('utf-8') + "},"
+
+        logger.debug("argocd rolesetting complete")
+
+        logger.debug("argocd pod password reset")
+
+        # argo CDのパスワード初期化
+        salt = bcrypt.gensalt(rounds=10, prefix=b'2a')
+        password = settings.ARGO_PASSWORD.encode("ascii")
+        argoLogin = bcrypt.hashpw(password, salt).decode("ascii")
+        logger.debug("argocd pod password : {}".format(argoLogin))
+        # bcryptでハッシュ化した内容でargocdのパスワードを初期化する
         datenow = datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y-%m-%dT%H:%M:%S%z')
-        pdata ='{"stringData": { "admin.password": "' + os.environ['EPOCH_ARGOCD_LOGIN'] + '", "admin.passwordMtime": "\'' + datenow + '\'" }}'
+        pdata ='{"stringData": { "admin.password": "' + argoLogin + '", "admin.passwordMtime": "\'' + datenow + '\'" }}'
         stdout_cd = subprocess.check_output(["kubectl","-n",name,"patch","secret","argocd-secret","-p",pdata],stderr=subprocess.STDOUT)
 
         output += "argocd_pwchg" + "{" + stdout_cd.decode('utf-8') + "},"
 
-        print("argocd pod password complete")
+        logger.debug("argocd pod password complete")
 
         response = {
             "result":"OK",
@@ -113,9 +135,10 @@ def post(request):
                 #stdout_cd.decode('utf-8'),
             ],
         }
-        return JsonResponse(response)
+        return JsonResponse(response, status=200)
 
     except subprocess.CalledProcessError as e:
+        logger.debug(e.output.decode('utf-8'))
         response = {
             "result":"ERROR",
             "returncode": e.returncode,
@@ -123,7 +146,17 @@ def post(request):
             "output": e.output.decode('utf-8'),
             "traceback": traceback.format_exc(),
         }
-        return JsonResponse(response)
+        return JsonResponse(response, status=500)
+
+    except Exception as e:
+        response = {
+            "result":"ERROR",
+            "returncode": "",
+            "args": e.args,
+            "output": e.args,
+            "traceback": traceback.format_exc(),
+        }
+        return JsonResponse(response, status=500)
 
 
 # namespaceの情報取得
@@ -142,12 +175,12 @@ def getNamespace(name):
 
         # namespaceの情報取得
         ret = v1.read_namespace(name=name)
-        print("ret: %s" % (ret))
+        logger.debug("ret: %s" % (ret))
 
         return ret 
 
     except Exception as e:
-        print("Except: %s" % (e))
+        logger.debug("Except: %s" % (e))
         return None 
       
 # namespaceの作成
@@ -171,11 +204,11 @@ def createNamespace(name):
         #ret = v1.create_namespace(body=body, pretty=pretty, dry_run=dry_run, field_manager=field_manager)
         ret = v1.create_namespace(body=body)
 
-        print("ret: %s" % (ret))
+        logger.debug("ret: %s" % (ret))
 
         return ret 
 
     except Exception as e:
-        print("Except: %s" % (e))
+        logger.debug("Except: %s" % (e))
         return None 
       

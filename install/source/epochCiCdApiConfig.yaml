@@ -11,13 +11,18 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from django.urls import path, include
-from . import views
-from . import viewsPipeline
-#from . import createTriggerYaml
-
-urlpatterns = [
-    path('', views.index),
-    # パイプライン設定
-    path('pipeline', viewsPipeline.index),
-]
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: epoch-cicd-api-config
+  namespace: epoch-system
+data:
+  HTTP_PROXY: ""
+  HTTPS_PROXY: ""
+  NO_PROXY: "localhost,127.0.0.1"
+  ARGOCD_NO_PROXY: "localhost,127.0.0.1,kurbernetes.default.svc,kurbernetes.default.svc.cluster.local,10.96.0.1,argocd-server,argocd-dex-server,argocd-redis,argocd-repo-server,argocd-server-metrics"
+  ARGOCD_HOST: "argocd-server.epoch-workspace.svc"
+  ITA_HOST: "it-automation.epoch-workspace.svc"
+  ITA_PORT: "8084"
+  ITA_WORKER_HOST: "ita-worker.epoch-workspace.svc"
+  WEBHOOK_PORT: "30904"

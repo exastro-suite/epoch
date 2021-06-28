@@ -1,0 +1,81 @@
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: epoch-resource-conf
+  namespace: epoch-system
+data:
+  api_workspace.conf: |
+    TZ='Asia/Tokyo'
+    MYSQL_HOST='workspace-db'
+    MYSQL_PORT='3306'
+    MYSQL_DATABASE='workspace_db'
+    MYSQL_USER='app_user'
+    MYSQL_PASSWORD='password'
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: epoch-resource-api
+  namespace: epoch-system
+spec:
+  selector:
+    matchLabels:
+      name: epoch-resource-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: epoch-resource-api
+    spec:
+      volumes:
+      - name: epoch-resource-conf
+        configMap:
+          name: epoch-resource-conf
+      containers:
+      - name: epoch-resource-api
+        image: exastro/epochresourceapi:0.1.0_20210624_1200
+        env:
+        - name: CONFIG_API_WORKSPACE_PATH
+          value: "/etc/epoch/epochResoure/api_workspace.conf"
+        - name: FLASK_ENV
+          value: "development"
+        - name: API_WORKSPACE_PORT
+          value: "8000"
+        - name: PYTHONIOENCODING
+          value: utf-8
+        volumeMounts:
+        - name: epoch-resource-conf
+          mountPath: /etc/epoch/epochResoure
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: epoch-resource-api
+  labels:
+    name: epoch-resource-api
+  namespace: epoch-system
+spec:
+  type: NodePort
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+  selector:
+    name: epoch-resource-api
