@@ -83,11 +83,13 @@ def post(request):
             })
 
             # hooksのPOST送信
-            logger.debug('TRACE github.webhooks setting to git')
-            logger.debug('TRACE request URL:' + github_webhook_base_url + gitRepos + github_webhook_base_hooks)
+            logger.debug('- github.webhooks setting to git')
+            logger.debug('- reequest URL:' + github_webhook_base_url + gitRepos + github_webhook_base_hooks)
             request_response = requests.post( github_webhook_base_url + gitRepos + github_webhook_base_hooks, headers=post_headers, data=post_data)
 
-            logger.debug('TRACE response STATUS=' + request_response.status_code)
+            logger.debug('- response headers')
+            logger.debug(request_response.headers)
+            logger.debug('- response body')
             logger.debug(request_response.text)
 
             output += "{" + request_response.text + "},"
@@ -99,6 +101,10 @@ def post(request):
         return JsonResponse(response)
 
     except Exception as e:
+        logger.debug('Exception github.webhooks')
+        logger.debug('- traceback.format_exc')
+        logger.debug(traceback.format_exc())
+
         response = {
             "result": e.returncode,
             "returncode": "0801",
