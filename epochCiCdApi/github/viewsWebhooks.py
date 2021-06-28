@@ -21,6 +21,7 @@ import subprocess
 import traceback
 import os
 import logging
+import re
 
 from django.shortcuts import render
 from django.http import HttpResponse
@@ -50,7 +51,6 @@ def index(request):
 @csrf_exempt    
 def post(request):
     try:
-
         # 引数で指定されたCD環境を取得
         logger.debug (request.body)
         request_json = json.loads(request.body)
@@ -59,7 +59,7 @@ def post(request):
         output = ""
         # パイプライン数分繰り返し
         for pipeline in request_ci_confg["pipelines"]:
-            gitRepos = pipeline["git_repositry"]["url"].lstrip("https://github.com/").rstrip(".git")
+            gitRepos = re.sub('\\.git$','',re.sub('^https?://[^/][^/]*/','',pipeline["git_repositry"]["url"]))
             webHooksUrl = pipeline["webhooks_url"]
             token = request_ci_confg["pipelines_common"]["git_repositry"]["token"]
 
@@ -83,7 +83,12 @@ def post(request):
             })
 
             # hooksのPOST送信
+            logger.debug('TRACE github.webhooks setting to git')
+            logger.debug('TRACE request URL:' + github_webhook_base_url + gitRepos + github_webhook_base_hooks)
             request_response = requests.post( github_webhook_base_url + gitRepos + github_webhook_base_hooks, headers=post_headers, data=post_data)
+
+            logger.debug('TRACE response STATUS=' + request_response.status_code)
+            logger.debug(request_response.text)
 
             output += "{" + request_response.text + "},"
 
@@ -114,7 +119,7 @@ def get(request):
         output = ""
         # パイプライン数分繰り返し
         for pipeline in request_ci_confg["pipelines"]:
-            gitRepos = pipeline["git_repositry"]["url"].lstrip("https://github.com/").rstrip(".git")
+            gitRepos = re.sub('\\.git$','',re.sub('^https?://[^/][^/]*/','',pipeline["git_repositry"]["url"]))
             webHooksUrl = pipeline["webhooks_url"]
             token = request_ci_confg["pipelines_common"]["git_repositry"]["token"]
 
