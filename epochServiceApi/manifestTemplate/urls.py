@@ -16,5 +16,5 @@ from . import views
 
 urlpatterns = [
     path('', views.file_id_not_assign),
-    path('/<int:file_id>', views.file_id_assign),
+    path('<int:file_id>', views.file_id_assign),
 ]

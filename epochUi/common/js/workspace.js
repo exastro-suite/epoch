@@ -1412,7 +1412,13 @@ const templateFileList = function(){
         alert('ファイルを更新しますか？');
         break;
       case 'delete':
-        alert('削除しますか？');
+        if (confirm(wsDataJSON['template-file'][key]['name'] + 'を削除しますか？'))
+        {
+          // manifestsテンプレートファイルの削除呼び出し
+          templateFileDelete(key, wsDataJSON['template-file'][key]['file_id'])
+          
+          $button.closest('.c-table-row').remove();
+        }
         break;      
     }
   });
@@ -1509,24 +1515,26 @@ const templateFileSelect = function( type ){
                 }).done(function( data, textStatus ){
                   if ( textStatus === 'success') {
 
-                    // 暫定実装 -----
                     wsDataJSON['template-file'] = {};
                     var disp = "";
 
                     console.log("manifest post response:" + JSON.stringify(data));
+                    // 現在登録されているファイルの一覧が返却されてくるので、その内容で構成しなおし
                     for(var fileidx = 0; fileidx < data['rows'].length; fileidx++ ) {
                       disp += data['rows'][fileidx]['file_name'] + '\n';
+                      var fileDate = new Date(data['rows'][fileidx]['update_at']);
                       wsDataJSON['template-file']['file'+("000"+(fileidx+1)).slice(-3)] = {
                         'name' : data['rows'][fileidx]['file_name'],
-                        'path' : 'exsample/' + data['rows'][fileidx]['file_name'],
-                        'date' : '2021/05/12 09:00:00',
-                        'user' : 'epoch-user',
-                        'note' : '<a>' + data['rows'][fileidx]['file_name'] + '</a>',
+                        'path' : data['rows'][fileidx]['file_name'],
+                        'date' : fileDate.getFullYear() + '/' + ('0' + (fileDate.getMonth() + 1)).slice(-2) + '/' + ('0' + fileDate.getDate()).slice(-2)
+                        + ' ' + ('0' + fileDate.getHours()).slice(-2) + ':' + ('0' + fileDate.getMinutes()).slice(-2) + ':' + ('0' + fileDate.getSeconds()).slice(-2),
+                        'user' : '',
+                        'note' : '',
                         "text" : data['rows'][fileidx]['file_text'],
+                        'file_id' : data['rows'][fileidx]['id'],
                       }
                     }
-                    // 暫定実装 -----
-
+                    
                     // アップロードが完了したら
                     $file.find('.item-file-list').html('<pre>' + disp + '</pre>');
 
@@ -1628,6 +1636,92 @@ const templateFileSelect = function( type ){
       // changeトリガー
       $file.find('.item-file').change();
     }
+  });
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//   Manifestテンプレートファイル削除実行
+// 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+function templateFileDelete(key, file_id){
+  
+  // API呼び出し
+  new Promise(function(resolve, reject) {
+    //
+    // Manifestテンプレート削除APIの呼び出し
+    //
+
+    console.log("CALL : Manifestテンプレート削除 : key:" + key + ", id:" + file_id);
+    api_param = {
+      "type": "POST",
+      "url": workspace_api_conf.api.manifestTemplate.delete.replace('{workspace_id}', workspace_id).replace('{file_id}', file_id),
+      "data": { "id": file_id, "_method": "DELETE" },
+      dataType: "json",
+    }
+
+    $.ajax(api_param).done(function(data) {
+      console.log("DONE : Manifestテンプレート削除");
+      console.log("--- data ----");
+      wsDataJSON['template-file'] = {};
+      var disp = "";
+
+      console.log("manifest delete response:" + JSON.stringify(data));
+      // 現在登録されているファイルの一覧が返却されてくるので、その内容で構成しなおし
+      for(var fileidx = 0; fileidx < data['rows'].length; fileidx++ ) {
+        disp += data['rows'][fileidx]['file_name'] + '\n';
+        var fileDate = new Date(data['rows'][fileidx]['update_at']);
+        wsDataJSON['template-file']['file'+("000"+(fileidx+1)).slice(-3)] = {
+          'name' : data['rows'][fileidx]['file_name'],
+          'path' : data['rows'][fileidx]['file_name'],
+          'date' : fileDate.getFullYear() + '/' + ('0' + (fileDate.getMonth() + 1)).slice(-2) + '/' + ('0' + fileDate.getDate()).slice(-2)
+          + ' ' + ('0' + fileDate.getHours()).slice(-2) + ':' + ('0' + fileDate.getMinutes()).slice(-2) + ':' + ('0' + fileDate.getSeconds()).slice(-2),
+          'user' : '',
+          'note' : '',
+          "text" : data['rows'][fileidx]['file_text'],
+          'file_id' : data['rows'][fileidx]['id'],
+        }
+      }
+      
+      // 該当行のManifestパラメータ削除
+      console.log("environment:-------------------------");
+      for(var env in wsDataJSON['environment']) {
+        newPara = {};
+        var i = 0;
+        for(var fileKey in wsDataJSON['environment'][env]["parameter"]) {
+          // 選択されている行を除いて移行
+          if (fileKey != key){
+            i = i + 1;
+            fildID = 'file'+("000"+i).slice(-3);
+            newPara[fildID] = {};
+            // パラメータごとにキー値があるので置き換え
+            for(var para in wsDataJSON['environment'][env]["parameter"][fileKey])
+            {
+              paraID = para.substr((key + '-' + env + '-').length);
+              newPara[fildID][fildID + "-" + env + "-" + paraID] = wsDataJSON['environment'][env]["parameter"][fileKey][para];
+            }
+          }
+        }
+        // 編集後の値を設定
+        wsDataJSON['environment'][env]["parameter"] = newPara;
+        console.log(wsDataJSON['environment'][env]['parameter']);
+      }
+
+      workspaceImageUpdate();
+
+      // 成功
+      resolve();
+    }).fail(function() {
+      console.log("FAIL : Manifestテンプレート削除");
+      // 失敗
+      reject();
+    });
+
+  }).then(() => {
+    console.log('Complete !!');
+  }).catch(() => {
+    // 実行中ダイアログ表示
+    console.log('Fail !!');
   });
 };
 
@@ -2438,13 +2532,16 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         console.log("manifest get data:" + JSON.stringify(data));
         for(var fileidx = 0; fileidx < data['rows'].length; fileidx++ ) {
           disp += data['rows'][fileidx]['file_name'] + '\n';
+          var fileDate = new Date(data['rows'][fileidx]['update_at']);
           wsDataJSON['template-file']['file'+("000"+(fileidx+1)).slice(-3)] = {
             'name' : data['rows'][fileidx]['file_name'],
             'path' : 'exsample/' + data['rows'][fileidx]['file_name'],
-            'date' : '2021/05/12 09:00:00',
-            'user' : 'epoch-user',
-            'note' : '<a>' + data['rows'][fileidx]['file_name'] + '</a>',
+            'date' : fileDate.getFullYear() + '/' + ('0' + (fileDate.getMonth() + 1)).slice(-2) + '/' + ('0' + fileDate.getDate()).slice(-2)
+            + ' ' + ('0' + fileDate.getHours()).slice(-2) + ':' + ('0' + fileDate.getMinutes()).slice(-2) + ':' + ('0' + fileDate.getSeconds()).slice(-2),
+            'user' : '',
+            'note' : '',
             "text" : data['rows'][fileidx]['file_text'],
+            "file_id" : data['rows'][fileidx]['id'],
           }
         }
         // 暫定実装 -----
