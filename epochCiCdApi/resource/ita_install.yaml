@@ -92,6 +92,10 @@ spec:
         command: ["sh", "-c"]
         args:
         - |
+          echo "export HTTPS_PROXY=$HTTPS_PROXY"  >  /etc/profile.d/99-proxy.sh;
+          echo "export https_proxy=$https_proxy"  >> /etc/profile.d/99-proxy.sh;
+          echo "export HTTP_PROXY=$HTTP_PROXY"    >> /etc/profile.d/99-proxy.sh;
+          echo "export http_proxy=$http_proxy"    >> /etc/profile.d/99-proxy.sh;
           /usr/sbin/sshd -De
 
 ---
