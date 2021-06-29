@@ -41,16 +41,16 @@ data:
   EPOCH_RESOURCE_PORT: "8000"
   PYTHONIOENCODING: utf-8
 
----
+# ---
 
-apiVersion: v1
-kind: Secret
-metadata:
-  name: epoch-service-api-secret
-  namespace: epoch-system
-type: Opaque
-stringData:
-  DJANGO_SECRET: 7o5lh(_qa_4dzr8zjwpi8o_2bz^#uqe^!)27@v-xj%pw2xd-^a
+# apiVersion: v1
+# kind: Secret
+# metadata:
+#   name: epoch-service-api-secret
+#   namespace: epoch-system
+# type: Opaque
+# stringData:
+#   ENV_NAME: value
 
 ---
 
@@ -78,9 +78,9 @@ spec:
         envFrom:
           - configMapRef:
               name: epoch-service-api-config
-          - prefix: EPOCH_
-            secretRef:
-              name: epoch-service-api-secret
+          # - prefix: EPOCH_
+          #   secretRef:
+          #     name: epoch-service-api-secret
 
 ---
 
