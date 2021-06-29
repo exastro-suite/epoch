@@ -38,6 +38,8 @@ spec:
       params:
       - name: gitUrl
         value: $(tt.params.gitrepositoryurl)
+      - name: gitrevision
+        value: $(tt.params.gitrevision)
       - name: pathToContext
         value: $(tt.params.pathToContext)
       - name: pathToDockerfile
