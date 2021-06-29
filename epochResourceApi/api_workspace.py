@@ -225,7 +225,7 @@ def manifest_file_registration(workspace_id):
 
                 globals.logger.debug('insert manifest_id:{}'.format(str(manifest_id)))
 
-                # workspace情報の再取得
+                # manifest情報の再取得
                 fetch_rows = da_manifest.select_manifest_id(cursor, workspace_id, manifest_id)
                 # 戻り値に内容を追加
                 response_rows.append(fetch_rows[0])
@@ -235,47 +235,42 @@ def manifest_file_registration(workspace_id):
     except Exception as e:
         return common.serverError(e)
 
-# @app.route('/workspace/<int:workspace_id>/manifests/<int:file_id>', methods=['PUT'])
-# def manifest_file_update(workspace_id, file_id):
-#     """マニフェストテンプレートファイル更新
+@app.route('/workspace/<int:workspace_id>/manifests/<int:file_id>', methods=['PUT'])
+def manifest_file_update(workspace_id, file_id):
+    """マニフェストテンプレートファイル更新
 
-#     Args:
-#         workspace_id (int): ワークスペースID
-#         file_id (int): ファイルID
+    Args:
+        workspace_id (int): ワークスペースID
+        file_id (int): ファイルID
 
-#     Returns:
-#         response: HTTP Respose
-#     """
-#     globals.logger.debug("CALL manifest_file_update:{}".format(workspace_id))
+    Returns:
+        response: HTTP Respose
+    """
+    globals.logger.debug("CALL manifest_file_update:{}".format(file_id))
 
-#     try:
-#         # # Requestからspecification項目を生成する
-#         # specification = convert_workspace_specification(request.json)
-      
-#         # with dbconnector() as db, dbcursor(db) as cursor:
-#         #     # workspace情報 update実行
-#         #     upd_cnt = da_workspace.update_workspace(cursor, specification, workspace_id)
+    try:
+        # 登録内容は基本的に、引数のJsonの値を使用する(追加項目があればここで記載)
+        specification = request.json
 
-#         #     if upd_cnt == 0:
-#         #         # データがないときは404応答
-#         #         db.rollback()
-#         #         return jsonify({"result": "404" }), 404
+        with dbconnector() as db, dbcursor(db) as cursor:
+            # workspace情報 update実行
+            upd_cnt = da_manifest.update_manifest(cursor, specification, file_id)
 
-#         #     # workspace履歴追加
-#         #     da_workspace.insert_history(cursor, workspace_id)
+            if upd_cnt == 0:
+                # データがないときは404応答
+                db.rollback()
+                return jsonify({"result": "404" }), 404
 
-#         #     # workspace情報の再取得
-#         #     fetch_rows = da_workspace.select_workspace_id(cursor, workspace_id)
+            # manifest情報の再取得
+            fetch_rows = da_manifest.select_manifest_id(cursor, workspace_id, file_id)
 
-#         # # Response用のjsonに変換
-#         # response_rows = fetch_rows
+        # Response用のjsonに変換
+        response_rows = fetch_rows
 
-#         # return jsonify({"result": "200", "rows": response_rows })
+        return jsonify({"result": "200", "rows": response_rows })
 
-#         return jsonify({"result": "200"})
-
-#     except Exception as e:
-#         return common.serverError(e)
+    except Exception as e:
+        return common.serverError(e)
 
 @app.route('/workspace/<int:workspace_id>/manifests', methods=['DELETE'])
 def manifest_file_delete_all(workspace_id):
