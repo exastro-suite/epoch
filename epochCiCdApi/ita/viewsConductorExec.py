@@ -48,8 +48,8 @@ def post(request):
         operation_id = payload["operationId"]
         conductor_class_no = payload["conductorClassNo"]
         preserve_datetime = payload["preserveDatetime"]
-        host = os.environ['ITA_HOST'] + os.environ['ITA_PORT']
-        auth = base64.b64encode((os.environ['ITA_USER'] + ':' + os.environ['ITA_PASSWORD']).encode())
+        host = os.environ['EPOCH_ITA_HOST'] + ':' + os.environ['EPOCH_ITA_PORT']
+        auth = base64.b64encode((os.environ['EPOCH_ITA_USER'] + ':' + os.environ['EPOCH_ITA_PASSWORD']).encode())
 
         # POST送信する
         # ヘッダ情報
@@ -70,7 +70,7 @@ def post(request):
         logger.debug("-------------------------")
         logger.debug("header:")
         logger.debug(header)
-        logger.debug("-------------------------")
+        logger.debug("")
         logger.debug("data:")
         logger.debug(data)
         logger.debug("-------------------------")
@@ -79,6 +79,11 @@ def post(request):
 
         # リクエスト送信
         exec_response = requests.post('http://' + host + '/default/menu/07_rest_api_ver1.php?no=2100180004', headers=header, data=json_data)
+
+        logger.debug("-------------------------")
+        logger.debug("response:")
+        logger.debug(exec_response.text)
+        logger.debug("-------------------------")
 
         response = {
             "result": "200",
