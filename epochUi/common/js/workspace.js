@@ -75,6 +75,10 @@ const wsDataJSON = {
   'git-service-argo': {
     'git-service-argo-select': 'epoch'
   },
+  'cd-execution-param': {
+    'operation-search-key': "",
+    'preserve-datetime': ""
+  }
 };
 
 const wsModalJSON = {
@@ -2063,13 +2067,15 @@ const cdExecution = function(){
     const key = $( this ).val();
     if ( key !== 'none') {
       const name = envList[key].text,
-            repository = '',
+            repository = envList[key][key+'-git-service-argo-repository-url'],
             url = envList[key][key+'-environment-url'],
             namespace = envList[key][key+'-environment-namespace'];
       $deployTable.html( deployList(name,repository,url,namespace) );
+      wsDataJSON['cd-execution-param']['operation-search-key'] = repository;
       $okButton.prop('disabled', false );
     } else {
       $deployTable.html( deployList('','','','') );
+      wsDataJSON['cd-execution-param']['operation-search-key'] = '';
       $okButton.prop('disabled', true );
     }
   });
@@ -2188,11 +2194,11 @@ const cdRunning = function(){
     // CD実行APIの呼び出し
     //
     $('#progress_message').html('CD実行開始');
-          
+
     // API Body生成
     reqbody = {};
-    reqbody['operationId'] = wsDataJSON['parameter']['operationId'];
-    reqbody['preserveDatetime'] = wsDataJSON['parameter']['preserveDatetime'];
+    reqbody['operationSearchKey'] = wsDataJSON['cd-execution-param']['operation-search-key'];
+    reqbody['preserveDatetime'] = wsDataJSON['cd-execution-param']['preserve-datetime'];
 
     console.log("CALL : CD実行開始");
     api_param = {
@@ -2291,6 +2297,12 @@ $content.find('.modal-open, .workspace-status-item').on('click', function(){
     // CD実行
     case 'cdExecution': {
       ok = function( $modal ){
+        if($modal.find('input:radio[name="execution-date"]:checked').val() == 'dateset') {
+          wsDataJSON['cd-execution-param']['preserve-datetime'] = $modal.find('.execution-date-input').val();
+        } else {
+          wsDataJSON['cd-execution-param']['preserve-datetime'] = '';
+        }
+
         cdRunning();
       };
       callback = cdExecution;
