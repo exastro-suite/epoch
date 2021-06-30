@@ -21,6 +21,7 @@ import subprocess
 import traceback
 import os
 import logging
+import time
 
 from django.conf import settings
 from django.shortcuts import render
@@ -32,6 +33,8 @@ from django.views.decorators.csrf import csrf_exempt
 from kubernetes import client, config
 
 logger = logging.getLogger('apilog')
+
+WAIT_APPLICATION_DELETE = 180 # アプリケーションが削除されるまでの最大待ち時間
 
 @csrf_exempt
 def index(request):
@@ -74,14 +77,26 @@ def post(request):
         # 設定済みのアプリケーション情報をクリア
         try:
             # アプリケーション情報の一覧を取得する
+            logger.debug("execute : argocd app list")
             stdout_cd = subprocess.check_output(["argocd","app","list","-o","json"],stderr=subprocess.STDOUT)
-            logger.debug("argocd app list:" + str(stdout_cd))
+            # logger.debug("result : argocd app list:" + str(stdout_cd))
 
+            # アプリケーション情報を削除する
             app_list = json.loads(stdout_cd)
             for app in app_list:
-                logger.debug('argocd app name:' + app['metadata']['name'])
+                logger.debug('execute : argocd app delete:' + app['metadata']['name'])
                 stdout_cd = subprocess.check_output(["argocd","app","delete",app['metadata']['name'],"-y"],stderr=subprocess.STDOUT)
-                logger.debug("argocd app delete:" + str(stdout_cd))
+
+            # アプリケーションが消えるまでWaitする
+            logger.debug("wait : argocd app list clean")
+
+            for i in range(WAIT_APPLICATION_DELETE):
+                # アプリケーションの一覧を取得し、結果が0件になるまでWaitする
+                stdout_cd = subprocess.check_output(["argocd","app","list","-o","json"],stderr=subprocess.STDOUT)
+                app_list = json.loads(stdout_cd)
+                if len(app_list) == 0:
+                    break
+                time.sleep(1) # 1秒ごとに確認
 
         except subprocess.CalledProcessError as e:
             logger.debug("CalledProcessError:\n" + traceback.format_exc())
@@ -93,7 +108,6 @@ def post(request):
                 "traceback": traceback.format_exc(),
             }
             return JsonResponse(response)
-
 
         # 環境群数分処理を実行
         output = ""
