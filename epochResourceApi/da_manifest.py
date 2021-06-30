@@ -42,7 +42,7 @@ def insert_manifest(cursor, workspace_id, spec):
     # 追加したワークスペースIDをreturn
     return cursor.lastrowid
 
-def update_manifest(cursor, workspace_id, spec):
+def update_manifest(cursor, workspace_id, spec, manifest_id):
     """manifest情報更新
 
     Args:
