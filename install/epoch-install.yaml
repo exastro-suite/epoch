@@ -97,7 +97,7 @@ spec:
     spec:
       containers:
       - name: epoch-cicd-api
-        image: exastro/epochcicdapi:0.1.0_20210630_1738
+        image: exastro/epochcicdapi:0.1.0_20210701_0834
         env:
           - name: HTTP_PROXY
             valueFrom:
@@ -474,7 +474,7 @@ spec:
           name: epoch-ui-conf
       containers:
       - name: epoch-ui
-        image: exastro/epochui:0.1.0_20210630_1733
+        image: exastro/epochui:0.1.0_20210630_2011
         volumeMounts:
         - name: epoch-ui-conf
           mountPath: /app/epoch/epochUi/common/js/config
