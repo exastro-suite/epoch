@@ -54,6 +54,7 @@ data:
             "manifestTemplate": {
                 "post" :    api_url_base + "/workspace/{workspace_id}/manifests",
                 "get" :     api_url_base + "/workspace/{workspace_id}/manifests",
+                "delete" :  api_url_base + "/workspace/{workspace_id}/manifests/{file_id}",
             },
             "cdExecDesignation": {
                 "post" :    api_url_base + "/cdExecDesignation/",
