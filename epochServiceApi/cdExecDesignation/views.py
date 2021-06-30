@@ -104,6 +104,7 @@ def post(request):
         return JsonResponse(response, status=status.HTTP_200_OK)
 
     except Exception as e:
+        logger.debug(traceback.format_exc())
         response = {
             "result":"500",
             "returncode": "0201",
