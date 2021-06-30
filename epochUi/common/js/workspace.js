@@ -1985,7 +1985,7 @@ const cdExecution = function(){
   }
   exeSettingOptionHTML += '</select>';
   
-  const today = fn.formatDate( new Date(), 'yyyy/MM/dd HH:mm:ss');
+  const today = fn.formatDate( new Date(), 'yyyy/MM/dd HH:mm');
   
   const exeSettingHTML = ''
   + '<table id="cd-execution-condition-table" class="c-table">'

@@ -17,6 +17,7 @@ from . import views
 from . import viewsManifestParameter
 from . import viewsManifestTemplates
 from . import viewsManifestGitEnv
+from . import viewsOperations
 from . import viewsConductorExec
 from . import viewsInitialize
 
