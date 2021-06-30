@@ -61,6 +61,7 @@ def post(request):
             logger.debug ("argocd login:" + str(stdout_cd))
 
         except subprocess.CalledProcessError as e:
+            logger.debug("CalledProcessError:\n" + traceback.format_exc())
             response = {
                 "result": e.returncode,
                 "returncode": "0401",
@@ -69,6 +70,30 @@ def post(request):
                 "traceback": traceback.format_exc(),
             }
             return JsonResponse(response)
+
+        # 設定済みのアプリケーション情報をクリア
+        try:
+            # アプリケーション情報の一覧を取得する
+            stdout_cd = subprocess.check_output(["argocd","app","list","-o","json"],stderr=subprocess.STDOUT)
+            logger.debug("argocd app list:" + str(stdout_cd))
+
+            app_list = json.loads(stdout_cd)
+            for app in app_list:
+                logger.debug('argocd app name:' + app['metadata']['name'])
+                stdout_cd = subprocess.check_output(["argocd","app","delete",app['metadata']['name'],"-y"],stderr=subprocess.STDOUT)
+                logger.debug("argocd app delete:" + str(stdout_cd))
+
+        except subprocess.CalledProcessError as e:
+            logger.debug("CalledProcessError:\n" + traceback.format_exc())
+            response = {
+                "result": e.returncode,
+                "returncode": "0405",
+                "command": e.cmd,
+                "output": e.output.decode('utf-8'),
+                "traceback": traceback.format_exc(),
+            }
+            return JsonResponse(response)
+
 
         # 環境群数分処理を実行
         output = ""
@@ -131,6 +156,7 @@ def post(request):
                 output += env_name + "{" + stdout_cd.decode('utf-8') + "},"
 
             except subprocess.CalledProcessError as e:
+                logger.debug("CalledProcessError:\n" + traceback.format_exc())
                 response = {
                     "result": e.returncode,
                     "returncode": "0402",
@@ -151,6 +177,7 @@ def post(request):
         return JsonResponse(response)
 
     except Exception as e:
+        logger.debug("Exception:\n" + traceback.format_exc())
         response = {
             "result":"500",
             "returncode": "0403",
