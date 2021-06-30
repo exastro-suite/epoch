@@ -2694,10 +2694,11 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
     })}).then(() => {
       // ボタン名変更
       $('#apply-workspace-button').html('ワークスペース更新');
-      // CI/CD実行タブを表示
-      document.getElementById("cicd-tab-item").style.visibility = "visible";
-      
+
       workspaceImageUpdate();
+
+      // CI/CD実行タブを表示
+      $('#cicd-tab-item').css('visibility','visible');
       // alert("ワークスペース情報を読み込みました");
       console.log('Complete !!');
     }).catch(() => {
@@ -2870,6 +2871,8 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         $('#progress_message').html('COMPLETE :  ワークスペースを更新しました（ワークスペースID:'+workspace_id+'）');
       }
       $('#progress-message-ok').prop("disabled", false);
+      // CI/CD実行タブを表示
+      $('#cicd-tab-item').css('visibility','visible');
       console.log('Complete !!');
     }).catch(() => {
       // 実行中ダイアログ表示
