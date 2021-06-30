@@ -601,8 +601,8 @@ const wsModalJSON = {
   /* -------------------------------------------------- *\
      CD実行指定
   \* -------------------------------------------------- */
-  'cdRunning': {
-    'id': 'cd-running',
+  'cdExecution': {
+    'id': 'cd-execution',
     'title': 'CD実行指定',
     'footer': {
       'ok': {
@@ -615,30 +615,30 @@ const wsModalJSON = {
       }
     },
     'block': {
-      'executionCondition': {
+      'cdExecutionCondition': {
         'title': '実行条件',
         'item': {
           'comitList': {
             'type': 'loading',
-            'id': 'execution-condition'            
+            'id': 'cd-execution-condition'            
           }
         }
       },
-      'manifestParameter': {
+      'cdExecutionManifestParameter': {
         'title': 'Manifestパラメータ',
         'item': {
           'comitList': {
             'type': 'loading',
-            'id': 'manifest-parameter'            
+            'id': 'cd-execution-manifest-parameter'            
           }
         }
       },
-      'argoCdPipeline': {
+      'cdExecutionArgo': {
         'title': 'ArgoCDパイプライン',
         'item': {
           'comitList': {
             'type': 'loading',
-            'id': 'argo-cd-pipeline'            
+            'id': 'cd-execution-argo'            
           }
         }
       }
@@ -662,7 +662,7 @@ const wsModalJSON = {
         'item': {
           'comitList': {
             'type': 'loading',
-            'id': 'commit-list'            
+            'id': 'commit-list'
           }
         }
       }
@@ -1961,6 +1961,123 @@ const dummyYaml = '# epoch-template => No.' + i + '\n'
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
+//   CD実行（IT Automation）環境選択
+// 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+const cdExecution = function(){
+  const envList = wsDataJSON['environment'],
+        $modal = $('#modal-container'),
+        $exeSetting = $('#cd-execution-condition'), // 実行条件
+        $manifest = $('#cd-execution-manifest-parameter'), // Manifestパラメータ
+        $argo = $('#cd-execution-argo'), // ArgoCDパイプライン
+        $okButton = $modal.find('.modal-menu-button[data-button="ok"]');
+        
+  $okButton.prop('disabled', true );
+  
+  // 実行条件
+  let exeSettingOptionHTML = '<option value="none" selected>CD実行する環境を選択してください。</option>';
+  for ( const key in envList ) {
+    exeSettingOptionHTML += '<option value="' + key + '">' + envList[key].text + '</option>'
+  }
+  exeSettingOptionHTML += '</select>';
+  
+  const today = fn.formatDate( new Date(), 'yyyy/MM/dd HH:mm:ss');
+  
+  const exeSettingHTML = ''
+  + '<table id="cd-execution-condition-table" class="c-table">'
+    + '<tr class="c-table-row">'
+      + '<th class="c-table-col c-table-col-header"><div class="c-table-ci">CD実行日時</div></th>'
+      + '<td class="c-table-col"><div class="c-table-ci">'
+        + '<ul class="execution-date-select item-radio-list">'
+          + '<li class="item-radio-item">'
+            + '<input class="item-radio" type="radio" id="execution-date-immediate" value="immediate" name="execution-date" checked>'
+            + '<label class="item-radio-label" for="execution-date-immediate">即実行</label>'
+          + '</li>'
+          + '<li class="item-radio-item">'
+            + '<input class="item-radio" type="radio" id="execution-date-set" value="dateset" name="execution-date">'
+            + '<label class="item-radio-label" for="execution-date-set">予約日時指定</label>'
+          + '</li>'
+        + '</ul>'
+        + '<div class="execution-date"><input type="text" class="execution-date-input item-text" placeholder="' + today + '" value="' + today + '" disabled></div>'
+      + '</div></td>'
+    + '</tr>'
+    + '<tr class="c-table-row">'
+      + '<th class="c-table-col c-table-col-header"><div class="c-table-ci">環境</div></th>'
+      + '<td class="c-table-col"><div class="c-table-ci">'
+        + '<div class="item-select-area">'
+          + '<select id="cd-execution-environment-select" class="item-select">'
+            + exeSettingOptionHTML
+          + '</select>'
+        + '</div>'
+      + '</div></td>'
+    + '</tr>'
+  + '</table>';
+  
+  $exeSetting.html( exeSettingHTML );
+
+  const $executionDateInput = $modal.find('.execution-date-input');
+  $executionDateInput.datePicker();
+  
+  $modal.find('.item-radio[name="execution-date"]').on('change', function(){
+    const value = $( this ).val();
+    if ( value === 'dateset') {
+      $executionDateInput.prop('disabled', false ).focus();
+    } else {
+      $executionDateInput.prop('disabled', true );
+    }
+  });
+  
+  // Manifestパラメータ
+  $manifest.html('');
+  
+  // ArgoCDパイプライン
+  const deployList = function( environmentName, repository, url, namespace ){
+    return ''
+      + '<tr class="c-table-row">'
+        + '<th class="c-table-col c-table-col-header"><div class="c-table-ci">環境名</div></th>'
+        + '<td class="c-table-col"><div class="c-table-ci">' + fn.textEntities( environmentName ) + '</div></td>'
+      + '</tr>'
+      + '<tr class="c-table-row">'
+        + '<th class="c-table-col c-table-col-header"><div class="c-table-ci">Manifestリポジトリ</div></th>'
+        + '<td class="c-table-col"><div class="c-table-ci">' + fn.textEntities( repository ) + '</div></td>'
+      + '</tr>'
+      + '<tr class="c-table-row">'
+        + '<th class="c-table-col c-table-col-header"><div class="c-table-ci">Kubernetes API Server URL</th>'
+        + '<td class="c-table-col"><div class="c-table-ci">' + fn.textEntities( url ) + '</div></td>'
+      + '</tr>'
+      + '<tr class="c-table-row">'
+        + '<th class="c-table-col c-table-col-header"><div class="c-table-ci">Namespace</th>'
+        + '<td class="c-table-col"><div class="c-table-ci">' + fn.textEntities( namespace ) + '</div></td>'
+      + '</tr>';
+  };
+  $argo.html(''
+    + '<p>以下の内容でDeployします。よろしいですか？</p>'
+    + '<table id="deploy-chack" class="c-table">'
+      + deployList('','','','')
+    + '</table>'
+  + '');
+  
+  // 環境選択
+  const $deployTable = $modal.find('#deploy-chack');
+  $modal.find('#cd-execution-environment-select').on('change', function(){
+    const key = $( this ).val();
+    if ( key !== 'none') {
+      const name = envList[key].text,
+            repository = '',
+            url = envList[key][key+'-environment-url'],
+            namespace = envList[key][key+'-environment-namespace'];
+      $deployTable.html( deployList(name,repository,url,namespace) );
+      $okButton.prop('disabled', false );
+    } else {
+      $deployTable.html( deployList('','','','') );
+      $okButton.prop('disabled', true );
+    }
+  });
+  
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
 //   IT Automation実行結果一覧
 // 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2062,56 +2179,51 @@ const arogCdStatusList = function(){
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 const cdRunning = function(){
   
-    // API呼び出し
-    new Promise(function(resolve, reject) {
-      // 実行中ダイアログ表示
-      $('#modal-progress-container').css('display','flex');
-      $('#progress-message-ok').prop("disabled", true);
-      //
-      // CD実行APIの呼び出し
-      //
-      $('#progress_message').html('CD実行開始');
-            
-      // API Body生成
-      reqbody = {};
+  // API呼び出し
+  new Promise(function(resolve, reject) {
+    // 実行中ダイアログ表示
+    $('#modal-progress-container').css('display','flex');
+    $('#progress-message-ok').prop("disabled", true);
+    //
+    // CD実行APIの呼び出し
+    //
+    $('#progress_message').html('CD実行開始');
+          
+    // API Body生成
+    reqbody = {};
+    reqbody['operationId'] = wsDataJSON['parameter']['operationId'];
+    reqbody['preserveDatetime'] = wsDataJSON['parameter']['preserveDatetime'];
 
-      // 旧形式の付与
-      // reqbody['clusterInfo'] = workspace_api_conf['parameter']['clusterInfo'];
-      reqbody['operationId'] = workspace_api_conf['parameter']['operationId'];
-      reqbody['conductorClassNo'] = workspace_api_conf['parameter']['conductorClassNo'];
-      reqbody['preserveDatetime'] = workspace_api_conf['parameter']['preserveDatetime'];
-      // reqbody['itaInfo'] = workspace_api_conf['parameter']['itaInfo'];
+    console.log("CALL : CD実行開始");
+    api_param = {
+      "type": "POST",
+      "url": workspace_api_conf.api.cdExecDesignation.post,
+      "data": JSON.stringify(reqbody),
+      dataType: "json",
+    }
 
-      console.log("CALL : CD実行開始");
-      api_param = {
-        "type": "POST",
-        "url": workspace_api_conf.api.cdExecDesignation.post,
-        "data": JSON.stringify(reqbody),
-        dataType: "json",
-      }
-  
-      $.ajax(api_param).done(function(data) {
-        console.log("DONE : CD実行");
-        console.log("--- data ----");
-        console.log(JSON.stringify(data));
-        // 成功
-        resolve();
-      }).fail(function() {
-        console.log("FAIL : CD実行");
-        // 失敗
-        reject();
-      });
-
-    }).then(() => {
-      $('#progress_message').html('CD実行開始しました');
-      console.log('Complete !!');
-      $('#progress-message-ok').prop("disabled", false);
-    }).catch(() => {
-      // 実行中ダイアログ表示
-      $('#progress_message').html('CD実行失敗しました');
-      $('#progress-message-ok').prop("disabled", false);
-      console.log('Fail !!');
+    $.ajax(api_param).done(function(data) {
+      console.log("DONE : CD実行");
+      console.log("--- data ----");
+      console.log(JSON.stringify(data));
+      // 成功
+      resolve();
+    }).fail(function() {
+      console.log("FAIL : CD実行");
+      // 失敗
+      reject();
     });
+
+  }).then(() => {
+    $('#progress_message').html('CD実行開始しました');
+    console.log('Complete !!');
+    $('#progress-message-ok').prop("disabled", false);
+  }).catch(() => {
+    // 実行中ダイアログ表示
+    $('#progress_message').html('CD実行失敗しました');
+    $('#progress-message-ok').prop("disabled", false);
+    console.log('Fail !!');
+  });
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2173,6 +2285,16 @@ $content.find('.modal-open, .workspace-status-item').on('click', function(){
         workspaceImageUpdate();
       };
     } break;
+    
+    // ここからCD実行画面
+    
+    // CD実行
+    case 'cdExecution': {
+      ok = function( $modal ){
+        cdRunning();
+      };
+      callback = cdExecution;
+    } break;
     // Kubernetes Manifest テンプレート
     case 'kubernetesManifestTemplate': {
       callback = templateFileList;
@@ -2194,12 +2316,6 @@ $content.find('.modal-open, .workspace-status-item').on('click', function(){
     // Argo CD 実行結果一覧
     case 'arogCdResultCheck': {
       callback = arogCdResultList;
-    } break;
-    // CD実行
-    case 'cdRunning': {
-      ok = function( ){
-        cdRunning( );
-      };
     } break;
   }
 
