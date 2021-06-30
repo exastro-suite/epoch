@@ -80,6 +80,8 @@ def post(request):
             app_list = json.loads(stdout_cd)
             for app in app_list:
                 logger.debug('argocd app name:' + app['metadata']['name'])
+                stdout_cd = subprocess.check_output(["argocd","app","delete",app['metadata']['name'],"-y"],stderr=subprocess.STDOUT)
+                logger.debug("argocd app delete:" + str(stdout_cd))
 
         except subprocess.CalledProcessError as e:
             logger.debug("CalledProcessError:\n" + traceback.format_exc())
@@ -154,8 +156,8 @@ def post(request):
                 output += env_name + "{" + stdout_cd.decode('utf-8') + "},"
 
             except subprocess.CalledProcessError as e:
-              logger.debug("CalledProcessError:\n" + traceback.format_exc())
-                 response = {
+                logger.debug("CalledProcessError:\n" + traceback.format_exc())
+                response = {
                     "result": e.returncode,
                     "returncode": "0402",
                     "command": e.cmd,
