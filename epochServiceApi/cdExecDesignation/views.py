@@ -29,6 +29,13 @@ from rest_framework import status
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
+# 共通項目
+column_indexes_common = {
+    "method": 0,    # 実行処理種別
+    "delete": 1,    # 廃止
+    "record_no": 2, # No
+}
+
 # 項目名リスト
 column_names_opelist = {
     'operation_id': 'オペレーションID',
@@ -54,6 +61,8 @@ def index(request):
 def post(request):
     try:
 
+        request_json = json.loads(request.body)
+
         # ヘッダ情報
         post_headers = {
             'Content-Type': 'application/json',
@@ -64,7 +73,7 @@ def post(request):
         logger.debug ("cicd url:" + apiInfo)
 
         # オペレーション一覧の取得(ITA)
-        request_response = requests.get( apiInfo + "/ita/operations", headers=post_headers)
+        request_response = requests.get(apiInfo + "/ita/operations", headers=post_headers)
         logger.debug("ita/cdExec:operations:" + request_response.text)
         ret = json.loads(request_response.text)
 
@@ -74,7 +83,7 @@ def post(request):
         logger.debug(column_indexes_opelist)
 
         # 引数のgit urlをもとにオペレーションIDを取得
-        ope_id = search_opration_id(ret['resultdata']['CONTENTS']['BODY'], column_indexes_opelist, row_req['git_url'])
+        ope_id = search_opration_id(ret['resultdata']['CONTENTS']['BODY'], column_indexes_opelist, request_json['operationSearchKey'])
         if ope_id is None:
             raise Exception("Operation ID Not found!")
 
@@ -82,12 +91,13 @@ def post(request):
         post_data = {
             "operation_id" : ope_id,
             "conductor_class_no" : COND_CLASS_NO_CD_EXEC,
-            "preserve_datetime" : request.body["preserveDatetime"]
+            "preserve_datetime" : request_json["preserveDatetime"]
         }
+        post_data = json.dumps(post_data)
 
         output = []
         # CD実行(ITA)
-        request_response = requests.post( apiInfo + "/ita/cdExec", headers=post_headers, data=post_data)
+        request_response = requests.post(apiInfo + "/ita/cdExec", headers=post_headers, data=post_data)
         logger.debug("ita/cdExec:response:" + request_response.text)
         ret = json.loads(request_response.text)
         #ret = request_response.text
@@ -136,8 +146,16 @@ def search_opration_id(opelist, column_indexes, git_url):
         if git_url == row[column_indexes['remarks']]:
             # 備考にgit_urlが含まれているとき
             logger.debug('find:' + str(idx))
-            return row[column_indexes['operation_id']
+            return row[column_indexes['operation_id']]
 
     # 存在しないとき
     return None
 
+#
+# 項目位置の取得
+#
+def column_indexes(column_names, row_header):
+    column_indexes = {}
+    for idx in column_names:
+        column_indexes[idx] = row_header.index(column_names[idx])
+    return column_indexes
