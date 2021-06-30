@@ -76,7 +76,6 @@ padding-right: 0;
 text-align: right;
 }
 .workspace-tab-item,
-.cicd-tab-item,
 .workspace-status-item {
 display: inline-block;
 vertical-align: top;
