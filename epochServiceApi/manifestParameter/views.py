@@ -26,20 +26,22 @@ from django.http import HttpResponse
 from django.http.response import JsonResponse
 
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 
 logger = logging.getLogger('apilog')
 
+@require_http_methods(['POST'])
 @csrf_exempt
-def index(request):
-    logger.debug("manifestParameter:{}".format(request.method))
+def index(request, workspace_id):
+    logger.debug("manifestParameter:{}, workspace_id:{}".format(request.method, workspace_id))
 
     if request.method == 'POST':
-        return post(request)
+        return post(request, workspace_id)
     else:
         return ""
 
 @csrf_exempt    
-def post(request):
+def post(request, workspace_id):
     try:
 
         # ヘッダ情報
@@ -50,13 +52,30 @@ def post(request):
         # 引数をJSON形式で受け取りそのまま引数に設定
         post_data = request.body
 
+        # PUT送信（workspace更新）
+        apiInfo = "{}://{}:{}".format(os.environ['EPOCH_RESOURCE_PROTOCOL'], os.environ['EPOCH_RESOURCE_HOST'], os.environ['EPOCH_RESOURCE_PORT'])
+        logger.debug ("workspace put call: worksapce_id:{}".format(workspace_id))
+        request_response = requests.put( "{}/workspace/{}/manifestParameter".format(apiInfo, workspace_id), headers=post_headers, data=post_data)
+        # エラーの際は処理しない
+        if request_response.status_code != 200:
+            raise Exception(request_response.text)
+
+        # ヘッダ情報
+        post_headers = {
+            'Content-Type': 'application/json',
+        }
+
+        # 引数をJSON形式で受け取りそのまま引数に設定
+        post_data = request.body
+
         # 呼び出すapiInfoは、環境変数より取得
-        apiInfo = "{}://{}:{}/".format(os.environ["EPOCH_CICD_PROTOCOL"], os.environ["EPOCH_CICD_HOST"], os.environ["EPOCH_CICD_PORT"])
+        apiInfo = "{}://{}:{}".format(os.environ["EPOCH_CICD_PROTOCOL"], os.environ["EPOCH_CICD_HOST"], os.environ["EPOCH_CICD_PORT"])
         logger.debug ("apiInfo:" + apiInfo)
 
         output = []
         # Manifestパラメータ設定(ITA)
-        request_response = requests.post( apiInfo + "ita/manifestParameter", headers=post_headers, data=post_data)
+        logger.debug ("ita/manifestParameter post call: worksapce_id:{}".format(workspace_id))
+        request_response = requests.post( "{}/ita/manifestParameter".format(apiInfo), headers=post_headers, data=post_data)
         logger.debug("ita/manifestParameter:response:" + request_response.text.encode().decode('unicode-escape'))
         ret = json.loads(request_response.text)
         #ret = request_response.text

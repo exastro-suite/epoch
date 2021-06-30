@@ -407,5 +407,55 @@ def convert_workspace_response(fetch_rows):
         result.append(result_row)
     return result
 
+@app.route('/workspace/<int:workspace_id>/manifestParameter', methods=['PUT'])
+def update_manifestParameter(workspace_id):
+    """ワークスペース変更
+
+    Args:
+        workspace_id (int): ワークスペースID
+
+    Returns:
+        response: HTTP Respose
+    """
+    globals.logger.debug("CALL update_manifestParameter:{}".format(workspace_id))
+
+    try:
+        # Requestからspecification項目を生成する
+        specification = request.json
+      
+        with dbconnector() as db, dbcursor(db) as cursor:
+            # workspace情報取得
+            workspaceInfo = da_workspace.select_workspace_id(cursor, workspace_id)
+
+            # workspace情報のmanifestParameter部を差し替え
+            db_specification = json.loads(workspaceInfo[0]["specification"])
+
+            # 登録する配列用のindex
+            i = 0
+            for db_env in db_specification["ci_config"]["environments"]:
+                for in_env in specification["ci_config"]["environments"]:
+                    if db_env["environment_id"] == in_env["environment_id"]:
+                        db_specification["ci_config"]["environments"][i]["manifests"] = in_env["manifests"]
+                        break
+                i += 1
+
+            # workspace情報 update実行
+            upd_cnt = da_workspace.update_workspace(cursor, db_specification, workspace_id)
+
+            if upd_cnt == 0:
+                # データがないときは404応答
+                db.rollback()
+                return jsonify({"result": "404" }), 404
+
+            # Response用のjsonに変換
+            response_rows = workspaceInfo
+
+        return jsonify({"result": "200", "rows": response_rows })
+
+    except Exception as e:
+        return common.serverError(e)
+
+
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('API_WORKSPACE_PORT', '8000')), threaded=True)
+
