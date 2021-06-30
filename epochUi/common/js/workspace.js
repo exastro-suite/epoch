@@ -1400,16 +1400,16 @@ const templateFileList = function(){
           type = $( this ).attr('data-button');
     switch( type ) {
       case 'preview':
-        alert( wsDataJSON['template-file'][key]['path'] + 'プレビュー');
+        alert('Coming soon...');
         break;
       case 'download':
-        alert('Download');
+        alert('Coming soon...');
         break;
       case 'memo':
-        alert('ファイルを更新しますか？');
+        alert('Coming soon...');
         break;
       case 'update':
-        alert('ファイルを更新しますか？');
+        alert('Coming soon...');
         break;
       case 'delete':
         if (confirm(wsDataJSON['template-file'][key]['name'] + 'を削除しますか？'))
@@ -1417,8 +1417,8 @@ const templateFileList = function(){
           // manifestsテンプレートファイルの削除呼び出し
           templateFileDelete(key, wsDataJSON['template-file'][key]['file_id'])
           
-          $button.closest('.c-table-row').remove();
           $button.mouseleave().closest('.c-table-row').remove();
+          $button.closest('.c-table-row').remove();
         }
         break;      
     }
@@ -1715,6 +1715,8 @@ function templateFileDelete(key, file_id){
       }
 
       workspaceImageUpdate();
+
+      apply_manifest();
 
       // 成功
       resolve();

@@ -254,7 +254,7 @@ def manifest_file_update(workspace_id, file_id):
 
         with dbconnector() as db, dbcursor(db) as cursor:
             # workspace情報 update実行
-            upd_cnt = da_manifest.update_manifest(cursor, specification, file_id)
+            upd_cnt = da_manifest.update_manifest(cursor, workspace_id, specification, file_id)
 
             if upd_cnt == 0:
                 # データがないときは404応答
