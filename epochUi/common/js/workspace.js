@@ -1418,6 +1418,7 @@ const templateFileList = function(){
           templateFileDelete(key, wsDataJSON['template-file'][key]['file_id'])
           
           $button.closest('.c-table-row').remove();
+          $button.mouseleave().closest('.c-table-row').remove();
         }
         break;      
     }
@@ -1539,6 +1540,12 @@ const templateFileSelect = function( type ){
                     $file.find('.item-file-list').html('<pre>' + disp + '</pre>');
 
                     workspaceImageUpdate();
+
+                    // 選択が終わったらテンプレート一覧を表示
+                    modal.change('kubernetesManifestTemplate', {
+                      'callback': templateFileList
+                    },
+                    1160 );
                   }
                 }).fail(function( jqXHR, textStatus, errorThrown ){
                   // エラー
