@@ -73,6 +73,7 @@ def post(request):
         return JsonResponse(response)
 
     except Exception as e:
+        logger.debug(traceback.format_exc())
         response = {
             "result":"500",
             "returncode": "0201",
