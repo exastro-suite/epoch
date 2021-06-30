@@ -33,6 +33,8 @@ from django.views.decorators.http import require_http_methods
 
 logger = logging.getLogger('apilog')
 
+WAIT_ITA_IMPORT = 60 # ITA Import最大待ち時間
+
 @require_http_methods(['POST'])
 @csrf_exempt
 def post(request):
@@ -229,7 +231,7 @@ def post(request):
 
             # timeout
             current_time = time.time()
-            if (current_time - start_time) > 60:
+            if (current_time - start_time) > WAIT_ITA_IMPORT:
                 logger.debug("ITA menu import Time out")
                 response = {
                     "result": "500",
