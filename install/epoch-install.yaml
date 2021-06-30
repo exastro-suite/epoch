@@ -439,11 +439,11 @@ data:
                 "post":     api_url_base + "/pipelineParameter/",
             },
             "manifestParameter": {
-                "post":     api_url_base + "/manifestParameter",
+                "post":     api_url_base + "/workspace/{workspace_id}/manifestParameter",
             },
             "manifestTemplate": {
-                "post" :    api_url_base + "/workspace/{workspace_id}/manifests",
-                "get" :     api_url_base + "/workspace/{workspace_id}/manifests",
+                "post" :    api_url_base + "/workspace/{workspace_id}/manifests/",
+                "get" :     api_url_base + "/workspace/{workspace_id}/manifests/",
                 "delete" :  api_url_base + "/workspace/{workspace_id}/manifests/{file_id}",
             },
             "cdExecDesignation": {
