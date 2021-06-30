@@ -28,6 +28,7 @@
 <script src="common/js/jquery-3.5.1.min.js"></script>
 <script src="common/js/common.js"></script>
 <script src="common/js/modal.js"></script>
+<script src="common/js/datepicker.js"></script>
 <script src="common/js/workspace.js"></script>
 <script src="common/js/config/workspace_api_conf.js"></script>
 
@@ -225,7 +226,7 @@
         <ul class="workspace-tab-list">
           <!--<li class="workspace-tab-item"><a href="#" class="workspace-tab-link">一覧に戻る</a></li>-->
           <li class="workspace-tab-item"><a href="#setting" class="workspace-tab-link current">ワークスペース設定</a></li>
-          <li class="cicd-tab-item" id="cicd-tab-item" style="visibility:hidden;"><a href="#running" class="workspace-tab-link">CI/CD実行</a></li>
+          <li class="workspace-tab-item" id="cicd-tab-item" style="visibility:hidden;"><a href="#running" class="workspace-tab-link">CI/CD実行</a></li>
         </ul>
         <ul class="workspace-status-list">
           <li class="workspace-status-item workspace-mode-running" data-button="kubernetesManifestTemplate">
@@ -426,7 +427,7 @@
                 </svg>
                 <div class="workspace-point-name">CD</div>
                 <div class="workspace-point-setting workspace-mode-running">
-                  <button class="modal-open workspace-button" data-button="cdRunning">
+                  <button class="modal-open workspace-button" data-button="cdExecution">
                     <svg viewBox="0 0 64 64" class="workspace-button-svg">
                       <use xlink:href="#icon-running" />
                     </svg>
