@@ -31,6 +31,8 @@ logger = logging.getLogger('apilog')
 
 @csrf_exempt
 def index(request):
+    logger.debug("manifestParameter:{}".format(request.method))
+
     if request.method == 'POST':
         return post(request)
     else:
@@ -39,8 +41,6 @@ def index(request):
 @csrf_exempt    
 def post(request):
     try:
-
-        logger.debug("pipelineParameter post")
 
         # ヘッダ情報
         post_headers = {

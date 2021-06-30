@@ -134,7 +134,7 @@ def post(request, workspace_id):
         post_data = json.dumps(post_data_add)
 
         # Resource API呼び出し(登録)
-        response = requests.post( apiInfo + "/workspace/" + str(workspace_id) + "/manifests", headers=post_headers, data=post_data)
+        response = requests.post( "{}/workspace/{}/manifests".format(apiInfo, workspace_id), headers=post_headers, data=post_data)
 
         # ITA呼び出し
         logger.debug("CALL ita_registration Start")
