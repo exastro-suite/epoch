@@ -45,9 +45,9 @@ def post(request):
         # パラメータ情報(JSON形式)
         payload = json.loads(request.body)
         
-        operation_id = payload["operationId"]
-        conductor_class_no = payload["conductorClassNo"]
-        preserve_datetime = payload["preserveDatetime"]
+        operation_id = payload["operation_id"]
+        conductor_class_no = payload["conductor_class_no"]
+        preserve_datetime = payload["preserve_datetime"]
         host = os.environ['EPOCH_ITA_HOST'] + ':' + os.environ['EPOCH_ITA_PORT']
         auth = base64.b64encode((os.environ['EPOCH_ITA_USER'] + ':' + os.environ['EPOCH_ITA_PASSWORD']).encode())
 

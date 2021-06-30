@@ -31,6 +31,8 @@ urlpatterns = [
     path('manifestParameter', viewsManifestParameter.post),
     # Template
     path('manifestTemplates', viewsManifestTemplates.post),
+    # operation
+    path('operations', viewsOperations.index),
     # execute conductor
     path('cdExec', viewsConductorExec.index),
 ]
