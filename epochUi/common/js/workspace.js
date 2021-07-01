@@ -17,6 +17,8 @@
 
 $(function(){
 
+backgroundAurora();
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //   JSON
@@ -65,6 +67,19 @@ const wsDataJSON = {
     }
   },
   */
+  // 'manifests': [
+  //   {
+  //     'file_id': '0000000001',
+  //     'file_name': 'test1.yaml',
+  //     'file_text': 'ファイルの内容'
+  //   },
+  //   {
+  //     'file_id': '0000000002',
+  //     'file_name': 'test1.yaml',
+  //     'file_text': 'ファイルの内容'
+  //   }
+  // ],
+  'manifests': [],
   'template-file': {},
   'git-service': {
     'git-service-select': 'epoch'
@@ -685,12 +700,30 @@ const wsModalJSON = {
       }
     },
     'block': {
-      'imageList': {
-        'title': '実行状況',
-        'item': {
-          'comitList': {
-            'type': 'loading',
-            'id': 'image-list'            
+      'pipelineTektonTask': {
+        'title': 'タスク実行状況',
+        'tab': {
+          'id': 'pipeline-tekton-task-status',
+          'type': 'common',
+          'tabs': {
+            'pipelineTektonTaskNew': {
+              'title': '最新のタスク実行状況',
+              'item': {
+                'pipelineTektonTaskNewBody': {
+                  'type': 'loading',
+                  'id': 'pipeline-tekton-task-new'
+                }
+              }
+            },
+            'pipelineTektonTaskAll': {
+              'title': '全てのタスク実行履歴',
+              'item': {
+                'pipelineTektonTaskAllBody': {
+                  'type': 'loading',
+                  'id': 'pipeline-tekton-task-all'
+                }
+              }
+            }
           }
         }
       }
@@ -847,6 +880,7 @@ const wsModalJSON = {
   \* -------------------------------------------------- */
   'arogCdResultCheck': {
     'id': 'pipeline-argo-cd-check',
+    // 'class': 'layout-tab-fixed',
     'title': 'Argo CD',
     'footer': {
       'cancel': {
@@ -1262,6 +1296,14 @@ $( window ).on('resize.workspaceSize', function(){
     sizeAdjustment();
 	}, 300 ) ;
 });
+
+// サイドメニューのアニメーションが終了した際にもリサイズ
+$('#side').on('transitionend', function(e){
+  if ( e.originalEvent.target.id === 'side' ) {
+    sizeAdjustment();
+  }
+});
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -2439,7 +2481,7 @@ const workspaceImageUpdate = function( ) {
   // Argo CD Gitサービス
   const $gitServiceArgo = $('#ws-git-argo'),
         gitServiceArgoID = wsDataJSON['git-service-argo']['git-service-argo-select'],
-        gitServiceArgoText = wsModalJSON.gitServiceArgo.block.gitServiceArgoSelect.item.gitServiceArgoSelectRadio.item[gitServiceArgoID];console.log(gitServiceArgoID)
+        gitServiceArgoText = wsModalJSON.gitServiceArgo.block.gitServiceArgoSelect.item.gitServiceArgoSelectRadio.item[gitServiceArgoID];
   $gitServiceArgo.find('.workspace-block-name-inner').text( gitServiceArgoText );
   $gitServiceArgo.attr('data-service', gitServiceArgoID );
   
@@ -2453,7 +2495,7 @@ const workspaceImageUpdate = function( ) {
   };
   
   // 環境数
-  const $envTarget = $('#ws-ita-parameter, #ws-git-epoch, #ws-system, #ws-git-argo'),
+  const $envTarget = $('#ws-ita-parameter, #ws-git-epoch, #ws-system, #ws-kubernetes-manifest'),
         envNumber = Object.keys( wsDataJSON['environment'] ).length,
         limitEnvNumber = ( multipleMax >= envNumber )? envNumber: multipleMax,
         divEnvClone = cloneBlock( limitEnvNumber );
