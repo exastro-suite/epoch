@@ -23,6 +23,8 @@
 function modalFunction( modalJSON, valueJSON ){
     this.modalJSON = modalJSON;
     this.valueJSON = valueJSON;
+    
+    this.focusElements = 'input, button, textarea, a';
     /* -------------------------------------------------- *\
        モーダル用div
     \* -------------------------------------------------- */
@@ -83,7 +85,7 @@ modalFunction.prototype = {
         if ( type === 'object') {
           result = this.searchValue( values[key], targetKey );
           if ( result !== undefined ) return result;
-        } else if ( type === 'string') {
+        } else if ( type === 'string' || type === 'number') {
           if ( targetKey === key ) {
             return values[key];
           }
@@ -97,6 +99,8 @@ modalFunction.prototype = {
     'open': function( target, funcs, width, type ){
         const modal = this,
               $modal = modal.createMain( modal.modalJSON[target], width );
+        modal.$modal = $modal;
+  
         if ( type === undefined ) type = 'main';
         
         if ( type === 'main') {
@@ -130,6 +134,11 @@ modalFunction.prototype = {
 
               // タブ切り替え、幅調整
               $tabBlock.on({
+                'keydown': function(e){
+                  if ( e.keyCode === 13 ) {
+                    modal.openTab( $(this) );
+                  }
+                },
                 'click': function(){
                   modal.openTab( $(this) );
                 },
@@ -145,12 +154,19 @@ modalFunction.prototype = {
               }, '.modal-tab-item');
             });
           }          
+
+          modal.focusOn('#modal-container', '#container');
           
         } else if ( type === 'sub') {
+          $('#container').off('focusin.modal');
           $('body').addClass('sub-modal-open');
           $('#sub-modal-container').html( $modal ).css('display','flex');
           
+          modal.focusOn('#sub-modal-container', '#container, #modal-container');
+          
           $modal.find('.modal-menu-button, .modal-close-button').on('click', function(){
+            modal.focusOff('#container, #modal-container');
+            modal.focusOn('#modal-container', '#container');
             $('#sub-modal-container').empty().css('display','none');
             $('body').removeClass('sub-modal-open');
           });
@@ -159,12 +175,36 @@ modalFunction.prototype = {
         if ( funcs.callback !== undefined ) {
           funcs.callback();
         }
+        
+        // モーダルを開いた際、.modal-bodyの最初の要素をフォーカスする
+        const $modalBodyInput = $modal.find('.modal-body').find( modal.focusElements );
+        if ( $modalBodyInput.length ) {
+          $modalBodyInput.eq(0).focus();
+        } else {
+          $modal.find('.modal-footer').find( modal.focusElements ).eq(0).focus();
+        }
 
+    },
+    /* -------------------------------------------------- *\
+       モーダル外にフォーカスが移動したら ON
+    \* -------------------------------------------------- */
+    'focusOn': function( focusTarget, outTarget ){
+      const modal = this;
+      $( outTarget ).on('focusin.modal', function(){
+        $( focusTarget ).find( modal.focusElements ).eq(0).focus();
+      });
+    },
+    /* -------------------------------------------------- *\
+       モーダル外にフォーカスが移動したら OFF
+    \* -------------------------------------------------- */
+    'focusOff': function( outTarget ){
+      $( outTarget ).off('focusin.modal');
     },
     /* -------------------------------------------------- *\
        モーダルを閉じる
     \* -------------------------------------------------- */
     'close': function(){
+      this.focusOff('#container');
       $('#modal-container').empty().css('display','none');
       $('body').removeClass('modal-open');
     },
@@ -172,8 +212,23 @@ modalFunction.prototype = {
        モーダルを切り替える
     \* -------------------------------------------------- */
     'change': function( type, funcs, width ){
+      this.focusOff('#container');
       $('#modal-container').empty();
       this.open( type, funcs, width );
+    },
+    /* -------------------------------------------------- *\
+       入力値をvalueJSONに入れる
+    \* -------------------------------------------------- */
+    'setParameter': function(){
+      const modal = this,
+            inputTarget = 'input[type="text"], input[type="password"], input[type="radio"]:checked, textarea';
+  
+      modal.$modal.find( inputTarget ).each( function(){
+        const $input = $( this ),
+              name = $input.attr('name'),
+              value = $input.val();
+        modal.valueJSON[ name ] = value;
+      });
     },
     /* -------------------------------------------------- *\
        main
@@ -268,6 +323,7 @@ modalFunction.prototype = {
               const $item = $('<li/>', {
                 'class': 'modal-tab-item',
                 'data-id': tabID,
+                'tabindex': 0,
                 'data-default': block[key].tab.defaultTitle
               }).append(
                 $('<div/>', {'class': 'modal-tab-name'}).append(
@@ -322,6 +378,7 @@ modalFunction.prototype = {
               $('<li/>', {
                 'class': 'modal-tab-item',
                 'data-id': key,
+                'tabindex': 0,
                 'data-default': target[key][tab.target.key2]
               }).append(
                 $('<div/>', {'class': 'modal-tab-name'}).append(
@@ -342,6 +399,30 @@ modalFunction.prototype = {
         } else {
           emptyTab();
         }
+      } else if ( type === 'common') {
+        if ( tab.tabs !== undefined ) {
+          for ( const key in tab.tabs ) {
+            $tabList.append(
+              $('<li/>', {
+                'class': 'modal-tab-item',
+                'data-id': key,
+                'tabindex': 0
+              }).append(
+                $('<div/>', {'class': 'modal-tab-name'}).append(
+                  $('<span/>', {'class': 'modal-tab-text', 'text': tab.tabs[key]['title'] })
+                )
+              )
+            );
+            $tabBody.append(
+              $('<div/>', {
+                'id': key,
+                'class': 'modal-tab-body-block'
+              }).append(
+                this.createItem( tab.tabs[key].item, key )
+              )
+            );
+          }
+        }      
       }
       $tabMenu.append( $tabList );
       $tabList.find('.modal-tab-item:first-child').addClass('open');
@@ -383,10 +464,10 @@ modalFunction.prototype = {
       const $tabBlock = $tab.closest('.modal-tab-block'),
             tabNumber = $tabBlock.find('.modal-tab-item').index( $tab.get(0) );
       $tabBlock.find('.open').removeClass('open');
-      $tabBlock.find('.modal-tab-item').css('width', 'auto');
+      $tabBlock.find('.modal-tab-item').css('width', 'auto').attr('tabindex', 0 );
       
-      $tab.addClass('open');
-      $tabBlock.find('.modal-tab-body-block').eq( tabNumber ).addClass('open');
+      $tab.addClass('open').attr('tabindex', -1 );
+      $tabBlock.find('.modal-tab-body-block').eq( tabNumber ).addClass('open').find( this.focusElements ).eq(0).focus();
       this.tabSize( $tab );
     },
     /* -------------------------------------------------- *\
@@ -458,7 +539,7 @@ modalFunction.prototype = {
             'value': value        
           })
         ),
-        ( text.note !== undefined )? $('<dd/>', {'class': 'item-text-note'}): ''
+        ( text.note !== undefined )? $('<dd/>', {'class': 'item-text-note', 'text':  text.note }): ''
       );
       // タブ名と入力を合わせる
       const $tabNameInput = $input.find('.tab-name-link');
@@ -541,10 +622,28 @@ modalFunction.prototype = {
           }),
           $('<span/>', {
             'class': 'item-password-eye'
-          })
+          }).append('<svg viewBox="0 0 64 64" class="workspace-button-svg"><use href="#icon-eye-close" /></svg>')
         ),
         $('<dd/>', {'class': 'item-password-note'})
       );
+      // パスワード入力マスク解除
+      $input.find('.item-password-eye').on({
+        'mousedown' : function(){
+          var $eye = $( this ),
+              $input = $eye.prev('input');
+
+          $eye.find('use').attr('href', '#icon-eye-open');
+          $input.blur().attr('type', 'text');
+
+          $( window ).on({
+            'mouseup.passwordEye' : function(){
+              $( this ).off('mouseup.passwordEye');
+              $input.attr('type', 'password').focus();
+              $eye.find('use').attr('href', '#icon-eye-close');
+            }
+          });
+        }
+      });
       return $input;
     },
     /* -------------------------------------------------- *\

@@ -804,3 +804,46 @@ color:  #FFF;
 }
 
 
+.content-background {
+overflow: hidden;
+position: absolute;
+z-index: -1;
+width: 100%; height: 100%;
+background-color: #0C3830;
+background-image: radial-gradient( #0C3830, #030E0C );
+box-shadow: 0 0 32px rgba( 0,0,0,1 ) inset,0 0 32px rgba( 0,0,0,1 ) inset;
+}
+.content-background::before {
+content: '';
+display: block;
+position: absolute;
+left: 0; top: 0;
+z-index: 10;
+width: 100%; height: 100%;
+background-image: linear-gradient(-90deg, #092A24 50%, transparent 50%),
+linear-gradient(#092A24 50%, transparent 50%);
+background-size: 4px 4px;
+}
+.content-background::after {
+content: '';
+display: block;
+position: absolute;
+left: 0; top: 0;
+z-index: 3;
+width: 100%; height: 100%;
+background-color: #092A24;
+background-image: linear-gradient( rgba(255,255,255,0), rgba(255,255,255,0) 80%, rgba( 255,255,255,.3 ) 80%, rgba( 255,255,255,.3 ) 100% );
+background-size: 10px 10px, 100% 100%;
+mix-blend-mode: color-dodge;
+}
+.content-background-canvas {
+position: absolute;
+top: 0; left: 0;
+z-index: 5;
+width: 100%; height: 100%;
+mix-blend-mode: color-dodge;
+transform-origin: left top;
+}
+.content-background-canvas > canvas {
+width: 100%; height: 100%;
+}
