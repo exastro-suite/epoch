@@ -42,13 +42,14 @@ def insert_manifest(cursor, workspace_id, spec):
     # 追加したワークスペースIDをreturn
     return cursor.lastrowid
 
-def update_manifest(cursor, workspace_id, spec):
+def update_manifest(cursor, workspace_id, spec, manifest_id):
     """manifest情報更新
 
     Args:
         cursor (mysql.connector.cursor): カーソル
         workspace_id (int): ワークスペースID
         spec (Dict)): manifest情報のJson形式
+        manifest_id (int): manifest ID
 
     Returns:
         int: アップデート件数
@@ -58,11 +59,11 @@ def update_manifest(cursor, workspace_id, spec):
     cursor.execute('UPDATE manifest' \
                              ' SET file_name = %(file_name)s' \
                                ' , file_text = %(file_text)s' \
-                               ' WHERE workspace_id = %(workspace_id)s',
+                               ' WHERE workspace_id = %(workspace_id)s' \
                                  ' AND id = %(manifest_id)s',
         {
             'workspace_id' : workspace_id,
-            'manifest_id' : spec['manifest_id'],
+            'manifest_id' : manifest_id,
             'file_name': spec['file_name'],
             'file_text': spec['file_text']
         }

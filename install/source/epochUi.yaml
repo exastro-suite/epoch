@@ -49,11 +49,12 @@ data:
                 "post":     api_url_base + "/pipelineParameter/",
             },
             "manifestParameter": {
-                "post":     api_url_base + "/manifestParameter",
+                "post":     api_url_base + "/workspace/{workspace_id}/manifestParameter",
             },
             "manifestTemplate": {
-                "post" :    api_url_base + "/workspace/{workspace_id}/manifests",
-                "get" :     api_url_base + "/workspace/{workspace_id}/manifests",
+                "post" :    api_url_base + "/workspace/{workspace_id}/manifests/",
+                "get" :     api_url_base + "/workspace/{workspace_id}/manifests/",
+                "delete" :  api_url_base + "/workspace/{workspace_id}/manifests/{file_id}",
             },
             "cdExecDesignation": {
                 "post" :    api_url_base + "/cdExecDesignation/",
@@ -83,7 +84,7 @@ spec:
           name: epoch-ui-conf
       containers:
       - name: epoch-ui
-        image: exastro/epochui:0.1.0_20210624_1440
+        image: exastro/epochui:0.1.0_20210630_2011
         volumeMounts:
         - name: epoch-ui-conf
           mountPath: /app/epoch/epochUi/common/js/config

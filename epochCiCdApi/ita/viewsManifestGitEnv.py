@@ -66,7 +66,7 @@ column_names_gitlist = {
 param_value_host= os.environ['EPOCH_ITA_WORKER_HOST']
 param_value_method_entry='登録'
 param_value_method_update='更新'
-param_value_operation_date='2000/01/01 00:00'
+param_value_operation_date='2999/12/31 23:59'
 param_value_operation_name_prefix='CD実行:'
 
 ita_restapi_endpoint='http://' + ita_host + ':' + ita_port + '/default/menu/07_rest_api_ver1.php'
@@ -83,7 +83,7 @@ def index(request):
     else:
         return ""
 
-@csrf_exempt    
+@csrf_exempt
 def post(request):
 
     # HTTPヘッダの生成
