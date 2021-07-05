@@ -41,7 +41,7 @@ modalFunction.prototype = {
               UniqueTabID = 't' + new Date().getTime().toString(16) + Math.floor( strong * Math.random()).toString(16);
         // 念のためすでに使われているか確認する
         if ( $('#' + UniqueTabID ).length ) {
-          newUniqueTabID();
+          return newUniqueTabID();
         } else {
           return UniqueTabID;
         }

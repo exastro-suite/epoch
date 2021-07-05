@@ -43,6 +43,8 @@ z-index: 0;
 height: calc( 100% - 108px );
 }
 .workspace-footer {
+display: flex;
+align-items: center;
 height: 60px;
 padding: 0 24px;
 background-color: #FFF;
@@ -51,7 +53,13 @@ border-top: 1px solid #DDD;
 .workspace-footer-menu-list {
 display: flex;
 align-items: center;
-height: 59px;
+height: 48px;
+padding: 0 0 0 32px; margin-right: 16px;
+border-left: 1px solid #CCC;
+}
+.workspace-footer-menu-list:first-child {
+border: none;
+padding-left: 0;
 }
 .workspace-footer-menu-item {
 margin-right: 16px;
@@ -76,7 +84,6 @@ padding-right: 0;
 text-align: right;
 }
 .workspace-tab-item,
-.cicd-tab-item,
 .workspace-status-item {
 display: inline-block;
 vertical-align: top;

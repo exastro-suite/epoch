@@ -17,6 +17,7 @@ from . import views
 from . import viewsManifestParameter
 from . import viewsManifestTemplates
 from . import viewsManifestGitEnv
+from . import viewsOperations
 from . import viewsConductorExec
 from . import viewsInitialize
 
@@ -31,6 +32,8 @@ urlpatterns = [
     path('manifestParameter', viewsManifestParameter.post),
     # Template
     path('manifestTemplates', viewsManifestTemplates.post),
+    # operation
+    path('operations', viewsOperations.index),
     # execute conductor
     path('cdExec', viewsConductorExec.index),
 ]
