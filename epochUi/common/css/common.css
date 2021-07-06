@@ -55,6 +55,7 @@ height: calc( 100% - 80px );
 #content {
 overflow: auto;
 position: relative;
+z-index: 0;
 height: 100%;
 }
 #footer {
@@ -226,8 +227,6 @@ width: 48px;
 .close .main-menu-text {
 opacity: 0;
 }
-
-
 
 .topic-path {
 background-color: #FFF;
@@ -501,20 +500,25 @@ border-collapse: collapse;
 border-top: 1px solid #DDD;
 }
 .c-table-col {
-min-height: 48px;
+height: 48px;
 border-bottom: 1px solid #DDD;
 color: #333;
 }
-thead .c-table-col {
+thead .c-table-col,
+.c-table-col-header {
 background-color: #F2F2F2;
 text-align: left;
 font-weight: bold;
 font-size: 11px;
 color: #999;
 }
+.c-table-col-header {
+width: 30%;
+}
 .c-table-ci {
 width: 100%;
-padding: 0 8px;
+padding: 4px 8px;
+word-break: break-all;
 }
 .c-table-menu-list {
 letter-spacing: -0.4em;
@@ -568,6 +572,7 @@ align-items: center;
 }
 .c-table-fixed .c-table-ci {
 overflow: hidden;
+word-break: normal;
 white-space: nowrap;
 text-overflow: ellipsis;
 }
@@ -627,6 +632,8 @@ color: #F8F8F8;
 
  * -------------------------------------------------- */
 .epoch-button {
+position: relative;
+z-index: 0;
 height: 32px;
 padding: 0 24px;
 background-color: #666;
@@ -666,6 +673,15 @@ background-image: linear-gradient( rgba( 0,0,0,.05 ), rgba( 0,0,0,.1 ) );
 .epoch-button:active {
 transform: scale(.97);
 box-shadow: inset 0 1px 1px rgba( 255,255,255,.3 ), 0 2px 0 rgba( 0,0,0,.3 );
+}
+.epoch-button:focus::after {
+content: '';
+position: absolute;
+left: -4px; top: -4px;
+z-index: -1;
+width: calc( 100% + 8px ); height: calc( 100% + 9px );
+border: 1px solid #0070FF;
+border-radius: 5px;
 }
 .epoch-button:disabled {
 background-color: #EEE!important;
@@ -788,3 +804,46 @@ color:  #FFF;
 }
 
 
+.content-background {
+overflow: hidden;
+position: absolute;
+z-index: -1;
+width: 100%; height: 100%;
+background-color: #0C3830;
+background-image: radial-gradient( #0C3830, #030E0C );
+box-shadow: 0 0 32px rgba( 0,0,0,1 ) inset,0 0 32px rgba( 0,0,0,1 ) inset;
+}
+.content-background::before {
+content: '';
+display: block;
+position: absolute;
+left: 0; top: 0;
+z-index: 10;
+width: 100%; height: 100%;
+background-image: linear-gradient(-90deg, #092A24 50%, transparent 50%),
+linear-gradient(#092A24 50%, transparent 50%);
+background-size: 4px 4px;
+}
+.content-background::after {
+content: '';
+display: block;
+position: absolute;
+left: 0; top: 0;
+z-index: 3;
+width: 100%; height: 100%;
+background-color: #092A24;
+background-image: linear-gradient( rgba(255,255,255,0), rgba(255,255,255,0) 80%, rgba( 255,255,255,.3 ) 80%, rgba( 255,255,255,.3 ) 100% );
+background-size: 10px 10px, 100% 100%;
+mix-blend-mode: color-dodge;
+}
+.content-background-canvas {
+position: absolute;
+top: 0; left: 0;
+z-index: 5;
+width: 100%; height: 100%;
+mix-blend-mode: color-dodge;
+transform-origin: left top;
+}
+.content-background-canvas > canvas {
+width: 100%; height: 100%;
+}

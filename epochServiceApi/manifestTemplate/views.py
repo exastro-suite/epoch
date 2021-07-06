@@ -35,12 +35,14 @@ logger = logging.getLogger('apilog')
 @csrf_exempt    
 def file_id_not_assign(request, workspace_id):
 
+    logger.debug("CALL file_id_not_assign [{}]: workspace_id:{}".format(request.method, workspace_id))
+
     if request.method == 'POST':
         return post(request, workspace_id)
     else:
         return index(request, workspace_id)
 
-
+@csrf_exempt    
 def post(request, workspace_id):
     try:
 
@@ -53,13 +55,33 @@ def post(request, workspace_id):
             'Content-Type': 'application/json',
         }
 
-        # データ情報
-        post_data = {
+        # データ情報(追加用)
+        post_data_add = {
             "manifests": [
 
             ]
         }
 
+        # データ情報(更新用)
+        post_data_upd = {
+            "manifests": [
+
+            ]
+        }
+
+        # Resource API呼び出し(全件取得)
+        response = requests.get( apiInfo + "/workspace/" + str(workspace_id) + "/manifests", headers=post_headers)
+
+        # 戻り値が正常値以外の場合は、処理を終了
+        if response.status_code != 200:
+            raise Exception("CALL responseAPI /manifests Error")
+
+        ret_manifests = json.loads(response.text)
+        logger.debug("get Filedata ------------------ S")
+        logger.debug(ret_manifests["rows"])
+        logger.debug("get Filedata ------------------ E")
+
+        # 送信されたマニフェストファイル数分処理する
         for manifest_file in request.FILES.getlist('manifest_files'):
 
             with manifest_file.file as f:
@@ -71,28 +93,54 @@ def post(request, workspace_id):
 
                     file_text += line.decode('utf-8')
 
-            # データ情報(manifest_data)
+            # ファイル情報(manifest_data)
             manifest_data = {
                 "file_name": manifest_file.name,
                 "file_text": file_text
             }
 
-            # データ情報(manifest_dataと結合)
-            post_data['manifests'].append(manifest_data)
-        
+            # 同一ファイルがあるかファイルIDを取得
+            file_id = getFileID(ret_manifests["rows"], manifest_file.name)
+            
+            # 同一ファイル名が登録されている場合は、更新とする
+            if not file_id:
+                # データ登録情報(manifest_dataと結合)
+                post_data_add['manifests'].append(manifest_data)
+            else:
+                manifest_data["file_id"] = file_id 
+                # データ更新情報(manifest_dataと結合)
+                post_data_upd['manifests'].append(manifest_data)
+
+        logger.debug("post_data_add ------------------ S")
+        logger.debug(post_data_add)
+        logger.debug("post_data_add ------------------ E")
+
+        logger.debug("post_data_upd ------------------ S")
+        logger.debug(post_data_upd)
+        logger.debug("post_data_upd ------------------ E")
+
         # Resource API呼び出し(削除)
-        response = requests.delete( apiInfo + "/workspace/" + str(workspace_id) + "/manifests", headers=post_headers)
+        # response = requests.delete( apiInfo + "/workspace/" + str(workspace_id) + "/manifests", headers=post_headers)
+
+        # 更新は１件ずつ実施
+        for upd in post_data_upd['manifests']:
+            # JSON形式に変換
+            post_data = json.dumps(upd)
+
+            # Resource API呼び出し(更新)
+            response = requests.put( "{}/workspace/{}/manifests/{}".format(apiInfo, workspace_id, upd["file_id"]), headers=post_headers, data=post_data)
 
         # JSON形式に変換
-        post_data = json.dumps(post_data)
+        post_data = json.dumps(post_data_add)
 
         # Resource API呼び出し(登録)
-        response = requests.post( apiInfo + "/workspace/" + str(workspace_id) + "/manifests", headers=post_headers, data=post_data)
+        response = requests.post( "{}/workspace/{}/manifests".format(apiInfo, workspace_id), headers=post_headers, data=post_data)
 
         # ITA呼び出し
         logger.debug("CALL ita_registration Start")
         response = ita_registration(request, workspace_id)
-        logger.debug("CALL ita_registration End response:{}", response)
+        logger.debug("CALL ita_registration End response:")
+        logger.debug(response)
 
         # 正常時はmanifest情報取得した内容を返却
         response = {
@@ -113,6 +161,33 @@ def post(request, workspace_id):
             }
         }
         return JsonResponse(response, status=500)
+
+def getFileID(dict, fileName):
+    """辞書からfile_nameの値が一致するものがあるかチェックする
+
+    Args:
+        dict (json): 検索する対象Json
+        fileName (String): 検索対象ファイル名（完全一致）
+
+    Returns:
+        String: ファイルID
+    """
+
+    try:
+        # 戻り値の初期化
+        file_id = ""
+
+        for dictP in dict:
+            # 該当する文字列が一致した場合は、処理を抜ける
+            if dictP["file_name"] == fileName:
+                file_id = dictP["id"]
+                break
+
+        return file_id
+
+    except Exception:
+        raise
+    
 
 def ita_registration(request, workspace_id):
     """ITA登録
@@ -209,9 +284,11 @@ def index(request, workspace_id):
         return JsonResponse(response, status=500)
 
 
-@require_http_methods(['GET', 'DELETE'])
+@require_http_methods(['GET', 'POST'])
 @csrf_exempt    
 def file_id_assign(request, workspace_id, file_id):
+
+    logger.debug("CALL file_id_assign [{}]: workspace_id:{}: file_id:{}".format(request.method, workspace_id, file_id))
 
     if request.method == 'GET':
         return get(request, workspace_id, file_id)
@@ -267,7 +344,6 @@ def delete(request, workspace_id, file_id):
 
         response = requests.delete(apiurl, headers=headers)
 
-
         if response.status_code == 200 and isJsonFormat(response.text):
             # 取得したJSON結果が正常でない場合、例外を返す
             # ret = json.loads(response.text)
@@ -296,7 +372,8 @@ def delete(request, workspace_id, file_id):
         # ITA呼び出し
         logger.debug("CALL ita_registration Start")
         response = ita_registration(request, workspace_id)
-        logger.debug("CALL ita_registration End response:{}", response)
+        logger.debug("CALL ita_registration End response:")
+        logger.debug(response)
 
         # 正常時はmanifest情報取得した内容を返却
         response = {

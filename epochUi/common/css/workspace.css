@@ -17,7 +17,6 @@
 /* CSS Document */
 
 :root {
-  --main-color: #1F8C78;
   --ci-color: #00A99D;
   --cd-color: #335581;
 }
@@ -43,6 +42,8 @@ z-index: 0;
 height: calc( 100% - 108px );
 }
 .workspace-footer {
+display: flex;
+align-items: center;
 height: 60px;
 padding: 0 24px;
 background-color: #FFF;
@@ -51,7 +52,13 @@ border-top: 1px solid #DDD;
 .workspace-footer-menu-list {
 display: flex;
 align-items: center;
-height: 59px;
+height: 48px;
+padding: 0 0 0 32px; margin-right: 16px;
+border-left: 1px solid #CCC;
+}
+.workspace-footer-menu-list:first-child {
+border: none;
+padding-left: 0;
 }
 .workspace-footer-menu-item {
 margin-right: 16px;
@@ -76,7 +83,6 @@ padding-right: 0;
 text-align: right;
 }
 .workspace-tab-item,
-.cicd-tab-item,
 .workspace-status-item {
 display: inline-block;
 vertical-align: top;
@@ -150,8 +156,9 @@ color: #999;
 color: #333;
 }
 .workspace-tab-link.current {
+background-image: linear-gradient(transparent 25%, #E9F4F2);
 border-bottom-color: #1F8C78!important;
-border-bottom-width: 2px;
+border-bottom-width: 4px;
 color: #333!important;
 cursor: default;
 }
@@ -170,15 +177,15 @@ stroke: var(--cd-color);
 stroke: var(--ci-color);
 }
 .svg-path-back {
-stroke: rgba( 255,255,255,1 );
-stroke-width: 7px;
+stroke: #FFF;
+stroke-width: 9px;
 fill: none;
 stroke-linejoin: round;
 }
 #workspace-epoch polygon {
-stroke: rgba( 31,140,120,.4 );
+stroke: rgba( 31,140,120,.8 );
 stroke-width: 2px;
-fill: rgba( 31,140,120,.1 );
+fill: rgba( 31,140,120,.6 );
 }
 
 
@@ -249,20 +256,21 @@ width: 100%; height: 24px;
 text-align: center;
 font-weight: bold;
 line-height: 24px;
-color: #3371e3;
+text-shadow: 1px 1px #000,-1px 1px #000,1px -1px #000,-1px -1px #000;
+color: #EEE;
 }
 #ws-ci-user .workspace-point-inner {
 background-color: var(--ci-color);
 }
 #ws-ci-user .workspace-point-name {
 top: -32px; bottom: auto;
-color: var(--ci-color);
+color: #EEE;
 }
 #ws-cd-user .workspace-point-inner {
 background-color: var(--cd-color);
 }
 #ws-cd-user .workspace-point-name {
-color: var(--cd-color);
+color: #EEE;
 }
 .workspace-point-setting {
 position: absolute;
@@ -343,6 +351,7 @@ display: block;
 width: 100%; height: 100%;
 }
 .workspace-ita-frow {
+position: relative;
 width: 192px;
 padding: 8px 16px;
 }
@@ -361,7 +370,7 @@ height: 48px;
 text-align: center;
 font-weight: bold;
 font-size: 24px;
-color: var(--main-color);
+color: #1F8C78;
 }
 .workspace-block-logo {
 padding: 4px;
@@ -383,7 +392,7 @@ fill: #79BAAE;
 fill: #4CA393;
 }
 .st2 {
-fill: var(--main-color);
+fill: #1F8C78;
 }
 .st-setting {
 fill: #F7931E;
@@ -465,8 +474,8 @@ width: 100%; height: 100%;
 .workspace-document-wrap {
 position: relative;
 z-index: 0;
-margin: 24px 0 0 0;
 }
+.workspace-document-wrap[data-multiple] {margin-top: 24px; }
 .workspace-document-wrap[data-multiple="2"] { margin: 24px 6px 0 0; }
 .workspace-document-wrap[data-multiple="3"] { margin: 24px 12px 0 0; }
 .workspace-document-wrap[data-multiple="4"] { margin: 24px 18px 0 0; }
@@ -487,23 +496,23 @@ z-index: 1;
 line-height: 1;
 }
 .multiple-name {
-left: 6px; top: -16px;
+left: 6px; top: -15px;
 padding: 2px 8px;
 background-color: #FFF;
 border: 1px solid #CCC;
-border-bottom-color: #EEE;
+border-bottom-color: transparent;
 border-radius: 4px 4px 0 0;
 letter-spacing: .025em;
 font-size: 11px;
 color: #555;
 }
 .multiple-number {
-right: -12px; top: -12px;
-width: 24px; height: 24px;
+right: -12px; top: -8px;
+padding: 0 8px 1px 20px;
 background-color: var(--ci-color);
 box-shadow: 1px 1px 1px rgba( 0,0,0,.1 );
 border: 2px solid #FFF;
-border-radius: 50%;
+border-radius: 12px;
 text-align: center;
 line-height: 20px;
 font-family: Consolas, "メイリオ", Meiryo, Osaka, "ＭＳ Ｐゴシック", "MS PGothic", "sans-serif";
@@ -529,13 +538,13 @@ content: '';
 display: block;
 transform: scaleX(.7) rotate(45deg) translateY(-3px);
 width: 5px; height: 5px;
-border: 5px solid var(--main-color);
+border: 5px solid #1F8C78;
 border-top-color: transparent;
 border-left-color: transparent;
 }
 #ws-ci-area .multiple-arrow::after {
-border-right-color: #00A99D;;
-border-bottom-color: #00A99D;;
+border-right-color: #00A99D;
+border-bottom-color: #00A99D;
 }
 .environment .multiple-arrow::after {
 border-right-color: #3371e3;
@@ -547,15 +556,15 @@ border-bottom-color: #3371e3;
 content: '';
 display: block;
 position: absolute;
-left: -12px; top: 50%;
+left: 8px; top: 50%;
 width: 8px; height: 2px;
-background-color: #555;
+background-color: #EEE;
 }
 .multiple-number::before {
-transform: translateY(-50%) rotate(45deg);
+transform: translateY(-50%) rotate(-45deg);
 }
 .multiple-number::after {
-transform: translateY(-50%) rotate(-45deg);
+transform: translateY(-50%) rotate(45deg);
 }
 
 .multiple-block {
@@ -616,7 +625,7 @@ line-height: 32px;
 text-align: center;
 font-weight: bold;
 font-size: 16px;
-color: var(--main-color);
+color: #1F8C78;
 }
 
 
@@ -866,6 +875,159 @@ background-color: #002B62;
 }
 
 
+.workspace-block-status,
+.workspace-ita-status {
+position: absolute;
+user-select: none;
+-moz-user-select: none;
+-webkit-user-select: none;
+-ms-user-select: none;
+}
+.workspace-block-status {
+bottom: -10px; left: 8px;
+width: 96px; height: 20px;
+background-color: #FFF;
+border: 1px solid #CCC;
+border-radius: 2px;
+box-shadow: 0 1px 2px #AAA;
+}
+.workspace-ita-status {
+top: 50%; left: 50%;
+width: 76px; height: 20px;
+transform: translate(-50%,-50%);
+border-radius: 10px;
+}
+.workspace-block-status-bar {
+position: relative;
+z-index: 0;
+width: calc( 100% - 4px ); height: calc( 100% - 2px );
+margin: 1px auto;
+}
+.workspace-block-status-bar::before,
+.workspace-block-status-bar::after,
+.workspace-ita-status-bar::before,
+.workspace-ita-status-bar::after {
+content: '';
+display: block;
+position: absolute;
+left: 0; top: 0;
+width: 100%; height: 100%;
+}
+.workspace-block-status-bar::before,
+.workspace-ita-status-bar::before {
+z-index: 2;
+background-image: linear-gradient( -45deg, transparent 25%, rgba( 255,255,255,.2 ) 25%, rgba( 255,255,255,.2 ) 50%, transparent 50%, transparent 75%, rgba( 255,255,255,.2 ) 75% );
+background-size: 16px 16px;
+border: 1px solid #AAA;
+box-shadow: 0 0 8px rgba( 0,0,0,.1 ) inset;
+}
+.workspace-block-status-bar::after,
+.workspace-ita-status-bar::after {
+z-index: 1;
+background-image: linear-gradient( #999, #AAA );
+}
+
+.workspace-block-status[data-status="running"],
+.workspace-ita-status[data-status="running"] {
+cursor: pointer;
+}
+.workspace-block-status[data-status="running"]:hover {
+transform: scale( 1.02 );
+}
+.workspace-ita-status[data-status="running"]:hover {
+transform: translate(-50%,-50%) scale( 1.02 );
+}
+.workspace-block-status[data-status="running"]:active {
+transform: scale( .98 );
+}
+.workspace-ita-status[data-status="running"]:active {
+transform: translate(-50%,-50%) scale( .98 );
+}
+
+#ws-pipeline-tekton .workspace-block-status[data-status="running"] .workspace-block-status-bar::before {
+border-color: #2B338C; }
+#ws-pipeline-tekton .workspace-block-status[data-status="running"] .workspace-block-status-bar::after {
+background-image: linear-gradient( #B1476A, #2B338C );
+}
+#ws-pipeline-argo .workspace-block-status[data-status="running"] .workspace-block-status-bar::before {
+border-color: #FF5F27; }
+#ws-pipeline-argo .workspace-block-status[data-status="running"] .workspace-block-status-bar::after {
+background-image: linear-gradient( #FF6828, #FF5F27 );
+}
+.workspace-ita-status .workspace-ita-status-bar::before,
+.workspace-ita-status .workspace-ita-status-bar::after {
+border-radius: 10px;
+}
+.workspace-ita-status[data-status="running"] .workspace-ita-status-bar::before {
+border-color: #002B62;
+}
+.workspace-ita-status[data-status="running"] .workspace-ita-status-bar::after {
+background-image: linear-gradient( #002B62, #1A4072 );
+}
+.workspace-block-status[data-status="running"] .workspace-block-status-bar::before,
+.workspace-ita-status[data-status="running"] .workspace-ita-status-bar::before {
+animation: runningBar .5s linear infinite;
+}
+@keyframes runningBar {
+to { background-position: 16px 0; }
+}
+.workspace-block-status[data-status="running"] .workspace-block-status-text::before,
+.workspace-ita-status[data-status="running"] .workspace-ita-status-text::before,
+.workspace-block-status[data-status="running"] .workspace-block-status-text::after,
+.workspace-ita-status[data-status="running"] .workspace-ita-status-text::after {
+content: '';
+display: block;
+position: absolute;
+top: 50%;
+transform: translateY(-50%);
+width: 8px; height: 8px;
+border: 4px solid rgba( 255,255,255,.4 );
+border-left-color: rgba( 255,255,255,.1 );
+border-right-color: rgba( 255,255,255,.1 );
+border-radius: 50%;
+vertical-align: middle;
+animation: runningText 1s linear infinite;
+}
+.workspace-block-status[data-status="running"] .workspace-block-status-text::before,
+.workspace-ita-status[data-status="running"] .workspace-ita-status-text::before {
+left: 6px;
+}
+.workspace-block-status[data-status="running"] .workspace-block-status-text::after,
+.workspace-ita-status[data-status="running"] .workspace-ita-status-text::after {
+right: 6px;
+}
+@keyframes runningText {
+to { transform: translateY(-50%) rotate(360deg); }
+}
+.workspace-block-status-text,
+.workspace-ita-status-text {
+overflow: hidden;
+position: absolute;
+left: 0; top: 0;
+z-index: 2;
+width: 100%; height: 100%;
+padding-left: .05em;
+font-size: 11px;
+line-height: 20px;
+white-space: nowrap;
+letter-spacing: .05em;
+text-align: center;
+text-shadow: 1px 1px 0 rgba( 0,0,0,.2 );
+font-weight: bold;
+color: rgba( 255,255,255,.9 );
+}
+
+
+.execution-date-select,
+.execution-date {
+display: inline-block;
+vertical-align: middle;
+}
+.execution-date-input {
+width: 180px;
+}
+
+
 #yaml-preview .modal-body {
 padding: 0;
 }
@@ -896,7 +1058,9 @@ display: none!important;
 display: table-cell!important;
 }
 #content[data-mode="setting"] .workspace-point-setting.workspace-mode-setting,
-#content[data-mode="running"] .workspace-point-setting.workspace-mode-running {
+#content[data-mode="running"] .workspace-point-setting.workspace-mode-running,
+#content[data-mode="running"] .workspace-block-status.workspace-mode-running,
+#content[data-mode="running"] .workspace-ita-status.workspace-mode-running {
 display: block!important;
 }
 #content[data-mode="setting"] .workspace-footer-menu-item.workspace-mode-setting {

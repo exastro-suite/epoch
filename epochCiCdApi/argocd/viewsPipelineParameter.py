@@ -21,6 +21,7 @@ import subprocess
 import traceback
 import os
 import logging
+import time
 
 from django.conf import settings
 from django.shortcuts import render
@@ -32,6 +33,8 @@ from django.views.decorators.csrf import csrf_exempt
 from kubernetes import client, config
 
 logger = logging.getLogger('apilog')
+
+WAIT_APPLICATION_DELETE = 180 # アプリケーションが削除されるまでの最大待ち時間
 
 @csrf_exempt
 def index(request):
@@ -61,9 +64,45 @@ def post(request):
             logger.debug ("argocd login:" + str(stdout_cd))
 
         except subprocess.CalledProcessError as e:
+            logger.debug("CalledProcessError:\n" + traceback.format_exc())
             response = {
                 "result": e.returncode,
                 "returncode": "0401",
+                "command": e.cmd,
+                "output": e.output.decode('utf-8'),
+                "traceback": traceback.format_exc(),
+            }
+            return JsonResponse(response)
+
+        # 設定済みのアプリケーション情報をクリア
+        try:
+            # アプリケーション情報の一覧を取得する
+            logger.debug("execute : argocd app list")
+            stdout_cd = subprocess.check_output(["argocd","app","list","-o","json"],stderr=subprocess.STDOUT)
+            # logger.debug("result : argocd app list:" + str(stdout_cd))
+
+            # アプリケーション情報を削除する
+            app_list = json.loads(stdout_cd)
+            for app in app_list:
+                logger.debug('execute : argocd app delete:' + app['metadata']['name'])
+                stdout_cd = subprocess.check_output(["argocd","app","delete",app['metadata']['name'],"-y"],stderr=subprocess.STDOUT)
+
+            # アプリケーションが消えるまでWaitする
+            logger.debug("wait : argocd app list clean")
+
+            for i in range(WAIT_APPLICATION_DELETE):
+                # アプリケーションの一覧を取得し、結果が0件になるまでWaitする
+                stdout_cd = subprocess.check_output(["argocd","app","list","-o","json"],stderr=subprocess.STDOUT)
+                app_list = json.loads(stdout_cd)
+                if len(app_list) == 0:
+                    break
+                time.sleep(1) # 1秒ごとに確認
+
+        except subprocess.CalledProcessError as e:
+            logger.debug("CalledProcessError:\n" + traceback.format_exc())
+            response = {
+                "result": e.returncode,
+                "returncode": "0405",
                 "command": e.cmd,
                 "output": e.output.decode('utf-8'),
                 "traceback": traceback.format_exc(),
@@ -92,6 +131,23 @@ def post(request):
                     break
 
             try:
+                # namespaceの存在チェック
+                ret = getNamespace(namespace)
+                if ret is None:
+                    # namespaceの作成
+                    ret = createNamespace(namespace)
+
+                # namespaceの作成に失敗した場合
+                if ret is None:
+                    response = {
+                        "result":"500",
+                        "returncode": "0404",
+                        "args": e.args,
+                        "output": e.args,
+                        "traceback": traceback.format_exc(),
+                    }
+                    return JsonResponse(response)
+
                 # argocd app create catalogue \
                 # --repo [repogitory URL] \
                 # --path ./ \
@@ -114,6 +170,7 @@ def post(request):
                 output += env_name + "{" + stdout_cd.decode('utf-8') + "},"
 
             except subprocess.CalledProcessError as e:
+                logger.debug("CalledProcessError:\n" + traceback.format_exc())
                 response = {
                     "result": e.returncode,
                     "returncode": "0402",
@@ -134,6 +191,7 @@ def post(request):
         return JsonResponse(response)
 
     except Exception as e:
+        logger.debug("Exception:\n" + traceback.format_exc())
         response = {
             "result":"500",
             "returncode": "0403",
@@ -241,3 +299,56 @@ def get(request):
         }
         return JsonResponse(response)
 
+# namespaceの情報取得
+# 戻り値：namespaceの情報、存在しない場合はNone
+def getNamespace(name):
+    try:
+
+        config.load_incluster_config()
+        # 使用するAPIの宣言
+        v1 = client.CoreV1Api()
+        
+        # 引数の設定
+        pretty = '' # str | If 'true', then the output is pretty printed. (optional)
+        exact = True # bool | Should the export be exact.  Exact export maintains cluster-specific fields like 'Namespace'. Deprecated. Planned for removal in 1.18. (optional)
+        export = True # bool | Should this value be exported.  Export strips fields that a user can not specify. Deprecated. Planned for removal in 1.18. (optional)
+
+        # namespaceの情報取得
+        ret = v1.read_namespace(name=name)
+        logger.debug("ret: %s" % (ret))
+
+        return ret 
+
+    except Exception as e:
+        logger.debug("Except: %s" % (e))
+        return None 
+      
+# namespaceの作成
+# 戻り値：作成時の情報、失敗時はNone
+def createNamespace(name):
+    try:
+
+        config.load_incluster_config()
+        # 使用するAPIの宣言
+        v1 = client.CoreV1Api()
+        
+        # 引数の設定
+        body = client.V1Namespace(metadata=client.V1ObjectMeta(name=name))
+        # api_instance = kubernetes.client.CoreV1Api(api_client)
+        # body = kubernetes.client.V1Namespace() # V1Namespace | 
+        #pretty = '' # str | If 'true', then the output is pretty printed. (optional)
+        #dry_run = '' # str | When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed (optional)
+        #field_manager = '' # str | fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. (optional)
+
+        # namespaceの作成
+        #ret = v1.create_namespace(body=body, pretty=pretty, dry_run=dry_run, field_manager=field_manager)
+        ret = v1.create_namespace(body=body)
+
+        logger.debug("ret: %s" % (ret))
+
+        return ret 
+
+    except Exception as e:
+        logger.debug("Except: %s" % (e))
+        return None 
+ 

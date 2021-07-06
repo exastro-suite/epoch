@@ -36,7 +36,7 @@ urlpatterns = [
     path('workspace/', include('workspace.urls')),
     path('pipeline/', include('pipeline.urls')),
     path('pipelineParameter/', include('pipelineParameter.urls')),
-    path('manifestParameter', include('manifestParameter.urls')),
-    path('workspace/<int:workspace_id>/manifests', include('manifestTemplate.urls')),
+    path('workspace/<int:workspace_id>/manifestParameter', include('manifestParameter.urls')),
+    path('workspace/<int:workspace_id>/manifests/', include('manifestTemplate.urls')),
     path('cdExecDesignation/', include('cdExecDesignation.urls')),
 ]
