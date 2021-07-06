@@ -19,7 +19,7 @@ metadata:
 spec:
   params:
   - name: gitrevision
-    value: "<__build_git_branch__>"
+    value: $(body.ref)
   - name: gitrepositoryurl
     value: $(body.repository.clone_url)
   - name: git_ref

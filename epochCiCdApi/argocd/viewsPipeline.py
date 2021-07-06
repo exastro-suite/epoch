@@ -71,6 +71,29 @@ def post(request):
             logger.debug (response)
             return JsonResponse(response, status=500)
 
+        # 設定済みのリポジトリ情報をクリア
+        try:
+            # リポジトリ情報の一覧を取得する
+            logger.debug("execute : argocd repo list")
+            stdout_cd = subprocess.check_output(["argocd","repo","list","-o","json"],stderr=subprocess.STDOUT)
+            # logger.debug("result : argocd repo list:" + str(stdout_cd))
+
+            repo_list = json.loads(stdout_cd)
+            for repo in repo_list:
+                logger.debug('execute : argocd repo rm:' + repo['repo'])
+                stdout_cd = subprocess.check_output(["argocd","repo","rm",repo['repo']],stderr=subprocess.STDOUT)
+
+        except subprocess.CalledProcessError as e:
+            logger.debug("CalledProcessError:\n" + traceback.format_exc())
+            response = {
+                "result": e.returncode,
+                "returncode": "0308",
+                "command": e.cmd,
+                "output": e.output.decode('utf-8'),
+                "traceback": traceback.format_exc(),
+            }
+            return JsonResponse(response)
+
         # 環境群数分処理を実行
         output = ""
         for env in request_cd_env:
