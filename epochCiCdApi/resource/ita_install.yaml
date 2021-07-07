@@ -50,6 +50,10 @@ spec:
         volumeMounts:
         - name: epoch-ita-conf
           mountPath: /app/epoch/tmp
+      hostAliases:
+      - hostnames:
+        - exastro-it-automation
+        ip: 127.0.0.1
 ---
 apiVersion: v1
 kind: Service

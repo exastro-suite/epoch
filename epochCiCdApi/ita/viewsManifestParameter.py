@@ -62,6 +62,8 @@ column_names_manifest_param = {
     'replicas' : 'パラメータ/replicas',
     'image' : 'パラメータ/image',
     'image_tag' : 'パラメータ/image_tag',
+    'port_no_active' : 'パラメータ/port_no_active',
+    'port_no_preview' : 'パラメータ/port_no_preview',
     'template_name' : 'パラメータ/template_name',
     'lastupdate' : '更新用の最終更新日時',
 }
@@ -69,6 +71,7 @@ column_names_manifest_param = {
 param_value_host= os.environ['EPOCH_ITA_WORKER_HOST']
 param_value_method_entry='登録'
 param_value_method_update='更新'
+param_value_method_delete='廃止'
 
 ita_restapi_endpoint='http://' + ita_host + ':' + ita_port + '/default/menu/07_rest_api_ver1.php'
 
@@ -123,7 +126,7 @@ def post(request):
         maniparam_json = json.loads(maniparam_resp.text)
         logger.debug('---- Current Manifest Parameters ----')
         # logger.debug(maniparam_resp.text)
-        # logger.debug(maniparam_json)
+        logger.debug(maniparam_json)
 
         # 項目位置の取得
         column_indexes_maniparam = column_indexes(column_names_manifest_param, maniparam_json['resultdata']['CONTENTS']['BODY'][0])
@@ -152,6 +155,11 @@ def post(request):
 
             for idx_manifile, row_manifile in enumerate(environment['manifests']):
 
+                replicas = None
+                image = None
+                image_tag = None
+                port_no_active = None
+                port_no_preview = None
                 # parameters成型
                 for key, value in row_manifile['parameters'].items():
                     if key == 'replicas':
@@ -160,6 +168,10 @@ def post(request):
                         image = value
                     elif key == 'image_tag':
                         image_tag = value
+                    elif key == 'port_no_active':
+                        port_no_active = value
+                    elif key == 'port_no_preview':
+                        port_no_preview = value
 
                 # 既存データ確認
                 maniparam_id = -1
@@ -182,6 +194,8 @@ def post(request):
                             str(column_indexes_maniparam['replicas']) : replicas,
                             str(column_indexes_maniparam['image']) : image,
                             str(column_indexes_maniparam['image_tag']) : image_tag,
+                            str(column_indexes_maniparam['port_no_active']) : port_no_active,
+                            str(column_indexes_maniparam['port_no_preview']) : port_no_preview,
                             str(column_indexes_maniparam['template_name']) : '"{{ TPF_epoch_template_yaml' + str(idx_manifile + 1) + ' }}"',
                         }
                     )
@@ -200,6 +214,8 @@ def post(request):
                             str(column_indexes_maniparam['replicas']) : replicas,
                             str(column_indexes_maniparam['image']) : image,
                             str(column_indexes_maniparam['image_tag']) : image_tag,
+                            str(column_indexes_maniparam['port_no_active']) : port_no_active,
+                            str(column_indexes_maniparam['port_no_preview']) : port_no_preview,
                             str(column_indexes_maniparam['template_name']) : maniparam_json['resultdata']['CONTENTS']['BODY'][idx_maniparam][column_indexes_maniparam['template_name']],
                             str(column_indexes_maniparam['lastupdate']) : maniparam_json['resultdata']['CONTENTS']['BODY'][idx_maniparam][column_indexes_maniparam['lastupdate']],
                         }
@@ -207,8 +223,33 @@ def post(request):
                     logger.debug('---- Manifest Parameters Item(Update) ----')
                     logger.debug(maniparam_edit[len(maniparam_edit) -1])
 
+        logger.debug('---- Deleting Manifest Parameters Setting ----')
+        # 既存データをすべて廃止する
+        for idx_maniparam, row_maniparam in enumerate(maniparam_json['resultdata']['CONTENTS']['BODY']):
+            # 1行目無視する
+            if idx_maniparam == 0:
+                continue
+            flgExists = False
+            for idx_edit, row_edit in enumerate(maniparam_edit):
+                # 該当するrecord_noがあれば、チェックする
+                if  row_edit[str(column_indexes_common['record_no'])]:
+                    if row_edit[str(column_indexes_common['record_no'])] == row_maniparam[column_indexes_common['record_no']]:
+                        flgExists = True
+                        break
+            
+            # 該当するレコードがない場合は、廃止として追加する
+            if not flgExists:
+                # 削除用のデータ設定
+                maniparam_edit.append(
+                    {
+                        str(column_indexes_common['method']) : param_value_method_delete,
+                        str(column_indexes_common['record_no']) : row_maniparam[column_indexes_common['record_no']],
+                        str(column_indexes_maniparam['lastupdate']) : row_maniparam[column_indexes_maniparam['lastupdate']],
+                    }
+                )
+
         logger.debug('---- Updating Manifest Parameters ----')
-        # logger.debug(json.dumps(maniparam_edit))
+        logger.debug(json.dumps(maniparam_edit))
 
         manuparam_edit_resp = requests.post(ita_restapi_endpoint + '?no=' + ita_menu_manifest_param, headers=edit_headers, data=json.dumps(maniparam_edit))
         maniparam_json = json.loads(manuparam_edit_resp.text)
