@@ -35,6 +35,13 @@
 #workspace {
 height: 100%;
 }
+.workspace-header {
+display: flex;
+align-items: center;
+justify-content: space-between;
+height: 48px;
+background-color: #FFF;
+}
 .workspace-body {
 overflow: hidden;
 position: relative;
@@ -65,20 +72,27 @@ margin-right: 16px;
 }
 .workspace-tab {
 height: 48px;
-background-color: #FFF;
 letter-spacing: -0.4em;
 white-space: nowrap;
 }
+.workspace-header-menu {
+margin-right: 8px;
+}
 .workspace-tab-list,
-.workspace-status-list {
+.workspace-status-list,
+.workspace-setting-list {
 display: inline-block;
-width: 50%; height: 48px;
+height: 48px;
 padding: 0 16px;
 border-bottom: 1px solid #DDD;
 vertical-align: top;
 white-space: nowrap;
 }
 .workspace-status-list {
+border-right: 1px solid #DDD;
+}
+.workspace-status-list,
+.workspace-setting-list {
 padding-right: 0;
 text-align: right;
 }
@@ -162,6 +176,21 @@ border-bottom-width: 4px;
 color: #333!important;
 cursor: default;
 }
+
+.workspace-setting-item {
+width: 48px; height: 48px;
+padding: 8px;
+}
+.workspace-setting-button {
+margin: 0; padding: 0;
+background: transparent;
+border: none;
+cursor: pointer;
+}
+.workspace-setting-button-svg {
+width: 100%; height: 100%;
+}
+
 
 .svg-path {
 stroke: #999;

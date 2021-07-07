@@ -154,7 +154,90 @@ modalFunction.prototype = {
               }, '.modal-tab-item');
             });
           }          
+          
+          // 数値入力とフェーダー
+          $modal.find('.item-number-range').each(function(){
+            const $fader = $( this ),
+                  $input = $fader.prev();
+            let   val = $input.val(),
+                  min = $input.attr('data-min'),
+                  max = $input.attr('data-max');
+            if ( min !== 'none' && max !== 'none') {
+              min = Number( min );
+              max = Number( max );
+              if ( val === '' || val === undefined ) val = min;
+              
+              const inputRange = max - min,
+                    $knob = $fader.find('.item-number-range-knob');
+              let   width = $fader.width(),
+                    ratio = val / inputRange,
+                    positionX = Math.round( width * ratio );
+                    
+              $knob.css('left', Math.round( ratio * 100 ) + '%');
+              
+              $fader.on('mousedown', function( mde ){
+                // 選択を解除する
+                getSelection().removeAllRanges();
+                
+                $fader.addClass('active');
+                const clickX = mde.pageX - $fader.offset().left;
+                
+                val = $input.val();
+                width = $fader.width();
+                ratio = clickX / width;
+                positionX = Math.round( width * ratio );
+                
+                $knob.css('left', Math.round( ratio * 100 ) + '%' );
+                $input.val( Math.round( inputRange * ratio ) + min );
 
+                const $window = $( window );
+                
+                $window.on({
+                  'mouseup.faderKnob': function(){
+                    $fader.removeClass('active');
+                    $window.off('mouseup.faderKnob mousemove.faderKnob');
+                    positionX = Math.round( width * ratio );
+                  },
+                  'mousemove.faderKnob': function( mme ){
+                    const moveX = mme.pageX - mde.pageX;
+                    
+                    ratio = ( positionX + moveX ) / width;
+                    if ( ratio <= 0 ) ratio = 0;
+                    if ( ratio >= 1 ) ratio = 1;                    
+                    
+                    $knob.css('left', Math.round( ratio * 100 ) + '%' );
+                    $input.val( Math.round( inputRange * ratio ) + min );
+                  }
+                });
+              
+              });
+              
+              $input.on('input', function(){
+                val = $input.val();
+                if ( val < min || val === '') {
+                  $input.val( min );
+                  val = min;
+                }
+                if ( val > max ) {
+                  $input.val( max );
+                  val = max;
+                }
+                
+                width = $fader.width();
+                ratio = val / inputRange;
+                positionX = Math.round( width * ratio );
+                
+                $knob.css('left', Math.round( ratio * 100 ) + '%' );
+              });
+              
+              
+              
+              
+            } else {
+              $fader.remove();
+            }
+          });
+          
           modal.focusOn('#modal-container', '#container');
           
         } else if ( type === 'sub') {
@@ -221,7 +304,7 @@ modalFunction.prototype = {
     \* -------------------------------------------------- */
     'setParameter': function(){
       const modal = this,
-            inputTarget = 'input[type="text"], input[type="password"], input[type="radio"]:checked, textarea';
+            inputTarget = 'input[type="text"], input[type="number"], input[type="password"], input[type="radio"]:checked, textarea';
   
       modal.$modal.find( inputTarget ).each( function(){
         const $input = $( this ),
@@ -492,6 +575,7 @@ modalFunction.prototype = {
           const itemType = function( data ){
             switch( data.type ) {
               case 'input': return modal.createInput( data, tabNumber );
+              case 'number': return modal.createNumber( data, tabNumber );
               case 'textarea': return modal.createTextarea( data, tabNumber );
               case 'password': return modal.createPassword( data, tabNumber );
               case 'radio': return modal.createRadio( data, tabNumber );
@@ -521,7 +605,8 @@ modalFunction.prototype = {
        input TEXT
     \* -------------------------------------------------- */
     'createInput': function( text, tabNumber ){
-      const $input = $('<dl/>', {'class': 'item-text-block item-block'}),
+      const modal = this,
+            $input = $('<dl/>', {'class': 'item-text-block item-block'}),
             name = ( tabNumber !== undefined )? tabNumber + '-' + text.name: text.name,
             value = this.searchValue( this.valueJSON, name ),
             className = ( text.class !== undefined )? ' ' + text.class: '';
@@ -539,18 +624,46 @@ modalFunction.prototype = {
             'value': value        
           })
         ),
-        ( text.note !== undefined )? $('<dd/>', {'class': 'item-text-note', 'text':  text.note }): ''
+        ( text.note !== undefined )? $('<dd/>', {'class': 'item-note item-text-note', 'text':  text.note }): ''
       );
+      // 入力チェック
+      if ( text.validation !== undefined ) {
+        $input.append( $('<dd/>', {'class': 'item-text-error', 'text': text.inputError }) );
+        
+        const reg = new RegExp( text.validation ),
+              $error = $input.find('.item-text-error');
+        
+        const errorCheck = function( val ){
+          if ( val !== undefined ) {
+            if ( !val.match( reg ) && val !== '') {
+              $error.addClass('input-error');
+            } else {
+              $error.removeClass('input-error');
+            }
+          } else {
+            $error.removeClass('input-error');
+          }
+        };
+        errorCheck( value );
+        modal.errorCheck();
+        
+        $input.find('.item-text').on('blur', function(){
+          const $this = $( this ),
+                val = $this.val();
+          errorCheck( val );
+          modal.errorCheck();
+        });
+      }
       // タブ名と入力を合わせる
       const $tabNameInput = $input.find('.tab-name-link');
       if ( $tabNameInput.length ) {
         $tabNameInput.on({
           'input': function(){
-            const $input = $( this ),
-                  $tab = $input.closest('.modal-tab-block'),
+            const $this = $( this ),
+                  $tab = $this.closest('.modal-tab-block'),
                   defaultTitle = $tab.find('.odal-tab-item').attr('data-default-title'),
-                  id = $input.closest('.modal-tab-body-block').attr('id'),
-                  val = $input.val(),
+                  id = $this.closest('.modal-tab-body-block').attr('id'),
+                  val = $this.val(),
                   reg = new RegExp( text.regexp );
             let repositoryName;
             if ( val.match( reg ) ) {
@@ -563,6 +676,37 @@ modalFunction.prototype = {
         });
       }
       return $input;
+    },
+    /* -------------------------------------------------- *\
+       Number
+    \* -------------------------------------------------- */
+    'createNumber': function( number, tabNumber ){
+      const $number = $('<dl/>', {'class': 'item-number-block item-block'}),
+            name = ( tabNumber !== undefined )? tabNumber + '-' + number.name: number.name,
+            value = this.searchValue( this.valueJSON, name ),
+            className = ( number.class !== undefined )? ' ' + number.class: '',
+            min = ( number.min !== undefined )? Number( number.min ): 'none',
+            max = ( number.max !== undefined )? Number( number.max ): 'none';
+      $number.append(
+        $('<dt/>', {'class': 'item-number-title item-title', 'text': number.title }),
+        $('<dd/>', {'class': 'item-number-area'}).append(
+          $('<input>', {
+            'type': 'number',
+            'name': name,
+            'data-name': number.name,
+            'data-min': min,
+            'data-max': max,
+            'autocomplete': 'off',
+            'class': 'item-number ' + number.name + className,
+            'placeholder' : number.placeholder,
+            'value': value        
+          }),
+          $('<div/>', {'class':'item-number-range'}).append($('<div/>', {'class': 'item-number-range-knob'}))
+        ),
+        ( number.note !== undefined )? $('<dd/>', {'class': 'item-note item-number-note', 'text':  number.note }): ''
+      );
+      
+      return $number;
     },
     /* -------------------------------------------------- *\
        Textarea
@@ -684,6 +828,18 @@ modalFunction.prototype = {
         $radio.find('.item-radio').eq(0).prop('checked', true );
       }
       return $radio;
+    },
+    /* -------------------------------------------------- *\
+       入力内にエラーがあればOKボタンを無効化する
+    \* -------------------------------------------------- */
+    'errorCheck': function(){
+      const modal = this,
+            $okButton = modal.$modal.find('.modal-menu-button[data-button="ok"]');
+      if ( modal.$modal.find('.input-error').length ) {
+        $okButton.prop('disabled', true );
+      } else {
+        $okButton.prop('disabled', false );
+      }
     },
     /* -------------------------------------------------- *\
        対象のモーダル内のinputがすべて入力されているか
