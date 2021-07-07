@@ -20,6 +20,7 @@ import json
 import subprocess
 import traceback
 import os
+import logging
 
 from django.shortcuts import render
 from django.http import HttpResponse
@@ -28,8 +29,11 @@ from django.http.response import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from kubernetes import client, config
 
+logger = logging.getLogger('apilog')
+
 @csrf_exempt
 def index(request):
+    logger.debug("CALL {} method:{}".format(__name__, request.method))
     if request.method == 'POST':
         return post(request)
     else:
@@ -61,12 +65,13 @@ def post(request):
             return JsonResponse(response)
 
         output = ""
-        print("ita-pod create:" + output)
+        logger.debug("ita-pod create start")
         stdout_ita = subprocess.check_output(["kubectl","apply","-f",(resource_dir + "/ita_install.yaml"),"-n",name],stderr=subprocess.STDOUT)
 
-        output += "ita_pod create" + "{" + stdout_ita.decode('utf-8') + "},"
+        logger.debug("ita_pod create response:" )
+        logger.debug(stdout_ita)
 
-        print("ita_pod create:" + output)
+        output += "ita_pod create" + "{" + stdout_ita.decode('utf-8') + "},"
 
         # 対象となるdeploymentを定義
         deployments = [ "deployment/ita-worker" ]
@@ -101,6 +106,18 @@ def post(request):
         }
         return JsonResponse(response)
 
+    except Exception as e:
+        logger.debug("Exception:")
+        logger.debug(e)
+        response = {
+            "result":"ERROR",
+            "returncode": "",
+            "args": e.args,
+            "output": e.args,
+            "traceback": traceback.format_exc(),
+        }
+        return JsonResponse(response, status=500)
+
 # namespaceの情報取得
 # 戻り値：namespaceの情報、存在しない場合はNone
 def getNamespace(name):
@@ -117,12 +134,13 @@ def getNamespace(name):
 
         # namespaceの情報取得
         ret = v1.read_namespace(name=name)
-        print("ret: %s" % (ret))
+        logger.debug("ret: %s" % (ret))
 
         return ret 
 
     except Exception as e:
-        print("Except: %s" % (e))
+        logger.debug("Exception:")
+        logger.debug(e)
         return None 
       
 # namespaceの作成
@@ -146,12 +164,13 @@ def createNamespace(name):
         #ret = v1.create_namespace(body=body, pretty=pretty, dry_run=dry_run, field_manager=field_manager)
         ret = v1.create_namespace(body=body)
 
-        print("ret: %s" % (ret))
+        logger.debug("ret: %s" % (ret))
 
         return ret 
 
     except Exception as e:
-        print("Except: %s" % (e))
+        logger.debug("Exception:")
+        logger.debug(e)
         return None 
       
 

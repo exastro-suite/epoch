@@ -86,151 +86,162 @@ def index(request):
 @csrf_exempt
 def post(request):
 
-    # HTTPヘッダの生成
-    filter_headers = {
-        'host': ita_host + ':' + ita_port,
-        'Content-Type': 'application/json',
-        'Authorization': base64.b64encode((ita_user + ':' + ita_pass).encode()),
-        'X-Command': 'FILTER',
-    }
+    try:
+        # HTTPヘッダの生成
+        filter_headers = {
+            'host': ita_host + ':' + ita_port,
+            'Content-Type': 'application/json',
+            'Authorization': base64.b64encode((ita_user + ':' + ita_pass).encode()),
+            'X-Command': 'FILTER',
+        }
 
-    edit_headers = {
-        'host': ita_host + ':' + ita_port,
-        'Content-Type': 'application/json',
-        'Authorization': base64.b64encode((ita_user + ':' + ita_pass).encode()),
-        'X-Command': 'EDIT',
-    }
+        edit_headers = {
+            'host': ita_host + ':' + ita_port,
+            'Content-Type': 'application/json',
+            'Authorization': base64.b64encode((ita_user + ':' + ita_pass).encode()),
+            'X-Command': 'EDIT',
+        }
 
-    #
-    # オペレーションの取得
-    #
-    opelist_resp = requests.post(ita_restapi_endpoint + '?no=' + ite_menu_operation, headers=filter_headers)
-    opelist_json = json.loads(opelist_resp.text)
-    logger.debug('---- Operation ----')
-    #logger.debug(opelist_resp.text.encode().decode('unicode-escape'))
-    logger.debug(opelist_resp.text)
-
-    # 項目位置の取得
-    column_indexes_opelist = column_indexes(column_names_opelist, opelist_json['resultdata']['CONTENTS']['BODY'][0])
-    logger.debug('---- Operation Index ----')
-    logger.debug(column_indexes_opelist)
-
-    #
-    # オペレーションの追加処理
-    #
-    opelist_edit = []
-    for idx_req, row_req in enumerate(json.loads(request.body)['ci_config']['environments']):
-        if search_opration(opelist_json['resultdata']['CONTENTS']['BODY'], column_indexes_opelist, row_req['git_url']) == -1:
-            # オペレーションになければ、追加データを設定
-            opelist_edit.append(
-                {
-                    str(column_indexes_common['method']) : param_value_method_entry,
-                    str(column_indexes_opelist['operation_name']) : param_value_operation_name_prefix + row_req['git_url'],
-                    str(column_indexes_opelist['operation_date']) : param_value_operation_date,
-                    str(column_indexes_opelist['remarks']) : row_req['git_url'],
-                }
-            )
-
-    if len(opelist_edit) > 0:
         #
-        # オペレーションの追加がある場合
+        # オペレーションの取得
         #
-        ope_add_resp = requests.post(ita_restapi_endpoint + '?no=' + ite_menu_operation, headers=edit_headers, data=json.dumps(opelist_edit))
-
-        logger.debug('---- ope_add_resp ----')
-        #logger.debug(ope_add_resp.text.encode().decode('unicode-escape'))
-        logger.debug(ope_add_resp.text)
-
-        # 追加後再取得(オペレーションIDが決定する)
-        opelist_resp = requests.post(ita_restapi_endpoint + '?no=' + ite_menu_operation, headers=filter_headers)        
+        opelist_resp = requests.post(ita_restapi_endpoint + '?no=' + ite_menu_operation, headers=filter_headers)
         opelist_json = json.loads(opelist_resp.text)
         logger.debug('---- Operation ----')
         #logger.debug(opelist_resp.text.encode().decode('unicode-escape'))
+        logger.debug(opelist_resp.text)
 
-    #
-    # Git環境情報の取得
-    #
-    gitlist_resp = requests.post(ita_restapi_endpoint + '?no=' + ita_menu_gitenv_param, headers=filter_headers)
-    gitlist_json = json.loads(gitlist_resp.text)
-    logger.debug('---- Git Environments ----')
-    #logger.debug(gitlist_resp.text.encode().decode('unicode-escape'))
-    logger.debug(gitlist_resp.text)
+        # 項目位置の取得
+        column_indexes_opelist = column_indexes(column_names_opelist, opelist_json['resultdata']['CONTENTS']['BODY'][0])
+        logger.debug('---- Operation Index ----')
+        logger.debug(column_indexes_opelist)
 
-    # 項目位置の取得
-    column_indexes_gitlist = column_indexes(column_names_gitlist, gitlist_json['resultdata']['CONTENTS']['BODY'][0])
-    logger.debug('---- Git Environments Index ----')
-    logger.debug(column_indexes_gitlist)
+        #
+        # オペレーションの追加処理
+        #
+        opelist_edit = []
+        for idx_req, row_req in enumerate(json.loads(request.body)['ci_config']['environments']):
+            if search_opration(opelist_json['resultdata']['CONTENTS']['BODY'], column_indexes_opelist, row_req['git_url']) == -1:
+                # オペレーションになければ、追加データを設定
+                opelist_edit.append(
+                    {
+                        str(column_indexes_common['method']) : param_value_method_entry,
+                        str(column_indexes_opelist['operation_name']) : param_value_operation_name_prefix + row_req['git_url'],
+                        str(column_indexes_opelist['operation_date']) : param_value_operation_date,
+                        str(column_indexes_opelist['remarks']) : row_req['git_url'],
+                    }
+                )
 
-    # Responseデータの初期化
-    response = {"result":"200", "items":[]}
-    # Git環境情報の追加・更新
-    gitlist_edit = []
-    for idx_req, row_req in enumerate(json.loads(request.body)['ci_config']['environments']):
-        idx_git = search_gitlist(gitlist_json['resultdata']['CONTENTS']['BODY'], column_indexes_gitlist, row_req['git_url'])
-        if idx_git == -1:
-            # リストになければ、追加データを設定
-            # 追加対象のURLのオペレーション
-            idx_ope = search_opration(opelist_json['resultdata']['CONTENTS']['BODY'], column_indexes_opelist, row_req['git_url'])
+        if len(opelist_edit) > 0:
+            #
+            # オペレーションの追加がある場合
+            #
+            ope_add_resp = requests.post(ita_restapi_endpoint + '?no=' + ite_menu_operation, headers=edit_headers, data=json.dumps(opelist_edit))
 
-            # 追加処理データの設定
-            gitlist_edit.append(
-                {
-                    str(column_indexes_common['method']) : param_value_method_entry,
-                    str(column_indexes_gitlist['host']) : param_value_host,
-                    str(column_indexes_gitlist['operation_id']) : opelist_json['resultdata']['CONTENTS']['BODY'][idx_ope][column_indexes_opelist['operation_id']],
-                    str(column_indexes_gitlist['operation']) : format_opration_info(opelist_json['resultdata']['CONTENTS']['BODY'][idx_ope], column_indexes_opelist),
-                    str(column_indexes_gitlist['git_url']) : row_req['git_url'],
-                    str(column_indexes_gitlist['git_user']) : row_req['git_user'],
-                    str(column_indexes_gitlist['git_password']) : row_req['git_password'],
-                }
-            )
+            logger.debug('---- ope_add_resp ----')
+            #logger.debug(ope_add_resp.text.encode().decode('unicode-escape'))
+            logger.debug(ope_add_resp.text)
 
-            # レスポンスデータの設定
-            response["items"].append(
-                {
-                    'operation_id' : opelist_json['resultdata']['CONTENTS']['BODY'][idx_ope][column_indexes_opelist['operation_id']],
-                    'git_url' : row_req['git_url'],
-                    'git_user' : row_req['git_user'],
-                    'git_password' : row_req['git_password'],
-                }
-            )
+            # 追加後再取得(オペレーションIDが決定する)
+            opelist_resp = requests.post(ita_restapi_endpoint + '?no=' + ite_menu_operation, headers=filter_headers)        
+            opelist_json = json.loads(opelist_resp.text)
+            logger.debug('---- Operation ----')
+            #logger.debug(opelist_resp.text.encode().decode('unicode-escape'))
 
-        else:
-            # リストにあれば、更新データを設定
-            gitlist_edit.append(
-                {
-                    str(column_indexes_common['method']) : param_value_method_update,
-                    str(column_indexes_common['record_no']) : gitlist_json['resultdata']['CONTENTS']['BODY'][idx_git][column_indexes_common['record_no']],
-                    str(column_indexes_gitlist['host']) : gitlist_json['resultdata']['CONTENTS']['BODY'][idx_git][column_indexes_gitlist['host']],
-                    str(column_indexes_gitlist['operation']) : gitlist_json['resultdata']['CONTENTS']['BODY'][idx_git][column_indexes_gitlist['operation']],
-                    str(column_indexes_gitlist['git_url']) : row_req['git_url'],
-                    str(column_indexes_gitlist['git_user']) : row_req['git_user'],
-                    str(column_indexes_gitlist['git_password']) : row_req['git_password'],
-                    str(column_indexes_gitlist['lastupdate']) : gitlist_json['resultdata']['CONTENTS']['BODY'][idx_git][column_indexes_gitlist['lastupdate']],
-                }
-            )
+        #
+        # Git環境情報の取得
+        #
+        gitlist_resp = requests.post(ita_restapi_endpoint + '?no=' + ita_menu_gitenv_param, headers=filter_headers)
+        gitlist_json = json.loads(gitlist_resp.text)
+        logger.debug('---- Git Environments ----')
+        #logger.debug(gitlist_resp.text.encode().decode('unicode-escape'))
+        logger.debug(gitlist_resp.text)
 
-            # レスポンスデータの設定
-            response["items"].append(
-                {
-                    'operation_id' : gitlist_json['resultdata']['CONTENTS']['BODY'][idx_git][column_indexes_gitlist['operation_id']],
-                    'git_url' : row_req['git_url'],
-                    'git_user' : row_req['git_user'],
-                    'git_password' : row_req['git_password'],
-                }
-            )
+        # 項目位置の取得
+        column_indexes_gitlist = column_indexes(column_names_gitlist, gitlist_json['resultdata']['CONTENTS']['BODY'][0])
+        logger.debug('---- Git Environments Index ----')
+        logger.debug(column_indexes_gitlist)
 
-    logger.debug('---- Git Environments Post ----')
-    #logger.debug(json.dumps(gitlist_edit).encode().decode('unicode-escape'))
-    logger.debug(json.dumps(gitlist_edit))
+        # Responseデータの初期化
+        response = {"result":"200", "items":[]}
+        # Git環境情報の追加・更新
+        gitlist_edit = []
+        for idx_req, row_req in enumerate(json.loads(request.body)['ci_config']['environments']):
+            idx_git = search_gitlist(gitlist_json['resultdata']['CONTENTS']['BODY'], column_indexes_gitlist, row_req['git_url'])
+            if idx_git == -1:
+                # リストになければ、追加データを設定
+                # 追加対象のURLのオペレーション
+                idx_ope = search_opration(opelist_json['resultdata']['CONTENTS']['BODY'], column_indexes_opelist, row_req['git_url'])
 
-    gitlist_edit_resp = requests.post(ita_restapi_endpoint + '?no=' + ita_menu_gitenv_param, headers=edit_headers, data=json.dumps(gitlist_edit))
+                # 追加処理データの設定
+                gitlist_edit.append(
+                    {
+                        str(column_indexes_common['method']) : param_value_method_entry,
+                        str(column_indexes_gitlist['host']) : param_value_host,
+                        str(column_indexes_gitlist['operation_id']) : opelist_json['resultdata']['CONTENTS']['BODY'][idx_ope][column_indexes_opelist['operation_id']],
+                        str(column_indexes_gitlist['operation']) : format_opration_info(opelist_json['resultdata']['CONTENTS']['BODY'][idx_ope], column_indexes_opelist),
+                        str(column_indexes_gitlist['git_url']) : row_req['git_url'],
+                        str(column_indexes_gitlist['git_user']) : row_req['git_user'],
+                        str(column_indexes_gitlist['git_password']) : row_req['git_password'],
+                    }
+                )
 
-    logger.debug('---- Git Environments Post Response ----')
-    #logger.debug(gitlist_edit_resp.text.encode().decode('unicode-escape'))
-    logger.debug(gitlist_edit_resp.text)
+                # レスポンスデータの設定
+                response["items"].append(
+                    {
+                        'operation_id' : opelist_json['resultdata']['CONTENTS']['BODY'][idx_ope][column_indexes_opelist['operation_id']],
+                        'git_url' : row_req['git_url'],
+                        'git_user' : row_req['git_user'],
+                        'git_password' : row_req['git_password'],
+                    }
+                )
 
-    return JsonResponse(response)
+            else:
+                # リストにあれば、更新データを設定
+                gitlist_edit.append(
+                    {
+                        str(column_indexes_common['method']) : param_value_method_update,
+                        str(column_indexes_common['record_no']) : gitlist_json['resultdata']['CONTENTS']['BODY'][idx_git][column_indexes_common['record_no']],
+                        str(column_indexes_gitlist['host']) : gitlist_json['resultdata']['CONTENTS']['BODY'][idx_git][column_indexes_gitlist['host']],
+                        str(column_indexes_gitlist['operation']) : gitlist_json['resultdata']['CONTENTS']['BODY'][idx_git][column_indexes_gitlist['operation']],
+                        str(column_indexes_gitlist['git_url']) : row_req['git_url'],
+                        str(column_indexes_gitlist['git_user']) : row_req['git_user'],
+                        str(column_indexes_gitlist['git_password']) : row_req['git_password'],
+                        str(column_indexes_gitlist['lastupdate']) : gitlist_json['resultdata']['CONTENTS']['BODY'][idx_git][column_indexes_gitlist['lastupdate']],
+                    }
+                )
+
+                # レスポンスデータの設定
+                response["items"].append(
+                    {
+                        'operation_id' : gitlist_json['resultdata']['CONTENTS']['BODY'][idx_git][column_indexes_gitlist['operation_id']],
+                        'git_url' : row_req['git_url'],
+                        'git_user' : row_req['git_user'],
+                        'git_password' : row_req['git_password'],
+                    }
+                )
+
+        logger.debug('---- Git Environments Post ----')
+        #logger.debug(json.dumps(gitlist_edit).encode().decode('unicode-escape'))
+        logger.debug(json.dumps(gitlist_edit))
+
+        gitlist_edit_resp = requests.post(ita_restapi_endpoint + '?no=' + ita_menu_gitenv_param, headers=edit_headers, data=json.dumps(gitlist_edit))
+
+        logger.debug('---- Git Environments Post Response ----')
+        #logger.debug(gitlist_edit_resp.text.encode().decode('unicode-escape'))
+        logger.debug(gitlist_edit_resp.text)
+
+        return JsonResponse(response)
+
+    except Exception as e:
+        logger.debug(e)
+        logger.debug("traceback:" + traceback.format_exc())
+        response = {
+            "result": "500",
+            "output": traceback.format_exc(),
+            "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
+        }
+        return JsonResponse(response, status=500)
 
 #
 # 項目位置の取得
