@@ -256,26 +256,54 @@
 
   <div class="content-body">
     <div id="workspace">
-      <div class="workspace-tab">
-        <ul class="workspace-tab-list">
-          <!--<li class="workspace-tab-item"><a href="#" class="workspace-tab-link">一覧に戻る</a></li>-->
-          <li class="workspace-tab-item"><a href="#setting" class="workspace-tab-link current">ワークスペース設定</a></li>
-          <li class="workspace-tab-item" id="cicd-tab-item" style="visibility:hidden;"><a href="#running" class="workspace-tab-link">CI/CD実行</a></li>
-        </ul>
-        <ul class="workspace-status-list">
-          <li class="workspace-status-item" data-button="gitService">
-            <div class="workspace-status-item-name">アプリケーション<br>コード</div>
-            <div class="workspace-status-item-number application"></div>
-          </li>
-          <li class="workspace-status-item" data-button="pipelineArgo">
-            <div class="workspace-status-item-name">環境</div>
-            <div class="workspace-status-item-number environment"></div>
-          </li>
-          <li class="workspace-status-item" data-button="kubernetesManifestTemplate">
-            <div class="workspace-status-item-name">Kubernetes Manifest<br>テンプレート</div>
-            <div class="workspace-status-item-number template"></div>
-          </li>
-        </ul>
+      <div class="workspace-header">
+        <div class="workspace-tab">
+          <ul class="workspace-tab-list">
+            <!-- <li class="workspace-tab-item"><a href="#" class="workspace-tab-link">一覧に戻る</a></li> -->
+            <li class="workspace-tab-item"><a href="#setting" class="workspace-tab-link current">ワークスペース設定</a></li>
+            <li class="workspace-tab-item"><a href="#running" class="workspace-tab-link">CI/CD実行</a></li>
+          </ul>
+        </div>
+        <div class="workspace-header-menu">
+          <ul class="workspace-status-list">
+            <li class="workspace-status-item" data-button="gitService">
+              <div class="workspace-status-item-name">アプリケーション<br>コード</div>
+              <div class="workspace-status-item-number application"></div>
+            </li>
+            <li class="workspace-status-item" data-button="pipelineArgo">
+              <div class="workspace-status-item-name">環境</div>
+              <div class="workspace-status-item-number environment"></div>
+            </li>
+            <li class="workspace-status-item" data-button="kubernetesManifestTemplate">
+              <div class="workspace-status-item-name">Kubernetes Manifest<br>テンプレート</div>
+              <div class="workspace-status-item-number template"></div>
+            </li>
+          </ul>
+          <ul class="workspace-setting-list">
+            <li class="workspace-setting-item">
+              <button class="workspace-setting-button epoch-popup-m" data-button="workspaceSetting" title="ワークスペース画面設定">
+                <svg viewBox="0 0 64 64" class="workspace-setting-button-svg">
+                <path class="st-setting" d="M3.41,51.15V3.41h47.74V24.6c1.18,0.28,2.32,0.65,3.41,1.11V3.41c0-1.88-1.53-3.41-3.41-3.41H3.41
+                  C1.53,0,0,1.53,0,3.41v47.74c0,1.88,1.53,3.41,3.41,3.41h22.3c-0.46-1.09-0.83-2.23-1.11-3.41H3.41z"/>
+                <path class="st-setting" d="M11.08,6.82c-1.41,0-2.56,1.15-2.56,2.56v11.93c0,1.41,1.15,2.56,2.56,2.56c1.41,0,2.56-1.15,2.56-2.56V9.38
+                  C13.64,7.97,12.49,6.82,11.08,6.82z"/>
+                <path class="st-setting" d="M43.48,6.82c-1.41,0-2.56,1.15-2.56,2.56v11.93c0,1.41,1.15,2.56,2.56,2.56s2.56-1.15,2.56-2.56V9.38
+                  C46.03,7.97,44.88,6.82,43.48,6.82z"/>
+                <path class="st-setting" d="M11.08,30.69c-1.41,0-2.56,1.15-2.56,2.56v11.93c0,1.41,1.15,2.56,2.56,2.56c1.41,0,2.56-1.15,2.56-2.56V33.25
+                  C13.64,31.84,12.49,30.69,11.08,30.69z"/>
+                <rect x="16.2" y="10.23" class="st-setting" width="22.16" height="10.23"/>
+                <path class="st-setting" d="M16.2,34.1v10.23h7.86c0.28-3.75,1.5-7.24,3.43-10.23H16.2z"/>
+                <path class="st-setting" d="M64,48.56v-5.12L59.43,43c-0.35-1.58-0.98-3.05-1.82-4.37l2.93-3.55l-3.62-3.62l-3.55,2.93
+                  c-1.32-0.84-2.79-1.46-4.37-1.81L48.56,28h-5.12L43,32.59c-1.58,0.35-3.05,0.97-4.37,1.81l-3.55-2.93l-3.62,3.62l2.93,3.55
+                  c-0.84,1.32-1.47,2.8-1.82,4.37L28,43.44v5.12L32.57,49c0.35,1.58,0.97,3.06,1.81,4.39l-2.92,3.53l3.62,3.62l3.53-2.91
+                  c1.33,0.85,2.81,1.47,4.39,1.82L43.44,64h5.12l0.44-4.55c1.59-0.35,3.07-0.98,4.39-1.82l3.53,2.91l3.62-3.62l-2.92-3.53
+                  c0.84-1.33,1.46-2.81,1.81-4.39L64,48.56z M46,53.28c-4.01,0-7.27-3.25-7.27-7.27s3.25-7.27,7.27-7.27s7.27,3.25,7.27,7.27
+                  S50.01,53.28,46,53.28z"/>
+                </svg>
+              </button>
+            </li>
+          </ul>
+        </div>
       </div>
       <div class="workspace-body">
         <div class="content-background">

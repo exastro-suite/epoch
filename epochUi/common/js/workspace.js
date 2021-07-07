@@ -228,7 +228,9 @@ const wsModalJSON = {
               'title': 'Gitリポジトリ(ソース)　URL',
               'name': 'git-repository-url',
               'class': 'tab-name-link',
-              'regexp': '^https:\/\/github.com\/[^\/]+\/([^\/]+).git$',
+              'regexp': '^https:\/\/.+\/([^\/]+).git$',
+              'validation': '^https:\/\/.+\/([^\/]+).git$',
+              'inputError': 'Gitリポジトリ(ソース)　URLの形式が正しくありません。',
               'placeholder': 'Gitリポジトリ(ソース)　URLを入力してください'
             }
           }
