@@ -66,9 +66,9 @@ def post(request):
         # 登録したオーガナイゼーションの情報Rowを返却
         if request_response.status_code == 200:
             output.append(ret["rows"])
-        # else:
+        else:
             # エラーの際は処理しない
-            # raise UserError(ret["message"])
+            raise Exception(ret["message"])
 
         response = {
             "result":"200",
