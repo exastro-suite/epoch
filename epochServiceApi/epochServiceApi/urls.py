@@ -39,4 +39,5 @@ urlpatterns = [
     path('workspace/<int:workspace_id>/manifestParameter', include('manifestParameter.urls')),
     path('workspace/<int:workspace_id>/manifests/', include('manifestTemplate.urls')),
     path('cdExecDesignation/', include('cdExecDesignation.urls')),
+    path('organization/', include('organization.urls')),
 ]
