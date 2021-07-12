@@ -21,16 +21,13 @@ import globals
 import common
 from dbconnector import dbconnector
 from dbconnector import dbcursor
-import da_workspace
-import da_manifest
+import da_organization
 
 # 設定ファイル読み込み・globals初期化
 app = Flask(__name__)
-app.config.from_envvar('CONFIG_API_WORKSPACE_PATH')
+app.config.from_envvar('CONFIG_API_ORGANIZATION_PATH')
 globals.init(app)
 
-# workspaceテーブルに確保済みのcolumn
-workspace_allocated_columns=['workspace_id','create_at','update_at']
 
 @app.route('/alive', methods=['GET'])
 def alive():
@@ -51,27 +48,31 @@ def create_organization():
     globals.logger.debug('CALL create_organization')
 
     try:
-        # # Requestからspecification項目を生成する
-        # specification = convert_workspace_specification(request.json)
+        # Requestからinfo項目を生成する
+        info = request.json
 
-        # with dbconnector() as db, dbcursor(db) as cursor:
-        #     # workspace情報 insert実行(戻り値：追加したワークスペースID)
-        #     workspace_id = da_workspace.insert_workspace(cursor, specification)
+        with dbconnector() as db, dbcursor(db) as cursor:
+            # organization情報 insert実行(戻り値：追加したorganizationID)
+            organization_id = da_organization.insert_organization(cursor, info)
 
-        #     globals.logger.debug('insert workspaced_id:{}'.format(str(workspace_id)))
+            globals.logger.debug('insert organization_id:{}'.format(str(organization_id)))
 
-        #     # workspace履歴追加
-        #     da_workspace.insert_history(cursor, workspace_id)
+            # organization履歴追加
+            da_organization.insert_history(cursor, organization_id)
 
-        #     # workspace情報 データ再取得
-        #     fetch_rows = da_workspace.select_workspace_id(cursor, workspace_id)
+            # organization情報 データ再取得
+            fetch_rows = da_organization.select_organization_id(cursor, organization_id)
 
-        # # Response用のjsonに変換
-        # response_rows = fetch_rows
+        # Response用のjsonに変換
+        response_rows = fetch_rows
 
-        # globals.logger.info('CREATED workspace:{}'.format(str(workspace_id)))
+        globals.logger.info('CREATED organization:{}'.format(str(organization_id)))
 
-        # return jsonify({"result": "200", "rows": response_rows })
+        return jsonify({"result": "200", "rows": response_rows }), 200
 
     except Exception as e:
-        return common.serverError(e)
+        return common.serverError(e, "organization db registration error")
+
+
+if __name__ == "__main__":
+    app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('API_ORGANIZATION_PORT', '8000')), threaded=True)
