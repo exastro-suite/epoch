@@ -30,7 +30,7 @@ def insert_organization(cursor, info):
         
     """
     # insert実行
-    cursor.execute('INSERT INTO organization ( organization_name, additional_information  )' \
+    cursor.execute('INSERT INTO organization ( organization_name, additional_information )' \
                    ' VALUES ( %(organization_name)s, %(additional_information)s )',
         {
             'organization_name' : info['organization_name'],
@@ -48,12 +48,12 @@ def insert_history(cursor, organization_id):
         organization_id (int): Organization ID
     """
     cursor.execute(
-        '''INSERT INTO organization_history (organization_id, organization_name, additional_information, update_at)
+        '''INSERT INTO organization_history ( organization_id, organization_name, additional_information, update_at )
             SELECT organization_id, organization_name, additional_information, update_at FROM organization WHERE organization_id = %(organization_id)s''',
         {
             'organization_id' : organization_id
         }
-    )
+    )da
 
 def select_organization_id(cursor, organization_id):
     """organization情報取得(id指定)
