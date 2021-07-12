@@ -39,7 +39,7 @@ def randomString(n):
     return ''.join(random.choices(string.ascii_letters + string.digits, k=n))
 
 
-def serverError(e):
+def serverError(e, message=''):
     """レーバーエラーレスポンス
 
     Args:
@@ -49,12 +49,14 @@ def serverError(e):
         response: HTTP Response (HTTP-500)
     """
     import traceback
-
+    
+    globals.logger.error('message : {}'.format(message))
     globals.logger.error(''.join(list(traceback.TracebackException.from_exception(e).format())))
 
     return jsonify(
         {
             'result':       '500',
+            'message':      message,
             'exception':    ''.join(list(traceback.TracebackException.from_exception(e).format())),
         }
     ), 500
