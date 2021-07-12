@@ -40,7 +40,7 @@ def randomString(n):
 
 
 def serverError(e):
-    """レーバーエラーレスポンス
+    """サーバーエラーレスポンス
 
     Args:
         e (Exception): 例外
