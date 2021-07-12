@@ -1,4 +1,4 @@
-   Copyright 2019 NEC Corporation
+#    Copyright 2019 NEC Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import subprocess
 import traceback
 import os
 import logging
+# import userException
 
 from django.shortcuts import render
 from django.http import HttpResponse
@@ -43,7 +44,7 @@ def index(request):
 @csrf_exempt    
 def post(request):
     try:
-
+        # raise UserError("test")
         # ヘッダ情報
         post_headers = {
             'Content-Type': 'application/json',
@@ -65,9 +66,9 @@ def post(request):
         # 登録したオーガナイゼーションの情報Rowを返却
         if request_response.status_code == 200:
             output.append(ret["rows"])
-        else:
+        # else:
             # エラーの際は処理しない
-            raise Exception(ret["message"])
+            # raise UserError(ret["message"])
 
         response = {
             "result":"200",
@@ -75,6 +76,9 @@ def post(request):
         }
         
         return JsonResponse(response, status=200)
+
+    # except UserError as e:
+    #     logger.error (e)
 
     except Exception as e:
         response = {
