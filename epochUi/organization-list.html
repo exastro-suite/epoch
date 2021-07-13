@@ -25,6 +25,10 @@
 
 
 <script src="common/js/jquery-3.5.1.min.js"></script>
+
+<script src="common/js/organization.js"></script>
+<script src="common/js/config/organization_api_conf.js"></script>
+
 <script>
 
 $(function(){
@@ -112,12 +116,10 @@ $('#modal-container').css('display','flex');
           </tr>
         </thead>
         <tbody>
-        <!-- 
-          <tr class="content-row">
+          <tr class="content-row" id="dummy-row" hidden>
             <td class="content-cell cell-data">
               <div class="cell-inner">
-                <a href="#" class="organization-link">epoch-organization-A</a> / オーガナイゼーションオーナー
-                
+                <a href="#" class="organization-link">dummy</a> / オーガナイゼーションオーナー
               </div>
             </td>
             <td class="content-cell cell-data">
@@ -129,6 +131,7 @@ $('#modal-container').css('display','flex');
               </div>
             </td>
           </tr>
+        <!-- 
           <tr class="content-row">
             <td class="content-cell cell-data">
               <div class="cell-inner">
