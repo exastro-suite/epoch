@@ -48,7 +48,7 @@ spec:
           name: epoch-rs-organization-conf
       containers:
       - name: epoch-rs-organization-api
-        image: exastro/epochrsorganizationapi:0.1.0_20210713_1100
+        image: exastro/epochrsorganizationapi:20210713_1350
         env:
         - name: CONFIG_API_WORKSPACE_PATH
           value: "/etc/epoch/epochRsOraganaizationApi/api_organization.conf"
