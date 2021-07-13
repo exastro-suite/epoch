@@ -15,6 +15,22 @@
 */
 
 function get_organization() {
+
+  // $.ajax({
+  //   "type": "GET",
+  //   "url": organization_api_conf.api.resource.get_all
+  // }).done(function(data) {
+  //   console.log("DONE : オーガナイゼーション一覧取得");
+  //   console.log(typeof(data));
+  //   console.log(JSON.stringify(data));
+
+  //   return data;
+
+  // }).fail(function() {
+  //   // 失敗
+  //   console.log("FAIL : オーガナイゼーション一覧取得");
+
+  // });
   return [
     {"organization_name": "sample 1"},
     {"organization_name": "sample 2"},
@@ -43,44 +59,33 @@ function generate_organization_elements() {
 function create_organization() {
 
   var form = document.forms['organization-data'];
-  var add_info_key = []
-  form.elements['add_info_key'].forEach(function(elem) {
-    add_info_key.push(elem.value);
-  });
-  var add_info_value = []
-  form.elements['add_info_value'].forEach(function(elem) {
-    add_info_value.push(elem.value);
-  });
+  var additional_information = [];
+  for(var i = 0; i < 5; i++) {
+    var item = {};
+    item[form.elements['add_info_key'][i]] = form.elements['add_info_value'][i];
+    additional_information.push(item);
+  }
   var param = {
     'organization_name': form.elements['organization_name'].value,
-    'add_info_key': add_info_key,
-    'add_info_value': add_info_value
+    'additional_information': JSON.stringify(additional_information)
   }
-  console.log(JSON.stringify(param)); 
+  console.log(JSON.stringify(param));
 
-  new Promise((resolve, reject) => {
+  $.ajax({
+    "type": "POST",
+    "url": organization_api_conf.api.resource.post,
+    "data": param
+  }).done(function(data) {
+    console.log("DONE : オーガナイゼーション登録");
+    console.log(typeof(data));
+    console.log(JSON.stringify(data));
 
-    $.ajax({
-      "type": "POST",
-      "url": organization_api_conf.api.resource.post
-    }).done(function(data) {
-      console.log("DONE : オーガナイゼーション登録");
-      console.log(typeof(data));
-      console.log(JSON.stringify(data));
-
-      resolve();
-    }).fail(function() {
-      console.log("FAIL : オーガナイゼーション登録");
-      // 失敗
-      reject();
-    });
-
-  }).then(() => {
-    console.log('Complete !!');
     window.location.href = "organization-list.html";
-  }).catch(() => {
-    alert("オーガナイゼーション登録に失敗しました");
-    console.log('Fail !!');
+
+  }).fail(function() {
+    // 失敗
+    console.log("FAIL : オーガナイゼーション登録");
+
   });
 }
 
