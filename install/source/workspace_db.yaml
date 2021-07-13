@@ -41,6 +41,7 @@ data:
     use workspace_db;
     create table workspace (
       workspace_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
+      organization_id  int unsigned not null,
       specification json,
       create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
       update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -48,6 +49,7 @@ data:
     create table workspace_history (
       history_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
       workspace_id int unsigned not null,
+      organization_id  int unsigned not null,
       specification json,
       update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     );
