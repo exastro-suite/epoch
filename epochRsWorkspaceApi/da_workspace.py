@@ -18,11 +18,12 @@ import json
 import globals
 from dbconnector import dbcursor
 
-def insert_workspace(cursor, specification):
+def insert_workspace(cursor, organaization_id, specification):
     """workspace情報登録
 
     Args:
         cursor (mysql.connector.cursor): カーソル
+        organaization_id (int): オーガナイゼーションID
         specification (Dict)): ワークスペース情報のJson形式
 
     Returns:
@@ -30,8 +31,9 @@ def insert_workspace(cursor, specification):
         
     """
     # insert実行
-    cursor.execute('INSERT INTO workspace ( specification ) VALUES ( %(specification)s )',
+    cursor.execute('INSERT INTO workspace ( organaization_id, specification ) VALUES ( %(organaization_id)s, %(specification)s )',
         {
+            'organaization_id' : organaization_id,
             'specification' : json.dumps(specification)
         }
     )
@@ -100,8 +102,8 @@ def insert_history(cursor, workspace_id):
         workspace_id (int): ワークスペースID
     """
     cursor.execute(
-        '''INSERT INTO workspace_history (workspace_id, update_at, specification)
-            SELECT workspace_id, update_at, specification FROM workspace WHERE workspace_id = %(workspace_id)s''',
+        '''INSERT INTO workspace_history (workspace_id, organaization_id, update_at, specification)
+            SELECT workspace_id, organaization_id, update_at, specification FROM workspace WHERE workspace_id = %(workspace_id)s''',
         {
             'workspace_id' : workspace_id
         }
