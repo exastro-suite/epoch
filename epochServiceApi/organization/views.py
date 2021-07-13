@@ -55,7 +55,7 @@ def post(request):
 
         output = []
         # POST送信（organization登録）
-        apiInfo = "{}://{}:{}".format(os.environ['EPOCH_RESOURCE_PROTOCOL'], os.environ['EPOCH_RESOURCE_HOST'], os.environ['EPOCH_RESOURCE_PORT'])
+        apiInfo = "{}://{}:{}".format(os.environ['EPOCH_RS_ORGANIZATION_PROTOCOL'], os.environ['EPOCH_RS_ORGANIZATION_HOST'], os.environ['EPOCH_RS_ORGANIZATION_PORT'])
 
         logger.debug ("organization post call start")
         request_response = requests.post( "{}/organization".format(apiInfo), headers=post_headers, data=post_data )
