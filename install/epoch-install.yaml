@@ -50,6 +50,64 @@ kind: Namespace
 metadata:
   name: tekton-pipelines
 
+#---- epochCiCdApiConfig.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: epoch-cicd-api-config
+  namespace: epoch-system
+data:
+  HTTP_PROXY: ""
+  HTTPS_PROXY: ""
+  NO_PROXY: "localhost,127.0.0.1"
+  ARGOCD_NO_PROXY: "localhost,127.0.0.1,kurbernetes.default.svc,kurbernetes.default.svc.cluster.local,10.96.0.1,argocd-server,argocd-dex-server,argocd-redis,argocd-repo-server,argocd-server-metrics"
+  ARGOCD_HOST: "argocd-server.epoch-workspace.svc"
+  ITA_HOST: "it-automation.epoch-workspace.svc"
+  ITA_PORT: "8084"
+  ITA_WORKER_HOST: "ita-worker.epoch-workspace.svc"
+  WEBHOOK_PORT: "30904"
+
+#---- epochCiCdApiSecret.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: epoch-cicd-api-secret
+  namespace: epoch-system
+type: Opaque
+stringData:
+  ARGOCD_USER: "admin"
+  ARGOCD_PASSWORD: "password"
+  ITA_USER: "administrator"
+  ITA_PASSWORD: "password"
+
 #---- epochCiCdApi.yaml
 ---
 #   Copyright 2019 NEC Corporation
@@ -139,7 +197,7 @@ spec:
   selector:
     name: epoch-cicd-api
 
-#---- epochCiCdApiConfig.yaml
+#---- epochRsOrganaizationApi.yaml
 ---
 #   Copyright 2019 NEC Corporation
 #
@@ -157,45 +215,71 @@ spec:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: epoch-cicd-api-config
+  name: epoch-rs-organaization-conf
   namespace: epoch-system
 data:
-  HTTP_PROXY: ""
-  HTTPS_PROXY: ""
-  NO_PROXY: "localhost,127.0.0.1"
-  ARGOCD_NO_PROXY: "localhost,127.0.0.1,kurbernetes.default.svc,kurbernetes.default.svc.cluster.local,10.96.0.1,argocd-server,argocd-dex-server,argocd-redis,argocd-repo-server,argocd-server-metrics"
-  ARGOCD_HOST: "argocd-server.epoch-workspace.svc"
-  ITA_HOST: "it-automation.epoch-workspace.svc"
-  ITA_PORT: "8084"
-  ITA_WORKER_HOST: "ita-worker.epoch-workspace.svc"
-  WEBHOOK_PORT: "30904"
+  api_organaization.conf: |
+    TZ='Asia/Tokyo'
+    MYSQL_HOST='organization-db'
+    MYSQL_PORT='3306'
+    MYSQL_DATABASE='organization_db'
+    MYSQL_USER='app_user'
+    MYSQL_PASSWORD='password'
 
-#---- epochCiCdApiSecret.yaml
 ---
-#   Copyright 2019 NEC Corporation
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
-apiVersion: v1
-kind: Secret
+
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: epoch-cicd-api-secret
+  name: epoch-rs-organaization-api
   namespace: epoch-system
-type: Opaque
-stringData:
-  ARGOCD_USER: "admin"
-  ARGOCD_PASSWORD: "password"
-  ITA_USER: "administrator"
-  ITA_PASSWORD: "password"
+spec:
+  selector:
+    matchLabels:
+      name: epoch-rs-organaization-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: epoch-rs-organaization-api
+    spec:
+      volumes:
+      - name: epoch-rs-organaization-conf
+        configMap:
+          name: epoch-rs-organaization-conf
+      containers:
+      - name: epoch-rs-organaization-api
+        image: exastro/epochrsorganaizationapi:0.1.0_20210713_1100
+        env:
+        - name: CONFIG_API_WORKSPACE_PATH
+          value: "/etc/epoch/epochRsOraganaizationApi/api_organaization.conf"
+        - name: FLASK_ENV
+          value: "development"
+        - name: API_WORKSPACE_PORT
+          value: "8000"
+        - name: PYTHONIOENCODING
+          value: utf-8
+        volumeMounts:
+        - name: epoch-rs-workspace-conf
+          mountPath: /etc/epoch/epochRsOraganaizationApi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: epoch-rs-organaization-api
+  labels:
+    name: epoch-rs-organaization-api
+  namespace: epoch-system
+spec:
+  type: NodePort
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+  selector:
+    name: epoch-rs-organaization-api
 
 #---- epochRsWorkspaceApi.yaml
 ---
@@ -324,6 +408,9 @@ data:
   EPOCH_RS_WORKSPACE_PROTOCOL: "http"
   EPOCH_RS_WORKSPACE_HOST: "epoch-rs-workspace-api"
   EPOCH_RS_WORKSPACE_PORT: "8000"
+  EPOCH_RS_ORGANIZATION_PROTOCOL: "http"
+  EPOCH_RS_ORGANIZATION_HOST: "epoch-rs-organaization-api"
+  EPOCH_RS_ORGANIZATION_PORT: "8000"
   PYTHONIOENCODING: utf-8
 
 # ---
@@ -4467,6 +4554,7 @@ data:
     use workspace_db;
     create table workspace (
       workspace_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
+      organization_id  int unsigned not null,
       specification json,
       create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
       update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -4474,6 +4562,7 @@ data:
     create table workspace_history (
       history_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
       workspace_id int unsigned not null,
+      organization_id  int unsigned not null,
       specification json,
       update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     );
