@@ -18,12 +18,12 @@ import json
 import globals
 from dbconnector import dbcursor
 
-def insert_workspace(cursor, organaization_id, specification):
+def insert_workspace(cursor, organization_id, specification):
     """workspace情報登録
 
     Args:
         cursor (mysql.connector.cursor): カーソル
-        organaization_id (int): オーガナイゼーションID
+        organization_id (int): オーガナイゼーションID
         specification (Dict)): ワークスペース情報のJson形式
 
     Returns:
@@ -31,9 +31,9 @@ def insert_workspace(cursor, organaization_id, specification):
         
     """
     # insert実行
-    cursor.execute('INSERT INTO workspace ( organaization_id, specification ) VALUES ( %(organaization_id)s, %(specification)s )',
+    cursor.execute('INSERT INTO workspace ( organization_id, specification ) VALUES ( %(organization_id)s, %(specification)s )',
         {
-            'organaization_id' : organaization_id,
+            'organization_id' : organization_id,
             'specification' : json.dumps(specification)
         }
     )
@@ -80,17 +80,22 @@ def select_workspace_id(cursor, workspace_id):
     rows = cursor.fetchall()
     return rows
 
-def select_workspace(cursor):
+def select_workspace(cursor, organization_id):
     """workspace情報取得(全取得)
 
     Args:
         cursor (mysql.connector.cursor): カーソル
+        organization_id (int): オーガナイゼーションID
 
     Returns:
         dict: select結果
     """
     # select実行
-    cursor.execute('SELECT * FROM workspace ORDER BY workspace_id')
+    cursor.execute('SELECT * FROM workspace WHERE organization_id = %(organization_id)s ORDER BY workspace_id',
+        {
+            'organization_id' : organization_id
+        }
+    )
     rows = cursor.fetchall()
     return rows
 
@@ -102,8 +107,8 @@ def insert_history(cursor, workspace_id):
         workspace_id (int): ワークスペースID
     """
     cursor.execute(
-        '''INSERT INTO workspace_history (workspace_id, organaization_id, update_at, specification)
-            SELECT workspace_id, organaization_id, update_at, specification FROM workspace WHERE workspace_id = %(workspace_id)s''',
+        '''INSERT INTO workspace_history (workspace_id, organization_id, update_at, specification)
+            SELECT workspace_id, organization_id, update_at, specification FROM workspace WHERE workspace_id = %(workspace_id)s''',
         {
             'workspace_id' : workspace_id
         }

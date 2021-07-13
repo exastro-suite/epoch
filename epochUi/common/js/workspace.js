@@ -2945,7 +2945,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
     reqbody['common'] = {
       "name"  :   (wsDataJSON['workspace']['workspace-name']? wsDataJSON['workspace']['workspace-name'] : ""),
       "note"  :   (wsDataJSON['workspace']['workspace-note']? wsDataJSON['workspace']['workspace-note'] : ""),
-      "organization"  : "0001",
+      "organization_id"  : 1,
       "owners"  :  [],
     };
   
