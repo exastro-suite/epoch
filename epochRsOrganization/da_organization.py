@@ -53,7 +53,7 @@ def insert_history(cursor, organization_id):
         {
             'organization_id' : organization_id
         }
-    )da
+    )
 
 def select_organization_id(cursor, organization_id):
     """organization情報取得(id指定)
