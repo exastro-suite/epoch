@@ -52,6 +52,8 @@ def create_workspace():
 
     try:
         # Requestからspecification項目を生成する
+
+        organaization_id = request.json['organaization_id']
         specification = convert_workspace_specification(request.json)
 
         with dbconnector() as db, dbcursor(db) as cursor:
@@ -69,7 +71,7 @@ def create_workspace():
         # Response用のjsonに変換
         response_rows = fetch_rows
 
-        globals.logger.info('CREATED workspace:{}'.format(str(workspace_id)))
+        globals.logger.info('CREATED workspace:{} , organization:{}'.format(str(workspace_id), str(organization_id)))
 
         return jsonify({"result": "200", "rows": response_rows })
 
@@ -195,6 +197,7 @@ def convert_workspace_specification(json):
     # 不要な項目を削除する
     result = json.copy()
     common.deleteDictKey(result, 'workspace_id')
+    common.deleteDictKey(result, 'organization_id')
     common.deleteDictKey(result, 'create_at')
     common.deleteDictKey(result, 'update_at')
     
