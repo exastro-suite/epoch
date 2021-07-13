@@ -218,7 +218,7 @@ metadata:
   name: epoch-rs-organization-conf
   namespace: epoch-system
 data:
-  api_organaization.conf: |
+  api_organization.conf: |
     TZ='Asia/Tokyo'
     MYSQL_HOST='organization-db'
     MYSQL_PORT='3306'
@@ -252,7 +252,7 @@ spec:
         image: exastro/epochrsorganizationapi:20210713_1350
         env:
         - name: CONFIG_API_ORGANIZATION_PATH
-          value: "/etc/epoch/epochRsOraganaizationApi/api_organization.conf"
+          value: "/etc/epoch/epochRsOrganizationApi/api_organization.conf"
         - name: FLASK_ENV
           value: "development"
         - name: API_ORGANIZATION_PORT
@@ -261,7 +261,7 @@ spec:
           value: utf-8
         volumeMounts:
         - name: epoch-rs-organization-conf
-          mountPath: /etc/epoch/epochRsOraganaizationApi
+          mountPath: /etc/epoch/epochRsOrganizationApi
 
 ---
 
