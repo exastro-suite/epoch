@@ -34,7 +34,7 @@ def insert_organization(cursor, info):
                    ' VALUES ( %(organization_name)s, %(additional_information)s )',
         {
             'organization_name' : info['organization_name'],
-            'additional_information' : info['additional_information']
+            'additional_information' : json.dumps(info['additional_information'])
         }
     )
     # 追加したワークスペースIDをreturn
