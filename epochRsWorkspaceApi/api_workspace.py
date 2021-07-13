@@ -29,9 +29,6 @@ app = Flask(__name__)
 app.config.from_envvar('CONFIG_API_WORKSPACE_PATH')
 globals.init(app)
 
-# workspaceテーブルに確保済みのcolumn
-workspace_allocated_columns=['workspace_id','create_at','update_at']
-
 @app.route('/alive', methods=['GET'])
 def alive():
     """死活監視
@@ -49,16 +46,17 @@ def create_workspace():
         response: HTTP Respose
     """
     globals.logger.debug('CALL create_workspace')
+    globals.logger.debug(request.json)
 
     try:
+        # Requestからorganization_id項目を抽出する
+        organization_id = request.json['common']['organization_id']
         # Requestからspecification項目を生成する
-
-        organaization_id = request.json['organaization_id']
         specification = convert_workspace_specification(request.json)
 
         with dbconnector() as db, dbcursor(db) as cursor:
             # workspace情報 insert実行(戻り値：追加したワークスペースID)
-            workspace_id = da_workspace.insert_workspace(cursor, specification)
+            workspace_id = da_workspace.insert_workspace(cursor, organization_id, specification)
 
             globals.logger.debug('insert workspaced_id:{}'.format(str(workspace_id)))
 
@@ -89,9 +87,12 @@ def list_workspace():
     globals.logger.debug('CALL list_workspace')
 
     try:
+        # Requestからorganization_id項目を抽出する
+        organization_id = request.json['common']['organization_id']
+
         with dbconnector() as db, dbcursor(db) as cursor:
             # select実行
-            fetch_rows = da_workspace.select_workspace(cursor)
+            fetch_rows = da_workspace.select_workspace(cursor, organization_id)
 
         # Response用のjsonに変換
         response_rows = convert_workspace_response(fetch_rows)
@@ -405,6 +406,7 @@ def convert_workspace_response(fetch_rows):
     for fetch_row in fetch_rows:
         result_row = json.loads(fetch_row['specification'])
         result_row['workspace_id'] = fetch_row['workspace_id']
+        result_row['organization_id'] = fetch_row['organization_id']
         result_row['create_at'] = fetch_row['create_at']
         result_row['update_at'] = fetch_row['update_at']
         result.append(result_row)
