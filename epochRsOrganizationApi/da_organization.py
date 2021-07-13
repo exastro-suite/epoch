@@ -84,6 +84,6 @@ def select_organization(cursor):
         dict: select結果
     """
     # select実行
-    cursor.execute('SELECT * FROM workspace ORDER BY workspace_id')
+    cursor.execute('SELECT * FROM organization ORDER BY organization_id')
     rows = cursor.fetchall()
     return rows
