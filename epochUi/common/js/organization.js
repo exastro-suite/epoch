@@ -62,19 +62,20 @@ function create_organization() {
   var additional_information = [];
   for(var i = 0; i < 5; i++) {
     var item = {};
-    item[form.elements['add_info_key'][i]] = form.elements['add_info_value'][i];
+    item[form.elements['add_info_key'][i].value] = form.elements['add_info_value'][i].value;
     additional_information.push(item);
   }
   var param = {
     'organization_name': form.elements['organization_name'].value,
-    'additional_information': JSON.stringify(additional_information)
+    'additional_information': additional_information
   }
   console.log(JSON.stringify(param));
 
   $.ajax({
     "type": "POST",
     "url": organization_api_conf.api.resource.post,
-    "data": param
+    "data": JSON.stringify(param),
+    dataType: "json",
   }).done(function(data) {
     console.log("DONE : オーガナイゼーション登録");
     console.log(typeof(data));
