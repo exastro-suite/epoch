@@ -89,7 +89,7 @@ def list_organization():
             fetch_rows = da_organization.select_organization(cursor)
 
         # Response用のjsonに変換
-        response_rows = convert_organization_response(fetch_rows)
+        response_rows = fetch_rows
 
         return jsonify({"result": "200", "rows": response_rows, "time": str(datetime.now(globals.TZ))}), 200
 
@@ -115,7 +115,7 @@ def get_organization(organization_id):
 
         if len(fetch_rows) > 0:
             # Response用のjsonに変換
-            response_rows = convert_organization_response(fetch_rows)
+            response_rows = fetch_rows
 
             return jsonify({"result": "200", "rows": response_rows, "time": str(datetime.now(globals.TZ))}), 200
 

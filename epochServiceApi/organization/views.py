@@ -118,7 +118,6 @@ def info_all_get(request):
         # 引数をJSON形式で受け取りそのまま引数に設定
         post_data = request.body
 
-        output = []
         # GET送信（organization一覧取得）
         apiInfo = "{}://{}:{}".format(os.environ['EPOCH_RS_ORGANIZATION_PROTOCOL'], os.environ['EPOCH_RS_ORGANIZATION_HOST'], os.environ['EPOCH_RS_ORGANIZATION_PORT'])
 
@@ -130,7 +129,7 @@ def info_all_get(request):
 
         # 登録したオーガナイゼーションの情報Rowを返却
         if request_response.status_code == 200:
-            output.append(ret["rows"])
+            output = ret["rows"]
         else:
             # エラーの際は処理しない
             raise Exception(ret["message"])
