@@ -14,7 +14,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: epoch-rs-organaization-conf
+  name: epoch-rs-organization-conf
   namespace: epoch-system
 data:
   api_organaization.conf: |
@@ -30,28 +30,28 @@ data:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: epoch-rs-organaization-api
+  name: epoch-rs-organization-api
   namespace: epoch-system
 spec:
   selector:
     matchLabels:
-      name: epoch-rs-organaization-api
+      name: epoch-rs-organization-api
   replicas: 1
   template:
     metadata:
       labels:
-        name: epoch-rs-organaization-api
+        name: epoch-rs-organization-api
     spec:
       volumes:
-      - name: epoch-rs-organaization-conf
+      - name: epoch-rs-organization-conf
         configMap:
-          name: epoch-rs-organaization-conf
+          name: epoch-rs-organization-conf
       containers:
-      - name: epoch-rs-organaization-api
-        image: exastro/epochrsorganaizationapi:0.1.0_20210713_1100
+      - name: epoch-rs-organization-api
+        image: exastro/epochrsorganizationapi:20210713_1350
         env:
         - name: CONFIG_API_WORKSPACE_PATH
-          value: "/etc/epoch/epochRsOraganaizationApi/api_organaization.conf"
+          value: "/etc/epoch/epochRsOraganaizationApi/api_organization.conf"
         - name: FLASK_ENV
           value: "development"
         - name: API_WORKSPACE_PORT
@@ -59,7 +59,7 @@ spec:
         - name: PYTHONIOENCODING
           value: utf-8
         volumeMounts:
-        - name: epoch-rs-workspace-conf
+        - name: epoch-rs-organization-conf
           mountPath: /etc/epoch/epochRsOraganaizationApi
 
 ---
@@ -67,9 +67,9 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: epoch-rs-organaization-api
+  name: epoch-rs-organization-api
   labels:
-    name: epoch-rs-organaization-api
+    name: epoch-rs-organization-api
   namespace: epoch-system
 spec:
   type: NodePort
@@ -78,4 +78,4 @@ spec:
     port: 8000
     targetPort: 8000
   selector:
-    name: epoch-rs-organaization-api
+    name: epoch-rs-organization-api
