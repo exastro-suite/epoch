@@ -137,11 +137,13 @@ def convert_organization_response(fetch_rows):
     """
     result = []
     for fetch_row in fetch_rows:
-        result_row['organization_id'] = fetch_row['organization_id']
-        result_row['organization_name'] = fetch_row['organization_name']
-        result_row = json.loads(fetch_row['additional_information'])
-        result_row['create_at'] = fetch_row['create_at']
-        result_row['update_at'] = fetch_row['update_at']
+        result_row = {
+            'organization_id': fetch_row['organization_id'],
+            'organization_name': fetch_row['organization_name'],
+            'additional_information': json.loads(fetch_row['additional_information']),
+            'create_at': fetch_row['create_at'],
+            'update_at': fetch_row['update_at'],
+        }
         result.append(result_row)
     return result
 
