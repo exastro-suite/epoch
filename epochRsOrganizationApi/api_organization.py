@@ -94,7 +94,7 @@ def list_organization():
         return jsonify({"result": "200", "rows": response_rows, "time": str(datetime.now(globals.TZ))}), 200
 
     except Exception as e:
-        return common.serverError(e)
+        return common.serverError(e, "organization db get list error")
 
 @app.route('/organization/<int:organization_id>', methods=['GET'])
 def get_organization(organization_id):
@@ -106,7 +106,7 @@ def get_organization(organization_id):
     Returns:
         response: HTTP Respose
     """
-    globals.logger.debug('CALL get_workspace:{}'.format(organization_id))
+    globals.logger.debug('CALL get_organization:{}'.format(organization_id))
 
     try:
         with dbconnector() as db, dbcursor(db) as cursor:
@@ -124,7 +124,7 @@ def get_organization(organization_id):
             return jsonify({"result": "404" }), 404
 
     except Exception as e:
-        return common.serverError(e)
+        return common.serverError(e, "organization db get row error")
 
 def convert_organization_response(fetch_rows):
     """レスポンス用JSON変換
