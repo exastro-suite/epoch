@@ -23,8 +23,19 @@ function get_organization() {
     console.log("DONE : オーガナイゼーション一覧取得");
     console.log(typeof(data));
     console.log(JSON.stringify(data));
+    
+    organization_data = JSON.stringify(data);
+    organization_data.output.forEach(function(data) {
+      var $dummy_row = $('#dummy-row');
+      var $tbody = $dummy_row.closest('tbody');
+  
+      var $new_row = $dummy_row.clone(true);
+      $new_row.find('A').text(data.organization_name);
+      $new_row.removeAttr('hidden');
+      $tbody.append($new_row);
+    });
 
-    return data;
+    return JSON.stringify(data);
 
   }).fail(function() {
     // 失敗
@@ -45,15 +56,15 @@ function generate_organization_elements() {
   var organization_data = get_organization();
   console.log(organization_data);
 
-  organization_data.forEach(function(data) {
-    var $dummy_row = $('#dummy-row');
-    var $tbody = $dummy_row.closest('tbody');
+  // organization_data.output.forEach(function(data) {
+  //   var $dummy_row = $('#dummy-row');
+  //   var $tbody = $dummy_row.closest('tbody');
 
-    var $new_row = $dummy_row.clone(true);
-    $new_row.find('A').text(data.organization_name);
-    $new_row.removeAttr('hidden');
-    $tbody.append($new_row);
-  });
+  //   var $new_row = $dummy_row.clone(true);
+  //   $new_row.find('A').text(data.organization_name);
+  //   $new_row.removeAttr('hidden');
+  //   $tbody.append($new_row);
+  // });
 }
 
 function create_organization() {
