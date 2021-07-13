@@ -73,3 +73,17 @@ def select_organization_id(cursor, organization_id):
     )
     rows = cursor.fetchall()
     return rows
+
+def select_organization(cursor):
+    """organization情報取得(全取得)
+
+    Args:
+        cursor (mysql.connector.cursor): カーソル
+
+    Returns:
+        dict: select結果
+    """
+    # select実行
+    cursor.execute('SELECT * FROM workspace ORDER BY workspace_id')
+    rows = cursor.fetchall()
+    return rows
