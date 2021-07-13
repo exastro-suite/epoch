@@ -251,11 +251,11 @@ spec:
       - name: epoch-rs-organization-api
         image: exastro/epochrsorganizationapi:20210713_1350
         env:
-        - name: CONFIG_API_WORKSPACE_PATH
+        - name: CONFIG_API_ORGANIZATION_PATH
           value: "/etc/epoch/epochRsOraganaizationApi/api_organization.conf"
         - name: FLASK_ENV
           value: "development"
-        - name: API_WORKSPACE_PORT
+        - name: API_ORGANIZATION_PORT
           value: "8000"
         - name: PYTHONIOENCODING
           value: utf-8
