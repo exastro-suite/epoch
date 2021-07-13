@@ -16,27 +16,27 @@
 
 function get_organization() {
 
-  // $.ajax({
-  //   "type": "GET",
-  //   "url": organization_api_conf.api.resource.get_all
-  // }).done(function(data) {
-  //   console.log("DONE : オーガナイゼーション一覧取得");
-  //   console.log(typeof(data));
-  //   console.log(JSON.stringify(data));
+  $.ajax({
+    "type": "GET",
+    "url": organization_api_conf.api.resource.get_all
+  }).done(function(data) {
+    console.log("DONE : オーガナイゼーション一覧取得");
+    console.log(typeof(data));
+    console.log(JSON.stringify(data));
 
-  //   return data;
+    return data;
 
-  // }).fail(function() {
-  //   // 失敗
-  //   console.log("FAIL : オーガナイゼーション一覧取得");
+  }).fail(function() {
+    // 失敗
+    console.log("FAIL : オーガナイゼーション一覧取得");
 
-  // });
-  return [
-    {"organization_name": "sample 1"},
-    {"organization_name": "sample 2"},
-    {"organization_name": "sample 3"},
-    {"organization_name": "sample 4"}
-  ];
+  });
+  // return [
+  //   {"organization_name": "sample 1"},
+  //   {"organization_name": "sample 2"},
+  //   {"organization_name": "sample 3"},
+  //   {"organization_name": "sample 4"}
+  // ];
 }
 
 function generate_organization_elements() {

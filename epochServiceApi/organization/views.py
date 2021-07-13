@@ -38,7 +38,7 @@ def info_all(request):
 
     if request.method == 'POST':
         return info_all_post(request)
-    elif request.method == 'Get':
+    elif request.method == 'GET':
         return info_all_get(request)
     else:
         return ""
@@ -100,10 +100,11 @@ def info_all_post(request):
         return JsonResponse(response, status=500)
 
 @csrf_exempt    
-def info_all_get():
+def info_all_get(request):
     """organization 一覧情報取得
 
     Args:
+         request[json]: 特になし
 
     Returns:
         [json]: organization の rowsを配列としたJson形式
