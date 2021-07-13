@@ -74,5 +74,76 @@ def create_organization():
         return common.serverError(e, "organization db registration error")
 
 
+@app.route('/organization', methods=['GET'])
+def list_organization():
+    """オーガナイゼーション一覧取得
+
+    Returns:
+        response: HTTP Respose
+    """
+    globals.logger.debug('CALL list_organization')
+
+    try:
+        with dbconnector() as db, dbcursor(db) as cursor:
+            # select実行
+            fetch_rows = da_organization.select_organization(cursor)
+
+        # Response用のjsonに変換
+        response_rows = convert_organization_response(fetch_rows)
+
+        return jsonify({"result": "200", "rows": response_rows, "time": str(datetime.now(globals.TZ))}), 200
+
+    except Exception as e:
+        return common.serverError(e)
+
+@app.route('/organization/<int:organization_id>', methods=['GET'])
+def get_organization(organization_id):
+    """オーガナイゼーション詳細
+
+    Args:
+        organization_id (int): organization ID
+
+    Returns:
+        response: HTTP Respose
+    """
+    globals.logger.debug('CALL get_workspace:{}'.format(organization_id))
+
+    try:
+        with dbconnector() as db, dbcursor(db) as cursor:
+            # organization情報データ取得
+            fetch_rows = da_organization.select_organization_id(cursor, organization_id)
+
+        if len(fetch_rows) > 0:
+            # Response用のjsonに変換
+            response_rows = convert_organization_response(fetch_rows)
+
+            return jsonify({"result": "200", "rows": response_rows, "time": str(datetime.now(globals.TZ))}), 200
+
+        else:
+            # 0件のときは404応答
+            return jsonify({"result": "404" }), 404
+
+    except Exception as e:
+        return common.serverError(e)
+
+def convert_organization_response(fetch_rows):
+    """レスポンス用JSON変換
+        organization情報のselect(fetch)した結果をレスポンス用のjsonに変換する
+    Args:
+        fetch_rows (dict): organizationテーブル取得結果
+
+    Returns:
+        dict: レスポンス用json
+    """
+    result = []
+    for fetch_row in fetch_rows:
+        result_row['organization_id'] = fetch_row['organization_id']
+        result_row['organization_name'] = fetch_row['organization_name']
+        result_row = json.loads(fetch_row['additional_information'])
+        result_row['create_at'] = fetch_row['create_at']
+        result_row['update_at'] = fetch_row['update_at']
+        result.append(result_row)
+    return result
+
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('API_ORGANIZATION_PORT', '8000')), threaded=True)
