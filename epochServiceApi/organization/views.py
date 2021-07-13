@@ -31,18 +31,28 @@ from django.views.decorators.http import require_http_methods
 
 logger = logging.getLogger('apilog')
 
-@require_http_methods(['POST'])
+@require_http_methods(['GET','POST'])
 @csrf_exempt
-def index(request):
+def info_all(request):
     logger.debug("organization:{}".format(request.method))
 
     if request.method == 'POST':
-        return post(request)
+        return info_all_post(request)
+    elif request.method == 'Get':
+        return info_all_get(request)
     else:
         return ""
 
 @csrf_exempt    
-def post(request):
+def info_all_post(request):
+    """organization 情報登録
+
+    Args:
+        request[json]: 登録する内容のjson形式
+    Returns:
+        [json]: 登録した organization の row情報のJson形式
+    """
+
     try:
         # raise UserError("test")
         # ヘッダ情報
@@ -83,11 +93,59 @@ def post(request):
     except Exception as e:
         response = {
             "result":"500",
-            # "message": e.xxxx,
             "args": e.args,
             "output": e.args,
             "traceback": traceback.format_exc(),
         }
         return JsonResponse(response, status=500)
 
+@csrf_exempt    
+def info_all_get():
+    """organization 一覧情報取得
 
+    Args:
+
+    Returns:
+        [json]: organization の rowsを配列としたJson形式
+    """
+    try:
+        # ヘッダ情報
+        post_headers = {
+            'Content-Type': 'application/json',
+        }
+
+        # 引数をJSON形式で受け取りそのまま引数に設定
+        post_data = request.body
+
+        output = []
+        # GET送信（organization一覧取得）
+        apiInfo = "{}://{}:{}".format(os.environ['EPOCH_RS_ORGANIZATION_PROTOCOL'], os.environ['EPOCH_RS_ORGANIZATION_HOST'], os.environ['EPOCH_RS_ORGANIZATION_PORT'])
+
+        logger.debug ("organization get call start")
+        request_response = requests.get( "{}/organization".format(apiInfo), headers=post_headers )
+        logger.debug ("organization get call end")
+        # 戻り値の内容をJson形式で設定
+        ret = json.loads(request_response.text)
+
+        # 登録したオーガナイゼーションの情報Rowを返却
+        if request_response.status_code == 200:
+            output.append(ret["rows"])
+        else:
+            # エラーの際は処理しない
+            raise Exception(ret["message"])
+
+        response = {
+            "result":"200",
+            "output" : output,
+        }
+        
+        return JsonResponse(response, status=200)
+
+    except Exception as e:
+        response = {
+            "result":"500",
+            "args": e.args,
+            "output": e.args,
+            "traceback": traceback.format_exc(),
+        }
+        return JsonResponse(response, status=500)
