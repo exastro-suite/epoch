@@ -197,7 +197,7 @@ stringData:
   ITA_USER: "administrator"
   ITA_PASSWORD: "password"
 
-#---- epochResourceApi.yaml
+#---- epochRsWorkspaceApi.yaml
 ---
 #   Copyright 2019 NEC Corporation
 #
@@ -215,7 +215,7 @@ stringData:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: epoch-resource-conf
+  name: epoch-rs-workspace-conf
   namespace: epoch-system
 data:
   api_workspace.conf: |
@@ -231,28 +231,28 @@ data:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: epoch-resource-api
+  name: epoch-rs-workspace-api
   namespace: epoch-system
 spec:
   selector:
     matchLabels:
-      name: epoch-resource-api
+      name: epoch-rs-workspace-api
   replicas: 1
   template:
     metadata:
       labels:
-        name: epoch-resource-api
+        name: epoch-rs-workspace-api
     spec:
       volumes:
-      - name: epoch-resource-conf
+      - name: epoch-rs-workspace-conf
         configMap:
-          name: epoch-resource-conf
+          name: epoch-rs-workspace-conf
       containers:
-      - name: epoch-resource-api
-        image: exastro/epochresourceapi:0.1.0_20210630_1727
+      - name: epoch-rs-workspace-api
+        image: exastro/epochrsworkspaceapi:0.1.0_20210713_1100
         env:
         - name: CONFIG_API_WORKSPACE_PATH
-          value: "/etc/epoch/epochResoure/api_workspace.conf"
+          value: "/etc/epoch/epochRsWorkspaceApi/api_workspace.conf"
         - name: FLASK_ENV
           value: "development"
         - name: API_WORKSPACE_PORT
@@ -260,17 +260,17 @@ spec:
         - name: PYTHONIOENCODING
           value: utf-8
         volumeMounts:
-        - name: epoch-resource-conf
-          mountPath: /etc/epoch/epochResoure
+        - name: epoch-rs-workspace-conf
+          mountPath: /etc/epoch/epochRsWorkspaceApi
 
 ---
 
 apiVersion: v1
 kind: Service
 metadata:
-  name: epoch-resource-api
+  name: epoch-rs-workspace-api
   labels:
-    name: epoch-resource-api
+    name: epoch-rs-workspace-api
   namespace: epoch-system
 spec:
   type: NodePort
@@ -279,7 +279,7 @@ spec:
     port: 8000
     targetPort: 8000
   selector:
-    name: epoch-resource-api
+    name: epoch-rs-workspace-api
 
 #---- epochServiceApi.yaml
 ---
@@ -322,7 +322,7 @@ data:
   EPOCH_CICD_HOST: "epoch-cicd-api"
   EPOCH_CICD_PORT: "8000"
   EPOCH_RS_WORKSPACE_PROTOCOL: "http"
-  EPOCH_RS_WORKSPACE_HOST: "epoch-resource-api"
+  EPOCH_RS_WORKSPACE_HOST: "epoch-rs-workspace-api"
   EPOCH_RS_WORKSPACE_PORT: "8000"
   PYTHONIOENCODING: utf-8
 
