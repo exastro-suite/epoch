@@ -20,7 +20,7 @@
 1. 次のコマンドを実行して、EPOCH をインストールします:
 
     ```bash
-    kubectl apply -f https://github.com/exastro-suite/epoch/install/install.yaml
+    kubectl apply -f https://github.com/exastro-suite/epoch/releases/download/v0.1.0/epoch-install.yaml
     ```
 
 1. すべてのコンポーネントがRunningステータスを表示するまで、次のコマンドを使用してインストールを監視します:
@@ -36,7 +36,7 @@
     - 以下のマニフェストを我々のGitHubから取得してください。
 
         ```bash
-        curl -OL https://github.com/exastro-suite/epoch/install/epoch-pv.yaml
+        curl -OL https://github.com/exastro-suite/epoch/releases/download/v0.1.0/epoch-pv.yaml
         ```
 
     - `# Please specify the host name of the worker node #` の部分をご自身のホスト名に変換してください。
