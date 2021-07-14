@@ -14,18 +14,19 @@
 #   limitations under the License.
 */
 
-function get_organization() {
+function generate_organization_elements() {
+
+  console.log('generate_organization_elements');
 
   $.ajax({
     "type": "GET",
     "url": organization_api_conf.api.resource.get_all
-  }).done(function(data) {
+  }).done(function(response_body) {
     console.log("DONE : オーガナイゼーション一覧取得");
-    console.log(typeof(data));
-    console.log(JSON.stringify(data));
-    
-    organization_data = JSON.stringify(data);
-    organization_data.output.forEach(function(data) {
+    // console.log(typeof(response_body));
+    console.log(JSON.stringify(response_body));
+
+    response_body.output.forEach(function(data) {
       var $dummy_row = $('#dummy-row');
       var $tbody = $dummy_row.closest('tbody');
   
@@ -34,37 +35,13 @@ function get_organization() {
       $new_row.removeAttr('hidden');
       $tbody.append($new_row);
     });
-
-    return JSON.stringify(data);
+    console.log("一覧表示 完了");
 
   }).fail(function() {
     // 失敗
     console.log("FAIL : オーガナイゼーション一覧取得");
 
   });
-  // return [
-  //   {"organization_name": "sample 1"},
-  //   {"organization_name": "sample 2"},
-  //   {"organization_name": "sample 3"},
-  //   {"organization_name": "sample 4"}
-  // ];
-}
-
-function generate_organization_elements() {
-
-  console.log('generate_organization_elements');
-  var organization_data = get_organization();
-  console.log(organization_data);
-
-  // organization_data.output.forEach(function(data) {
-  //   var $dummy_row = $('#dummy-row');
-  //   var $tbody = $dummy_row.closest('tbody');
-
-  //   var $new_row = $dummy_row.clone(true);
-  //   $new_row.find('A').text(data.organization_name);
-  //   $new_row.removeAttr('hidden');
-  //   $tbody.append($new_row);
-  // });
 }
 
 function create_organization() {
