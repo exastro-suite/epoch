@@ -32,6 +32,7 @@ function generate_organization_elements() {
   
       var $new_row = $dummy_row.clone(true);
       $new_row.find('A').text(data.organization_name);
+      $new_row.find('A').prop('title', data.additional_information);
       $new_row.removeAttr('hidden');
       $tbody.append($new_row);
     });
