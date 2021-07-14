@@ -48,7 +48,7 @@ spec:
           name: epoch-rs-workspace-conf
       containers:
       - name: epoch-rs-workspace-api
-        image: exastro/epochrsworkspaceapi:0.1.0_20210713_1100
+        image: exastro/epochrsworkspaceapi:0.1.0_20210714_1120
         env:
         - name: CONFIG_API_WORKSPACE_PATH
           value: "/etc/epoch/epochRsWorkspaceApi/api_workspace.conf"
