@@ -29,9 +29,6 @@ app = Flask(__name__)
 app.config.from_envvar('CONFIG_API_WORKSPACE_PATH')
 globals.init(app)
 
-# workspaceテーブルに確保済みのcolumn
-workspace_allocated_columns=['workspace_id','create_at','update_at']
-
 @app.route('/alive', methods=['GET'])
 def alive():
     """死活監視
@@ -49,14 +46,17 @@ def create_workspace():
         response: HTTP Respose
     """
     globals.logger.debug('CALL create_workspace')
+    globals.logger.debug(request.json)
 
     try:
+        # Requestからorganization_id項目を抽出する
+        organization_id = request.json['common']['organization_id']
         # Requestからspecification項目を生成する
         specification = convert_workspace_specification(request.json)
 
         with dbconnector() as db, dbcursor(db) as cursor:
             # workspace情報 insert実行(戻り値：追加したワークスペースID)
-            workspace_id = da_workspace.insert_workspace(cursor, specification)
+            workspace_id = da_workspace.insert_workspace(cursor, organization_id, specification)
 
             globals.logger.debug('insert workspaced_id:{}'.format(str(workspace_id)))
 
@@ -69,7 +69,7 @@ def create_workspace():
         # Response用のjsonに変換
         response_rows = fetch_rows
 
-        globals.logger.info('CREATED workspace:{}'.format(str(workspace_id)))
+        globals.logger.info('CREATED workspace:{} , organization:{}'.format(str(workspace_id), str(organization_id)))
 
         return jsonify({"result": "200", "rows": response_rows })
 
@@ -87,9 +87,12 @@ def list_workspace():
     globals.logger.debug('CALL list_workspace')
 
     try:
+        # Requestからorganization_id項目を抽出する
+        organization_id = request.json['common']['organization_id']
+
         with dbconnector() as db, dbcursor(db) as cursor:
             # select実行
-            fetch_rows = da_workspace.select_workspace(cursor)
+            fetch_rows = da_workspace.select_workspace(cursor, organization_id)
 
         # Response用のjsonに変換
         response_rows = convert_workspace_response(fetch_rows)
@@ -195,6 +198,7 @@ def convert_workspace_specification(json):
     # 不要な項目を削除する
     result = json.copy()
     common.deleteDictKey(result, 'workspace_id')
+    common.deleteDictKey(result, 'organization_id')
     common.deleteDictKey(result, 'create_at')
     common.deleteDictKey(result, 'update_at')
     
@@ -402,6 +406,7 @@ def convert_workspace_response(fetch_rows):
     for fetch_row in fetch_rows:
         result_row = json.loads(fetch_row['specification'])
         result_row['workspace_id'] = fetch_row['workspace_id']
+        result_row['organization_id'] = fetch_row['organization_id']
         result_row['create_at'] = fetch_row['create_at']
         result_row['update_at'] = fetch_row['update_at']
         result.append(result_row)

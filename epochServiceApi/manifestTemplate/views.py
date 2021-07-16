@@ -48,7 +48,7 @@ def post(request, workspace_id):
 
         logger.debug("CALL FilePost:{}".format(workspace_id))
 
-        apiInfo = os.environ['EPOCH_RESOURCE_PROTOCOL'] + "://" + os.environ['EPOCH_RESOURCE_HOST'] + ":" + os.environ['EPOCH_RESOURCE_PORT'] 
+        apiInfo = os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'] + "://" + os.environ['EPOCH_RS_WORKSPACE_HOST'] + ":" + os.environ['EPOCH_RS_WORKSPACE_PORT'] 
 
         # ヘッダ情報
         post_headers = {
@@ -69,7 +69,7 @@ def post(request, workspace_id):
             ]
         }
 
-        # Resource API呼び出し(全件取得)
+        # RsWorkspace API呼び出し(全件取得)
         response = requests.get( apiInfo + "/workspace/" + str(workspace_id) + "/manifests", headers=post_headers)
 
         # 戻り値が正常値以外の場合は、処理を終了
@@ -119,7 +119,7 @@ def post(request, workspace_id):
         logger.debug(post_data_upd)
         logger.debug("post_data_upd ------------------ E")
 
-        # Resource API呼び出し(削除)
+        # RsWorkspace API呼び出し(削除)
         # response = requests.delete( apiInfo + "/workspace/" + str(workspace_id) + "/manifests", headers=post_headers)
 
         # 更新は１件ずつ実施
@@ -127,13 +127,13 @@ def post(request, workspace_id):
             # JSON形式に変換
             post_data = json.dumps(upd)
 
-            # Resource API呼び出し(更新)
+            # RsWorkspace API呼び出し(更新)
             response = requests.put( "{}/workspace/{}/manifests/{}".format(apiInfo, workspace_id, upd["file_id"]), headers=post_headers, data=post_data)
 
         # JSON形式に変換
         post_data = json.dumps(post_data_add)
 
-        # Resource API呼び出し(登録)
+        # RsWorkspace API呼び出し(登録)
         response = requests.post( "{}/workspace/{}/manifests".format(apiInfo, workspace_id), headers=post_headers, data=post_data)
 
         # ITA呼び出し
@@ -204,9 +204,9 @@ def ita_registration(request, workspace_id):
         logger.debug("CALL ita_registration")
 
         # post先のURL初期化
-        resourceProtocol = os.environ['EPOCH_RESOURCE_PROTOCOL']
-        resourceHost = os.environ['EPOCH_RESOURCE_HOST']
-        resourcePort = os.environ['EPOCH_RESOURCE_PORT']
+        resourceProtocol = os.environ['EPOCH_RS_WORKSPACE_PROTOCOL']
+        resourceHost = os.environ['EPOCH_RS_WORKSPACE_HOST']
+        resourcePort = os.environ['EPOCH_RS_WORKSPACE_PORT']
         apiurl = "{}://{}:{}/workspace/{}/manifests".format(resourceProtocol, resourceHost, resourcePort, workspace_id)
 
         # ヘッダ情報
@@ -215,7 +215,7 @@ def ita_registration(request, workspace_id):
         }
 
         logger.debug("CALL responseAPI : url:{}".format(apiurl))
-        # Resource API呼び出し
+        # RsWorkspace API呼び出し
         response = requests.get(apiurl, headers=post_headers)
 #        print("CALL responseAPI : response:{}, text:{}".format(response, response.text))
 
@@ -249,7 +249,7 @@ def ita_registration(request, workspace_id):
 
         apiurl = "{}://{}:{}/ita/manifestTemplates".format(cicdProtocol, cicdHost, cicdPort)
 
-        # Resource API呼び出し
+        # RsWorkspace API呼び出し
         response = requests.post( apiurl, headers=post_headers, data=send_data)
         logger.debug("CALL manifestTemplates : status:{}".format(response.status_code))
 
@@ -265,9 +265,9 @@ def ita_registration(request, workspace_id):
 
 def index(request, workspace_id):
     try:
-        resourceProtocol = os.environ['EPOCH_RESOURCE_PROTOCOL']
-        resourceHost = os.environ['EPOCH_RESOURCE_HOST']
-        resourcePort = os.environ['EPOCH_RESOURCE_PORT']
+        resourceProtocol = os.environ['EPOCH_RS_WORKSPACE_PROTOCOL']
+        resourceHost = os.environ['EPOCH_RS_WORKSPACE_HOST']
+        resourcePort = os.environ['EPOCH_RS_WORKSPACE_PORT']
         apiurl = "{}://{}:{}/workspace/{}/manifests".format(resourceProtocol, resourceHost, resourcePort, workspace_id)
 
         return  get_manifests(apiurl)
@@ -299,9 +299,9 @@ def file_id_assign(request, workspace_id, file_id):
 def get(request, workspace_id, file_id):
 
     try:
-        resourceProtocol = os.environ['EPOCH_RESOURCE_PROTOCOL']
-        resourceHost = os.environ['EPOCH_RESOURCE_HOST']
-        resourcePort = os.environ['EPOCH_RESOURCE_PORT']
+        resourceProtocol = os.environ['EPOCH_RS_WORKSPACE_PROTOCOL']
+        resourceHost = os.environ['EPOCH_RS_WORKSPACE_HOST']
+        resourcePort = os.environ['EPOCH_RS_WORKSPACE_PORT']
         apiurl = "{}://{}:{}/workspace/{}/manifests/{}".format(resourceProtocol, resourceHost, resourcePort, workspace_id, file_id)
 
         return  get_manifests(apiurl)
@@ -337,9 +337,9 @@ def delete(request, workspace_id, file_id):
         }
 
         # DELETE送信（作成）
-        resourceProtocol = os.environ['EPOCH_RESOURCE_PROTOCOL']
-        resourceHost = os.environ['EPOCH_RESOURCE_HOST']
-        resourcePort = os.environ['EPOCH_RESOURCE_PORT']
+        resourceProtocol = os.environ['EPOCH_RS_WORKSPACE_PROTOCOL']
+        resourceHost = os.environ['EPOCH_RS_WORKSPACE_HOST']
+        resourcePort = os.environ['EPOCH_RS_WORKSPACE_PORT']
         apiurl = "{}://{}:{}/workspace/{}/manifests/{}".format(resourceProtocol, resourceHost, resourcePort, workspace_id, file_id)
 
         response = requests.delete(apiurl, headers=headers)

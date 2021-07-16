@@ -70,6 +70,7 @@ INSTALLED_APPS = [
     'pipelineParameter',
     'manifestParameter',
     'cdExecDesignation',
+    'organization',
 ]
 
 MIDDLEWARE = [

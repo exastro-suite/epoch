@@ -14,7 +14,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: workspace-db-myconf
+  name: organization-db-myconf
   namespace: epoch-system
 data:
   my.cnf: |
@@ -29,36 +29,28 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: workspace-db-initdb
+  name: organization-db-initdb
   namespace: epoch-system
 data:
-  workspace.sql: |
-    create database workspace_db
+  organization.sql: |
+    create database organization_db
       CHARACTER SET utf8mb4
       COLLATE utf8mb4_unicode_ci;
     create user app_user IDENTIFIED WITH mysql_native_password BY 'password';
-    GRANT ALL ON workspace_db.* TO app_user;
-    use workspace_db;
-    create table workspace (
-      workspace_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
-      organization_id  int unsigned not null,
-      specification json,
+    GRANT ALL ON organization_db.* TO app_user;
+    use organization_db;
+    create table organization (
+      organization_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
+      organization_name varchar(256) not null,
+      additional_information json,
       create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
       update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     );
-    create table workspace_history (
+    create table organization_history (
       history_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
-      workspace_id int unsigned not null,
-      organization_id  int unsigned not null,
-      specification json,
-      update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    );
-    create table manifest (
-      id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
-      workspace_id int unsigned not null,
-      file_name varchar(1024) not null,
-      file_text text not null,
-      create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
+      organization_id int unsigned not null,
+      organization_name varchar(256) not null,
+      additional_information json,
       update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     );
 
@@ -66,29 +58,29 @@ data:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: workspace-db
+  name: organization-db
   namespace: epoch-system
 spec:
   selector:
     matchLabels:
-      name: workspace-db
+      name: organization-db
   replicas: 1
   template:
     metadata:
       labels:
-        name: workspace-db
+        name: organization-db
     spec:
       volumes:
       - name: mysqlconf-volume
         configMap:
-          name: workspace-db-myconf
+          name: organization-db-myconf
       - name: mysqldata
         hostPath:
-          path: /var/data/epoch/workspace_db/mysql
+          path: /var/data/epoch/organization_db/mysql
           type: DirectoryOrCreate
       - name: mysqlinitdb-volume
         configMap:
-          name: workspace-db-initdb
+          name: organization-db-initdb
       containers:
       - name: mysql
         image: mysql
@@ -109,9 +101,9 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: workspace-db
+  name: organization-db
   labels:
-    name: workspace-db
+    name: organization-db
   namespace: epoch-system
 spec:
   type: ClusterIP
@@ -120,4 +112,4 @@ spec:
     port: 3306
     targetPort: 3306
   selector:
-    name: workspace-db
+    name: organization-db
