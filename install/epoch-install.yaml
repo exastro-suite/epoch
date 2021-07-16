@@ -97,7 +97,7 @@ spec:
     spec:
       containers:
       - name: epoch-cicd-api
-        image: exastro/epochcicdapi:0.1.0_20210701_0834
+        image: exastro/epochcicdapi:0.1.0_20210714_1120
         env:
           - name: HTTP_PROXY
             valueFrom:
@@ -197,7 +197,7 @@ stringData:
   ITA_USER: "administrator"
   ITA_PASSWORD: "password"
 
-#---- epochResourceApi.yaml
+#---- epochRsOrganizationApi.yaml
 ---
 #   Copyright 2019 NEC Corporation
 #
@@ -215,7 +215,91 @@ stringData:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: epoch-resource-conf
+  name: epoch-rs-organization-conf
+  namespace: epoch-system
+data:
+  api_organization.conf: |
+    TZ='Asia/Tokyo'
+    MYSQL_HOST='organization-db'
+    MYSQL_PORT='3306'
+    MYSQL_DATABASE='organization_db'
+    MYSQL_USER='app_user'
+    MYSQL_PASSWORD='password'
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: epoch-rs-organization-api
+  namespace: epoch-system
+spec:
+  selector:
+    matchLabels:
+      name: epoch-rs-organization-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: epoch-rs-organization-api
+    spec:
+      volumes:
+      - name: epoch-rs-organization-conf
+        configMap:
+          name: epoch-rs-organization-conf
+      containers:
+      - name: epoch-rs-organization-api
+        image: exastro/epochrsorganizationapi:0.1.0_20210714_1120
+        env:
+        - name: CONFIG_API_ORGANIZATION_PATH
+          value: "/etc/epoch/epochRsOrganizationApi/api_organization.conf"
+        - name: FLASK_ENV
+          value: "development"
+        - name: API_ORGANIZATION_PORT
+          value: "8000"
+        - name: PYTHONIOENCODING
+          value: utf-8
+        volumeMounts:
+        - name: epoch-rs-organization-conf
+          mountPath: /etc/epoch/epochRsOrganizationApi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: epoch-rs-organization-api
+  labels:
+    name: epoch-rs-organization-api
+  namespace: epoch-system
+spec:
+  type: NodePort
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+  selector:
+    name: epoch-rs-organization-api
+
+#---- epochRsWorkspaceApi.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: epoch-rs-workspace-conf
   namespace: epoch-system
 data:
   api_workspace.conf: |
@@ -231,28 +315,28 @@ data:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: epoch-resource-api
+  name: epoch-rs-workspace-api
   namespace: epoch-system
 spec:
   selector:
     matchLabels:
-      name: epoch-resource-api
+      name: epoch-rs-workspace-api
   replicas: 1
   template:
     metadata:
       labels:
-        name: epoch-resource-api
+        name: epoch-rs-workspace-api
     spec:
       volumes:
-      - name: epoch-resource-conf
+      - name: epoch-rs-workspace-conf
         configMap:
-          name: epoch-resource-conf
+          name: epoch-rs-workspace-conf
       containers:
-      - name: epoch-resource-api
-        image: exastro/epochresourceapi:0.1.0_20210630_1727
+      - name: epoch-rs-workspace-api
+        image: exastro/epochrsworkspaceapi:0.1.0_20210714_1120
         env:
         - name: CONFIG_API_WORKSPACE_PATH
-          value: "/etc/epoch/epochResoure/api_workspace.conf"
+          value: "/etc/epoch/epochRsWorkspaceApi/api_workspace.conf"
         - name: FLASK_ENV
           value: "development"
         - name: API_WORKSPACE_PORT
@@ -260,17 +344,17 @@ spec:
         - name: PYTHONIOENCODING
           value: utf-8
         volumeMounts:
-        - name: epoch-resource-conf
-          mountPath: /etc/epoch/epochResoure
+        - name: epoch-rs-workspace-conf
+          mountPath: /etc/epoch/epochRsWorkspaceApi
 
 ---
 
 apiVersion: v1
 kind: Service
 metadata:
-  name: epoch-resource-api
+  name: epoch-rs-workspace-api
   labels:
-    name: epoch-resource-api
+    name: epoch-rs-workspace-api
   namespace: epoch-system
 spec:
   type: NodePort
@@ -279,7 +363,7 @@ spec:
     port: 8000
     targetPort: 8000
   selector:
-    name: epoch-resource-api
+    name: epoch-rs-workspace-api
 
 #---- epochServiceApi.yaml
 ---
@@ -321,9 +405,12 @@ data:
   EPOCH_CICD_PROTOCOL: "http"
   EPOCH_CICD_HOST: "epoch-cicd-api"
   EPOCH_CICD_PORT: "8000"
-  EPOCH_RESOURCE_PROTOCOL: "http"
-  EPOCH_RESOURCE_HOST: "epoch-resource-api"
-  EPOCH_RESOURCE_PORT: "8000"
+  EPOCH_RS_WORKSPACE_PROTOCOL: "http"
+  EPOCH_RS_WORKSPACE_HOST: "epoch-rs-workspace-api"
+  EPOCH_RS_WORKSPACE_PORT: "8000"
+  EPOCH_RS_ORGANIZATION_PROTOCOL: "http"
+  EPOCH_RS_ORGANIZATION_HOST: "epoch-rs-organization-api"
+  EPOCH_RS_ORGANIZATION_PORT: "8000"
   PYTHONIOENCODING: utf-8
 
 # ---
@@ -356,7 +443,7 @@ spec:
     spec:
       containers:
       - name: epoch-service-api
-        image: exastro/epochserviceapi:0.1.0_20210630_1735
+        image: exastro/epochserviceapi:0.1.0_20210714_1120
         env:
         - name: PYTHONIOENCODING
           value: utf-8
@@ -451,6 +538,28 @@ data:
             }
         }
     }
+  organization_api_conf.js: |
+    var location_host = window.location.hostname;
+    var location_prot = window.location.protocol;
+    var api_port = "30081";
+    var api_url_base = location_prot + "//" + location_host + ":" + api_port
+
+    console.log('api_url_base:' + api_url_base);
+
+    var organization_api_conf = {
+        "api" : {
+            "resource": {
+                "get_all"  : api_url_base + "/organization/",
+                "get"  : api_url_base + "/organization/{organization_id}/",
+                "post" : api_url_base + "/organization/",
+                "put"  : api_url_base + "/organization/{organization_id}/",
+            }
+        },
+        "parameter" : {
+
+        }
+    }
+
 
 ---
 apiVersion: apps/v1
@@ -474,7 +583,7 @@ spec:
           name: epoch-ui-conf
       containers:
       - name: epoch-ui
-        image: exastro/epochui:0.1.0_20210630_2011
+        image: exastro/epochui:0.1.0_20210714_1120
         volumeMounts:
         - name: epoch-ui-conf
           mountPath: /app/epoch/epochUi/common/js/config
@@ -1024,6 +1133,124 @@ spec:
     app.kubernetes.io/instance: default
     app.kubernetes.io/name: dashboard
     app.kubernetes.io/part-of: tekton-dashboard
+
+#---- organization_db.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: organization-db-myconf
+  namespace: epoch-system
+data:
+  my.cnf: |
+    [mysqld]
+    character-set-server=utf8mb4
+    collation-server=utf8mb4_bin
+    secure_file_priv=/tmp
+    [client]
+    default-character-set=utf8mb4
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: organization-db-initdb
+  namespace: epoch-system
+data:
+  organization.sql: |
+    create database organization_db
+      CHARACTER SET utf8mb4
+      COLLATE utf8mb4_unicode_ci;
+    create user app_user IDENTIFIED WITH mysql_native_password BY 'password';
+    GRANT ALL ON organization_db.* TO app_user;
+    use organization_db;
+    create table organization (
+      organization_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
+      organization_name varchar(256) not null,
+      additional_information json,
+      create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
+      update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    );
+    create table organization_history (
+      history_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
+      organization_id int unsigned not null,
+      organization_name varchar(256) not null,
+      additional_information json,
+      update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    );
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: organization-db
+  namespace: epoch-system
+spec:
+  selector:
+    matchLabels:
+      name: organization-db
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: organization-db
+    spec:
+      volumes:
+      - name: mysqlconf-volume
+        configMap:
+          name: organization-db-myconf
+      - name: mysqldata
+        hostPath:
+          path: /var/data/epoch/organization_db/mysql
+          type: DirectoryOrCreate
+      - name: mysqlinitdb-volume
+        configMap:
+          name: organization-db-initdb
+      containers:
+      - name: mysql
+        image: mysql
+        volumeMounts:
+        - name: mysqldata
+          mountPath: /var/lib/mysql
+        - name: mysqlconf-volume
+          mountPath: /etc/mysql
+        - name: mysqlinitdb-volume
+          mountPath: /docker-entrypoint-initdb.d
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: password
+        - name: TZ
+          value: "Asia/Tokyo"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: organization-db
+  labels:
+    name: organization-db
+  namespace: epoch-system
+spec:
+  type: ClusterIP
+  ports:
+  - name: mysql
+    port: 3306
+    targetPort: 3306
+  selector:
+    name: organization-db
 
 #---- pipeline-release.yaml
 ---
@@ -4349,6 +4576,7 @@ data:
     use workspace_db;
     create table workspace (
       workspace_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
+      organization_id  int unsigned not null,
       specification json,
       create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
       update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -4356,6 +4584,7 @@ data:
     create table workspace_history (
       history_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
       workspace_id int unsigned not null,
+      organization_id  int unsigned not null,
       specification json,
       update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     );

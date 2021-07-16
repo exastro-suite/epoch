@@ -53,7 +53,7 @@ def post(request, workspace_id):
         post_data = request.body
 
         # PUT送信（workspace更新）
-        apiInfo = "{}://{}:{}".format(os.environ['EPOCH_RESOURCE_PROTOCOL'], os.environ['EPOCH_RESOURCE_HOST'], os.environ['EPOCH_RESOURCE_PORT'])
+        apiInfo = "{}://{}:{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'], os.environ['EPOCH_RS_WORKSPACE_HOST'], os.environ['EPOCH_RS_WORKSPACE_PORT'])
         logger.debug ("workspace put call: worksapce_id:{}".format(workspace_id))
         request_response = requests.put( "{}/workspace/{}/manifestParameter".format(apiInfo, workspace_id), headers=post_headers, data=post_data)
         # エラーの際は処理しない

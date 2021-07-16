@@ -36,9 +36,12 @@ data:
   EPOCH_CICD_PROTOCOL: "http"
   EPOCH_CICD_HOST: "epoch-cicd-api"
   EPOCH_CICD_PORT: "8000"
-  EPOCH_RESOURCE_PROTOCOL: "http"
-  EPOCH_RESOURCE_HOST: "epoch-resource-api"
-  EPOCH_RESOURCE_PORT: "8000"
+  EPOCH_RS_WORKSPACE_PROTOCOL: "http"
+  EPOCH_RS_WORKSPACE_HOST: "epoch-rs-workspace-api"
+  EPOCH_RS_WORKSPACE_PORT: "8000"
+  EPOCH_RS_ORGANIZATION_PROTOCOL: "http"
+  EPOCH_RS_ORGANIZATION_HOST: "epoch-rs-organization-api"
+  EPOCH_RS_ORGANIZATION_PORT: "8000"
   PYTHONIOENCODING: utf-8
 
 # ---
@@ -71,7 +74,7 @@ spec:
     spec:
       containers:
       - name: epoch-service-api
-        image: exastro/epochserviceapi:0.1.0_20210630_1735
+        image: exastro/epochserviceapi:0.1.0_20210714_1120
         env:
         - name: PYTHONIOENCODING
           value: utf-8

@@ -185,7 +185,7 @@ def info_all_post(request):
         post_data = request.body
 
         # 呼び出すapiInfoは、環境変数より取得
-        apiInfo = "{}://{}:{}/".format(os.environ["EPOCH_RESOURCE_PROTOCOL"], os.environ["EPOCH_RESOURCE_HOST"], os.environ["EPOCH_RESOURCE_PORT"])
+        apiInfo = "{}://{}:{}/".format(os.environ["EPOCH_RS_WORKSPACE_PROTOCOL"], os.environ["EPOCH_RS_WORKSPACE_HOST"], os.environ["EPOCH_RS_WORKSPACE_PORT"])
 
         # ワークスペース情報保存
         request_response = requests.post( apiInfo + "workspace", headers=post_headers, data=post_data)
@@ -254,9 +254,9 @@ def info_put(request, workspace_id):
         post_data = request.body
 
         # PUT送信（更新）
-        resourceProtocol = os.environ['EPOCH_RESOURCE_PROTOCOL']
-        resourceHost = os.environ['EPOCH_RESOURCE_HOST']
-        resourcePort = os.environ['EPOCH_RESOURCE_PORT']
+        resourceProtocol = os.environ['EPOCH_RS_WORKSPACE_PROTOCOL']
+        resourceHost = os.environ['EPOCH_RS_WORKSPACE_HOST']
+        resourcePort = os.environ['EPOCH_RS_WORKSPACE_PORT']
         apiInfo = "{}://{}:{}/".format(resourceProtocol, resourceHost, resourcePort)
         request_response = requests.put(apiInfo + 'workspace/' + str(workspace_id), headers=headers, data=post_data)
         ret = json.loads(request_response.text)
@@ -293,9 +293,9 @@ def info_get(request, workspace_id):
         }
 
         # GET送信（作成）
-        resourceProtocol = os.environ['EPOCH_RESOURCE_PROTOCOL']
-        resourceHost = os.environ['EPOCH_RESOURCE_HOST']
-        resourcePort = os.environ['EPOCH_RESOURCE_PORT']
+        resourceProtocol = os.environ['EPOCH_RS_WORKSPACE_PROTOCOL']
+        resourceHost = os.environ['EPOCH_RS_WORKSPACE_HOST']
+        resourcePort = os.environ['EPOCH_RS_WORKSPACE_PORT']
         apiInfo = "{}://{}:{}/".format(resourceProtocol, resourceHost, resourcePort)
         response = requests.get(apiInfo + 'workspace/' + str(workspace_id), headers=headers)
 
