@@ -188,21 +188,21 @@ const wsModalJSON = {
         'item': {
           'gitServiceAccountUser': {
             'type': 'input',
-            'title': 'Gitリポジトリ(ソース)　ユーザ名',
+            'title': 'ユーザ名',
             'name': 'git-service-user',
-            'placeholder': 'Gitリポジトリ(ソース)　ユーザ名を入力してください'
+            'placeholder': 'ユーザ名を入力してください'
           },
           'gitServiceAccountPassword': {
             'type': 'password',
-            'title': 'Gitリポジトリ(ソース)　パスワード',
+            'title': 'パスワード',
             'name': 'git-service-password',
-            'placeholder': 'Gitリポジトリ(ソース)　パスワードを入力してください'
+            'placeholder': 'パスワードを入力してください'
           },
           'gitServiceAccountToken': {
             'type': 'password',
-            'title': 'Gitリポジトリ(ソース)　トークン',
+            'title': 'トークン',
             'name': 'git-service-token',
-            'placeholder': 'Gitリポジトリ(ソース)　トークンを入力してください'
+            'placeholder': 'トークンを入力してください'
           }
         }
       },
@@ -225,13 +225,13 @@ const wsModalJSON = {
           'item' : {
             'gitServiceRepositorySource': {
               'type': 'input',
-              'title': 'Gitリポジトリ(ソース)　URL',
+              'title': 'Gitリポジトリ URL',
               'name': 'git-repository-url',
               'class': 'tab-name-link',
               'regexp': '^https:\/\/.+\/([^\/]+).git$',
               'validation': '^https:\/\/.+\/([^\/]+).git$',
-              'inputError': 'Gitリポジトリ(ソース)　URLの形式が正しくありません。',
-              'placeholder': 'Gitリポジトリ(ソース)　URLを入力してください'
+              'inputError': 'Gitリポジトリ URLの形式が正しくありません。',
+              'placeholder': 'Gitリポジトリ URLを入力してください'
             }
           }
         }
@@ -296,7 +296,7 @@ const wsModalJSON = {
           'item': {
             'gitRepositoryURL': {
               'type': 'reference',
-              'title': 'Gitリポジトリ(ソース)　URL',
+              'title': 'Gitリポジトリ URL',
               'target': 'git-repository-url'
             },
             'registryServiceOutputDestination': {
@@ -339,7 +339,7 @@ const wsModalJSON = {
           'item': {
             'gitRepositoryURL': {
               'type': 'reference',
-              'title': 'Gitリポジトリ(ソース)　URL',
+              'title': 'Gitリポジトリ URL',
               'target': 'git-repository-url'
             },
             'pipelineTektonBranch': {
@@ -517,7 +517,7 @@ const wsModalJSON = {
               'type': 'input',
               'title': 'Kubernetes API Server URL',
               'name': 'environment-url',
-              'placeholder': '実行環境のKubernetes API Server URLを入力してください'
+              'placeholder': '実行環境のKubernetes API Server URLを入力してください（入力例：https://kubernetes.default.svc）'
             },
             'environmentNamespace': {
               'type': 'input',
@@ -577,21 +577,21 @@ const wsModalJSON = {
         'item': {
           'gitServiceArgoAccountUser': {
             'type': 'input',
-            'title': 'Gitリポジトリ(Manifest)　ユーザ名',
+            'title': 'ユーザ名',
             'name': 'git-service-argo-user',
-            'placeholder': 'Gitリポジトリ(Manifest)　ユーザ名を入力してください'
+            'placeholder': 'ユーザ名を入力してください'
           },
           'gitServiceArgoAccountPassword': {
             'type': 'password',
-            'title': 'Gitリポジトリ(Manifest)　パスワード',
+            'title': 'パスワード',
             'name': 'git-service-argo-password',
-            'placeholder': 'Gitリポジトリ(Manifest)　パスワードを入力してください'
+            'placeholder': 'パスワードを入力してください'
           },
           'gitServiceArgoAccountToken': {
             'type': 'password',
-            'title': 'Gitリポジトリ(Manifest)　トークン',
+            'title': 'トークン',
             'name': 'git-service-argo-token',
-            'placeholder': 'Gitリポジトリ(Manifest)　トークンを入力してください'
+            'placeholder': 'トークンを入力してください'
           }
         }
       },
@@ -608,11 +608,11 @@ const wsModalJSON = {
           'item' : {
             'gitServiceArgoRepositorySource': {
               'type': 'input',
-              'title': 'Gitリポジトリ(Manifest)　URL',
+              'title': 'Gitリポジトリ URL',
               'name': 'git-service-argo-repository-url',
               'class': 'tab-name-link',
               'regexp': '^https:\/\/github.com\/[^\/]+\/([^\/]+).git$',
-              'placeholder': 'Gitリポジトリ(Manifest)　URLを入力してください'
+              'placeholder': 'Gitリポジトリ URLを入力してください'
             }
           }
         }
