@@ -517,7 +517,7 @@ const wsModalJSON = {
               'type': 'input',
               'title': 'Kubernetes API Server URL',
               'name': 'environment-url',
-              'placeholder': '実行環境のKubernetes API Server URLを入力してください（入力例：https://kubernetes.default.svc or https://<デプロイ先のホストIP>:8443）'
+              'placeholder': '実行環境のKubernetes API Server URLを入力してください（入力例：https://kubernetes.default.svc）'
             },
             'environmentNamespace': {
               'type': 'input',
