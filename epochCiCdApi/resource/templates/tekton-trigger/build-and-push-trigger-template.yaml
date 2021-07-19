@@ -21,7 +21,6 @@ spec:
   - name: gitrevision
     default: master
   - name: gitrepositoryurl
-  - name: pathToContext
   - name: pathToDockerfile
   - name: imageUrl
   - name: imageTag
@@ -40,8 +39,6 @@ spec:
         value: $(tt.params.gitrepositoryurl)
       - name: gitrevision
         value: $(tt.params.gitrevision)
-      - name: pathToContext
-        value: $(tt.params.pathToContext)
       - name: pathToDockerfile
         value: $(tt.params.pathToDockerfile)
       - name: imageUrl
