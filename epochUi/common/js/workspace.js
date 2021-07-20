@@ -154,11 +154,11 @@ const wsModalJSON = {
     }
   },
   /* -------------------------------------------------- *\
-     Gitサービス
+     アプリケーションコードリポジトリ
   \* -------------------------------------------------- */
   'gitService': {
     'id': 'git-service',
-    'title': 'Gitサービス',
+    'title': 'アプリケーションコードリポジトリ',
     'footer': {
       'ok': {
         'text': '決定',
@@ -346,7 +346,7 @@ const wsModalJSON = {
               'type': 'input',
               'title': 'ビルド　Dockerファイルパス',
               'name': 'pipeline-tekton-docker-path',
-              'placeholder': 'ビルド　Dockerファイルパスを入力してください'
+              'placeholder': 'ビルド Dockerファイルパスを入力してください（入力例：./Dockerfile）'
             },
             'staticAnalysis': {
               'type': 'radio',
@@ -505,7 +505,7 @@ const wsModalJSON = {
               'type': 'input',
               'title': 'Kubernetes API Server URL',
               'name': 'environment-url',
-              'placeholder': '実行環境のKubernetes API Server URLを入力してください（入力例：https://kubernetes.default.svc）'
+              'placeholder': '実行環境のKubernetes API Server URLを入力してください（入力例：https://<外部クラスタIP>:6443）'
             },
             'environmentNamespace': {
               'type': 'input',
@@ -531,11 +531,11 @@ const wsModalJSON = {
     }
   },
   /* -------------------------------------------------- *\
-     Argo CD Gitサービス
+     IaCリポジトリ
   \* -------------------------------------------------- */
   'gitServiceArgo': {
     'id': 'git-service-argo',
-    'title': 'Argo CD Gitサービス',
+    'title': 'IaCリポジトリ',
     'footer': {
       'ok': {
         'text': '決定',
