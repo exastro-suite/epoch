@@ -348,12 +348,6 @@ const wsModalJSON = {
               'name': 'pipeline-tekton-branch',
               'placeholder': 'ビルド　ブランチを入力してください'
             },
-            'pipelineTektonContextPath': {
-              'type': 'input',
-              'title': 'ビルド　コンテキストパス',
-              'name': 'pipeline-tekton-context-path',
-              'placeholder': 'ビルド　コンテキストパスを入力してください'
-            },
             'pipelineTektonDockerPath': {
               'type': 'input',
               'title': 'ビルド　Dockerファイルパス',
@@ -2652,7 +2646,6 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
           wsDataJSON['application-code'][item]['text'] = data_pipelines[i]['git_repositry']['url'].replace(/^.*\//,'').replace(/\.git$/,'');
           wsDataJSON['application-code'][item][item + '-git-repository-url']                  = data_pipelines[i]['git_repositry']['url'];
           wsDataJSON['application-code'][item][item + '-pipeline-tekton-branch']              = data_pipelines[i]['build']['branch'].join(',');
-          wsDataJSON['application-code'][item][item + '-pipeline-tekton-context-path']        = data_pipelines[i]['build']['context_path'];
           wsDataJSON['application-code'][item][item + '-pipeline-tekton-docker-path']         = data_pipelines[i]['build']['dockerfile_path'];
           wsDataJSON['application-code'][item]['pipeline-tekton-static-analysis']             = data_pipelines[i]['static_analysis']['interface'];
           wsDataJSON['application-code'][item][item + '-registry-service-output-destination'] = data_pipelines[i]['contaier_registry']['image'];
@@ -2977,7 +2970,6 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         'webhooks_url'   :  location.protocol + "//" + location.hostname,
         'build' : {
           'branch' :          (wsDataJSON['application-code'][i][i+'-pipeline-tekton-branch']? wsDataJSON['application-code'][i][i+'-pipeline-tekton-branch'].split(','): []),
-          'context_path' :    (wsDataJSON['application-code'][i][i+'-pipeline-tekton-context-path']? wsDataJSON['application-code'][i][i+'-pipeline-tekton-context-path'] : ""),
           'dockerfile_path' : (wsDataJSON['application-code'][i][i+'-pipeline-tekton-docker-path']? wsDataJSON['application-code'][i][i+'-pipeline-tekton-docker-path'] : ""),
         },
         'contaier_registry' : {
