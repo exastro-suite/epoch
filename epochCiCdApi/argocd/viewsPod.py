@@ -34,6 +34,8 @@ from django.views.decorators.csrf import csrf_exempt
 from kubernetes import client, config
 
 logger = logging.getLogger('apilog')
+execstat = ""
+appName = ""
 
 @csrf_exempt
 def index(request):
@@ -51,23 +53,29 @@ def post(request):
         v1 = client.CoreV1Api()
         
         logger.debug("argocd pod create")
+        appName = "argocd pod create : "
+        execstat = "error"
 
         resource_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource"
 
         # namespace定義
         name = "epoch-workspace"
+
+        execstat = "namespace exists check error"
         # namespaceの存在チェック
         ret = getNamespace(name)
         if ret is None:
+            execstat = "namespace create error"
             # namespaceの作成
             ret = createNamespace(name)
-
+        a = 1 / 0
         # namespaceの作成に失敗した場合
         if ret is None:
             response = {
                 "result":"ERROR",
                 "returncode": "0",
                 "command": "createNamespace",
+                "errorStatement": appName + execstat,
                 "output": "",
                 "traceback": "",
             }
@@ -76,6 +84,7 @@ def post(request):
         output = ""
 
         logger.debug("argocd pod kubectl apply")
+        execstat = "argocd install error"
         # argocd pod create
         stdout_cd = subprocess.check_output(["kubectl","apply","-n",name,"-f",(resource_dir + "/argocd_install.yaml")],stderr=subprocess.STDOUT)
 
@@ -98,6 +107,7 @@ def post(request):
 
         for deployment_name in deployments:
             for env_name in envs:
+                execstat = "argocd set env error"
                 # 環境変数の設定
                 stdout_cd = subprocess.check_output(["kubectl","set","env",deployment_name,"-n",name,env_name],stderr=subprocess.STDOUT)
 
@@ -105,6 +115,7 @@ def post(request):
 
 
         logger.debug("argocd rolesetting kubectl apply")
+        execstat = "argocd rolebinding error"
         # role bindingの再設定 (ns:epoch-workspace用)
         stdout_cd = subprocess.check_output(["kubectl","apply","-n",name,"-f",(resource_dir + "/argocd_rolebinding.yaml")],stderr=subprocess.STDOUT)
 
@@ -114,6 +125,7 @@ def post(request):
 
         logger.debug("argocd pod password reset")
 
+        execstat = "argocd password reset error"
         # argo CDのパスワード初期化
         salt = bcrypt.gensalt(rounds=10, prefix=b'2a')
         password = settings.ARGO_PASSWORD.encode("ascii")
@@ -122,6 +134,7 @@ def post(request):
         # bcryptでハッシュ化した内容でargocdのパスワードを初期化する
         datenow = datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y-%m-%dT%H:%M:%S%z')
         pdata ='{"stringData": { "admin.password": "' + argoLogin + '", "admin.passwordMtime": "\'' + datenow + '\'" }}'
+        execstat = "argocd password reset set error"
         stdout_cd = subprocess.check_output(["kubectl","-n",name,"patch","secret","argocd-secret","-p",pdata],stderr=subprocess.STDOUT)
 
         output += "argocd_pwchg" + "{" + stdout_cd.decode('utf-8') + "},"
@@ -142,6 +155,7 @@ def post(request):
         response = {
             "result":"ERROR",
             "returncode": e.returncode,
+            "errorStatement": appName + execstat,
             "command": e.cmd,
             "output": e.output.decode('utf-8'),
             "traceback": traceback.format_exc(),
@@ -152,6 +166,7 @@ def post(request):
         response = {
             "result":"ERROR",
             "returncode": "",
+            "errorStatement": appName + execstat,
             "args": e.args,
             "output": e.args,
             "traceback": traceback.format_exc(),
