@@ -34,12 +34,14 @@ from django.views.decorators.csrf import csrf_exempt
 from kubernetes import client, config
 
 logger = logging.getLogger('apilog')
+execstat = ""
 
 @require_http_methods(['POST'])
 @csrf_exempt
 def post(request):
     try:
         logger.debug("CALL workspace post")
+        execstat="ワークスペース作成:初期化"
 
         # ヘッダ情報
         headers = {
@@ -57,6 +59,7 @@ def post(request):
         output = []
 
         # post送信（argocd/pod作成）
+        execstat="ワークスペース作成:ArgoCDデプロイ"
         response = requests.post(apiInfo + 'argocd/pod', headers=headers, data=data, params=payload)
 
         if isJsonFormat(response.text):
@@ -71,6 +74,7 @@ def post(request):
                 "result": {
                     "code": "500",
                     "detailcode": "",
+                    "errorStatement": execstat,
                     "output": response.text,
                     "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
                 }
@@ -78,6 +82,7 @@ def post(request):
             return JsonResponse(response)
 
         # post送信（ita/pod作成）
+        execstat="ワークスペース作成:Exastro IT Automationデプロイ"
         response = requests.post(apiInfo + 'ita/', headers=headers, data=data, params=payload)
 
         # 取得したJSON結果が正常でない場合、例外を返す
@@ -91,6 +96,7 @@ def post(request):
             "result": {
                 "code": "200",
                 "detailcode": "",
+                "errorStatement": execstat,
                 "output": output,
                 "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
             }
@@ -102,6 +108,7 @@ def post(request):
             "result": {
                 "code": "500",
                 "detailcode": "",
+                "errorStatement": execstat,
                 "output": traceback.format_exc(),
                 "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
             }
@@ -273,7 +280,7 @@ def info_put(request, workspace_id):
                 "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
             }
         }
-        return JsonResponse(response)
+        return JsonResponse(response, status=500)
 
 @csrf_exempt
 def info_get(request, workspace_id):
