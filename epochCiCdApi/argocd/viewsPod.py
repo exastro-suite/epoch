@@ -68,7 +68,7 @@ def post(request):
             execstat = "namespace create error"
             # namespaceの作成
             ret = createNamespace(name)
-        a = 1 / 0
+        # a = 1 / 0
         # namespaceの作成に失敗した場合
         if ret is None:
             response = {
