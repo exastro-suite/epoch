@@ -2754,7 +2754,8 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       // ワークスペース情報登録API
       //
       $('#progress_message').html('STEP 1/4 : ワークスペース情報を登録しています');
-  
+      $('error_message').html('');
+
       console.log("CALL : ワークスペース情報登録");
       if (workspace_id == null) {
         api_param = {
@@ -2781,10 +2782,11 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
 
         // 成功
         resolve();
-      }).fail(function() {
+      }).fail((jqXHR, textStatus, errorThrown) => {
         console.log("FAIL : ワークスペース情報登録");
+        console.log("RESPONSE:" + jqXHR.responseText);
         // 失敗
-        reject();
+        try { reject(jqXHR.responseJSON.result.errorStatement); } catch { reject(); }
       });
     }).then(() => { return new Promise((resolve, reject) => {
       //
@@ -2816,10 +2818,11 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
           // 失敗
           reject();
         }
-      }).fail(() => {
+      }).fail((jqXHR, textStatus, errorThrown) => {
         console.log("FAIL : ワークスペース作成");
+        console.log("RESPONSE:" + jqXHR.responseText);
         // 失敗
-        reject();
+        try { reject(jqXHR.responseJSON.result.errorStatement); } catch { reject(); }
       });
   
     })}).then(() => { return new Promise((resolve, reject) => {
@@ -2850,10 +2853,11 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
           // 失敗
           reject();
         }
-      }).fail(function() {
+      }).fail((jqXHR, textStatus, errorThrown) => {
         console.log("FAIL : パイプライン作成");
+        console.log("RESPONSE:" + jqXHR.responseText);
         // 失敗
-        reject();
+        try { reject(jqXHR.responseJSON.result.errorStatement); } catch { reject(); }
       });
   
     })}).then(() => { return new Promise((resolve, reject) => {
@@ -2877,14 +2881,14 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
           resolve();
         } else {
           // 失敗
-          reject();
+          reject(data.errorStatement);
         }
-      }).fail(function() {
+      }).fail((jqXHR, textStatus, errorThrown) => {
         console.log("FAIL : パイプラインパラメータ設定");
+        console.log("RESPONSE:" + jqXHR.responseText);
         // 失敗
-        reject();
+        try { reject(jqXHR.responseJSON.result.errorStatement); } catch { reject(); }
       });
-
     })}).then(() => {
       // 実行中ダイアログ表示
       if(workspace_id == null) {
@@ -2897,9 +2901,9 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       // CI/CD実行タブを表示
       $('#cicd-tab-item').css('visibility','visible');
       console.log('Complete !!');
-    }).catch(() => {
+    }).catch((reason) => {
       // 実行中ダイアログ表示
-      
+
       if(created_workspace_id != null) {
         $('#progress_message').html('ERROR :  ワークスペースの作成に失敗しました（ワークスペースID:'+created_workspace_id+'）');
         // workspace_id = created_workspace_id;
@@ -2908,7 +2912,12 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       } else {
         $('#progress_message').html('ERROR :  ワークスペースの更新に失敗しました（ワークスペースID:'+workspace_id+'）');
       }
-  
+      if(reason) {
+        $('#error_message').html(reason);
+      } else {
+        $('#error_message').html('');
+      }
+
       $('#progress-message-ok').prop("disabled", false);
       console.log('Fail !!');
     });
