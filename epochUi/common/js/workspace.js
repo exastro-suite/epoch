@@ -586,15 +586,14 @@ const wsModalJSON = {
             'key2': 'text'
           },
           'emptyText': '環境の登録がありません。Argo CDの設定から環境を追加してください。',
-          'deletConfirmText': '',
           'item' : {
             'gitServiceArgoRepositorySource': {
               'type': 'input',
-              'title': 'Gitリポジトリ URL',
+              'title': 'Gitリポジトリ(ソース)　URL',
               'name': 'git-service-argo-repository-url',
-              'class': 'tab-name-link',
-              'regexp': '^https:\/\/github.com\/[^\/]+\/([^\/]+).git$',
-              'placeholder': 'Gitリポジトリ URLを入力してください'
+              'validation': '^https:\/\/.+\.git$',
+              'inputError': 'Gitリポジトリ(ソース)　URLの形式が正しくありません。',
+              'placeholder': 'Gitリポジトリ(ソース)　URLを入力してください'
             }
           }
         }
@@ -2046,7 +2045,7 @@ const cdExecution = function(){
   $exeSetting.html( exeSettingHTML );
 
   const $executionDateInput = $modal.find('.execution-date-input');
-  $executionDateInput.datePicker();
+  $executionDateInput.datePicker({'s': 'none'});
   
   $modal.find('.item-radio[name="execution-date"]').on('change', function(){
     const value = $( this ).val();
