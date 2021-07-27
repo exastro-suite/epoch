@@ -28,9 +28,6 @@ spec:
     - name: gitrevision
       description: Git revision to check out
       default: master
-    - name: pathToContext
-      description: The path to the build context, used by Kaniko - within the workspace
-      default: src
     - name: pathToDockerfile
       description: The path to the build Dockerfile
       default: Dockerfile
@@ -68,7 +65,7 @@ spec:
         - name: revision
           value: "$(params.gitrevision)"
         - name: subdirectory
-          value: "."
+          value: "$(context.pipelineRun.name)"
         - name: deleteExisting
           value: "true"
         - name: sslVerify
@@ -88,7 +85,7 @@ spec:
           workspace: dockerconfig
       params:
         - name: CONTEXT
-          value: $(params.pathToContext)
+          value: "$(context.pipelineRun.name)"
         - name: DOCKERFILE
           value: $(params.pathToDockerfile)
         - name: IMAGE
