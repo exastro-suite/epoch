@@ -79,7 +79,7 @@ def post(request):
                     "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
                 }
             }
-            return JsonResponse(response)
+            return JsonResponse(response,status=500)
 
         # post送信（ita/pod作成）
         execstat="ワークスペース作成:Exastro IT Automationデプロイ"
@@ -113,7 +113,7 @@ def post(request):
                 "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
             }
         }
-        return JsonResponse(response)
+        return JsonResponse(response,status=500)
 
 def isJsonFormat(line):
     try:
