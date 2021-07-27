@@ -330,7 +330,6 @@ def conv(template_yaml, dest_yaml, json_ci_config):
     # 文字列置換
     # data_lines = data_lines.replace("<__build_registry_imageTag__>", json_ci_config["registry"]["imageTag"])  # imageTagは自動化で不要
     data_lines = data_lines.replace("<__build_registry_url__>", json_pipelines["contaier_registry"]["image"])
-    data_lines = data_lines.replace("<__build_pathToContext__>", json_pipelines["build"]["context_path"])
     data_lines = data_lines.replace("<__build_pathToDockerfile__>", json_pipelines["build"]["dockerfile_path"])
     data_lines = data_lines.replace("<__build_git_url__>", json_pipelines["git_repositry"]["url"])
     data_lines = data_lines.replace("<__build_git_branch__>", ",".join(json_pipelines["build"]["branch"]))

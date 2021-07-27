@@ -154,11 +154,11 @@ const wsModalJSON = {
     }
   },
   /* -------------------------------------------------- *\
-     Gitサービス
+     アプリケーションコードリポジトリ
   \* -------------------------------------------------- */
   'gitService': {
     'id': 'git-service',
-    'title': 'Gitサービス',
+    'title': 'アプリケーションコードリポジトリ',
     'footer': {
       'ok': {
         'text': '決定',
@@ -188,21 +188,15 @@ const wsModalJSON = {
         'item': {
           'gitServiceAccountUser': {
             'type': 'input',
-            'title': 'Gitリポジトリ(ソース)　ユーザ名',
+            'title': 'ユーザ名',
             'name': 'git-service-user',
-            'placeholder': 'Gitリポジトリ(ソース)　ユーザ名を入力してください'
-          },
-          'gitServiceAccountPassword': {
-            'type': 'password',
-            'title': 'Gitリポジトリ(ソース)　パスワード',
-            'name': 'git-service-password',
-            'placeholder': 'Gitリポジトリ(ソース)　パスワードを入力してください'
+            'placeholder': 'ユーザ名を入力してください'
           },
           'gitServiceAccountToken': {
             'type': 'password',
-            'title': 'Gitリポジトリ(ソース)　トークン',
+            'title': 'トークン',
             'name': 'git-service-token',
-            'placeholder': 'Gitリポジトリ(ソース)　トークンを入力してください'
+            'placeholder': 'トークンを入力してください'
           }
         }
       },
@@ -225,13 +219,13 @@ const wsModalJSON = {
           'item' : {
             'gitServiceRepositorySource': {
               'type': 'input',
-              'title': 'Gitリポジトリ(ソース)　URL',
+              'title': 'Gitリポジトリ URL',
               'name': 'git-repository-url',
               'class': 'tab-name-link',
               'regexp': '^https:\/\/.+\/([^\/]+).git$',
-              'validation': '^https:\/\/.+\/([^\/]+).git$',
-              'inputError': 'Gitリポジトリ(ソース)　URLの形式が正しくありません。',
-              'placeholder': 'Gitリポジトリ(ソース)　URLを入力してください'
+              //'validation': '^https:\/\/.+\/([^\/]+).git$',
+              'inputError': 'Gitリポジトリ URLの形式が正しくありません。',
+              'placeholder': 'Gitリポジトリ URLを入力してください'
             }
           }
         }
@@ -296,7 +290,7 @@ const wsModalJSON = {
           'item': {
             'gitRepositoryURL': {
               'type': 'reference',
-              'title': 'Gitリポジトリ(ソース)　URL',
+              'title': 'Gitリポジトリ URL',
               'target': 'git-repository-url'
             },
             'registryServiceOutputDestination': {
@@ -339,7 +333,7 @@ const wsModalJSON = {
           'item': {
             'gitRepositoryURL': {
               'type': 'reference',
-              'title': 'Gitリポジトリ(ソース)　URL',
+              'title': 'Gitリポジトリ URL',
               'target': 'git-repository-url'
             },
             'pipelineTektonBranch': {
@@ -348,17 +342,11 @@ const wsModalJSON = {
               'name': 'pipeline-tekton-branch',
               'placeholder': 'ビルド　ブランチを入力してください'
             },
-            'pipelineTektonContextPath': {
-              'type': 'input',
-              'title': 'ビルド　コンテキストパス',
-              'name': 'pipeline-tekton-context-path',
-              'placeholder': 'ビルド　コンテキストパスを入力してください'
-            },
             'pipelineTektonDockerPath': {
               'type': 'input',
               'title': 'ビルド　Dockerファイルパス',
               'name': 'pipeline-tekton-docker-path',
-              'placeholder': 'ビルド　Dockerファイルパスを入力してください'
+              'placeholder': 'ビルド Dockerファイルパスを入力してください（入力例：./Dockerfile）'
             },
             'staticAnalysis': {
               'type': 'radio',
@@ -517,7 +505,7 @@ const wsModalJSON = {
               'type': 'input',
               'title': 'Kubernetes API Server URL',
               'name': 'environment-url',
-              'placeholder': '実行環境のKubernetes API Server URLを入力してください'
+              'placeholder': '実行環境のKubernetes API Server URLを入力してください（入力例：https://<外部クラスタIP>:6443）'
             },
             'environmentNamespace': {
               'type': 'input',
@@ -543,11 +531,11 @@ const wsModalJSON = {
     }
   },
   /* -------------------------------------------------- *\
-     Argo CD Gitサービス
+     IaCリポジトリ
   \* -------------------------------------------------- */
   'gitServiceArgo': {
     'id': 'git-service-argo',
-    'title': 'Argo CD Gitサービス',
+    'title': 'IaCリポジトリ',
     'footer': {
       'ok': {
         'text': '決定',
@@ -577,21 +565,15 @@ const wsModalJSON = {
         'item': {
           'gitServiceArgoAccountUser': {
             'type': 'input',
-            'title': 'Gitリポジトリ(Manifest)　ユーザ名',
+            'title': 'ユーザ名',
             'name': 'git-service-argo-user',
-            'placeholder': 'Gitリポジトリ(Manifest)　ユーザ名を入力してください'
-          },
-          'gitServiceArgoAccountPassword': {
-            'type': 'password',
-            'title': 'Gitリポジトリ(Manifest)　パスワード',
-            'name': 'git-service-argo-password',
-            'placeholder': 'Gitリポジトリ(Manifest)　パスワードを入力してください'
+            'placeholder': 'ユーザ名を入力してください'
           },
           'gitServiceArgoAccountToken': {
             'type': 'password',
-            'title': 'Gitリポジトリ(Manifest)　トークン',
+            'title': 'トークン',
             'name': 'git-service-argo-token',
-            'placeholder': 'Gitリポジトリ(Manifest)　トークンを入力してください'
+            'placeholder': 'トークンを入力してください'
           }
         }
       },
@@ -608,11 +590,11 @@ const wsModalJSON = {
           'item' : {
             'gitServiceArgoRepositorySource': {
               'type': 'input',
-              'title': 'Gitリポジトリ(Manifest)　URL',
+              'title': 'Gitリポジトリ URL',
               'name': 'git-service-argo-repository-url',
               'class': 'tab-name-link',
               'regexp': '^https:\/\/github.com\/[^\/]+\/([^\/]+).git$',
-              'placeholder': 'Gitリポジトリ(Manifest)　URLを入力してください'
+              'placeholder': 'Gitリポジトリ URLを入力してください'
             }
           }
         }
@@ -2635,7 +2617,6 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         wsDataJSON['git-service'] = {
           'git-service-select' :                data_workspace['ci_config']['pipelines_common']['git_repositry']['housing'] == 'inner'? 'epoch': data_workspace['ci_config']['pipelines_common']['git_repositry']['interface'],
           'git-service-user' :                  data_workspace['ci_config']['pipelines_common']['git_repositry']['user'],
-          'git-service-password' :              data_workspace['ci_config']['pipelines_common']['git_repositry']['password'],
           'git-service-token' :                 data_workspace['ci_config']['pipelines_common']['git_repositry']['token'],
         };
         wsDataJSON['registry-service'] = {
@@ -2652,7 +2633,6 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
           wsDataJSON['application-code'][item]['text'] = data_pipelines[i]['git_repositry']['url'].replace(/^.*\//,'').replace(/\.git$/,'');
           wsDataJSON['application-code'][item][item + '-git-repository-url']                  = data_pipelines[i]['git_repositry']['url'];
           wsDataJSON['application-code'][item][item + '-pipeline-tekton-branch']              = data_pipelines[i]['build']['branch'].join(',');
-          wsDataJSON['application-code'][item][item + '-pipeline-tekton-context-path']        = data_pipelines[i]['build']['context_path'];
           wsDataJSON['application-code'][item][item + '-pipeline-tekton-docker-path']         = data_pipelines[i]['build']['dockerfile_path'];
           wsDataJSON['application-code'][item]['pipeline-tekton-static-analysis']             = data_pipelines[i]['static_analysis']['interface'];
           wsDataJSON['application-code'][item][item + '-registry-service-output-destination'] = data_pipelines[i]['contaier_registry']['image'];
@@ -2688,7 +2668,6 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         wsDataJSON['git-service-argo'] = {};
         if(data_workspace['ci_config']['environments'][0]) {
           wsDataJSON['git-service-argo']['git-service-argo-user'] = data_workspace['ci_config']['environments'][0]['git_user'];
-          wsDataJSON['git-service-argo']['git-service-argo-password'] = data_workspace['ci_config']['environments'][0]['git_password'];
           wsDataJSON['git-service-argo']['git-service-argo-token'] = data_workspace['ci_config']['environments'][0]['git_token'];
         }
 
@@ -2957,7 +2936,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       'housing' :   (wsDataJSON['git-service']['git-service-select']=='epoch'? 'inner': 'outer'),
       'interface' : (wsDataJSON['git-service']['git-service-select']=='epoch'? 'gitlab': wsDataJSON['git-service']['git-service-select']),
       'user' :      (wsDataJSON['git-service']['git-service-user']? wsDataJSON['git-service']['git-service-user']: ""),
-      'password' :  (wsDataJSON['git-service']['git-service-password']? wsDataJSON['git-service']['git-service-password']: ""),
+      'password' :  (wsDataJSON['git-service']['git-service-token']? wsDataJSON['git-service']['git-service-token']: ""),
       'token' :     (wsDataJSON['git-service']['git-service-token']? wsDataJSON['git-service']['git-service-token']: ""),
     };
     reqbody['ci_config']['pipelines_common']['container_registry'] = {
@@ -2977,7 +2956,6 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         'webhooks_url'   :  location.protocol + "//" + location.hostname,
         'build' : {
           'branch' :          (wsDataJSON['application-code'][i][i+'-pipeline-tekton-branch']? wsDataJSON['application-code'][i][i+'-pipeline-tekton-branch'].split(','): []),
-          'context_path' :    (wsDataJSON['application-code'][i][i+'-pipeline-tekton-context-path']? wsDataJSON['application-code'][i][i+'-pipeline-tekton-context-path'] : ""),
           'dockerfile_path' : (wsDataJSON['application-code'][i][i+'-pipeline-tekton-docker-path']? wsDataJSON['application-code'][i][i+'-pipeline-tekton-docker-path'] : ""),
         },
         'contaier_registry' : {
@@ -2997,7 +2975,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         'environment_id'    : env,
         'git_url'           : wsDataJSON['environment'][env][env + '-git-service-argo-repository-url'],
         'git_user'          : wsDataJSON['git-service-argo']['git-service-argo-user'],
-        'git_password'      : wsDataJSON['git-service-argo']['git-service-argo-password'],
+        'git_password'      : wsDataJSON['git-service-argo']['git-service-argo-token'],
         'git_token'         : wsDataJSON['git-service-argo']['git-service-argo-token'],
         'manifests'         : [],
       }

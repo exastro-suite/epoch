@@ -28,6 +28,10 @@ spec:
       script: |
         #!/bin/bash
         export TZ="Asia/Tokyo"
+
+        # remove 120minute passed directry
+        find $(workspaces.output.path) -mindepth 1 -type d -mmin +120 -exec rm -rf {} \;
+
         python - <<EOF
         import time
         import re
