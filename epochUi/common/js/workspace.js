@@ -2584,8 +2584,13 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
   $('#reset-button').on('click', function(){
     // 確認メッセージ
     if (confirm("入力値をリセットしてもよろしいですか？"))
-      // ワークスペース情報の読み込み
-      getWorksapce();
+      if(workspace_id == null) {
+        // 新規のときは画面リロード
+        top.location.reload();        
+      } else {
+        // ワークスペース情報の読み込み
+        getWorksapce();
+      }
   });
 
   // ワークスペース情報の読み込み
@@ -2724,6 +2729,8 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       // alert("ワークスペース情報を読み込みました");
       console.log('Complete !!');
     }).catch(() => {
+      // CI/CD実行タブを表示
+      $('#cicd-tab-item').css('visibility','hidden');
       // alert("ワークスペース情報を読み込みに失敗しました");
       console.log('Fail !!');
     });
@@ -2778,7 +2785,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         console.log("--- data ----");
         console.log(JSON.stringify(data));
         created_workspace_id = data['rows'][0]['workspace_id'];
-        workspace_id = created_workspace_id;
+        //workspace_id = created_workspace_id;
 
         // 成功
         resolve();
@@ -2893,13 +2900,15 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       // 実行中ダイアログ表示
       if(workspace_id == null) {
         $('#progress_message').html('【COMPLETE】 ワークスペースを作成しました（ワークスペースID:'+created_workspace_id+'）');
-        // workspace_id = created_workspace_id;
+        workspace_id = created_workspace_id;
       } else {
         $('#progress_message').html('【COMPLETE】 ワークスペースを更新しました（ワークスペースID:'+workspace_id+'）');
       }
       $('#progress-message-ok').prop("disabled", false);
       // CI/CD実行タブを表示
       $('#cicd-tab-item').css('visibility','visible');
+      $('#apply-workspace-button').html('ワークスペース更新');
+
       console.log('Complete !!');
     }).catch((errorinfo) => {
       // 実行中ダイアログ表示
