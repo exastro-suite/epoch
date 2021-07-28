@@ -69,8 +69,6 @@ def post(request):
         if ret["result"] == "200" or ret["result"] == "201":
             output.append(ret["output"])
         else:
-            app_name = ret["errorStatement"]
-            exec_stat = ""
             exec_detail = ret["errorDetail"]
             raise Exception(request_response.text)
 
