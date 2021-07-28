@@ -29,13 +29,19 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
 logger = logging.getLogger('apilog')
+app_name = ""
+exec_stat = ""
+exec_detail = ""
 
 @require_http_methods(['POST'])
 @csrf_exempt    
 def post(request):
     try:
+        logger.debug("CALL pipeline post")
+        app_name = "パイプライン作成:"
+        exec_stat = "初期化"
+        exec_detail = ""
 
-        logger.debug("pipeline post")
         # ヘッダ情報
         post_headers = {
             'Content-Type': 'application/json',
@@ -48,6 +54,8 @@ def post(request):
         apiInfo = "{}://{}:{}/".format(os.environ["EPOCH_CICD_PROTOCOL"], os.environ["EPOCH_CICD_HOST"], os.environ["EPOCH_CICD_PORT"])
 
         output = []
+
+        exec_stat = "パイプライン設定(GitHub webhooks)"
         # パイプライン設定(Github webhooks)
         request_response = requests.post( apiInfo + "github/webhooks", headers=post_headers, data=post_data)
         logger.debug("github/webhooks:" + request_response.text)
@@ -58,6 +66,7 @@ def post(request):
         else:
             return (request_response.text)
 
+        exec_stat = "パイプライン設定(TEKTON)"
         # パイプライン設定(TEKTON)
         request_response = requests.post( apiInfo + "tekton/pipeline", headers=post_headers, data=post_data)
         logger.debug("tekton/pipeline:response:" + request_response.text)
@@ -69,6 +78,7 @@ def post(request):
         else:
             return (request_response.text)
 
+        exec_stat = "パイプライン設定(ITA - 初期化設定)"
         # パイプライン設定(ITA - 初期化設定)
         request_response = requests.post( apiInfo + "ita/initialize", headers=post_headers, data=post_data)
         logger.debug("ita/initialize:response:" + request_response.text)
@@ -79,6 +89,7 @@ def post(request):
         else:
             return (request_response.text)
 
+        exec_stat = "パイプライン設定(ITA - Git環境情報設定)"
         # パイプライン設定(ITA - Git環境情報設定)
         request_response = requests.post( apiInfo + "ita/manifestGitEnv", headers=post_headers, data=post_data)
         logger.debug("ita/manifestGitEnv:response:" + request_response.text)
@@ -89,6 +100,7 @@ def post(request):
         else:
             return (request_response.text)
 
+        exec_stat = "パイプライン設定(ArgoCD)"
         # パイプライン設定(ArgoCD)
         request_response = requests.post( apiInfo + "argocd/pipeline", headers=post_headers, data=post_data)
         logger.debug("argocd/pipeline:response:" + request_response.text)
@@ -96,6 +108,7 @@ def post(request):
         if ret["result"] == "200" or ret["result"] == "201":
             output.append(ret["output"])
         else:
+            exec_detail = ret["errorDetail"]
             return (request_response.text)
 
         response = {
@@ -108,6 +121,8 @@ def post(request):
         response = {
             "result":"500",
             "returncode": "0101",
+            "errorStatement": app_name + exec_stat,
+            "errorDetail": exec_detail,
             "args": e.args,
             "output": e.args,
             "traceback": traceback.format_exc(),

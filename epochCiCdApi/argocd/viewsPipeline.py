@@ -107,6 +107,7 @@ def post(request):
                     break
             
             try:
+                exec_detail = "IaCリポジトリの設定内容を確認してください"
                 # レポジトリの情報を追加
                 stdout_cd = subprocess.check_output(["argocd","repo","add",gitUrl,"--username",gitUsername,"--password",gitPassword],stderr=subprocess.STDOUT)
                 logger.debug ("argocd repo add:" + str(stdout_cd))
@@ -118,6 +119,7 @@ def post(request):
                     "result": e.returncode,
                     "returncode": "0302",
                     "command": e.cmd,
+                    "errorDetail": exec_detail,
                     "output": e.output.decode('utf-8'),
                     "traceback": traceback.format_exc(),
                 }
