@@ -28,6 +28,9 @@ from django.http.response import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
 logger = logging.getLogger('apilog')
+app_name = ""
+exec_stat = ""
+exec_detail = ""
 
 @csrf_exempt
 def index(request):
@@ -41,6 +44,9 @@ def post(request):
     try:
 
         logger.debug("pipelineParameter post")
+        app_name = "パイプラインパラメータ設定:"
+        exec_stat = "初期化"
+        exec_detail = ""
 
         # ヘッダ情報
         post_headers = {
@@ -56,12 +62,16 @@ def post(request):
         output = []
 
         # パイプラインパラメータ設定(ArgoCD)
+        exec_stat = "ArgoCD設定"
         request_response = requests.post( apiInfo + "argocd/pipelineParameter", headers=post_headers, data=post_data)
         logger.debug("argocd/pipelineParameter:response:" + request_response.text)
         ret = json.loads(request_response.text)
         if ret["result"] == "200" or ret["result"] == "201":
             output.append(ret["output"])
         else:
+            app_name = ret["errorStatement"]
+            exec_stat = ""
+            exec_detail = ret["errorDetail"]
             raise Exception(request_response.text)
 
         response = {
@@ -74,6 +84,8 @@ def post(request):
         response = {
             "result":"500",
             "returncode": "0201",
+            "errorStatement": app_name + exec_stat,
+            "errorDetail": exec_detail,
             "args": e.args,
             "output": e.args,
             "traceback": traceback.format_exc(),
