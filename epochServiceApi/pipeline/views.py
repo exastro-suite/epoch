@@ -109,7 +109,7 @@ def post(request):
             output.append(ret["output"])
         else:
             exec_detail = ret["errorDetail"]
-            return (request_response.text)
+            raise Exception
 
         response = {
             "result":"200",
