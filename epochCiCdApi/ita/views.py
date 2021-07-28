@@ -30,6 +30,7 @@ from django.views.decorators.csrf import csrf_exempt
 from kubernetes import client, config
 
 logger = logging.getLogger('apilog')
+exec_detail = ""
 
 @csrf_exempt
 def index(request):
@@ -42,7 +43,8 @@ def index(request):
 @csrf_exempt    
 def post(request):
     try:
-
+        exec_detail = ""
+        
         resource_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource"
 
         # namespace定義
@@ -81,12 +83,14 @@ def post(request):
                  "http_proxy=" + os.environ['EPOCH_HTTP_PROXY'],
                  "https_proxy=" + os.environ['EPOCH_HTTPS_PROXY'] ]
 
+        exec_detail = "環境変数[PROXY]を確認してください"
         for deployment_name in deployments:
             for env_name in envs:
                 # 環境変数の設定
                 stdout_cd = subprocess.check_output(["kubectl","set","env",deployment_name,"-n",name,env_name],stderr=subprocess.STDOUT)
 
                 output += deployment_name + "." + env_name + "{" + stdout_cd.decode('utf-8') + "},"
+        exec_detail = ""
 
         response = {
             "result":"OK",
@@ -100,6 +104,7 @@ def post(request):
         response = {
             "result":"ERROR",
             "returncode": e.returncode,
+            "errorDetail": exec_detail,
             "command": e.cmd,
             "output": e.output.decode('utf-8'),
             "traceback": traceback.format_exc(),
@@ -112,6 +117,7 @@ def post(request):
         response = {
             "result":"ERROR",
             "returncode": "",
+            "errorDetail": exec_detail,
             "args": e.args,
             "output": e.args,
             "traceback": traceback.format_exc(),
