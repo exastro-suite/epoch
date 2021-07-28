@@ -2923,7 +2923,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       }
       try {
         if(errorinfo.error_statement) {
-          $('#error_statement').html('<br><hr>ERROR情報<br>　処理：' + errorinfo.error_statement);
+          $('#error_statement').html('<br><hr>ERROR情報<br>　' + errorinfo.error_statement);
         } else {
           $('#error_statement').html('');
         }
@@ -2932,9 +2932,9 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       }
       try {
         if(errorinfo.error_detail) {
-          $('#error_detail').html('　詳細：' + errorinfo.error_detail);
+          $('#error_detail').html('　' + errorinfo.error_detail);
         } else {
-          $('#error_detail').html('');
+          $('#error_detail').html('　上記の処理でエラーが発生しました');
         }
       } catch {
         $('#error_detail').html('');
