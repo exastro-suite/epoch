@@ -15,6 +15,8 @@
 from flask import jsonify
 import random, string
 
+from pytz import NonExistentTimeError
+
 import globals
 
 def deleteDictKey(dictobj, key):
@@ -39,7 +41,7 @@ def randomString(n):
     return ''.join(random.choices(string.ascii_letters + string.digits, k=n))
 
 
-def serverError(e):
+def serverError(e, exec_stat = None, exec_detail = None):
     """サーバーエラーレスポンス
 
     Args:
@@ -52,10 +54,21 @@ def serverError(e):
 
     globals.logger.error(''.join(list(traceback.TracebackException.from_exception(e).format())))
 
-    return jsonify(
-        {
-            'result':       '500',
-            'exception':    ''.join(list(traceback.TracebackException.from_exception(e).format())),
-        }
-    ), 500
+    if exec_stat is None:
+        return jsonify(
+            {
+                'result':       '500',
+                'exception':    ''.join(list(traceback.TracebackException.from_exception(e).format())),
+            }
+        ), 500
+    else:
+        return jsonify(
+            {
+                'result':       '500',
+                'errorStatement':   exec_stat,
+                'errorDetail':      exec_detail,
+                'exception':    ''.join(list(traceback.TracebackException.from_exception(e).format())),
+            }
+        ), 500
+
 
