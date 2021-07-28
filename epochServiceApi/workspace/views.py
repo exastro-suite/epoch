@@ -45,13 +45,13 @@ def post(request):
         logger.debug("CALL workspace post")
         app_name = "ワークスペース作成:"
         exec_stat = "初期化"
-        exec_detail = ""
+        exec_detail = "お試しのメッセージ"
 
         # ヘッダ情報
         headers = {
             'Content-Type': 'application/json',
         }
-
+        raise   Exception('TEST!!')
         # データ情報
         data = '{}'
 
