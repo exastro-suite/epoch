@@ -34,6 +34,7 @@ from django.views.decorators.csrf import csrf_exempt
 from kubernetes import client, config
 
 logger = logging.getLogger('apilog')
+exec_detail = ""
 
 @csrf_exempt
 def index(request):
@@ -48,6 +49,8 @@ def index(request):
 @csrf_exempt    
 def post(request):
     try:
+        exec_detail = ""
+
         v1 = client.CoreV1Api()
         
         logger.debug("argocd pod create")
@@ -56,18 +59,20 @@ def post(request):
 
         # namespace定義
         name = "epoch-workspace"
+
         # namespaceの存在チェック
         ret = getNamespace(name)
         if ret is None:
             # namespaceの作成
             ret = createNamespace(name)
-
+        
         # namespaceの作成に失敗した場合
         if ret is None:
             response = {
                 "result":"ERROR",
                 "returncode": "0",
                 "command": "createNamespace",
+                "errorDetail": exec_detail,
                 "output": "",
                 "traceback": "",
             }
@@ -96,6 +101,7 @@ def post(request):
                  "NO_PROXY=" + os.environ['EPOCH_ARGOCD_NO_PROXY'],
                  "no_proxy=" + os.environ['EPOCH_ARGOCD_NO_PROXY'] ]
 
+        exec_detail = "環境変数[PROXY]を確認してください"
         for deployment_name in deployments:
             for env_name in envs:
                 # 環境変数の設定
@@ -103,6 +109,7 @@ def post(request):
 
                 output += deployment_name + "." + env_name + "{" + stdout_cd.decode('utf-8') + "},"
 
+        exec_detail = ""
 
         logger.debug("argocd rolesetting kubectl apply")
         # role bindingの再設定 (ns:epoch-workspace用)
@@ -142,6 +149,7 @@ def post(request):
         response = {
             "result":"ERROR",
             "returncode": e.returncode,
+            "errorDetail": exec_detail,
             "command": e.cmd,
             "output": e.output.decode('utf-8'),
             "traceback": traceback.format_exc(),
@@ -152,6 +160,7 @@ def post(request):
         response = {
             "result":"ERROR",
             "returncode": "",
+            "errorStatement": exec_detail,
             "args": e.args,
             "output": e.args,
             "traceback": traceback.format_exc(),
