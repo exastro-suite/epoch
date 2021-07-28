@@ -40,21 +40,21 @@ let datePickerHTML = ( function(){/*
 <div class="datepicker-datetime">
 <table class="form">
 <tr>
-<th>H</th><td>
+<th class="date-h-c">H</th><td class="date-h-c">
 <div class="select">
 <select class="date-h">
 <option value="00">00</option><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option>
 </select>
 </div>
 </td>
-<th>M</th><td>
+<th class="date-m-c">M</th><td class="date-m-c">
 <div class="select">
 <select class="date-m">
 <option value="00">00</option><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option><option value="32">32</option><option value="33">33</option><option value="34">34</option><option value="35">35</option><option value="36">36</option><option value="37">37</option><option value="38">38</option><option value="39">39</option><option value="40">40</option><option value="41">41</option><option value="42">42</option><option value="43">43</option><option value="44">44</option><option value="45">45</option><option value="46">46</option><option value="47">47</option><option value="48">48</option><option value="49">49</option><option value="50">50</option><option value="51">51</option><option value="52">52</option><option value="53">53</option><option value="54">54</option><option value="55">55</option><option value="56">56</option><option value="57">57</option><option value="58">58</option><option value="59">59</option>
 </select>
 </div>
 </td>
-<th>S</th><td>
+<th class="date-s-c">S</th><td class="date-s-c">
 <div class="select">
 <select class="date-s">
 <option value="00">00</option><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option><option value="32">32</option><option value="33">33</option><option value="34">34</option><option value="35">35</option><option value="36">36</option><option value="37">37</option><option value="38">38</option><option value="39">39</option><option value="40">40</option><option value="41">41</option><option value="42">42</option><option value="43">43</option><option value="44">44</option><option value="45">45</option><option value="46">46</option><option value="47">47</option><option value="48">48</option><option value="49">49</option><option value="50">50</option><option value="51">51</option><option value="52">52</option><option value="53">53</option><option value="54">54</option><option value="55">55</option><option value="56">56</option><option value="57">57</option><option value="58">58</option><option value="59">59</option>
@@ -158,7 +158,7 @@ const datePickerCalender = function( year, month, inputDay ){
 
 
 
-$.fn.datePicker = function() {
+$.fn.datePicker = function( option ) {
 
     $( this ).on('focus', function(){
         if( $('.datepicker').length > 0 ) $('.datepicker').remove();
@@ -170,21 +170,22 @@ $.fn.datePicker = function() {
 
         const $focusObj = $( this ),
               value = $focusObj.val();
+        
+        if ( option.s === 'none') {
+          $datePicker.find('.date-s-c').remove();
+        }
 
         // 入力済みの時間をセット
         if ( value !== '' && value.match(/[0-9][0-9]:[0-9][0-9]:[0-9][0-9]$/)) {
-          const time = value.slice(-5).split(':');
+          const time = value.slice(-8).split(':');
           $datePicker.find('.date-h').val( time[0] );
           $datePicker.find('.date-m').val( time[1] );
           $datePicker.find('.date-s').val( time[2] );
+        } else if ( value !== '' && value.match(/[0-9][0-9]:[0-9][0-9]$/)) {
+          const time = value.slice(-5).split(':');
+          $datePicker.find('.date-h').val( time[0] );
+          $datePicker.find('.date-m').val( time[1] );
         }
-        else if ( value !== '' && value.match(/[0-9][0-9]:[0-9][0-9]$/)) {
-            const time = value.slice(-5).split(':');
-            $datePicker.find('.date-h').val( time[0] );
-            $datePicker.find('.date-m').val( time[1] );
-            $datePicker.find('.date-s').val( "00" );
-          }
-  
 
         let inputOffset = $focusObj.offset(),
             inputHeight = $focusObj.outerHeight(),
@@ -208,31 +209,31 @@ $.fn.datePicker = function() {
         // value変更
         let changeDate = function() {
 
-        let year = $datePicker.find('.date-year').val(),
-            month = ( 0 + $datePicker.find('.date-month').val() ).slice(-2),
-            day = ( 0 + $datePicker.find('.select-date').text() ).slice(-2),
-            HH = ( 0 + $datePicker.find('.date-h').val() ).slice(-2),
-            mm = ( 0 + $datePicker.find('.date-m').val() ).slice(-2),
-            ss = ( 0 + $datePicker.find('.date-s').val() ).slice(-2);
-
-        $focusObj.val( year + '/' + month + '/' + day + ' ' + HH + ':' + mm );
+          let dateValue = '';
+          dateValue += $datePicker.find('.date-year').val()
+                     + '/' + ( 0 + $datePicker.find('.date-month').val() ).slice(-2)
+                     + '/' + ( 0 + $datePicker.find('.select-date').text() ).slice(-2);
+          
+          dateValue += ' ' + ( 0 + $datePicker.find('.date-h').val() ).slice(-2);
+          dateValue += ':' + ( 0 + $datePicker.find('.date-m').val() ).slice(-2);
+          if ( option.s !== 'none') {
+            dateValue += ':' + ( 0 + $datePicker.find('.date-s').val() ).slice(-2);
+          }
+          
+          $focusObj.val( dateValue );
 
         }
 
         // 日付変更
         $datePicker.on('click', '.num', function(){
-
             $('.select-date').removeClass('select-date');
             $( this ).addClass('select-date');    
             changeDate();
-
         });
 
         // 時間変更
         $datePicker.on('change', 'select', function(){
-
             changeDate();
-
         });
 
         // 年月変更
