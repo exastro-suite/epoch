@@ -108,7 +108,6 @@ def post(request):
                 stdout_cd = subprocess.check_output(["kubectl","set","env",deployment_name,"-n",name,env_name],stderr=subprocess.STDOUT)
 
                 output += deployment_name + "." + env_name + "{" + stdout_cd.decode('utf-8') + "},"
-
         exec_detail = ""
 
         logger.debug("argocd rolesetting kubectl apply")
@@ -160,7 +159,7 @@ def post(request):
         response = {
             "result":"ERROR",
             "returncode": "",
-            "errorStatement": exec_detail,
+            "errorDetail": exec_detail,
             "args": e.args,
             "output": e.args,
             "traceback": traceback.format_exc(),
