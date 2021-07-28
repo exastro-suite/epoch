@@ -28,6 +28,9 @@ import da_manifest
 app = Flask(__name__)
 app.config.from_envvar('CONFIG_API_WORKSPACE_PATH')
 globals.init(app)
+app_name = ""
+exec_stat = ""
+exec_detail = ""
 
 @app.route('/alive', methods=['GET'])
 def alive():
@@ -46,6 +49,9 @@ def create_workspace():
         response: HTTP Respose
     """
     globals.logger.debug('CALL create_workspace')
+    app_name = "ワークスペース情報登録:"
+    exec_stat = "初期化"
+    exec_detail = ""
     globals.logger.debug(request.json)
 
     try:
@@ -54,16 +60,20 @@ def create_workspace():
         # Requestからspecification項目を生成する
         specification = convert_workspace_specification(request.json)
 
+        exec_stat = "DB接続"
         with dbconnector() as db, dbcursor(db) as cursor:
             # workspace情報 insert実行(戻り値：追加したワークスペースID)
+            exec_stat = "登録実行"
             workspace_id = da_workspace.insert_workspace(cursor, organization_id, specification)
 
             globals.logger.debug('insert workspaced_id:{}'.format(str(workspace_id)))
 
             # workspace履歴追加
+            exec_stat = "登録実行(履歴)"
             da_workspace.insert_history(cursor, workspace_id)
 
             # workspace情報 データ再取得
+            exec_stat = "登録データ確認"
             fetch_rows = da_workspace.select_workspace_id(cursor, workspace_id)
 
         # Response用のjsonに変換
@@ -74,7 +84,7 @@ def create_workspace():
         return jsonify({"result": "200", "rows": response_rows })
 
     except Exception as e:
-        return common.serverError(e)
+        return common.serverError(e, app_name + exec_stat, exec_detail)
 
 
 @app.route('/workspace', methods=['GET'])
@@ -143,24 +153,31 @@ def update_workspace(workspace_id):
         response: HTTP Respose
     """
     globals.logger.debug("CALL update_workspace:{}".format(workspace_id))
+    app_name = "ワークスペース情報更新:"
+    exec_stat = "初期化"
+    exec_detail = ""
 
     try:
         # Requestからspecification項目を生成する
         specification = convert_workspace_specification(request.json)
       
+        exec_stat = "DB接続"
         with dbconnector() as db, dbcursor(db) as cursor:
             # workspace情報 update実行
+            exec_stat = "更新実行"
             upd_cnt = da_workspace.update_workspace(cursor, specification, workspace_id)
 
             if upd_cnt == 0:
                 # データがないときは404応答
                 db.rollback()
-                return jsonify({"result": "404" }), 404
+                return jsonify({"result": "404", "errorStatement": app_name + exec_stat, "errorDetail" : "更新するデータがありません"}), 404
 
             # workspace履歴追加
+            exec_stat = "登録実行(履歴)"
             da_workspace.insert_history(cursor, workspace_id)
 
             # workspace情報の再取得
+            exec_stat = "登録データ確認"
             fetch_rows = da_workspace.select_workspace_id(cursor, workspace_id)
 
         # Response用のjsonに変換
@@ -169,7 +186,7 @@ def update_workspace(workspace_id):
         return jsonify({"result": "200", "rows": response_rows })
 
     except Exception as e:
-        return common.serverError(e)
+        return common.serverError(e, app_name + exec_stat, exec_detail)
 
 @app.route('/workspace/<int:workspace_id>', methods=['DELETE'])
 def delete_workspace(workspace_id):
