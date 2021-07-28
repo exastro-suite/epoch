@@ -72,7 +72,9 @@ def post(request):
             if ret["result"] == "OK":
                 output.append(ret["output"])
             else:
-                exec_detail = ret["errorDetail"]
+                # 詳細エラーがある場合は詳細を設定
+                if ret["errorDetail"] is not None:
+                    exec_detail = ret["errorDetail"]
                 raise Exception
         else:
             response = {
@@ -96,15 +98,15 @@ def post(request):
         if ret["result"] == "OK":
             output.append(ret["output"])
         else:
-            exec_detail = ret["errorDetail"]
+            # 詳細エラーがある場合は詳細を設定
+            if ret["errorDetail"] is not None:
+                exec_detail = ret["errorDetail"]
             raise Exception
 
         response = {
             "result": {
                 "code": "200",
                 "detailcode": "",
-                "errorStatement": app_name + exec_stat,
-                "errorDetail": exec_detail,
                 "output": output,
                 "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
             }
@@ -192,6 +194,11 @@ def info_all_post(request):
     """
     try:
         logger.debug ("CALL " + __name__)
+
+        app_name = "ワークスペース情報:"
+        exec_stat = "初期化"
+        exec_detail = ""
+
         # ヘッダ情報
         post_headers = {
             'Content-Type': 'application/json',
@@ -204,10 +211,17 @@ def info_all_post(request):
         apiInfo = "{}://{}:{}/".format(os.environ["EPOCH_RS_WORKSPACE_PROTOCOL"], os.environ["EPOCH_RS_WORKSPACE_HOST"], os.environ["EPOCH_RS_WORKSPACE_PORT"])
 
         # ワークスペース情報保存
+        exec_stat = "保存"
         request_response = requests.post( apiInfo + "workspace", headers=post_headers, data=post_data)
         logger.debug("workspace:" + request_response.text)
         ret = json.loads(request_response.text)
         #print(ret)
+        if request_response.status_code == 500:
+            # 詳細エラーがある場合は詳細を設定
+            if ret["errorDetail"] is not None:
+                exec_detail = ret["errorDetail"]
+            raise Exception
+            
         # 戻り値をそのまま返却        
         return JsonResponse(ret, status=request_response.status_code)
 
@@ -215,6 +229,8 @@ def info_all_post(request):
         response = {
             "result": {
                 "output": traceback.format_exc(),
+                "errorStatement": app_name + exec_stat,
+                "errorDetail": exec_detail,
                 "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
             }
         }
@@ -261,6 +277,10 @@ def info_put(request, workspace_id):
         response: HTTP Respose
     """
     try:
+        app_name = "ワークスペース情報:"
+        exec_stat = "初期化"
+        exec_detail = ""
+
         # ヘッダ情報
         headers = {
             'Content-Type': 'application/json',
@@ -277,6 +297,12 @@ def info_put(request, workspace_id):
         request_response = requests.put(apiInfo + 'workspace/' + str(workspace_id), headers=headers, data=post_data)
         ret = json.loads(request_response.text)
 
+        if request_response.status_code == 500:
+            # 詳細エラーがある場合は詳細を設定
+            if ret["errorDetail"] is not None:
+                exec_detail = ret["errorDetail"]
+            raise Exception
+
         # 戻り値をそのまま返却        
         return JsonResponse(ret, status=request_response.status_code)
 
@@ -286,6 +312,8 @@ def info_put(request, workspace_id):
                 "code": "500",
                 "detailcode": "",
                 "output": traceback.format_exc(),
+                "errorStatement": app_name + exec_stat,
+                "errorDetail": exec_detail,
                 "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
             }
         }
@@ -330,10 +358,19 @@ def info_get(request, workspace_id):
             }
             return JsonResponse(response, status=404)
         else:
+            if response.status_code == 500 and isJsonFormat(response.text):
+                # 戻り値がJsonの場合は、値を取得
+                ret = json.loads(response.text)
+                # 詳細エラーがある場合は詳細を設定
+                if ret["errorDetail"] is not None:
+                    exec_detail = ret["errorDetail"]
+
             response = {
                 "result": {
                     "detailcode": "",
                     "output": response.text,
+                    "errorStatement": app_name + exec_stat,
+                    "errorDetail": exec_detail,
                     "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
                 }
             }
@@ -354,7 +391,9 @@ def info_get(request, workspace_id):
                 "code": "500",
                 "detailcode": "",
                 "output": traceback.format_exc(),
+                "errorStatement": app_name + exec_stat,
+                "errorDetail": exec_detail,
                 "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
             }
         }
-        return JsonResponse(response)
+        return JsonResponse(response, status=500)
