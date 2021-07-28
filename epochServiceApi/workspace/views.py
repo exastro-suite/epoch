@@ -34,16 +34,18 @@ from django.views.decorators.csrf import csrf_exempt
 from kubernetes import client, config
 
 logger = logging.getLogger('apilog')
-AppNme = ""
-execstat = ""
+app_name = ""
+exec_stat = ""
+exec_detail = ""
 
 @require_http_methods(['POST'])
 @csrf_exempt
 def post(request):
     try:
         logger.debug("CALL workspace post")
-        AppName = "ワークスペース作成 : "
-        execstat = "初期化 error"
+        app_name = "ワークスペース作成:"
+        exec_stat = "初期化"
+        exec_detail = ""
 
         # ヘッダ情報
         headers = {
@@ -61,7 +63,7 @@ def post(request):
         output = []
 
         # post送信（argocd/pod作成）
-        execstat = "ArgoCDデプロイ"
+        exec_stat = "ArgoCDデプロイ"
         response = requests.post(apiInfo + 'argocd/pod', headers=headers, data=data, params=payload)
 
         if isJsonFormat(response.text):
@@ -70,14 +72,15 @@ def post(request):
             if ret["result"] == "OK":
                 output.append(ret["output"])
             else:
-                execstat = "ArgoCDデプロイ失敗\nError info : " + ret["errorStatement"]
+                exec_detail = ret["errorDetail"]
                 raise Exception
         else:
             response = {
                 "result": {
                     "code": "500",
                     "detailcode": "",
-                    "errorStatement": AppName + execstat,
+                    "errorStatement": app_name + exec_stat,
+                    "errorDetail": exec_detail,
                     "output": response.text,
                     "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
                 }
@@ -85,7 +88,7 @@ def post(request):
             return JsonResponse(response,status=500)
 
         # post送信（ita/pod作成）
-        execstat = "Exastro IT Automationデプロイ"
+        exec_stat = "Exastro IT Automationデプロイ"
         response = requests.post(apiInfo + 'ita/', headers=headers, data=data, params=payload)
 
         # 取得したJSON結果が正常でない場合、例外を返す
@@ -93,13 +96,15 @@ def post(request):
         if ret["result"] == "OK":
             output.append(ret["output"])
         else:
+            exec_detail = ret["errorDetail"]
             raise Exception
 
         response = {
             "result": {
                 "code": "200",
                 "detailcode": "",
-                "errorStatement": AppName + execstat,
+                "errorStatement": app_name + exec_stat,
+                "errorDetail": exec_detail,
                 "output": output,
                 "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
             }
@@ -111,7 +116,8 @@ def post(request):
             "result": {
                 "code": "500",
                 "detailcode": "",
-                "errorStatement": AppName + execstat,
+                "errorStatement": app_name + exec_stat,
+                "errorDetail": exec_detail,
                 "output": traceback.format_exc(),
                 "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
             }
