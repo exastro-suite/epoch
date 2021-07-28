@@ -33,6 +33,9 @@ from django.views.decorators.csrf import csrf_exempt
 from kubernetes import client, config
 
 logger = logging.getLogger('apilog')
+app_name = ""
+exec_stat = ""
+exec_detail = ""
 
 WAIT_APPLICATION_DELETE = 180 # アプリケーションが削除されるまでの最大待ち時間
 
@@ -50,6 +53,9 @@ def post(request):
     try:
 
         logger.debug ("CALL argocd.pipelineParameter post")
+        app_name = "パイプラインパラメータ設定(ArgoCD):"
+        exec_stat = "初期化"
+        exec_detail = ""
 
         # 引数で指定されたCD環境を取得
         logger.debug (request.body)
@@ -60,6 +66,7 @@ def post(request):
 
         try:
             # argocdにloginする
+            exec_stat = "ログイン"
             stdout_cd = subprocess.check_output(["argocd","login",settings.ARGO_SVC,"--insecure","--username",settings.ARGO_ID,"--password",settings.ARGO_PASSWORD],stderr=subprocess.STDOUT)
             logger.debug ("argocd login:" + str(stdout_cd))
 
@@ -68,6 +75,8 @@ def post(request):
             response = {
                 "result": e.returncode,
                 "returncode": "0401",
+                "errorStatement": app_name + exec_stat,
+                "errorDetail": exec_detail,
                 "command": e.cmd,
                 "output": e.output.decode('utf-8'),
                 "traceback": traceback.format_exc(),
@@ -78,6 +87,7 @@ def post(request):
         try:
             # アプリケーション情報の一覧を取得する
             logger.debug("execute : argocd app list")
+            exec_stat = "アプリケーション一覧取得"
             stdout_cd = subprocess.check_output(["argocd","app","list","-o","json"],stderr=subprocess.STDOUT)
             # logger.debug("result : argocd app list:" + str(stdout_cd))
 
@@ -85,6 +95,7 @@ def post(request):
             app_list = json.loads(stdout_cd)
             for app in app_list:
                 logger.debug('execute : argocd app delete:' + app['metadata']['name'])
+                exec_stat = "アプリケーション削除"
                 stdout_cd = subprocess.check_output(["argocd","app","delete",app['metadata']['name'],"-y"],stderr=subprocess.STDOUT)
 
             # アプリケーションが消えるまでWaitする
@@ -92,6 +103,7 @@ def post(request):
 
             for i in range(WAIT_APPLICATION_DELETE):
                 # アプリケーションの一覧を取得し、結果が0件になるまでWaitする
+                exec_stat = "アプリケーション削除完了確認"
                 stdout_cd = subprocess.check_output(["argocd","app","list","-o","json"],stderr=subprocess.STDOUT)
                 app_list = json.loads(stdout_cd)
                 if len(app_list) == 0:
@@ -103,6 +115,8 @@ def post(request):
             response = {
                 "result": e.returncode,
                 "returncode": "0405",
+                "errorStatement": app_name + exec_stat,
+                "errorDetail": exec_detail,
                 "command": e.cmd,
                 "output": e.output.decode('utf-8'),
                 "traceback": traceback.format_exc(),
@@ -132,9 +146,11 @@ def post(request):
 
             try:
                 # namespaceの存在チェック
+                exec_stat = "namespace存在確認"
                 ret = getNamespace(namespace)
                 if ret is None:
                     # namespaceの作成
+                    exec_stat = "namespace作成"
                     ret = createNamespace(namespace)
 
                 # namespaceの作成に失敗した場合
@@ -142,8 +158,10 @@ def post(request):
                     response = {
                         "result":"500",
                         "returncode": "0404",
-                        "args": e.args,
-                        "output": e.args,
+                        "errorStatement": app_name + exec_stat,
+                        "errorDetail": exec_detail,
+                        "args": "",
+                        "output": "",
                         "traceback": traceback.format_exc(),
                     }
                     return JsonResponse(response)
@@ -156,6 +174,8 @@ def post(request):
                 # --auto-prune \
                 # --sync-policy automated
                 # アプリケーション情報を追加
+                exec_stat = "アプリケーション作成"
+                exec_detail = "ArgoCDの入力内容を確認してください"
                 stdout_cd = subprocess.check_output(["argocd","app","create",env_name,
                     "--repo",gitUrl,
                     "--path","./",
@@ -164,6 +184,8 @@ def post(request):
                     "--auto-prune",
                     "--sync-policy","automated",
                     ],stderr=subprocess.STDOUT)
+
+                exec_detail = ""
 
                 logger.debug ("argocd app create:" + str(stdout_cd))
 
@@ -174,6 +196,8 @@ def post(request):
                 response = {
                     "result": e.returncode,
                     "returncode": "0402",
+                    "errorStatement": app_name + exec_stat,
+                    "errorDetail": exec_detail,
                     "command": e.cmd,
                     "output": e.output.decode('utf-8'),
                     "traceback": traceback.format_exc(),
@@ -195,6 +219,8 @@ def post(request):
         response = {
             "result":"500",
             "returncode": "0403",
+            "errorStatement": app_name + exec_stat,
+            "errorDetail": exec_detail,
             "args": e.args,
             "output": e.args,
             "traceback": traceback.format_exc(),
