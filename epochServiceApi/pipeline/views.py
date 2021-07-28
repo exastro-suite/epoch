@@ -64,7 +64,11 @@ def post(request):
         if ret["result"] == "200" or ret["result"] == "201":
             output.append(ret["output"])
         else:
-            return (request_response.text)
+            if "errorDetail" in ret:
+                exec_detail = ret["errorDetail"]
+            else:
+                exec_detail = ""
+            raise Exception
 
         exec_stat = "パイプライン設定(TEKTON)"
         # パイプライン設定(TEKTON)
@@ -76,7 +80,11 @@ def post(request):
         if ret["result"] == "200" or ret["result"] == "201":
             output.append(ret["output"])
         else:
-            return (request_response.text)
+            if "errorDetail" in ret:
+                exec_detail = ret["errorDetail"]
+            else:
+                exec_detail = ""
+            raise Exception
 
         exec_stat = "パイプライン設定(ITA - 初期化設定)"
         # パイプライン設定(ITA - 初期化設定)
@@ -87,7 +95,11 @@ def post(request):
         if ret["result"] == "200" or ret["result"] == "201":
             output.append(ret["output"])
         else:
-            return (request_response.text)
+            if "errorDetail" in ret:
+                exec_detail = ret["errorDetail"]
+            else:
+                exec_detail = ""
+            raise Exception
 
         exec_stat = "パイプライン設定(ITA - Git環境情報設定)"
         # パイプライン設定(ITA - Git環境情報設定)
@@ -98,7 +110,11 @@ def post(request):
         if ret["result"] == "200" or ret["result"] == "201":
             output.append(ret["items"])
         else:
-            return (request_response.text)
+            if "errorDetail" in ret:
+                exec_detail = ret["errorDetail"]
+            else:
+                exec_detail = ""
+            raise Exception
 
         exec_stat = "パイプライン設定(ArgoCD)"
         # パイプライン設定(ArgoCD)
@@ -108,7 +124,10 @@ def post(request):
         if ret["result"] == "200" or ret["result"] == "201":
             output.append(ret["output"])
         else:
-            exec_detail = ret["errorDetail"]
+            if "errorDetail" in ret:
+                exec_detail = ret["errorDetail"]
+            else:
+                exec_detail = ""
             raise Exception
 
         response = {
