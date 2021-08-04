@@ -1212,10 +1212,11 @@ spec:
       - name: mysqlconf-volume
         configMap:
           name: organization-db-myconf
-      - name: mysqldata
-        hostPath:
-          path: /var/data/epoch/organization_db/mysql
-          type: DirectoryOrCreate
+      # COMMENT OUT:Persistent data retention
+      #- name: mysqldata
+      #  hostPath:
+      #    path: /var/data/epoch/organization_db/mysql
+      #    type: DirectoryOrCreate
       - name: mysqlinitdb-volume
         configMap:
           name: organization-db-initdb
@@ -1223,8 +1224,9 @@ spec:
       - name: mysql
         image: mysql
         volumeMounts:
-        - name: mysqldata
-          mountPath: /var/lib/mysql
+        # COMMENT OUT:Persistent data retention
+        #- name: mysqldata
+        #  mountPath: /var/lib/mysql
         - name: mysqlconf-volume
           mountPath: /etc/mysql
         - name: mysqlinitdb-volume
@@ -4617,10 +4619,11 @@ spec:
       - name: mysqlconf-volume
         configMap:
           name: workspace-db-myconf
-      - name: mysqldata
-        hostPath:
-          path: /var/data/epoch/workspace_db/mysql
-          type: DirectoryOrCreate
+      # COMMENT OUT:Persistent data retention
+      #- name: mysqldata
+      #  hostPath:
+      #    path: /var/data/epoch/workspace_db/mysql
+      #    type: DirectoryOrCreate
       - name: mysqlinitdb-volume
         configMap:
           name: workspace-db-initdb
@@ -4628,8 +4631,9 @@ spec:
       - name: mysql
         image: mysql
         volumeMounts:
-        - name: mysqldata
-          mountPath: /var/lib/mysql
+        # COMMENT OUT:Persistent data retention
+        #- name: mysqldata
+        #  mountPath: /var/lib/mysql
         - name: mysqlconf-volume
           mountPath: /etc/mysql
         - name: mysqlinitdb-volume
