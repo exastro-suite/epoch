@@ -32,59 +32,12 @@ const wsDataJSON = {
   'application-code': {
     'defaultapplicationCode': {
       'text': 'CIパイプライン',
-      'defaultapplicationCode-pipeline-tekton-branch': 'main, master'
+      // TODO
+      //'defaultapplicationCode-pipeline-tekton-branch': 'main, master'
+      'defaultapplicationCode-pipeline-tekton-branch': ''
     }
   },
-  /*
-  'template-file': {
-    'file001': {
-      'name': 'text1text1text1text1text1text1text1text1.yaml',
-      'path': 'exsample/text1.yaml',
-      'date': '2021/05/12 09:00:00',
-      'user': 'administratoradministratoradministratoradministrator',
-      'note': '<a>test1</a>'
-    },
-    'file002': {
-      'name': 'text2.yaml',
-      'path': 'exsample/text2.yaml',
-      'date': '2021/05/12 09:00:00',
-      'user': 'administrator',
-      'note': '<a>test2</a>memomemomemomemomemomemomemomemomemomemomemomemomemomemomemo'
-    }
-  },
-  */
-  /*
-  'template-file': {
-    'file001': {
-      'name': 'front-end.yaml',
-      'path': 'exsample/front-end.yaml',
-      'date': '2021/05/12 09:00:00',
-      'user': 'administratoradministratoradministratoradministrator',
-      'note': '<a>test1</a>'
-    },
-    'file002': {
-      'name': 'catalogue.yaml',
-      'path': 'exsample/catalogue.yaml',
-      'date': '2021/05/12 09:00:00',
-      'user': 'administrator',
-      'note': '<a>test2</a>memomemomemomemomemomemomemomemomemomemomemomemomemomemomemo'
-    }
-  },
-  */
-  // 'manifests': [
-  //   {
-  //     'file_id': '0000000001',
-  //     'file_name': 'test1.yaml',
-  //     'file_text': 'ファイルの内容'
-  //   },
-  //   {
-  //     'file_id': '0000000002',
-  //     'file_name': 'test1.yaml',
-  //     'file_text': 'ファイルの内容'
-  //   }
-  // ],
   'manifests': [],
-  'template-file': {},
   'git-service': {
     'git-service-select': 'epoch'
   },
@@ -346,7 +299,7 @@ const wsModalJSON = {
               'type': 'input',
               'title': 'ビルド　ブランチ',
               'name': 'pipeline-tekton-branch',
-              'placeholder': 'ビルド　ブランチを入力してください'
+              'placeholder': 'ビルド　ブランチを入力してください（入力例：main,master）'
             },
             'pipelineTektonDockerPath': {
               'type': 'input',
@@ -518,7 +471,7 @@ const wsModalJSON = {
                 'internal': '内部クラスタ',
                 'external': '外部クラスタ'
               },
-              'note': '内部クラスタと・・・・・・'
+              'note': 'デプロイ先がEPOCHと同じクラスタのときは内部クラスタ、以外のクラスタのときは外部クラスタを選択してください'
             },  
             'environmentURL': {
               'type': 'input',
@@ -631,11 +584,11 @@ const wsModalJSON = {
           'item' : {
             'gitServiceArgoRepositorySource': {
               'type': 'input',
-              'title': 'Gitリポジトリ(ソース)　URL',
+              'title': 'Gitリポジトリ URL',
               'name': 'git-service-argo-repository-url',
               'validation': '^https:\/\/.+\.git$',
-              'inputError': 'Gitリポジトリ(ソース)　URLの形式が正しくありません。',
-              'placeholder': 'Gitリポジトリ(ソース)　URLを入力してください'
+              'inputError': 'Gitリポジトリ URLの形式が正しくありません。',
+              'placeholder': 'Gitリポジトリ URLを入力してください'
             }
           }
         }
@@ -1543,11 +1496,9 @@ const templateFileList = function(){
         alert('ファイルを更新しますか？');
         break;
       case 'delete':
-        if (confirm(wsDataJSON['template-file'][key]['name'] + 'を削除しますか？'))
-        {
-          // manifestsテンプレートファイルの削除呼び出し
-          templateFileDelete(key, wsDataJSON['template-file'][key]['file_id'])
-          
+        if (confirm(wsDataJSON['manifests'][key]['file_name'] + 'を削除しますか？')) {
+          templateFileDelete(key, wsDataJSON['manifests'][key]['file_id']);
+
           $button.mouseleave().closest('.c-table-row').remove();
           $button.closest('.c-table-row').remove();
 
@@ -1566,6 +1517,7 @@ const templateFileList = function(){
     modal.change('manifestParametar', {
       'ok': function( $modal ){
         setParameterData( $modal );
+        apply_manifest();
       },
       'callback': inputParameter
     }, 1160 );
@@ -1652,6 +1604,7 @@ const templateFileSelect = function( type ){
                 $button.prop('disabled', true );
                 // フォームデータ取得
                 const formData = new FormData( $('#template-files').get(0) );
+                console.log('CALL : マニフェストテンプレートアップロード');
                 // 送信
                 $.ajax({
                   'url': workspace_api_conf.api.manifestTemplate.post.replace('{workspace_id}', workspace_id),
@@ -1662,30 +1615,16 @@ const templateFileSelect = function( type ){
                   'cache': false,
                 }).done(function( data, textStatus ){
                   if ( textStatus === 'success') {
-
-                    wsDataJSON['template-file'] = {};
-                    var disp = "";
-
                     console.log("manifest post response:" + JSON.stringify(data));
-                    // 現在登録されているファイルの一覧が返却されてくるので、その内容で構成しなおし
+                    wsDataJSON['manifests'] = [];
                     for(var fileidx = 0; fileidx < data['rows'].length; fileidx++ ) {
-                      disp += data['rows'][fileidx]['file_name'] + '\n';
-                      var fileDate = new Date(data['rows'][fileidx]['update_at']);
-                      wsDataJSON['template-file']['file'+("000"+(fileidx+1)).slice(-3)] = {
-                        'name' : data['rows'][fileidx]['file_name'],
-                        'path' : data['rows'][fileidx]['file_name'],
-                        'date' : fileDate.getFullYear() + '/' + ('0' + (fileDate.getMonth() + 1)).slice(-2) + '/' + ('0' + fileDate.getDate()).slice(-2)
-                        + ' ' + ('0' + fileDate.getHours()).slice(-2) + ':' + ('0' + fileDate.getMinutes()).slice(-2) + ':' + ('0' + fileDate.getSeconds()).slice(-2),
-                        'user' : '',
-                        'note' : '',
-                        "text" : data['rows'][fileidx]['file_text'],
-                        'file_id' : data['rows'][fileidx]['id'],
-                      }
+                      wsDataJSON['manifests'][wsDataJSON['manifests'].length] = {
+                        'file_id':  data['rows'][fileidx]['id'],
+                        'file_name':  data['rows'][fileidx]['file_name'],
+                        'file_text':  data['rows'][fileidx]['file_text'],
+                      };
                     }
-                    
                     // アップロードが完了したら
-                    $file.find('.item-file-list').html('<pre>' + disp + '</pre>');
-
                     workspaceImageUpdate();
 
                     // 選択が終わったらテンプレート一覧を表示
@@ -1816,27 +1755,17 @@ function templateFileDelete(key, file_id){
 
     $.ajax(api_param).done(function(data) {
       console.log("DONE : Manifestテンプレート削除");
-      console.log("--- data ----");
-      wsDataJSON['template-file'] = {};
-      var disp = "";
-
       console.log("manifest delete response:" + JSON.stringify(data));
-      // 現在登録されているファイルの一覧が返却されてくるので、その内容で構成しなおし
+
+      wsDataJSON['manifests'] = [];
       for(var fileidx = 0; fileidx < data['rows'].length; fileidx++ ) {
-        disp += data['rows'][fileidx]['file_name'] + '\n';
-        var fileDate = new Date(data['rows'][fileidx]['update_at']);
-        wsDataJSON['template-file']['file'+("000"+(fileidx+1)).slice(-3)] = {
-          'name' : data['rows'][fileidx]['file_name'],
-          'path' : data['rows'][fileidx]['file_name'],
-          'date' : fileDate.getFullYear() + '/' + ('0' + (fileDate.getMonth() + 1)).slice(-2) + '/' + ('0' + fileDate.getDate()).slice(-2)
-          + ' ' + ('0' + fileDate.getHours()).slice(-2) + ':' + ('0' + fileDate.getMinutes()).slice(-2) + ':' + ('0' + fileDate.getSeconds()).slice(-2),
-          'user' : '',
-          'note' : '',
-          "text" : data['rows'][fileidx]['file_text'],
-          'file_id' : data['rows'][fileidx]['id'],
-        }
+        wsDataJSON['manifests'][wsDataJSON['manifests'].length] = {
+          'file_id':  data['rows'][fileidx]['id'],
+          'file_name':  data['rows'][fileidx]['file_name'],
+          'file_text':  data['rows'][fileidx]['file_text'],
+        };
       }
-      
+
       // 該当行のManifestパラメータ削除
       console.log("environment:-------------------------");
       for(var env in wsDataJSON['environment']) {
@@ -1892,110 +1821,7 @@ const inputParameter = function(){
   $('#manifest-parameter').find('.modal-tab-body-block').each(function(i){
   
     // yamlファイルを読み込む
-    //
-    // 
-    
-    // モック用ダミーyamlデータ
-/*
-    const dummyYaml = '# epoch-template => No.' + i + '\n'
-    + 'apiVersion: apps/v1\n'
-    + 'kind: Deployment\n'
-    + 'metadata:\n'
-    + '  name: catalogue\n'
-    + '  labels:\n'
-    + '    name: catalogue\n'
-    + 'spec:\n'
-    + '  replicas: {{ replicas_' + i + ' }}\n'
-    + '  selector:\n'
-    + '    matchLabels:\n'
-    + '      name: catalogue\n'
-    + '  template:\n'
-    + '    metadata:\n'
-    + '      labels:\n'
-    + '        name: catalogue\n'
-    + '    spec:\n'
-    + '      containers:\n'
-    + '      - name: catalogue\n'
-    + '        image: {{ image_' + i + ' }} : {{ image_tag_' + i + ' }}\n'
-    + '        ports:\n'
-    + '        - containerPort: 8000\n'
-    + '      nodeSelector:\n'
-    + '        beta.kubernetes.io/os: linux\n'
-    + 'spec2:\n'
-    + '  replicas: {{ replicas_' + i + ' }}\n'
-    + '  selector:\n'
-    + '    matchLabels:\n'
-    + '      name: catalogue\n'
-    + '  template:\n'
-    + '    metadata:\n'
-    + '      labels:\n'
-    + '        name: catalogue\n'
-    + '    spec:\n'
-    + '      containers:\n'
-    + '      - name: catalogue\n'
-    + '        image: {{ image_' + i + ' }} : {{ image_tag_' + i + ' }}\n'
-    + '        ports:\n'
-    + '        - containerPort: 8000\n'
-    + '      nodeSelector:\n'
-    + '        beta.kubernetes.io/os: linux\n'
-    + '---\n'
-    + 'apiVersion: v1\n'
-    + 'kind: Service\n'
-    + 'metadata:\n'
-    + '  name: catalogue\n'
-    + '  labels:\n'
-    + '    name: catalogue\n'
-    + 'spec:\n'
-    + '  ports:\n'
-    + '    # the port that this service should serve on\n'
-    + '  - port: 80\n'
-    + '    targetPort: 8000\n'
-    + '  selector:\n'
-    + '    name: catalogue\n';
-*/
-/*
-const dummyYaml = '# epoch-template => No.' + i + '\n'
-+ 'apiVersion: apps/v1\n'
-+ 'kind: Deployment\n'
-+ 'metadata:\n'
-+ '  name: front-end\n'
-+ '  labels:\n'
-+ '    name: front-end\n'
-+ 'spec:\n'
-+ '  replicas: {{ replicas }}\n'
-+ '  selector:\n'
-+ '    matchLabels:\n'
-+ '      name: front-end\n'
-+ '  template:\n'
-+ '    metadata:\n'
-+ '      labels:\n'
-+ '        name: front-end\n'
-+ '    spec:\n'
-+ '      containers:\n'
-+ '      - name: front-end\n'
-+ '        image: {{ image }} : {{ image_tag }}\n'
-+ '        ports:\n'
-+ '        - containerPort: 8000\n'
-+ '      nodeSelector:\n'
-+ '        beta.kubernetes.io/os: linux\n'
-+ '---\n'
-+ 'apiVersion: v1\n'
-+ 'kind: Service\n'
-+ 'metadata:\n'
-+ '  name: front-end\n'
-+ '  labels:\n'
-+ '    name: front-end\n'
-+ 'spec:\n'
-+ '  ports:\n'
-+ '    # the port that this service should serve on\n'
-+ '  - port: 80\n'
-+ '    targetPort: 8000\n'
-+ '  selector:\n'
-+ '    name: front-end\n';
-*/
-    // 暫定実装 -----
-    const dummyYaml = wsDataJSON['template-file']['file'+("000"+(i+1)).slice(-3)]['text'];
-    // 暫定実装 -----
+    const dummyYaml = wsDataJSON['manifests'][i]['file_text'];
 
     // 読み込みが完了したら
     const $tabBlock = $( this ),
@@ -2375,8 +2201,7 @@ $content.find('.modal-open, .workspace-status-item').on('click', function(){
   
   let ok, cancel, callback, width = 800;
 
-  // TODO
-  console.log('modal target:' + target);
+  console.log('modal open:' + target);
 
   switch( target ) {
     // Workspace
@@ -2607,7 +2432,7 @@ const workspaceImageUpdate = function( ) {
   
   // Kubernetes Manifestテンプレート数
   const $tempTarget = $('#ws-kubernetes-manifest-template'),
-        tempNumber = Object.keys( wsDataJSON['template-file'] ).length,
+        tempNumber = Object.keys( wsDataJSON['manifests'] ).length,
         limitTempNumber = ( multipleMax >= tempNumber )? tempNumber: multipleMax,
         divTempClone = cloneBlock( limitTempNumber );
         
@@ -2764,6 +2589,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
           wsDataJSON['environment'][item] = {};
           wsDataJSON['environment'][item]['text']                         = data_environments[i]['name'];
           wsDataJSON['environment'][item][item + '-environment-name']     = data_environments[i]['name'];
+          wsDataJSON['environment'][item][item + '-deploy-select']        = data_environments[i]['deploy_destination']['cluster_kind'];
           wsDataJSON['environment'][item][item + '-environment-url']      = data_environments[i]['deploy_destination']['cluster_url'];
           wsDataJSON['environment'][item][item + '-environment-namespace']= data_environments[i]['deploy_destination']['namespace'];
           wsDataJSON['environment'][item][item + '-environment-authentication-token']= data_environments[i]['deploy_destination']['authentication_token'];
@@ -2778,7 +2604,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
             var flid = data_workspace['ci_config']['environments'][i]['manifests'][fl]['file_id'];
             wsDataJSON['environment'][item]['parameter'][flid] = {};
             for(var prm in data_workspace['ci_config']['environments'][i]['manifests'][fl]['parameters']) {
-              wsDataJSON['environment'][item]['parameter'][flid][flid + '-' + item + '-' + prm] = data_workspace['ci_config']['environments'][i]['manifests'][fl]['parameters'][prm];
+              wsDataJSON['environment'][item]['parameter'][flid][item + "-" + flid + '-' + prm] = data_workspace['ci_config']['environments'][i]['manifests'][fl]['parameters'][prm];
             }
           }
         }
@@ -2786,6 +2612,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         // data_workspaceからwsDataJSONのマニフェストgitリポジトリ情報へ書き出す
         wsDataJSON['git-service-argo'] = {};
         if(data_workspace['ci_config']['environments'][0]) {
+          wsDataJSON['git-service-argo']['git-service-argo-account-select'] = data_workspace['ci_config']['environments'][0]['account_select'];
           wsDataJSON['git-service-argo']['git-service-argo-user'] = data_workspace['ci_config']['environments'][0]['git_user'];
           wsDataJSON['git-service-argo']['git-service-argo-token'] = data_workspace['ci_config']['environments'][0]['git_token'];
         }
@@ -2804,26 +2631,14 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         "type": "GET",
         "url": workspace_api_conf.api.manifestTemplate.get.replace('{workspace_id}', workspace_id),
       }).done(function(data) {
-        // 暫定実装 -----
-        wsDataJSON['template-file'] = {};
-        var disp = "";
-
-        console.log("manifest get data:" + JSON.stringify(data));
+        wsDataJSON['manifests'] = [];
         for(var fileidx = 0; fileidx < data['rows'].length; fileidx++ ) {
-          disp += data['rows'][fileidx]['file_name'] + '\n';
-          var fileDate = new Date(data['rows'][fileidx]['update_at']);
-          wsDataJSON['template-file']['file'+("000"+(fileidx+1)).slice(-3)] = {
-            'name' : data['rows'][fileidx]['file_name'],
-            'path' : 'exsample/' + data['rows'][fileidx]['file_name'],
-            'date' : fileDate.getFullYear() + '/' + ('0' + (fileDate.getMonth() + 1)).slice(-2) + '/' + ('0' + fileDate.getDate()).slice(-2)
-            + ' ' + ('0' + fileDate.getHours()).slice(-2) + ':' + ('0' + fileDate.getMinutes()).slice(-2) + ':' + ('0' + fileDate.getSeconds()).slice(-2),
-            'user' : '',
-            'note' : '',
-            "text" : data['rows'][fileidx]['file_text'],
-            "file_id" : data['rows'][fileidx]['id'],
-          }
+          wsDataJSON['manifests'][wsDataJSON['manifests'].length] = {
+            'file_id':  data['rows'][fileidx]['id'],
+            'file_name': data['rows'][fileidx]['file_name'],
+            'file_text': data['rows'][fileidx]['file_text'],
+          };
         }
-        // 暫定実装 -----
 
         resolve();
 
@@ -3120,23 +2935,34 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       var prmenv = {
         'environment_id'    : env,
         'git_url'           : wsDataJSON['environment'][env][env + '-git-service-argo-repository-url'],
-        'git_user'          : wsDataJSON['git-service-argo']['git-service-argo-user'],
-        'git_password'      : wsDataJSON['git-service-argo']['git-service-argo-token'],
-        'git_token'         : wsDataJSON['git-service-argo']['git-service-argo-token'],
+        'account_select'    : wsDataJSON['git-service-argo']['git-service-argo-account-select'],
         'manifests'         : [],
       }
-      for(var flid in wsDataJSON['template-file']) {
+      if (wsDataJSON['git-service-argo']['git-service-argo-account-select'] == "applicationCode") {
+        // アプリケーションコードと同じ
+        prmenv['git_user'] = wsDataJSON['git-service']['git-service-user'];
+        prmenv['git_password'] = wsDataJSON['git-service']['git-service-token'];
+        prmenv['git_token'] = wsDataJSON['git-service']['git-service-token'];
+      } else {
+        // 入力する
+        prmenv['git_user'] = wsDataJSON['git-service-argo']['git-service-argo-user'];
+        prmenv['git_password'] = wsDataJSON['git-service-argo']['git-service-argo-token'];
+        prmenv['git_token'] = wsDataJSON['git-service-argo']['git-service-argo-token'];
+      }
+
+
+      for(var flidx in wsDataJSON['manifests']) {
+        flid = ("" + wsDataJSON['manifests'][flidx]['file_id']);
         var prmmani = {
           'file_id'         : flid,
-          'file'            : wsDataJSON['template-file'][flid]['name'],
+          'file'            : wsDataJSON['manifests'][flidx]['file_name'],
           'parameters'      : {},
         };
-        console.log('env:'+env);
         if(wsDataJSON['environment'][env]['parameter']) {
           // マニフェストパラメータの指定をしている時、パラメータを設定する
           // 環境を追加してパラメータ指定を行わない時は上記if文でスキップする
           for(var prm in wsDataJSON['environment'][env]['parameter'][flid]) {
-            var prmname = prm.replace(new RegExp('^'+flid+'-'+env+'-'),'');
+            var prmname = prm.replace(new RegExp('^'+env+'-'+flid+'-'),'');
             prmmani['parameters'][prmname] = wsDataJSON['environment'][env]['parameter'][flid][prm];
           }
         }
@@ -3151,19 +2977,26 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
     reqbody['cd_config']['system_config'] = "one-namespace";
     reqbody['cd_config']['environments'] = [];
     for(var i in wsDataJSON['environment']) {
-      reqbody['cd_config']['environments'][reqbody['cd_config']['environments'].length] = {
-          //'environment_id'  :     (reqbody['cd_config']['environments'].length + 1),
-          'environment_id'  :     i,
-          'name' :                (wsDataJSON['environment'][i][i + '-environment-name']? wsDataJSON['environment'][i][i + '-environment-name']: "" ),
-          'deploy_destination' : {
-            'cluster_url' :           (wsDataJSON['environment'][i][i + '-environment-url']? wsDataJSON['environment'][i][i + '-environment-url']: "" ),
-            'namespace' :             (wsDataJSON['environment'][i][i + '-environment-namespace']? wsDataJSON['environment'][i][i + '-environment-namespace']: "" ),
-            'authentication_token' :  (wsDataJSON['environment'][i][i + '-environment-authentication-token']? wsDataJSON['environment'][i][i + '-environment-authentication-token']: "" ),
-            'base64_encoded_certificate' :  (wsDataJSON['environment'][i][i + '-environment-certificate']? wsDataJSON['environment'][i][i + '-environment-certificate']: "" ),
-          },
+      var envitem = {
+        'environment_id'  :     i,
+        'name' :                (wsDataJSON['environment'][i][i + '-environment-name']? wsDataJSON['environment'][i][i + '-environment-name']: "" ),
+        'deploy_destination' : {
+          'cluster_kind' : (wsDataJSON['environment'][i][i + '-environment-deploy-select']? wsDataJSON['environment'][i][i + '-environment-deploy-select']: "internal" ),
+          'namespace' :             (wsDataJSON['environment'][i][i + '-environment-namespace']? wsDataJSON['environment'][i][i + '-environment-namespace']: "" ),
+          'authentication_token' :  (wsDataJSON['environment'][i][i + '-environment-authentication-token']? wsDataJSON['environment'][i][i + '-environment-authentication-token']: "" ),
+          'base64_encoded_certificate' :  (wsDataJSON['environment'][i][i + '-environment-certificate']? wsDataJSON['environment'][i][i + '-environment-certificate']: "" ),
+        }
       }
-    }
+      if( envitem['deploy_destination']['cluster_kind'] == "internal" ) {
+        // 内部Clusterの場合
+        envitem['deploy_destination']['cluster_url'] = "https://kubernetes.default.svc";
+      } else {
+        // 外部Clusterの場合
+        envitem['deploy_destination']['cluster_url'] = (wsDataJSON['environment'][i][i + '-environment-url']? wsDataJSON['environment'][i][i + '-environment-url']: "" );
+      }
 
+      reqbody['cd_config']['environments'][reqbody['cd_config']['environments'].length] = envitem;
+    }
     return reqbody;
   }
 
