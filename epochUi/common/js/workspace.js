@@ -30,6 +30,10 @@ const wsDataJSON = {
   'environment' : {
   },
   'application-code': {
+    'defaultapplicationCode': {
+      'text': 'CIパイプライン',
+      'defaultapplicationCode-pipeline-tekton-branch': 'main, master'
+    }
   },
   /*
   'template-file': {
@@ -236,6 +240,7 @@ const wsModalJSON = {
      レジストリサービス
   \* -------------------------------------------------- */
   'registryService': {
+    'id': 'registry-service',
     'title': 'レジストリサービス',
     'footer': {
       'ok': {
@@ -291,7 +296,8 @@ const wsModalJSON = {
             'gitRepositoryURL': {
               'type': 'reference',
               'title': 'Gitリポジトリ URL',
-              'target': 'git-repository-url'
+              'target': 'git-repository-url',
+              'note': 'アプリケーションコードリポジトリ設定から参照しています。'
             },
             'registryServiceOutputDestination': {
               'type': 'input',
@@ -369,6 +375,10 @@ const wsModalJSON = {
     'id': 'kubernetes-manifest-template',
     'title': 'Kubernetes Manifest テンプレート',
     'footer': {
+      'move': {
+        'text': 'パラメータ入力画面へ',
+        'type': 'positive'
+      },
       'cancel': {
         'text': '閉じる',
         'type': 'negative'
@@ -440,16 +450,14 @@ const wsModalJSON = {
       },
     },
     'block': {
-      'registryServiceOutput': {
-        'title': 'パラメータ入力',
+      'manifestParametarInput': {
         'tab': {
           'type': 'reference',
           'target': {
-            'key1': 'template-file',
-            'key2': 'name'
+            'key1': 'manifests',
+            'key2': 'file_name'
           },
           'emptyText': 'テンプレートファイルの登録がありません。Kubernetes Manifestテンプレートの設定からテンプレートファイルを追加してください。',
-          'deletConfirmText': '',
           'item': {
             'parameter': {
               'type': 'loading',
@@ -501,28 +509,43 @@ const wsModalJSON = {
               'regexp': '^(.+)$',
               'placeholder': '環境名を入力してください'
             },
+            'environmentDeployTargetRadio': {
+              'type': 'radio',
+              'title': 'Deploy先',
+              'name': 'environment-deploy-select',
+              'class': 'input-pickup-select',
+              'item': {
+                'internal': '内部クラスタ',
+                'external': '外部クラスタ'
+              },
+              'note': '内部クラスタと・・・・・・'
+            },  
             'environmentURL': {
               'type': 'input',
               'title': 'Kubernetes API Server URL',
               'name': 'environment-url',
+              'class': 'input-pickup input-pickup-external',
               'placeholder': '実行環境のKubernetes API Server URLを入力してください（入力例：https://<外部クラスタIP>:6443）'
             },
             'environmentNamespace': {
               'type': 'input',
               'title': 'Namespace',
               'name': 'environment-namespace',
+              'class': 'input-pickup input-pickup-external input-pickup-internal',
               'placeholder': '実行環境のNamespaceを入力してください'
             },
             'environmentToken': {
               'type': 'input',
               'title': 'Authentication token',
               'name': 'environment-authentication-token',
+              'class': 'input-pickup input-pickup-external',
               'placeholder': '実行環境のAuthentication tokenを入力してください'
             },
             'environmentCertificate': {
               'type': 'input',
               'title': 'Base64 encoded certificate',
               'name': 'environment-certificate',
+              'class': 'input-pickup input-pickup-external',
               'placeholder': '実行環境のBase64 encoded certificateを入力してください'
             }
           }
@@ -563,16 +586,35 @@ const wsModalJSON = {
       'gitServiceArgoAccount': {
         'title': 'Gitアカウント指定',
         'item': {
+          'gitServiceArgoAccountSelect': {
+            'type': 'radio',
+            'title': 'Gitアカウント選択',
+            'name': 'git-service-argo-account-select',
+            'class': 'input-pickup-select',
+            'item': {
+              'applicationCode': 'アプリケーションコードと同一',
+              'separate': '入力する'
+            }
+          },  
+          'gitServiceArgoAccountUserApplicationCode': {
+            'type': 'reference',
+            'title': 'ユーザ名（アプリケーションコードと同一）',
+            'target': 'git-service-user',
+            'class': 'input-pickup input-pickup-applicationCode',
+            'note': 'アプリケーションコードリポジトリ設定から参照しています。'
+          },
           'gitServiceArgoAccountUser': {
             'type': 'input',
             'title': 'ユーザ名',
             'name': 'git-service-argo-user',
+            'class': 'input-pickup input-pickup-separate',
             'placeholder': 'ユーザ名を入力してください'
           },
           'gitServiceArgoAccountToken': {
             'type': 'password',
             'title': 'トークン',
             'name': 'git-service-argo-token',
+            'class': 'input-pickup input-pickup-separate',
             'placeholder': 'トークンを入力してください'
           }
         }
@@ -1316,10 +1358,18 @@ const setInputData = function( $modal, tabTarget, commonTarget ){
       const tabID = $tabBlock.attr('id');
       if ( wsDataJSON[ tabTarget ] === undefined ) wsDataJSON[ tabTarget ] = new Object();
       if ( wsDataJSON[ tabTarget ][ tabID ] === undefined ) wsDataJSON[ tabTarget ][ tabID ] = new Object();
-      wsDataJSON[ tabTarget ][ tabID ][ name ] = $input.val();
+      if ( $input.is(':disabled') ) {
+        wsDataJSON[ tabTarget ][ tabID ][ name ] = null
+      } else {
+        wsDataJSON[ tabTarget ][ tabID ][ name ] = $input.val();
+      }
     } else {
       if ( wsDataJSON[ commonTarget ] === undefined ) wsDataJSON[ commonTarget ] = new Object();
-      wsDataJSON[ commonTarget ][ name ] = $input.val();
+      if ( $input.is(':disabled') ) {
+        wsDataJSON[ commonTarget ][ name ] = null
+      } else {
+        wsDataJSON[ commonTarget ][ name ] = $input.val();
+      }
     }
   });
 };
@@ -1369,13 +1419,65 @@ const setParameterData = function( $modal ){
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
+//   レジストリサービス
+// 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// ユーザ名の入力に合わせてイメージ出力先に値をセットする
+const registryServiceInput = function(){
+  const $modal = $('#registry-service'),
+        inputArray = [];
+  $modal.find('.registry-service-account-user').on({
+    // フォーカスが当たった時にURLと未入力チェック
+    'focus': function(){
+      $modal.find('.modal-tab-body-block').each(function(i){
+        const $tab = $( this ),
+              repositoryURL = $tab.find('.item-reference').text(),
+              imageTarget = $tab.find('.registry-service-output-destination').val();
+        inputArray[i] = [];
+        if ( repositoryURL !== '' && repositoryURL !== undefined ) {
+          inputArray[i].push( repositoryURL.replace(/^.+\/([^\/]+)\.git$/, '$1') );
+        } else {
+          inputArray[i].push('');
+        }
+        if ( imageTarget === '') {
+          inputArray[i].push( null );
+        } else {
+          inputArray[i].push( imageTarget );
+        }
+      });
+    },
+    'input': function(){
+      const value = $( this ).val();
+      $modal.find('.modal-tab-body-block').each(function(i){
+        const $imageTarget = $( this ).find('.registry-service-output-destination');
+        if ( inputArray[i][1] === null ) {
+          $imageTarget.val( value + '/' + inputArray[i][0] );
+        }
+      });
+    }
+  });
+
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
 //   テンプレートファイルリスト
 // 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 const templateFileList = function(){
-  const $fileList = $('#template-file-list-body'),
-        fileList = wsDataJSON['template-file'],
-        fileLength = Object.keys( fileList ).length;
+  const $modal = $('#kubernetes-manifest-template'),
+        $fileList = $('#template-file-list-body'),
+        $moveButton = $modal.find('.epoch-button[data-button="move"]'),
+        fileList = wsDataJSON['manifests'],
+        fileLength = fileList.length;
+  
+  const moveButton = function( disabled ){
+    $moveButton.prop('disabled', disabled );
+  };
+  if ( fileLength < 1 ) {
+    moveButton( true );
+  }
   let listHtml = '<table class="c-table c-table-fixed">'
   + '<thead>'
     + '<tr class="c-table-row">'
@@ -1388,29 +1490,29 @@ const templateFileList = function(){
   + '<tbody>';
   
   if ( fileLength > 0 ) {
-    for ( let key in fileList ) {
+    for ( let i = 0; i < fileLength; i++ ) {
       listHtml += ''
       + '<tr class="c-table-row">'
-        + '<td class="template-name c-table-col"><div class="c-table-ci">' + fn.textEntities(fileList[key]["name"]) + '</div></td>'
-        + '<td class="template-date c-table-col"><div class="c-table-ci">' + fn.textEntities(fileList[key]["date"]) + '</div></td>'
-        + '<td class="template-user c-table-col"><div class="c-table-ci">' + fn.textEntities(fileList[key]["user"]) + '</div></td>'
-        + '<td class="template-note c-table-col"><div class="c-table-ci">' + fn.textEntities(fileList[key]["note"]) + '</div></td>'
-        + '<td class="template-menu c-table-col"><div class="c-table-ci">'
+      + '<td class="template-name c-table-col"><div class="c-table-ci">' + fn.textEntities(fileList[i]["file_name"]) + '</div></td>'
+      + '<td class="template-date c-table-col"><div class="c-table-ci"></div></td>'
+      + '<td class="template-user c-table-col"><div class="c-table-ci"></div></td>'
+      + '<td class="template-note c-table-col"><div class="c-table-ci">' + fn.textEntities(fileList[i]["file_text"]) + '</div></td>'
+      + '<td class="template-menu c-table-col"><div class="c-table-ci">'
           + '<ul class="c-table-menu-list">'
             + '<li class="c-table-menu-item">'
-              + '<button class="c-table-menu-button epoch-popup-m" title="プレビュー" data-key="' + key + '" data-button="preview">'
+              + '<button class="c-table-menu-button epoch-popup-m" title="プレビュー" data-key="' + i + '" data-button="preview">'
                 + '<svg viewBox="0 0 64 64" class="c-table-menu-svg"><use xlink:href="#icon-preview" /></svg></button></li>'
             + '<li class="c-table-menu-item">'
-              + '<button class="c-table-menu-button epoch-popup-m" title="ダウンロード" data-key="' + key + '" data-button="download">'
+              + '<button class="c-table-menu-button epoch-popup-m" title="ダウンロード" data-key="' + i + '" data-button="download">'
                 + '<svg viewBox="0 0 64 64" class="c-table-menu-svg"><use xlink:href="#icon-download" /></svg></button></li>'
             + '<li class="c-table-menu-item">'
-              + '<button class="c-table-menu-button epoch-popup-m" title="備考" data-key="' + key + '" data-button="note">'
+              + '<button class="c-table-menu-button epoch-popup-m" title="備考" data-key="' + i + '" data-button="note">'
                 + '<svg viewBox="0 0 64 64" class="c-table-menu-svg"><use xlink:href="#icon-edit" /></svg></button></li>'
             + '<li class="c-table-menu-item">'
-              + '<button class="c-table-menu-button epoch-popup-m" title="更新" data-key="' + key + '" data-button="update">'
+              + '<button class="c-table-menu-button epoch-popup-m" title="更新" data-key="' + i + '" data-button="update">'
                 + '<svg viewBox="0 0 64 64" class="c-table-menu-svg"><use xlink:href="#icon-update" /></svg></button></li>'
             + '<li class="c-table-menu-item">'
-              + '<button class="c-table-menu-button epoch-popup-m" title="削除" data-key="' + key + '" data-button="delete">'
+              + '<button class="c-table-menu-button epoch-popup-m" title="削除" data-key="' + i + '" data-button="delete">'
                 + '<svg viewBox="0 0 64 64" class="c-table-menu-svg"><use xlink:href="#icon-trash" /></svg></button></li>'
           + '</ul>'
         + '</div></td>'
@@ -1429,16 +1531,16 @@ const templateFileList = function(){
           type = $( this ).attr('data-button');
     switch( type ) {
       case 'preview':
-        alert('Coming soon...');
+        alert( wsDataJSON['manifests'][key] + 'プレビュー');
         break;
       case 'download':
-        alert('Coming soon...');
+        alert('Download');
         break;
       case 'memo':
-        alert('Coming soon...');
+        alert('ファイルを更新しますか？');
         break;
       case 'update':
-        alert('Coming soon...');
+        alert('ファイルを更新しますか？');
         break;
       case 'delete':
         if (confirm(wsDataJSON['template-file'][key]['name'] + 'を削除しますか？'))
@@ -1448,11 +1550,27 @@ const templateFileList = function(){
           
           $button.mouseleave().closest('.c-table-row').remove();
           $button.closest('.c-table-row').remove();
+
+          // 件数によって入力画面ボタンを制御
+          if ( $modal.find('tbody .c-table-row').length < 1 ) {
+            moveButton( true );
+          } else {
+            moveButton( false );
+          }
         }
         break;      
     }
   });
   
+  $moveButton.on('click', function(){
+    modal.change('manifestParametar', {
+      'ok': function( $modal ){
+        setParameterData( $modal );
+      },
+      'callback': inputParameter
+    }, 1160 );
+  });
+
   // ファイル選択モーダルを開く
   $('#template-upload-select').on('click', function(){
     modal.change('kubernetesManifestTemplateUpload', {
@@ -1882,17 +2000,17 @@ const dummyYaml = '# epoch-template => No.' + i + '\n'
     // 読み込みが完了したら
     const $tabBlock = $( this ),
           tabID = $tabBlock.attr('id'),
-          parameterSpan = '<span class="item-parameter" data-status="unentered" data-value="$2">$1</span>',
+          parameterSpan = '<span class="item-parameter" data-value="$2">$1</span>',
           envNumber = Object.keys( wsDataJSON['environment'] ).length;
           
     let $parameter = $(''
     + '<div class="item-parameter-block">'
+      + '<div class="item-parameter-input-area">'
+      + '</div>'
       + '<div class="item-parameter-code">'
         + '<pre class="item-parameter-pre prettyprint linenums lang-yaml">'
           + dummyYaml.replace(/({{\s(.*?)\s}})/g, parameterSpan )
         + '</pre>'
-      + '</div>'
-      + '<div class="item-parameter-select">'
       + '</div>'
     + '</div>');
     
@@ -1907,78 +2025,67 @@ const dummyYaml = '# epoch-template => No.' + i + '\n'
     });
     
     let parameterArea = '';
-    for ( let key in parameterList ) {
-      const parameterID = key,
-            $p = $parameter.find('.item-parameter[data-value="' + key + '"]');
-      let emptyCount = 0;
-      parameterArea += '<div id="' + tabID + '-' + parameterID + '" class="item-parameter-area">'
-      + '<div class="item-parameter-name">'
-        + parameterList[key]
-      + '</div>'
-      + '<div class="item-parameter-input-area">';
-      
-      if ( Object.keys(wsDataJSON.environment).length ) {
+    
+    // 環境が登録済みか？
+    if ( Object.keys( wsDataJSON.environment).length ) {
+      parameterArea += ''
+      + '<table class="item-parameter-table">'
+        + '<thead>'
+          + '<tr class="item-parameter-row">'
+            + '<th class="item-parameter-cell"><div class="item-parameter-cell-i">パラメータ</div></th>';
+      // thead 環境名
+      for ( const key in wsDataJSON.environment ) {          
+        parameterArea += ''
+        + '<th class="item-parameter-cell"><div class="item-parameter-cell-i">' + wsDataJSON.environment[key].text + '</div></th>';
+      }
+      parameterArea += '</tr>'
+      + '</thead>'
+      + '<tbody>';
+      for ( const parameterID in parameterList ) {
+        const parameterName = parameterList[parameterID].replace(/^{{\s(.+)\s}}$/,'$1');
+        parameterArea += '<tr class="item-parameter-row"><th class="item-parameter-cell"><div class="item-parameter-cell-i">' + parameterName + '</div></th>';
         for ( let key in wsDataJSON.environment ) {
-          const envName = wsDataJSON.environment[key].text;
-          const $input = modal.createInput({
-            'title': envName,
-            'name': key + '-' + parameterID,
-            'placeholder': envName + '用のパラメータを入力してください。'
-          }, tabID );
-          $input.find('input').attr({
-            'data-file': tabID,
-            'data-enviroment': key,
-            'data-parameter': parameterID
-          });
-          emptyCount += ( $input.find('.item-text').val() === '')? 1: 0;
-          parameterArea += $input.get(0).outerHTML;
+          const name = key + '-' + tabID + '-' + parameterID,
+                environmentName = wsDataJSON.environment[key].text;
+          let value = modal.searchValue( wsDataJSON.environment[key], name );
+          if ( value === undefined ) value = '';
+          parameterArea += '<td class="item-parameter-cell">'
+          + '<div class="item-parameter-input-w">'
+            + '<input type="text" '
+              + 'value="' + value + '" '
+              + 'class="item-text" '
+              + 'placeholder="' + environmentName + ' : ' + parameterName + '" '
+              + 'name="' + name + '" '
+              + 'data-file="' + tabID + '" '
+              + 'data-enviroment="' + key + '" '
+              + 'data-parameter="' + parameterID + '">'
+            + '</div>'
+          + '</td>';
         }
-      } else {
-        parameterArea += '<div class="modal-empty-block">環境の登録がありません。</div>'
+        parameterArea += '</tr>'
       }
-    
-      parameterArea += '</div></div>';
-      
-      if ( emptyCount === 0 && envNumber !== 0 ) {
-        $p.attr('data-status', 'done');
-      } else {
-        $p.attr('data-status', 'unentered');
-      }
+      parameterArea += '</tbody>'
+      + '</table>';
     }
-    $parameter.find('.item-parameter-select').html( parameterArea );
-    
-    // パラメータ切り替え
-    $parameter.find('.item-parameter').on('click', function(){
-      const $clickParameter = $( this ),
-            $parameterArea = $clickParameter.closest('.item-parameter-block'),
-            $targetBlock = $('#' + tabID + '-' + $clickParameter.attr('data-value') );
-      $parameterArea.find('.parameter-open').removeClass('parameter-open');
-      $clickParameter.add( $targetBlock ).addClass('parameter-open');
-    });
-    
-    // 最初のパラメータオープン
-    $parameter.find('.item-parameter').eq(0).addClass('parameter-open');
-    $parameter.find('.item-parameter-area').eq(0).addClass('parameter-open');
+    $parameter.find('.item-parameter-input-area').html( parameterArea );
     
     $tabBlock.html( $parameter );
     
-    // 入力チェック
-    $parameter.find('.item-text').on('blur', function(){
-      const $input = $( this ),
-            p = $input.attr('data-parameter'),
-            $inputArea = $parameter.find('#' + $input.attr('data-file') + '-' + p ),
-            $p = $parameter.find('.item-parameter[data-value="' + p + '"]');
-      // 未入力の数
-      const emptyLength = $inputArea.find('.item-text').filter(function(){
-        return ( $( this ).val() === '')
-      }).length;
-      if ( emptyLength === 0 && envNumber !== 0) {
-        $p.attr('data-status', 'done');
-      } else {
-        $p.attr('data-status', 'unentered');
-      }      
-    });
     
+    $parameter.find('.item-text').on({
+      // フォーカスでコードを指定位置にスクロール
+      'focus': function(){
+        const $input = $( this ),
+              p = $input.attr('data-parameter'),
+              $p = $parameter.find('.item-parameter[data-value="' + p + '"]').eq(0),
+              $l = $p.closest('li'),
+              $code = $parameter.find('.item-parameter-code');
+        $code.find('.select').removeClass('select');
+        $p.addClass('select');
+        $code.stop( 0,0 ).animate({ scrollTop: $l.position().top + $code.scrollTop() }, 300, 'swing');
+      }  
+    });
+
     // コードハイライト
     if ( PR !== undefined ) {
       PR.prettyPrint();
@@ -1990,7 +2097,7 @@ const dummyYaml = '# epoch-template => No.' + i + '\n'
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-//   CD実行（IT Automation）環境選択
+//   CD実行
 // 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 const cdExecution = function(){
@@ -2293,7 +2400,8 @@ $content.find('.modal-open, .workspace-status-item').on('click', function(){
         setInputData( $modal, 'application-code', 'registry-service');
         workspaceImageUpdate();
       };      
-      } break;
+      callback = registryServiceInput;
+    } break;
     // Argo CD
     case 'pipelineArgo': {
       ok = function( $modal ){
@@ -2534,6 +2642,13 @@ const workspaceImageUpdate = function( ) {
     const $wsIta = $('#ws-ita'),
           templateInput = ( tempNumber !== 0 )? done: unentered;
     $wsIta.find('.workspace-document-button[data-button="kubernetesManifestTemplate"]').attr('data-status', templateInput );
+    // パラメータ入力
+    if ( tempNumber <= 0 ) {
+      $wsIta.find('.workspace-document-button[data-button="manifestParametar"]').prop('disabled', true );
+    } else if ( tempNumber > 0 ) {
+      $wsIta.find('.workspace-document-button[data-button="manifestParametar"]').prop('disabled', false );
+    }
+    
   }
   
   workspaceReload();
