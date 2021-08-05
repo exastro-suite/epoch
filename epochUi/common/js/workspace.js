@@ -545,13 +545,13 @@ const wsModalJSON = {
             'name': 'git-service-argo-account-select',
             'class': 'input-pickup-select',
             'item': {
-              'applicationCode': 'アプリケーションコードと同一',
+              'applicationCode': 'アプリケーションコードリポジトリと同一',
               'separate': '入力する'
             }
           },  
           'gitServiceArgoAccountUserApplicationCode': {
             'type': 'reference',
-            'title': 'ユーザ名（アプリケーションコードと同一）',
+            'title': 'ユーザ名（アプリケーションコードリポジトリと同一）',
             'target': 'git-service-user',
             'class': 'input-pickup input-pickup-applicationCode',
             'note': 'アプリケーションコードリポジトリ設定から参照しています。'
