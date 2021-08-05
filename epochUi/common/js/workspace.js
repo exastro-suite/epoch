@@ -2475,12 +2475,13 @@ const workspaceImageUpdate = function( ) {
           templateInput = ( tempNumber !== 0 )? done: unentered;
     $wsIta.find('.workspace-document-button[data-button="kubernetesManifestTemplate"]').attr('data-status', templateInput );
     // パラメータ入力
-    if ( tempNumber <= 0 ) {
-      $wsIta.find('.workspace-document-button[data-button="manifestParametar"]').prop('disabled', true );
-    } else if ( tempNumber > 0 ) {
-      $wsIta.find('.workspace-document-button[data-button="manifestParametar"]').prop('disabled', false );
-    }
-    
+    /* テンプレートが無くてもdisable化しない
+    //if ( tempNumber <= 0 ) {
+    //  $wsIta.find('.workspace-document-button[data-button="manifestParametar"]').prop('disabled', true );
+    //} else if ( tempNumber > 0 ) {
+    //  $wsIta.find('.workspace-document-button[data-button="manifestParametar"]').prop('disabled', false );
+    //}
+    */
   }
   
   workspaceReload();
