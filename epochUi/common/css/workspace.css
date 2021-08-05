@@ -848,16 +848,6 @@ text-align: center;
 font-weight: bold;
 color: #666;
 }
-.item-parameter-input-area {
-overflow: auto;
-height: calc( 100% - 64px );
-padding: 8px;
-background-color: #F8F8F8;
-border: 1px solid #CCC;
-border-top: none;
-border-radius: 0 0 4px 4px;
-}
-
 .adjust-text {
 display: inline-block;
 transform-origin: left;

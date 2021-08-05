@@ -35,20 +35,15 @@ function modalFunction( modalJSON, valueJSON ){
 }
 modalFunction.prototype = {
     /* -------------------------------------------------- *\
-       ユニークなTab IDを返す
+       ユニークなIDを返す
     \* -------------------------------------------------- */
-    'getUniqueTabID': function( ) {
-      const newUniqueTabID = function() {
+    'getUniqueID': function() {
+      const newUniqueID = function() {
         const strong = 9999,
-              UniqueTabID = 't' + new Date().getTime().toString(16) + Math.floor( strong * Math.random()).toString(16);
-        // 念のためすでに使われているか確認する
-        if ( $('#' + UniqueTabID ).length ) {
-          return newUniqueTabID();
-        } else {
-          return UniqueTabID;
-        }
+              uniqueID = 't' + new Date().getTime().toString(16) + Math.floor( strong * Math.random()).toString(16);
+        return uniqueID;
       }
-      return newUniqueTabID();
+      return newUniqueID();
     },
     /* -------------------------------------------------- *\
        型を返す
@@ -85,7 +80,7 @@ modalFunction.prototype = {
         if ( type === 'object') {
           result = this.searchValue( values[key], targetKey );
           if ( result !== undefined ) return result;
-        } else if ( type === 'string' || type === 'number') {
+        } else if ( type === 'string' || type === 'number' || type === 'null') {
           if ( targetKey === key ) {
             return values[key];
           }
@@ -154,6 +149,16 @@ modalFunction.prototype = {
               }, '.modal-tab-item');
             });
           }          
+
+          // 入力欄Radioセレクト
+          if ( $modal.find('.input-pickup-select').length ) {
+            $modal.find('.input-pickup-select:checked').each( function(){
+              modal.pikupInput( $(this) );
+            });            
+            $modal.find('.input-pickup-select').on('change', function(){
+              modal.pikupInput( $(this) );
+            });
+          }
           
           // 数値入力とフェーダー
           $modal.find('.item-number-range').each(function(){
@@ -268,6 +273,15 @@ modalFunction.prototype = {
         }
 
     },
+    'pikupInput': function( $check ){
+      const $itemBlock = $check.closest('.modal-item'),
+            target = $check.val();
+      $itemBlock.find('.input-pickup').prop('disabled', true );
+      $itemBlock.find('.input-pickup').closest('.item-block').hide();
+
+      $itemBlock.find('.input-pickup-' + target ).prop('disabled', false );
+      $itemBlock.find('.input-pickup-' + target ).closest('.item-block').show();
+    },
     /* -------------------------------------------------- *\
        モーダル外にフォーカスが移動したら ON
     \* -------------------------------------------------- */
@@ -302,7 +316,7 @@ modalFunction.prototype = {
     /* -------------------------------------------------- *\
        入力値をvalueJSONに入れる
     \* -------------------------------------------------- */
-    'setParameter': function(){
+    'setParameter': function( parentKey ){
       const modal = this,
             inputTarget = 'input[type="text"], input[type="number"], input[type="password"], input[type="radio"]:checked, textarea';
   
@@ -310,7 +324,12 @@ modalFunction.prototype = {
         const $input = $( this ),
               name = $input.attr('name'),
               value = $input.val();
-        modal.valueJSON[ name ] = value;
+        if ( parentKey === undefined ) {
+          modal.valueJSON[ name ] = value;
+        } else {
+          if ( modal.valueJSON[ parentKey ] === undefined ) modal.valueJSON[ parentKey ] = {};
+          modal.valueJSON[ parentKey ][ name ] = value;
+        }
       });
     },
     /* -------------------------------------------------- *\
@@ -401,7 +420,7 @@ modalFunction.prototype = {
                 $modalBody.find('.modal-tab-empty').removeClass('modal-tab-empty');
                 $modalBody.find('.modal-empty-block').remove();
               }
-              const tabID = modal.getUniqueTabID();
+              const tabID = modal.getUniqueID();
               
               const $item = $('<li/>', {
                 'class': 'modal-tab-item',
@@ -424,6 +443,17 @@ modalFunction.prototype = {
                   modal.createItem( block[key].tab.item, tabID )
                 )
               );
+              
+              // 追加されたタブに入力選択処理
+              const $addTab = $modalBody.find('#' + tabID );
+              if ( $addTab.find('.input-pickup-select').length ) {
+                $addTab.find('.input-pickup-select:checked').each( function(){
+                  modal.pikupInput( $(this) );
+                });            
+                $addTab.find('.input-pickup-select').on('change', function(){
+                  modal.pikupInput( $(this) );
+                });
+              }
               
               modal.openTab( $item );
             });            
@@ -454,13 +484,20 @@ modalFunction.prototype = {
         );
       };
       if ( type === 'add' || type === 'reference') {
-        const target = this.valueJSON[ tab.target.key1 ];
-        if ( Object.keys( target ).length > 0 ) {
-          for ( const key in target ) {
+        const target = modal.valueJSON[ tab.target.key1 ],
+              type = modal.typeJudgment( target );
+        let length = 0;
+        if ( type === 'object') {
+          length = Object.keys( target ).length;
+        } else if ( type === 'array') {
+          length = target.length;
+        }
+        if ( length > 0 ) {
+          const $html = function( key, id ){
             $tabList.append(
               $('<li/>', {
                 'class': 'modal-tab-item',
-                'data-id': key,
+                'data-id': id,
                 'tabindex': 0,
                 'data-default': target[key][tab.target.key2]
               }).append(
@@ -472,12 +509,23 @@ modalFunction.prototype = {
             );
             $tabBody.append(
               $('<div/>', {
-                'id': key,
+                'id': id,
                 'class': 'modal-tab-body-block'
               }).append(
-                this.createItem( tab.item, key )
+                modal.createItem( tab.item, key )
               )
             );
+          };
+          if ( type === 'object') {
+            for ( const key in target ) {
+              $html( key, key );
+            }
+          } else if ( type === 'array') {
+            for ( let i = 0; i < length; i++ ) {
+              // マニュフェストならfile_idをidとする
+              const key = ( target[i]['file_id'] !== undefined )? target[i].file_id: i;
+              $html( i, key );
+            }
           }
         } else {
           emptyTab();
@@ -501,7 +549,7 @@ modalFunction.prototype = {
                 'id': key,
                 'class': 'modal-tab-body-block'
               }).append(
-                this.createItem( tab.tabs[key].item, key )
+                modal.createItem( tab.tabs[key].item, key )
               )
             );
           }
@@ -581,6 +629,8 @@ modalFunction.prototype = {
               case 'radio': return modal.createRadio( data, tabNumber );
               case 'loading': return modal.createLoadingBlock( data, tabNumber );
               case 'reference': return modal.createReference( data, tabNumber );
+              case 'freeitem': return modal.createFreeItem( data, tabNumber );
+              case 'message': return modal.createMessage( data );
             }
           };
           $item.append( itemType( item[key] ) );
@@ -645,13 +695,13 @@ modalFunction.prototype = {
           }
         };
         errorCheck( value );
-        modal.errorCheck();
-        
+        if ( modal.$modal !== undefined ) modal.errorCheck();
+
         $input.find('.item-text').on('blur', function(){
           const $this = $( this ),
                 val = $this.val();
           errorCheck( val );
-          modal.errorCheck();
+          if ( modal.$modal !== undefined ) modal.errorCheck();
         });
       }
       // タブ名と入力を合わせる
@@ -725,7 +775,8 @@ modalFunction.prototype = {
             'class': 'item-textarea ' + textarea.name + className,
             'placeholder' : textarea.placeholder,
             'text': value        
-          })
+          }),
+          ( textarea.note !== undefined )? $('<dd/>', {'class': 'item-note item-textarea-note', 'text':  textarea.note }): ''
         )
       );
       return $textarea;
@@ -735,14 +786,16 @@ modalFunction.prototype = {
     \* -------------------------------------------------- */
     'createReference': function( reference, tabNumber ){
       const $input = $('<dl/>', {'class': 'item-reference-block item-block'}),
-            value = this.searchValue( this.valueJSON, tabNumber + '-' + reference.target );
+            value = ( tabNumber !== undefined )? this.searchValue( this.valueJSON, tabNumber + '-' + reference.target ) : this.searchValue( this.valueJSON, reference.target ),
+            className = ( reference.class !== undefined )? ' ' + reference.class: '';
       $input.append(
         $('<dt/>', {'class': 'item-reference-title item-title', 'text': reference.title }),
         $('<dd/>', {'class': 'item-reference-area'}).append(
           $('<span/>', {
             'text': value,
-            'class': 'item-reference'
-          })
+            'class': 'item-reference' + className
+          }),
+          ( reference.note !== undefined )? $('<dd/>', {'class': 'item-note item-reference-note', 'text':  reference.note }): ''
         )
       );
       return $input;
@@ -753,14 +806,15 @@ modalFunction.prototype = {
     'createPassword': function( password, tabNumber ){
       const $input = $('<dl/>', {'class': 'item-password-block item-block'}),
             name = ( tabNumber !== undefined )? tabNumber + '-' + password.name: password.name,
-            value = this.searchValue( this.valueJSON, name );
+            value = this.searchValue( this.valueJSON, name ),
+            className = ( password.class !== undefined )? ' ' + password.class: '';
       $input.append(
         $('<dt/>', {'class': 'item-password-title item-title', 'text': password.title }),
         $('<dd/>', {'class': 'item-password-area'}).append(
           $('<input>', {
             'type': 'password',
             'name': name,
-            'class': 'item-password ' + password.name,
+            'class': 'item-password ' + password.name + className,
             'placeholder' : password.placeholder,
             'value': value
           }),
@@ -768,7 +822,7 @@ modalFunction.prototype = {
             'class': 'item-password-eye'
           }).append('<svg viewBox="0 0 64 64" class="workspace-button-svg"><use href="#icon-eye-close" /></svg>')
         ),
-        $('<dd/>', {'class': 'item-password-note'})
+        ( password.note !== undefined )? $('<dd/>', {'class': 'item-note item-password-note', 'text':  password.note }): ''
       );
       // パスワード入力マスク解除
       $input.find('.item-password-eye').on({
@@ -799,16 +853,17 @@ modalFunction.prototype = {
               $('<dd/>', {'class': 'item-radio-area'}).append(
                 $('<ul/>', {'class': 'item-radio-list'})
               ),
-              ( radio.note !== undefined )? $('<dd/>', {'class': 'item-radio-note'}): ''
+              ( radio.note !== undefined )? $('<dd/>', {'class': 'item-note item-radio-note', 'text':  radio.note }): ''
             ),
-            checkedValue = this.searchValue( this.valueJSON, radio.name ),
             name = ( tabNumber !== undefined )? tabNumber + '-' + radio.name: radio.name,
-            checked = ( checkedValue !== undefined )? radio.name + '-' + checkedValue: undefined;
+            checkedValue = this.searchValue( this.valueJSON, name ),
+            checked = ( checkedValue !== undefined )? name + '-' + checkedValue: undefined,
+            className = ( radio.class !== undefined )? ' ' + radio.class: '';
       for ( const key in radio.item ) {
         $radio.find('.item-radio-list').append(
           $('<li/>', {'class': 'item-radio-item'}).append(
             $('<input>', {
-              'class': 'item-radio',
+              'class': 'item-radio' + className,
               'type': 'radio',
               'id': name + '-' + key,
               'value': key,
@@ -830,40 +885,109 @@ modalFunction.prototype = {
       return $radio;
     },
     /* -------------------------------------------------- *\
+       自由
+    \* -------------------------------------------------- */
+    'createFreeItem': function( free, tabNumber ){
+      const $free = $('<dl/>', {'class': 'item-freeitem-block item-block'}),
+            name = ( tabNumber !== undefined )? tabNumber + '-' + free.name: free.name,
+            value = this.searchValue( this.valueJSON, name ),
+            list = ( value === undefined )? {'':''}: value,
+            listLength = Object.keys( list ).length,
+            className = ( free.class !== undefined )? ' ' + free.class: '';
+      
+      const addLine = function( key, value ){
+        return ''
+        + '<li class="item-freeitem-item">'
+          + '<div class="item-freeitem-item-move"></div>'
+          + '<div class="item-freeitem-item-name"><input class="item-freeitem-input item-text" type="text" value="' + key + '" placeholder="項目名を入力してください。"></div>'
+          + '<div class="item-freeitem-item-content"><input class="item-freeitem-input item-text" type="text" value="' + value + '" placeholder="項目内容を入力してください。"></div>'
+          + '<div class="item-freeitem-item-delete"></div>'
+        + '</li>';
+      };
+      
+      let inputHTML = '<ul class="item-freeitem-list">';
+      for ( let i = 0; i < listLength; i++ ) {
+        for ( const key in list ) {
+          inputHTML += addLine( key, list[key] );
+        }
+      }
+      inputHTML += '</ul>'
+      + '<ul class="item-freeitem-menu-list">'
+        + '<li class="item-freeitem-menu-item"><button class="epoch-button item-freeitem-add-button add" type="button">項目を追加する</button></li>'
+      + '</ul>';
+      
+      $free.append(
+        $('<dt/>', {'class': 'item-freeitem-title item-title', 'text': free.title }),
+        $('<dd/>', {'class': 'item-freeitem-area'}).append(
+          $('<div/>', {
+            'name': name,
+            'data-name': free.name,
+            'class': 'item-freeitem ' + free.name + className,
+            'html': inputHTML
+          })
+        )
+      );
+      
+      $free.find('.item-freeitem-add').on('click', function(){
+        $free.find('.item-freeitem-list').append( addLine('','') );
+      });
+      return $free;
+    },
+    /* -------------------------------------------------- *\
+       メッセージ
+    \* -------------------------------------------------- */
+    'createMessage': function( message ){
+      const $free = $('<dl/>', {'class': 'item-message-block item-block'}),
+            className = ( message.class !== undefined )? ' ' + message.class: '';
+      $free.append(
+        $('<dt/>', {'class': 'item-message-title item-title', 'text': message.title }),
+        $('<dd/>', {'class': 'item-message-area'}).append(
+          $('<div/>', {
+            'class': 'item-message ' + className,
+            'text': message.text
+          })
+        )
+      );
+      return $free;
+    },
+    /* -------------------------------------------------- *\
        入力内にエラーがあればOKボタンを無効化する
     \* -------------------------------------------------- */
     'errorCheck': function(){
-      const modal = this,
-            $okButton = modal.$modal.find('.modal-menu-button[data-button="ok"]');
-      if ( modal.$modal.find('.input-error').length ) {
-        $okButton.prop('disabled', true );
-      } else {
-        $okButton.prop('disabled', false );
+      const modal = this;
+      if ( modal.$modal !== undefined ) {
+        const $okButton = modal.$modal.find('.modal-menu-button[data-button="ok"]');
+        if ( modal.$modal.find('.input-error').length ) {
+          $okButton.prop('disabled', true );
+        } else {
+          $okButton.prop('disabled', false );
+        }
       }
     },
     /* -------------------------------------------------- *\
        対象のモーダル内のinputがすべて入力されているか
     \* -------------------------------------------------- */
-    'inputCheck': function( target ){
+    'inputCheck': function( jTarget ){
       let emptyNumber = 0;
       const modal = this,
-            block = this.modalJSON[target].block;
+            block = this.modalJSON[jTarget].block;
       
       const inputF = function( text, tabNumber ){
         const name = ( tabNumber !== undefined )? tabNumber + '-' + text.name: text.name,
               value = modal.searchValue( modal.valueJSON, name );
-        if ( value === undefined || value === '' || value === null ) emptyNumber++;      
+        // undefinedまたは空白の場合は未入力とする nullは無視
+        if ( value === undefined || value === '' ) emptyNumber++;      
       };
       const tabF = function( tab ){
         const  type = tab.type;
         if ( type === 'add' || type === 'reference') {
-        const target = modal.valueJSON[ tab.target.key1 ];
-        if ( Object.keys( target ).length > 0 ) {
-          for ( const key in target ) {
-            itemF( tab.item, key );
+          const target = modal.valueJSON[ tab.target.key1 ];
+          if ( Object.keys( target ).length > 0 ) {
+            for ( const key in target ) {
+              itemF( tab.item, key );
+            }
           }
         }
-      }
       };
       const itemF = function( item, tabNumber ){
         if ( item !== undefined ) {

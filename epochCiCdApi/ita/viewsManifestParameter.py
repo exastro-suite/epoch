@@ -232,7 +232,7 @@ def post(request):
             flgExists = False
             for idx_edit, row_edit in enumerate(maniparam_edit):
                 # 該当するrecord_noがあれば、チェックする
-                if  row_edit[str(column_indexes_common['record_no'])]:
+                if str(column_indexes_common['record_no']) in row_edit:
                     if row_edit[str(column_indexes_common['record_no'])] == row_maniparam[column_indexes_common['record_no']]:
                         flgExists = True
                         break

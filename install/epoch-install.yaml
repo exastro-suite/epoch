@@ -155,7 +155,7 @@ spec:
     spec:
       containers:
       - name: epoch-cicd-api
-        image: exastro/epochcicdapi:0.1.0_20210720_1626
+        image: exastro/epochcicdapi:0.1.0_20210805_1100
         env:
           - name: HTTP_PROXY
             valueFrom:
@@ -249,7 +249,7 @@ spec:
           name: epoch-rs-organization-conf
       containers:
       - name: epoch-rs-organization-api
-        image: exastro/epochrsorganizationapi:0.1.0_20210714_1120
+        image: exastro/epochrsorganizationapi:0.1.0_20210805_1100
         env:
         - name: CONFIG_API_ORGANIZATION_PATH
           value: "/etc/epoch/epochRsOrganizationApi/api_organization.conf"
@@ -333,7 +333,7 @@ spec:
           name: epoch-rs-workspace-conf
       containers:
       - name: epoch-rs-workspace-api
-        image: exastro/epochrsworkspaceapi:0.1.0_20210714_1120
+        image: exastro/epochrsworkspaceapi:0.1.0_20210805_1100
         env:
         - name: CONFIG_API_WORKSPACE_PATH
           value: "/etc/epoch/epochRsWorkspaceApi/api_workspace.conf"
@@ -443,7 +443,7 @@ spec:
     spec:
       containers:
       - name: epoch-service-api
-        image: exastro/epochserviceapi:0.1.0_20210714_1120
+        image: exastro/epochserviceapi:0.1.0_20210805_1100
         env:
         - name: PYTHONIOENCODING
           value: utf-8
@@ -583,7 +583,7 @@ spec:
           name: epoch-ui-conf
       containers:
       - name: epoch-ui
-        image: exastro/epochui:0.1.0_20210720_1633
+        image: exastro/epochui:0.1.0_20210805_1400
         volumeMounts:
         - name: epoch-ui-conf
           mountPath: /app/epoch/epochUi/common/js/config
@@ -1212,10 +1212,11 @@ spec:
       - name: mysqlconf-volume
         configMap:
           name: organization-db-myconf
-      - name: mysqldata
-        hostPath:
-          path: /var/data/epoch/organization_db/mysql
-          type: DirectoryOrCreate
+      # COMMENT OUT:Persistent data retention
+      #- name: mysqldata
+      #  hostPath:
+      #    path: /var/data/epoch/organization_db/mysql
+      #    type: DirectoryOrCreate
       - name: mysqlinitdb-volume
         configMap:
           name: organization-db-initdb
@@ -1223,8 +1224,9 @@ spec:
       - name: mysql
         image: mysql
         volumeMounts:
-        - name: mysqldata
-          mountPath: /var/lib/mysql
+        # COMMENT OUT:Persistent data retention
+        #- name: mysqldata
+        #  mountPath: /var/lib/mysql
         - name: mysqlconf-volume
           mountPath: /etc/mysql
         - name: mysqlinitdb-volume
@@ -4617,10 +4619,11 @@ spec:
       - name: mysqlconf-volume
         configMap:
           name: workspace-db-myconf
-      - name: mysqldata
-        hostPath:
-          path: /var/data/epoch/workspace_db/mysql
-          type: DirectoryOrCreate
+      # COMMENT OUT:Persistent data retention
+      #- name: mysqldata
+      #  hostPath:
+      #    path: /var/data/epoch/workspace_db/mysql
+      #    type: DirectoryOrCreate
       - name: mysqlinitdb-volume
         configMap:
           name: workspace-db-initdb
@@ -4628,8 +4631,9 @@ spec:
       - name: mysql
         image: mysql
         volumeMounts:
-        - name: mysqldata
-          mountPath: /var/lib/mysql
+        # COMMENT OUT:Persistent data retention
+        #- name: mysqldata
+        #  mountPath: /var/lib/mysql
         - name: mysqlconf-volume
           mountPath: /etc/mysql
         - name: mysqlinitdb-volume

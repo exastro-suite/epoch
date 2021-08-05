@@ -175,10 +175,10 @@ border-radius: 4px;
 .etf-si,
 .etf-sc {
 display: flex;
-flex: 0 0 40px;
+flex: 0 0 48px;
 justify-content: center;
 align-items: center;
-width: 40px; height: 28px;
+width: 48px; height: 28px;
 }
 .etf-si {
 border-right: 1px solid #DDD;
@@ -326,14 +326,14 @@ left: 0; top: 0;
 z-index: 9999;
 width: 100%; height: 100%;
 padding: 32px;
-background-color: rgba( 0,0,0,.5 );
+background-color: rgba( 255,255,255,.6 );
 }
 .etf-a {
 width: 100%; height: 100%;
 max-width: 640px;
 margin: 0 auto;
 background-color: #FFF;
-box-shadow: 0 0 16px rgb(0 0 0 / 30%);
+box-shadow: 0 0 16px rgb( 0,0,0,.3 );
 border-radius: 4px;
 }
 .etf-ah {
@@ -430,7 +430,6 @@ position: relative;
 z-index: 0;
 display: flex;
 justify-content: flex-start;
-flex-wrap: wrap;
 box-shadow: 0 0 0 1px #D2E8E4;
 }
 .et-b .et-r {
@@ -446,7 +445,7 @@ z-index: 0;
 display: flex;
 flex: 1 1 auto;
 align-items: center;
-min-width: 0;
+min-width: 0; min-height: 40px;
 text-align: left;
 }
 .et-h .et-c::after {
@@ -517,7 +516,68 @@ width: 16px; height: 100%;
 cursor: col-resize;
 }
 
-
+.et-c-hoverMenu {
+display: none;
+position: absolute;
+right: 0; top: 0;
+z-index: 100!important;
+padding: 8px;
+background-color: #FFF;
+}
+.et-c-hoverMenu .et-ci {
+padding: 0;
+}
+.et-r:nth-child(even) .et-c-hoverMenu {
+background-color: #F4F9F8;
+}
+.et-r:hover .et-c-hoverMenu {
+display: block;
+}
+.et-hm-l {
+padding-left: 16px;
+border-left: 1px solid #d2e8e4;
+letter-spacing: -0.4em;
+}
+.et-hm-i {
+display: inline-block;
+margin-right: 12px;
+letter-spacing: normal;
+vertical-align: middle;
+}
+.et-hm-i:last-child {
+margin-right: 0;
+}
+.et-hm-i.et-hm-s {
+margin-right: 12px;
+padding-right: 12px;
+border-right: 1px solid #d2e8e4;
+}
+.et-hm-b {
+width: 24px; height: 24px;
+margin: 0; padding: 0;
+background-color: transparent;
+border: none;
+cursor: pointer;
+}
+.et-hm-i {
+fill: #FFA500;
+}
+.et-hm-b[data-button="delete"] .et-hm-i {
+fill: #E00;
+}
+.et-hm-i:hover {
+transform: scale(1.04);
+}
+.et-hm-i:active {
+transform: scale(0.98);
+}
+.et-hm-i:disabled {
+cursor: default;
+transform: scale(1) !important;
+background-color: #F2F2F2;
+border-color: #CCC;
+}
+    
 /* ステータスアイコン */
 .et-si {
 position: relative;
@@ -920,4 +980,37 @@ border-left-color: #CCC;
 .etp-b[data-button="start"]:disabled::after,
 .etp-b[data-button="end"]:disabled::after {
 background-color: #CCC;
+}
+.et-nd {
+width: 100%; height: 100%;
+padding: 8px;
+}
+.et-ndi {
+overflow: hidden;
+position: relative;
+z-index: 0;
+display: flex;
+align-items: center;
+justify-content: center;
+width: 100%; height: 100%;
+background-color: #E9F4F2;
+border: 4px double #8FC6BC;
+border-radius: 4px;
+color: #1F8C78;
+}
+.et-ndi::before,
+.et-ndi::after {
+content: '';
+display: block;
+position: absolute;
+left: 50%; top: 50%;
+z-index: -1;
+transform: translate(-50%,-50%) rotate(45deg);
+width: 100%;
+padding-bottom: 50%;
+border: 4px solid #D2E8E4;
+border-radius: 50%;
+}
+.et-ndi::after {
+transform: translate(-50%,-50%) rotate(-45deg);
 }
