@@ -471,7 +471,7 @@ const wsModalJSON = {
                 'internal': '内部クラスタ',
                 'external': '外部クラスタ'
               },
-              'note': 'デプロイ先がEPOCHと同じクラスタのときは内部クラスタ、以外のクラスタのときは外部クラスタを選択してください'
+              'note': 'Deploy先がEPOCHと同じクラスタのときは「内部クラスタ」、以外のクラスタのときは「外部クラスタ」を選択してください'
             },  
             'environmentURL': {
               'type': 'input',
