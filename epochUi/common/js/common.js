@@ -66,10 +66,12 @@ function initialScreen() {
        title属性ポップアップ
     \* -------------------------------------------------- */
     $body.on({
-      'mouseenter': function(){
+      'mouseenter.popup': function(){
         const $target = $( this ),
               title = $target.attr('title');
         if ( title !== undefined ) {
+          // buttonかつdisabledの場合
+          if ( $target.is('button') && $target.prop('disabled') === true ) return false;        
           // デフォルトtitileを無効にするためいったん削除
           $target.removeAttr('title');
           
@@ -114,17 +116,18 @@ function initialScreen() {
             'left': l,
             'top': t
           });
-          
+
+          $target.on({
+            'mouseleave.popup': function(){
+              const $popup = $body.find('.epoch-popup-block, .epoch-popup-m-block'),
+                    title = $popup.text();
+              $popup.remove();
+
+              // titleを戻す
+              $target.off('mouseleave.popup').attr('title', title );        
+            }
+          });          
         }
-      },
-      'mouseleave': function(){
-        const $target = $( this ),
-              $popup = $body.find('.epoch-popup-block, .epoch-popup-m-block'),
-              title = $popup.text();
-        $popup.remove();
-        
-        // titleを戻す
-        $target.attr('title', title );        
       }
     }, '.epoch-popup, .epoch-popup-m');
 

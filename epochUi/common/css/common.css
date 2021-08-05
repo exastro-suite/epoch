@@ -304,6 +304,11 @@ width: 40px;
 flex: 0 0 40px;
 padding-right: 16px
 }
+.content-header-menu {
+flex: 0 0 auto;
+margin-left: auto;
+padding-left: 16px
+}
 .content-title-heading {
 overflow: hidden;
 width: 100%;
@@ -314,6 +319,13 @@ font-weight: normal;
 font-size: 180%;
 color: #333;
 }
+.content-title-svg {
+display: inline-block;
+width: 24px; height: 24px;
+margin-right: 8px;
+vertical-align: -2px;
+fill: #666;
+}
 .content-note-inner {
 overflow: hidden;
 padding: 0 16px;
@@ -322,30 +334,55 @@ text-overflow: ellipsis;
 font-size: 100%;
 color: #555;
 }
-.content-menu {
-background-color: #FFF;
-text-align: right;
-}
 .content-menu-list {
 letter-spacing: -0.4em;
 }
 .content-menu-item {
 display: inline-block;
+margin-right: 16px;
 letter-spacing: normal;
+vertical-align: middle;
+}
+.content-menu-item:last-child {
+margin-right: 0;
 }
 .content-menu-button {
-padding: 4px 24px;
+display: block;
+width: 28px;
+height: 28px;
+margin: 0 auto;
+padding: 0;
+background-color: transparent;
+border: none;
+}
+.content-menu-button-svg {
+fill: #F7931E;
+}
+.content-menu-button .button-plus {
+position: absolute;
+z-index: 1;
+right: -6px; bottom: -6px;
+width: 14px; height: 14px;
 background-color: #FFF;
-border: 1px solid #065FD4;
-border-radius: 32px;
-color: #065FD4;
-cursor: pointer;
+border: 1px solid #F7931E;
+border-radius: 50%;
+box-shadow: 0 0 0 2px #FFF;
 }
-.content-menu-button:hover {
-background-color: #065FD4;
-color: #FFF;
+.content-menu-button .button-plus::before,
+.content-menu-button .button-plus::after {
+content: '';
+display: block;
+position: absolute;
+z-index: 2;
+left: 50%; top: 50%;
+transform: translate(-50%,-50%);
+width: 2px; height: 8px;
+background-color: #F7931E;
 }
-
+.content-menu-button .button-plus::after {
+transform: translate(-50%,-50%) rotate(90deg);
+}
+  
 .content-body {
 height: calc( 100% - 84px );
 }
@@ -658,8 +695,13 @@ border-color: #AAA;
 color: #555;
 text-shadow: none;
 }
+.epoch-button.danger {
+background-color: #D00;
+border-color: #B00;
+}
+.epoch-button.item-freeitem-add-button,
 .epoch-button.modal-block-button {
-height: 28px;
+height: 24px;
 background-color: #F9A94B;
 border-color: #DE841B;
 }
@@ -700,19 +742,22 @@ padding: 0 8px;
 }
 
 .workspace-button,
-.workspace-document-button {
+.workspace-document-button,
+.content-menu-button {
 position: relative;
 outline: none;
 cursor: pointer;
 }
 .workspace-button:hover,
 .workspace-setting-button:hover,
-.workspace-document-button:hover {
+.workspace-document-button:hover,
+.content-menu-button:hover {
 transform: scale(1.05);
 }
 .workspace-button:active,
 .workspace-setting-button:active,
-.workspace-document-button:active {
+.workspace-document-button:active,
+.content-menu-button:active {
 transform: scale(.95);
 }
 .item-parameter::after,
