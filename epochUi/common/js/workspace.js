@@ -1444,10 +1444,13 @@ const templateFileList = function(){
   
   if ( fileLength > 0 ) {
     for ( let i = 0; i < fileLength; i++ ) {
+      // var update_at = (new Date(fn.textEntities(fileList[i]["update_at"]))).toLocaleString('ja-JP');
+      var update_at = "";
+
       listHtml += ''
       + '<tr class="c-table-row">'
       + '<td class="template-name c-table-col"><div class="c-table-ci">' + fn.textEntities(fileList[i]["file_name"]) + '</div></td>'
-      + '<td class="template-date c-table-col"><div class="c-table-ci"></div></td>'
+      + '<td class="template-date c-table-col"><div class="c-table-ci">' + update_at + '</td>'
       + '<td class="template-user c-table-col"><div class="c-table-ci"></div></td>'
       + '<td class="template-note c-table-col"><div class="c-table-ci">' + fn.textEntities(fileList[i]["file_text"]) + '</div></td>'
       + '<td class="template-menu c-table-col"><div class="c-table-ci">'
@@ -1622,6 +1625,7 @@ const templateFileSelect = function( type ){
                         'file_id':  data['rows'][fileidx]['id'],
                         'file_name':  data['rows'][fileidx]['file_name'],
                         'file_text':  data['rows'][fileidx]['file_text'],
+                        'update_at':  data['rows'][fileidx]['update_at'],
                       };
                     }
                     // アップロードが完了したら
@@ -1763,6 +1767,7 @@ function templateFileDelete(key, file_id){
           'file_id':  data['rows'][fileidx]['id'],
           'file_name':  data['rows'][fileidx]['file_name'],
           'file_text':  data['rows'][fileidx]['file_text'],
+          'update_at':  data['rows'][fileidx]['update_at'],
         };
       }
 
@@ -2637,6 +2642,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
             'file_id':  data['rows'][fileidx]['id'],
             'file_name': data['rows'][fileidx]['file_name'],
             'file_text': data['rows'][fileidx]['file_text'],
+            'update_at':  data['rows'][fileidx]['update_at'],
           };
         }
 
