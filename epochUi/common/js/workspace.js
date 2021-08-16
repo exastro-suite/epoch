@@ -2521,11 +2521,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
   var workspace_id = null;
 
   // window onloadイベント
-  window.onload = function()
-  {
-    // ワークスペース情報の読み込み
-    getWorksapce();
-  }
+  $(document).ready(function(){ getWorksapce(); });
 
   //$(document).ready(function(){
   // リセットボタン処理
