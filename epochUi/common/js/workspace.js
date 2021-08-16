@@ -468,10 +468,10 @@ const wsModalJSON = {
               'name': 'environment-deploy-select',
               'class': 'input-pickup-select',
               'item': {
-                'internal': '内部クラスタ',
-                'external': '外部クラスタ'
+                'internal': 'EPOCHと同じKubernetes',
+                'external': '以外のKubernetes'
               },
-              'note': 'Deploy先がEPOCHと同じクラスタのときは「内部クラスタ」、以外のクラスタのときは「外部クラスタ」を選択してください'
+              'note': 'Deploy先のKubernetesを選択してください'
             },  
             'environmentURL': {
               'type': 'input',
