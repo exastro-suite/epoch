@@ -155,7 +155,7 @@ spec:
     spec:
       containers:
       - name: epoch-cicd-api
-        image: exastro/epochcicdapi:0.1.0_20210817_1150
+        image: exastro/epochcicdapi:0.1.0_20210817_1723
         env:
           - name: HTTP_PROXY
             valueFrom:
