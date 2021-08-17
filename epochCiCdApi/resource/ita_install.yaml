@@ -18,7 +18,11 @@ metadata:
   name: epoch-ita-conf
 data:
   ita_table_update.sql: |
-    UPDATE A_ACCOUNT_LIST SET PW_LAST_UPDATE_TIME = '2999-12-31 23:59:58' WHERE USER_ID = 1;
+    UPDATE A_ACCOUNT_LIST
+    SET
+      PW_LAST_UPDATE_TIME = '2999-12-31 23:59:58',
+      PASSWORD = 'e2af70b260b03a8f66b8f276fa0246c7'
+    WHERE USER_ID = 1;
 
 ---
 apiVersion: apps/v1
