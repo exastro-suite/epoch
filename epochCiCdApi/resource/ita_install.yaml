@@ -75,6 +75,7 @@ spec:
     - name: "10483"
       port: 10483
       targetPort: 443
+      nodePort: 30805
 
 ---
 apiVersion: apps/v1
