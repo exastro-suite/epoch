@@ -76,7 +76,7 @@ def post(request):
                     "url": webHooksUrl,
                     "content_type":"json",
                     "secret":"",
-                    "insecure_ssl":"0",
+                    "insecure_ssl":"1",
                     "token":"token",
                     "digest":"digest",
                 }
