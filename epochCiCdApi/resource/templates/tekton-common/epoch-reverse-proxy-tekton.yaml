@@ -29,7 +29,7 @@ spec:
     spec:
       containers:
       - name: epoch-reverse-proxy-tekton
-        image: exastro/epochrevproxy:test_01
+        image: exastro/epochrevproxytekton:0.1.0_20210818_1615
 
 ---
 apiVersion: v1
@@ -42,18 +42,10 @@ metadata:
 spec:
   type: NodePort
   ports:
-  - name: dashboad-http
-    port: 9097
-    targetPort: 9097
-    nodePort: 30901
   - name: dashboad-https
     port: 4430
     targetPort: 4430
     nodePort: 30801
-  - name: eventlistener-http
-    port: 8000
-    targetPort: 8000
-    nodePort: 30904
   - name: eventlistener-https
     port: 4431
     targetPort: 4431
