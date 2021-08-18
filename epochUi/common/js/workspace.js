@@ -2919,7 +2919,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         'git_repositry' :  {
           'url' :             (wsDataJSON['application-code'][i][i+'-git-repository-url']? wsDataJSON['application-code'][i][i+'-git-repository-url'] : ""),
         },
-        'webhooks_url'   :  location.protocol + "//" + location.hostname,
+        'webhooks_url'   :  "https://" + location.hostname,
         'build' : {
           'branch' :          (wsDataJSON['application-code'][i][i+'-pipeline-tekton-branch']? wsDataJSON['application-code'][i][i+'-pipeline-tekton-branch'].split(','): []),
           'dockerfile_path' : (wsDataJSON['application-code'][i][i+'-pipeline-tekton-docker-path']? wsDataJSON['application-code'][i][i+'-pipeline-tekton-docker-path'] : ""),
