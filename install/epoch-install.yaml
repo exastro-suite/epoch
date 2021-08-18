@@ -155,7 +155,7 @@ spec:
     spec:
       containers:
       - name: epoch-cicd-api
-        image: exastro/epochcicdapi:0.1.0_20210818_1224
+        image: exastro/epochcicdapi:0.1.0_20210818_1500
         env:
           - name: HTTP_PROXY
             valueFrom:
@@ -497,14 +497,21 @@ data:
   workspace_api_conf.js: |
     var location_host = window.location.hostname;
     var location_prot = window.location.protocol;
+
     var api_port = "30081";
     var api_url_base = location_prot + "//" + location_host + ":" + api_port
+
+    if ( location_prot == "https:" ) {
+      api_port = window.location.port;
+      api_url_base = location_prot + "//" + location_host + ":" + api_port + "/api"
+    }
+
     var workspace_api_conf = {
         "links" : {
-            "tekton"    : location_prot + "//" + location_host + ":30901/",
+            "tekton"    : location_prot + "//" + location_host + ":" + (location_prot == "https:"? "30801": "30901") + "/",
             "registry"  : "https://hub.docker.com/repositories",
-            "argo"      : location_prot + "//" + location_host + ":30906/",
-            "ita"       : location_prot + "//" + location_host + ":30905/",
+            "argo"      : location_prot + "//" + location_host + ":" + "30906" + "/",
+            "ita"       : location_prot + "//" + location_host + ":" + (location_prot == "https:"? "30805": "30905") + "/",
         },
         "test": {
             "default_workspace_id": 1
@@ -541,8 +548,14 @@ data:
   organization_api_conf.js: |
     var location_host = window.location.hostname;
     var location_prot = window.location.protocol;
+
     var api_port = "30081";
     var api_url_base = location_prot + "//" + location_host + ":" + api_port
+
+    if ( location_prot == "https:" ) {
+      api_port = window.location.port;
+      api_url_base = location_prot + "//" + location_host + ":" + api_port + "/api"
+    }
 
     console.log('api_url_base:' + api_url_base);
 
@@ -583,7 +596,7 @@ spec:
           name: epoch-ui-conf
       containers:
       - name: epoch-ui
-        image: exastro/epochui:0.1.0_20210816_1620
+        image: exastro/epochui:0.1.0_20210818_1430
         volumeMounts:
         - name: epoch-ui-conf
           mountPath: /app/epoch/epochUi/common/js/config
@@ -603,6 +616,10 @@ spec:
     port: 8000
     targetPort: 8000
     nodePort: 30080
+  - name: https
+    port: 4430
+    targetPort: 4430
+    nodePort: 30443
   selector:
     name: epoch-ui
 
