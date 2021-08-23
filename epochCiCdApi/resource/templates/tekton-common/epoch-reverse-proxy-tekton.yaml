@@ -1,0 +1,54 @@
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: epoch-reverse-proxy-tekton
+  namespace: epoch-tekton-pipelines
+spec:
+  selector:
+    matchLabels:
+      name: epoch-reverse-proxy-tekton
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: epoch-reverse-proxy-tekton
+    spec:
+      containers:
+      - name: epoch-reverse-proxy-tekton
+        image: exastro/epochrevproxytekton:0.1.0_20210818_1615
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: epoch-reverse-proxy-tekton
+  labels:
+    name: epoch-reverse-proxy-tekton
+  namespace: epoch-tekton-pipelines
+spec:
+  type: NodePort
+  ports:
+  - name: dashboad-https
+    port: 4430
+    targetPort: 4430
+    nodePort: 30801
+  - name: eventlistener-https
+    port: 4431
+    targetPort: 4431
+    nodePort: 30804
+  selector:
+    name: epoch-reverse-proxy-tekton

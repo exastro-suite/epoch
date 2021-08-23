@@ -468,10 +468,10 @@ const wsModalJSON = {
               'name': 'environment-deploy-select',
               'class': 'input-pickup-select',
               'item': {
-                'internal': '内部クラスタ',
-                'external': '外部クラスタ'
+                'internal': 'EPOCHと同じKubernetes',
+                'external': '以外のKubernetes'
               },
-              'note': 'Deploy先がEPOCHと同じクラスタのときは「内部クラスタ」、以外のクラスタのときは「外部クラスタ」を選択してください'
+              'note': 'Deploy先のKubernetesを選択してください'
             },  
             'environmentURL': {
               'type': 'input',
@@ -2521,11 +2521,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
   var workspace_id = null;
 
   // window onloadイベント
-  window.onload = function()
-  {
-    // ワークスペース情報の読み込み
-    getWorksapce();
-  }
+  $(document).ready(function(){ getWorksapce(); });
 
   //$(document).ready(function(){
   // リセットボタン処理
@@ -2923,7 +2919,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         'git_repositry' :  {
           'url' :             (wsDataJSON['application-code'][i][i+'-git-repository-url']? wsDataJSON['application-code'][i][i+'-git-repository-url'] : ""),
         },
-        'webhooks_url'   :  location.protocol + "//" + location.hostname,
+        'webhooks_url'   :  "https://" + location.hostname,
         'build' : {
           'branch' :          (wsDataJSON['application-code'][i][i+'-pipeline-tekton-branch']? wsDataJSON['application-code'][i][i+'-pipeline-tekton-branch'].split(','): []),
           'dockerfile_path' : (wsDataJSON['application-code'][i][i+'-pipeline-tekton-docker-path']? wsDataJSON['application-code'][i][i+'-pipeline-tekton-docker-path'] : ""),

@@ -482,7 +482,11 @@ border: none;
 display: block;
 width: 100%; height: 100%;
 }
-
+.workspace-document-button:disabled {
+  cursor: default!important;
+  transform: scale(1)!important;
+  opacity: .2;
+}
 
 .workspace-area {
 position: relative;
@@ -536,7 +540,7 @@ font-size: 11px;
 color: #555;
 }
 .multiple-number {
-right: -12px; top: -8px;
+right: -12px; top: -16px;
 padding: 0 8px 1px 20px;
 background-color: var(--ci-color);
 box-shadow: 1px 1px 1px rgba( 0,0,0,.1 );
@@ -724,21 +728,90 @@ border-color: transparent;
 
 .item-parameter-block {
 overflow: hidden;
-display: flex;
 background-color: #F2F2F2;
 border: 1px solid #CCC;
 border-radius: 4px;
 }
-.item-parameter-select {
-width: 40%;
-background-color: #F2F2F2;
-border-left: 1px dashed #CCC;
+.item-parameter-input-area {
+width: 100%; height: 50%;
+background-color: #FFF;
+border-bottom: 1px solid #CCC;
+}
+.item-parameter-table {
+position: relative;
+display: block;
+overflow: auto;
+width: 100%; height: 100%;
+}
+.item-parameter-table thead,
+.item-parameter-table tbody {
+display: inline-block;
+min-width: 100%;
+vertical-align: top;
+}
+.item-parameter-table thead {
+position: sticky;
+top: 0; left: 0;
+z-index: 20;
+background-color: #4CA393;
+}
+.item-parameter-row {
+display: flex;
+min-width: 100%;
+border-bottom: 1px solid #d2e8e4;
+}
+thead th.item-parameter-cell {
+background-color: #4CA393;
+}
+.item-parameter-cell {
+display: flex;
+align-items: center;
+flex: 0 0 240px;
+position: relative;
+width: 240px;
+padding: 4px;
+text-align: left;
+}
+thead .item-parameter-cell::after {
+content: '';
+display: block;
+position: absolute;
+right: 0; top: 4px;
+width: 1px; height: calc( 100% - 8px );
+background-color: #8FC6BC;
+}
+thead .item-parameter-cell:last-child::after {
+display: none;
+}
+.item-parameter-cell-i {
+overflow: hidden;
+width: 100%;
+flex: 0 0 100%;
+padding: 4px 8px;
+text-overflow: ellipsis;
+white-space: nowrap;
+}
+.item-parameter-input-w {
+width: 100%;
+}
+thead .item-parameter-cell {
+color: #FFF;
+font-weight: normal;
+}
+th.item-parameter-cell:first-child {
+position: sticky;
+left: 0;
+z-index: 10;
+}
+tbody th.item-parameter-cell {
+background-color: #E9F4F2;
+border-right: 1px solid #d2e8e4;
+color: #197060;
 }
 .item-parameter-code {
+position: relative;
 overflow: scroll;
-width: 60%;
-margin: 8px;
-border: 1px solid #AAA;
+width: 100%; height: 50%;
 }
 .item-parameter-pre.prettyprint {
 min-height: 100%;
@@ -799,14 +872,16 @@ color: #8A2BE2;
 position: relative;
 display: inline-block;
 padding: 0px 4px;
-border-bottom: 1px solid #FF7423;
 line-height: 1;
 vertical-align: middle;
-cursor: pointer;
 }
 .preview-parameter {
 border-bottom: none;
 cursor: default;
+}
+.item-parameter.select {
+background-color: #FFFFCC;
+border-bottom: 1px solid #FF7423;
 }
 .item-parameter,
 .item-parameter > *,

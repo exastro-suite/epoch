@@ -125,7 +125,8 @@ def postCommon(request):
 
 
         # 対象となるYamlを定義
-        yamls = [ "pipeline-sa-and-rbac.yaml",
+        yamls = [ "epoch-reverse-proxy-tekton.yaml",
+                  "pipeline-sa-and-rbac.yaml",
                   "pipeline-ws-pvc.yaml",
                   "trigger-rbac.yaml",
                   "trigger-secret.yaml" ]
