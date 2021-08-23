@@ -59,12 +59,29 @@ column_names_manifest_param = {
     'operation_id' : 'オペレーション/ID',
     'operation' : 'オペレーション/オペレーション',
     'indexes' : '代入順序',
-    'replicas' : 'パラメータ/replicas',
-    'image' : 'パラメータ/image',
-    'image_tag' : 'パラメータ/image_tag',
-    'port_no_active' : 'パラメータ/port_no_active',
-    'port_no_preview' : 'パラメータ/port_no_preview',
-    'template_name' : 'パラメータ/template_name',
+    'image' : 'パラメータ/固定パラメータ/image',
+    'image_tag' : 'パラメータ/固定パラメータ/image_tag',
+    'param01' : 'パラメータ/汎用パラメータ/param01',
+    'param02' : 'パラメータ/汎用パラメータ/param02',
+    'param03' : 'パラメータ/汎用パラメータ/param03',
+    'param04' : 'パラメータ/汎用パラメータ/param04',
+    'param05' : 'パラメータ/汎用パラメータ/param05',
+    'param06' : 'パラメータ/汎用パラメータ/param06',
+    'param07' : 'パラメータ/汎用パラメータ/param07',
+    'param08' : 'パラメータ/汎用パラメータ/param08',
+    'param09' : 'パラメータ/汎用パラメータ/param09',
+    'param10' : 'パラメータ/汎用パラメータ/param10',
+    'param11' : 'パラメータ/汎用パラメータ/param11',
+    'param12' : 'パラメータ/汎用パラメータ/param12',
+    'param13' : 'パラメータ/汎用パラメータ/param13',
+    'param14' : 'パラメータ/汎用パラメータ/param14',
+    'param15' : 'パラメータ/汎用パラメータ/param15',
+    'param16' : 'パラメータ/汎用パラメータ/param16',
+    'param17' : 'パラメータ/汎用パラメータ/param17',
+    'param18' : 'パラメータ/汎用パラメータ/param18',
+    'param19' : 'パラメータ/汎用パラメータ/param19',
+    'param20' : 'パラメータ/汎用パラメータ/param20',
+    'template_name' : 'パラメータ/固定パラメータ/template_name',
     'lastupdate' : '更新用の最終更新日時',
 }
 
@@ -155,23 +172,74 @@ def post(request):
 
             for idx_manifile, row_manifile in enumerate(environment['manifests']):
 
-                replicas = None
                 image = None
                 image_tag = None
-                port_no_active = None
-                port_no_preview = None
+                param01 = None
+                param02 = None
+                param03 = None
+                param04 = None
+                param05 = None
+                param06 = None
+                param07 = None
+                param08 = None
+                param09 = None
+                param10 = None
+                param11 = None
+                param12 = None
+                param13 = None
+                param14 = None
+                param15 = None
+                param16 = None
+                param17 = None
+                param18 = None
+                param19 = None
+                param20 = None
                 # parameters成型
                 for key, value in row_manifile['parameters'].items():
-                    if key == 'replicas':
-                        replicas = value
-                    elif key == 'image':
+                    if key == 'image':
                         image = value
                     elif key == 'image_tag':
                         image_tag = value
-                    elif key == 'port_no_active':
-                        port_no_active = value
-                    elif key == 'port_no_preview':
-                        port_no_preview = value
+                    elif key == 'param01':
+                        param01 = value
+                    elif key == 'param02':
+                        param02 = value
+                    elif key == 'param03':
+                        param03 = value
+                    elif key == 'param04':
+                        param04 = value
+                    elif key == 'param05':
+                        param05 = value
+                    elif key == 'param06':
+                        param06 = value
+                    elif key == 'param07':
+                        param07 = value
+                    elif key == 'param08':
+                        param08 = value
+                    elif key == 'param09':
+                        param09 = value
+                    elif key == 'param10':
+                        param10 = value
+                    elif key == 'param11':
+                        param11 = value
+                    elif key == 'param12':
+                        param12 = value
+                    elif key == 'param13':
+                        param13 = value
+                    elif key == 'param14':
+                        param14 = value
+                    elif key == 'param15':
+                        param15 = value
+                    elif key == 'param16':
+                        param16 = value
+                    elif key == 'param17':
+                        param17 = value
+                    elif key == 'param18':
+                        param18 = value
+                    elif key == 'param19':
+                        param19 = value
+                    elif key == 'param20':
+                        param20 = value
 
                 # 既存データ確認
                 maniparam_id = -1
@@ -191,11 +259,28 @@ def post(request):
                             str(column_indexes_maniparam['host']) : param_value_host,
                             str(column_indexes_maniparam['operation']) : format_opration_info(opelist_json['resultdata']['CONTENTS']['BODY'][idx_ope], column_indexes_opelist),
                             str(column_indexes_maniparam['indexes']) : idx_manifile + 1,
-                            str(column_indexes_maniparam['replicas']) : replicas,
                             str(column_indexes_maniparam['image']) : image,
                             str(column_indexes_maniparam['image_tag']) : image_tag,
-                            str(column_indexes_maniparam['port_no_active']) : port_no_active,
-                            str(column_indexes_maniparam['port_no_preview']) : port_no_preview,
+                            str(column_indexes_maniparam['param01']) : param01,
+                            str(column_indexes_maniparam['param02']) : param02,
+                            str(column_indexes_maniparam['param03']) : param03,
+                            str(column_indexes_maniparam['param04']) : param04,
+                            str(column_indexes_maniparam['param05']) : param05,
+                            str(column_indexes_maniparam['param06']) : param06,
+                            str(column_indexes_maniparam['param07']) : param07,
+                            str(column_indexes_maniparam['param08']) : param08,
+                            str(column_indexes_maniparam['param09']) : param09,
+                            str(column_indexes_maniparam['param10']) : param10,
+                            str(column_indexes_maniparam['param11']) : param11,
+                            str(column_indexes_maniparam['param12']) : param12,
+                            str(column_indexes_maniparam['param13']) : param13,
+                            str(column_indexes_maniparam['param14']) : param14,
+                            str(column_indexes_maniparam['param15']) : param15,
+                            str(column_indexes_maniparam['param16']) : param16,
+                            str(column_indexes_maniparam['param17']) : param17,
+                            str(column_indexes_maniparam['param18']) : param18,
+                            str(column_indexes_maniparam['param19']) : param19,
+                            str(column_indexes_maniparam['param20']) : param20,
                             str(column_indexes_maniparam['template_name']) : '"{{ TPF_epoch_template_yaml' + str(idx_manifile + 1) + ' }}"',
                         }
                     )
@@ -211,11 +296,28 @@ def post(request):
                             str(column_indexes_maniparam['host']) : maniparam_json['resultdata']['CONTENTS']['BODY'][idx_maniparam][column_indexes_maniparam['host']],
                             str(column_indexes_maniparam['operation']) : maniparam_json['resultdata']['CONTENTS']['BODY'][idx_maniparam][column_indexes_maniparam['operation']],
                             str(column_indexes_maniparam['indexes']) : maniparam_json['resultdata']['CONTENTS']['BODY'][idx_maniparam][column_indexes_maniparam['indexes']],
-                            str(column_indexes_maniparam['replicas']) : replicas,
                             str(column_indexes_maniparam['image']) : image,
                             str(column_indexes_maniparam['image_tag']) : image_tag,
-                            str(column_indexes_maniparam['port_no_active']) : port_no_active,
-                            str(column_indexes_maniparam['port_no_preview']) : port_no_preview,
+                            str(column_indexes_maniparam['param01']) : param01,
+                            str(column_indexes_maniparam['param02']) : param02,
+                            str(column_indexes_maniparam['param03']) : param03,
+                            str(column_indexes_maniparam['param04']) : param04,
+                            str(column_indexes_maniparam['param05']) : param05,
+                            str(column_indexes_maniparam['param06']) : param06,
+                            str(column_indexes_maniparam['param07']) : param07,
+                            str(column_indexes_maniparam['param08']) : param08,
+                            str(column_indexes_maniparam['param09']) : param09,
+                            str(column_indexes_maniparam['param10']) : param10,
+                            str(column_indexes_maniparam['param11']) : param11,
+                            str(column_indexes_maniparam['param12']) : param12,
+                            str(column_indexes_maniparam['param13']) : param13,
+                            str(column_indexes_maniparam['param14']) : param14,
+                            str(column_indexes_maniparam['param15']) : param15,
+                            str(column_indexes_maniparam['param16']) : param16,
+                            str(column_indexes_maniparam['param17']) : param17,
+                            str(column_indexes_maniparam['param18']) : param18,
+                            str(column_indexes_maniparam['param19']) : param19,
+                            str(column_indexes_maniparam['param20']) : param20,
                             str(column_indexes_maniparam['template_name']) : maniparam_json['resultdata']['CONTENTS']['BODY'][idx_maniparam][column_indexes_maniparam['template_name']],
                             str(column_indexes_maniparam['lastupdate']) : maniparam_json['resultdata']['CONTENTS']['BODY'][idx_maniparam][column_indexes_maniparam['lastupdate']],
                         }

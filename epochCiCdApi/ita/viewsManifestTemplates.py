@@ -113,9 +113,28 @@ def post(request):
             tmp_data['0'] = "登録"
             tmp_data['3'] = "TPF_epoch_template_yaml" + str(tpl_cnt)
             tmp_data['4'] = req_data[i]["file_name"]
-            tmp_data['5'] = "VAR_replicas:\n"\
-                            "VAR_image:\n"\
-                            "VAR_image_tag:"
+            tmp_data['5'] = "VAR_image:\n"\
+                            "VAR_image_tag:\n"\
+                            "VAR_param01:\n"\
+                            "VAR_param02:\n"\
+                            "VAR_param03:\n"\
+                            "VAR_param04:\n"\
+                            "VAR_param05:\n"\
+                            "VAR_param06:\n"\
+                            "VAR_param07:\n"\
+                            "VAR_param08:\n"\
+                            "VAR_param09:\n"\
+                            "VAR_param10:\n"\
+                            "VAR_param11:\n"\
+                            "VAR_param12:\n"\
+                            "VAR_param13:\n"\
+                            "VAR_param14:\n"\
+                            "VAR_param15:\n"\
+                            "VAR_param16:\n"\
+                            "VAR_param17:\n"\
+                            "VAR_param18:\n"\
+                            "VAR_param19:\n"\
+                            "VAR_param20:"
 
             edit_data[str(i)] = tmp_data
             edit_data["UPLOAD_FILE"].append({"4": base64.b64encode(req_data[i]["file_text"].encode()).decode()})
@@ -127,9 +146,28 @@ def post(request):
             tmp_data[0] = "更新"
             tmp_data[3] = "TPF_epoch_template_yaml" + str(tpl_cnt)
             tmp_data[4] = req_data[i]["file_name"]
-            tmp_data[5] = "VAR_replicas:\n"\
-                          "VAR_image:\n"\
-                          "VAR_image_tag:"
+            tmp_data[5] = "VAR_image:\n"\
+                          "VAR_image_tag:\n"\
+                          "VAR_param01:\n"\
+                          "VAR_param02:\n"\
+                          "VAR_param03:\n"\
+                          "VAR_param04:\n"\
+                          "VAR_param05:\n"\
+                          "VAR_param06:\n"\
+                          "VAR_param07:\n"\
+                          "VAR_param08:\n"\
+                          "VAR_param09:\n"\
+                          "VAR_param10:\n"\
+                          "VAR_param11:\n"\
+                          "VAR_param12:\n"\
+                          "VAR_param13:\n"\
+                          "VAR_param14:\n"\
+                          "VAR_param15:\n"\
+                          "VAR_param16:\n"\
+                          "VAR_param17:\n"\
+                          "VAR_param18:\n"\
+                          "VAR_param19:\n"\
+                          "VAR_param20:"
 
             edit_data[str(i)] = tmp_data
             edit_data["UPLOAD_FILE"].append({"4": base64.b64encode(req_data[i]["file_text"].encode()).decode()})
