@@ -34,7 +34,7 @@ data:
             "tekton"    : location_prot + "//" + location_host + ":" + (location_prot == "https:"? "30801": "30901") + "/",
             "registry"  : "https://hub.docker.com/repositories",
             "argo"      : location_prot + "//" + location_host + ":" + "30906" + "/",
-            "ita"       : location_prot + "//" + location_host + ":" + (location_prot == "https:"? "30805": "30905") + "/",
+            "ita"       : location_prot + "//" + location_host + ":" + (location_prot == "https:"? "30805": "30905") + "/default/menu/01_browse.php?no=2100180006",
         },
         "test": {
             "default_workspace_id": 1
