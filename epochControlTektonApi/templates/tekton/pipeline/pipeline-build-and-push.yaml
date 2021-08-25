@@ -36,8 +36,6 @@ spec:
     - name: pipeline_run_name
     - name: pipeline_run_uid
   tasks:
-    # ステップ #0
-    # 初期処理
     - name: task-start
       taskRef:
         name: pipeline-task-start
@@ -65,8 +63,6 @@ spec:
           value: "$(context.pipelineRun.name)"
         - name: pipeline_run_uid
           value: "$(context.pipelineRun.uid)"
-    # ステップ #1
-    # GitHubからソースコードをワークスペースにクローン（取得）する
     - name: task-git-clone
       taskRef:
         name: pipeline-task-git-clone
@@ -86,8 +82,6 @@ spec:
           value: "true"
         - name: sslVerify
           value: "false"
-    # ステップ #2 
-    # コンテナのビルドとレジストリへ登録  タスクにパラメータを渡してビルド実行、イメージをレジストリへ登録
     - name: task-build-and-push
       taskRef:
         name: pipeline-task-build-and-push
@@ -105,8 +99,6 @@ spec:
           value: "$(params.build_dockerfile_path)"
         - name: IMAGE
           value: "$(params.container_registry_image):$(tasks.task-start.results.container_registry_image_tag)"
-    # ステップ #3 
-    # 最終処理タスク
     - name: task-complete
       taskRef:
         name: pipeline-task-complete
@@ -122,5 +114,5 @@ spec:
           value: "$(tasks.task-start.results.task_id)"
         - name: subdirectory
           value: "$(context.pipelineRun.name)"
-        - name: container_registry_image_digest
-          value: "$(tasks.task-build-and-push.results.IMAGE-DIGEST)"
+        #- name: container_registry_image_digest
+        #  value: "$(tasks.task-build-and-push.results.IMAGE-DIGEST)"

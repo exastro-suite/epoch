@@ -37,7 +37,7 @@ metadata:
 type: kubernetes.io/basic-auth
 stringData:
   username: {{ item.git_repositry.user }}
-  token: {{ item.git_repositry.token }}
+  password: {{ item.git_repositry.token }}
 {% endif %}
 
 ---

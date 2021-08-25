@@ -52,7 +52,7 @@ def post(request):
 
 
         # 呼び出すapiInfoは、環境変数より取得
-        apiInfo_cdcd = "{}://{}:{}/".format(os.environ["EPOCH_CICD_PROTOCOL"], os.environ["EPOCH_CICD_HOST"], os.environ["EPOCH_CICD_PORT"])
+        apiInfo_cicd = "{}://{}:{}/".format(os.environ["EPOCH_CICD_PROTOCOL"], os.environ["EPOCH_CICD_HOST"], os.environ["EPOCH_CICD_PORT"])
         apiInfo_tekton = "{}://{}:{}/".format(os.environ["EPOCH_CONTROL_TEKTON_PROTOCOL"], os.environ["EPOCH_CONTROL_TEKTON_HOST"], os.environ["EPOCH_CONTROL_TEKTON_PORT"])
 
         output = []
@@ -82,8 +82,8 @@ def post(request):
         if ret["result"] == "200" or ret["result"] == "201":
             output.append(ret)
         else:
-            if "exception" in ret:
-                exec_detail = ret["exception"]
+            if "errorDetail" in ret:
+                exec_detail = ret["errorDetail"]
             else:
                 exec_detail = ""
             raise Exception

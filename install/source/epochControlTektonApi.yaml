@@ -24,6 +24,7 @@ data:
     MYSQL_DATABASE='tekton_pipeline_db'
     MYSQL_USER='app_user'
     MYSQL_PASSWORD='password'
+    RESOURCE_CREATION_WAIT=60
 
 ---
 
@@ -58,6 +59,16 @@ spec:
           value: "8000"
         - name: PYTHONIOENCODING
           value: utf-8
+        - name: EPOCH_HTTP_PROXY
+          valueFrom:
+            configMapKeyRef:
+              name: proxy-setting-config
+              key: HTTP_PROXY
+        - name: EPOCH_HTTPS_PROXY
+          valueFrom:
+            configMapKeyRef:
+              name: proxy-setting-config
+              key: HTTPS_PROXY
         volumeMounts:
         - name: epoch-control-tekton-conf
           mountPath: /etc/epoch/epochControlTektonApi

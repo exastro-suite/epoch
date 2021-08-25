@@ -22,41 +22,12 @@ spec:
     #{% for item in param.ci_config.pipelines %}
     - bindings:
         - ref: trigger-binding-common
-        #{% if param.ci_config.pipelines_common.git_repositry.interface == "gitlab" %}
-        # - ref: trigger-binding-webhook-gitlab
-        #{% endif %}
-        #{% if param.ci_config.pipelines_common.git_repositry.interface == "github" %}
-        # - ref: trigger-binding-webhook-github
-        #{% endif %}
         - ref: trigger-binding-webhook-github
         - ref: trigger-binding-pipeline-{{ loop.index }}
       template:
         ref: trigger-template-build-and-push
       interceptors:
-        #{% if param.ci_config.pipelines_common.git_repositry.interface == "gitlab" %}
-        - gitlab:
-            secretRef:
-              secretName: webhook-secret-{{ loop.index }}
-              secretKey: secretToken
-            eventTypes:
-              - Push Hook
-              - Tag Push Hook
-        #{% endif %}
         - cel:
-            #{% if param.ci_config.pipelines_common.git_repositry.interface == "gitlab" %}
-            # filter: >
-            #   body.repository.git_http_url == '{{ item.git_repositry.url }}'
-            #   {% if item.build.branch|count > 0 %}
-            #     && ( body.ref.startsWith("refs/tags/") || body.ref in {{ item.build_refs }} )
-            #   {% endif %}
-            #{% endif %}
-            #{% if param.ci_config.pipelines_common.git_repositry.interface == "github" %}
-            # filter: >
-            #   body.repository.clone_url == '{{ item.git_repositry.url }}'
-            #   {% if item.build.branch|count > 0 %}
-            #     && ( body.ref.startsWith("refs/tags/") || body.ref in {{ item.build_refs }} )
-            #   {% endif %}
-            #{% endif %}
             filter: >
               body.repository.clone_url == '{{ item.git_repositry.url }}'
               {% if item.build.branch|count > 0 %}

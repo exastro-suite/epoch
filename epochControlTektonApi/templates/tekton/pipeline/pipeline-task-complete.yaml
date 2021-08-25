@@ -27,7 +27,6 @@ spec:
     - name: workspace_id
     - name: task_id
     - name: subdirectory
-    - name: container_registry_image_digest
   workspaces:
   - name: source
     description: Holds the context and docker file
@@ -53,7 +52,6 @@ spec:
         }
         req_body = json.dumps({
           'status' :                          'COMPLETE',
-          'container_registry_image_digest' :  '$(params.container_registry_image_digest)',
         })
         
         request = urllib.request.Request(req_url, data=req_body.encode(), method='PATCH', headers=req_header)

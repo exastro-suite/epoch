@@ -49,7 +49,7 @@ templates = {
         'pipeline-task-complete.yaml',
         'pipeline-build-and-push.yaml',
         'trigger-template-build-and-push.yaml',
-        'webhook-secret.yaml',
+        #'webhook-secret.yaml',
         'trigger-sa.yaml',
         'trigger-binding-common.yaml',
         'trigger-binding-webhook.yaml',
@@ -63,7 +63,7 @@ templates = {
 event_listener_name='event-listener'
 
 # yamlの出力先
-dest_folder='/var/epoch/tekton/'
+dest_folder='/var/epoch/tekton'
 
 TASK_STATUS_RUNNING='RUNNING'
 TASK_STATUS_COMPLETE='COMPLETE'
@@ -113,8 +113,13 @@ def post_tekton_pipeline(workspace_id):
         for pipeline in param['ci_config']['pipelines']:
 
             # git情報の設定（共通項目の取り込み）: pipelines_commonに設定されていれば設定値を優先、なければpipelineの値をそのまま使用
-            pipeline['git_repositry'] = ( param['ci_config']['pipelines_common']['git_repositry'] | pipeline['git_repositry'] )
-            pipeline['container_registry'] = ( param['ci_config']['pipelines_common']['container_registry'] | pipeline['container_registry'] )
+            git_repositry = param['ci_config']['pipelines_common']['git_repositry'].copy()
+            git_repositry.update(pipeline['git_repositry'])
+            pipeline['git_repositry'] = git_repositry
+
+            container_registry = param['ci_config']['pipelines_common']['container_registry'].copy()
+            container_registry.update(pipeline['container_registry'])
+            pipeline['container_registry'] = container_registry
 
             # gitサーバー情報付加（secret用)
             giturl = urlparse(pipeline['git_repositry']['url'])
@@ -185,15 +190,26 @@ def apply_tekton_pipeline(workspace_id, kind, param):
     with dbconnector() as db, dbcursor(db) as cursor:
 
         for template in templates[kind]:
-            globals.logger.debug('tekton pipeline apply start workspace_id:{} template:{}'.format(workspace_id, template))
+            globals.logger.debug('* tekton pipeline apply start workspace_id:{} template:{}'.format(workspace_id, template))
 
-            # templateの展開
-            yamltext = render_template('tekton/{}/{}'.format(kind, template), param=param, workspace_id=workspace_id)
+            try:
+                # templateの展開
+                yamltext = render_template('tekton/{}/{}'.format(kind, template), param=param, workspace_id=workspace_id)
+                globals.logger.debug(' render_template finish')
 
-            # yaml一時ファイル生成
-            path_yamlfile = '{}/{}'.format(dest_folder, template)
-            with open(path_yamlfile, mode='w') as fp:
-                fp.write(yamltext)
+                # ディレクトリ作成
+                os.makedirs(dest_folder, exist_ok=True)
+
+                # yaml一時ファイル生成
+                path_yamlfile = '{}/{}'.format(dest_folder, template)
+                with open(path_yamlfile, mode='w') as fp:
+                    fp.write(yamltext)
+
+                globals.logger.debug(' yamlfile output finish')
+
+            except Exception as e:
+                globals.logger.error('tekton pipeline yamlfile create workspace_id:{} template:{}'.format(workspace_id, template))
+                raise
 
             # yaml情報の変数設定
             info = {
@@ -204,7 +220,7 @@ def apply_tekton_pipeline(workspace_id, kind, param):
             }
 
             # 適用yaml情報の書き込み
-            da_tekton.insert_organization(cursor, info)
+            da_tekton.insert_tekton_pipeline_yaml(cursor, info)
 
             db.commit()
 
@@ -251,7 +267,7 @@ def delete_workspace_pipeline(workspace_id, kind):
                 # 削除失敗は無視
 
             # リソースを削除したら適用済みのyaml情報を削除する
-            da_tekton.delete_tekton_pipeline_yaml(fetch_row['yaml_id'])
+            da_tekton.delete_tekton_pipeline_yaml(cursor, fetch_row['yaml_id'])
 
             db.commit()
 
@@ -368,7 +384,7 @@ def post_tekton_task(workspace_id):
         with dbconnector() as db, dbcursor(db) as cursor:
 
             info = request.json
-            info['woekspace_id'] = workspace_id
+            info['workspace_id'] = workspace_id
             info['status'] = TASK_STATUS_RUNNING
             info['container_registry_image_tag'] = image_tag
 

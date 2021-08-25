@@ -52,9 +52,9 @@ spec:
     description: Includes a docker `config.json`
     optional: true
     mountPath: /kaniko/.docker
-  results:
-  - name: IMAGE-DIGEST
-    description: Digest of the image just built.
+  #results:
+  #- name: IMAGE-DIGEST
+  #  description: Digest of the image just built.
 
   steps:
   - name: build-and-push
