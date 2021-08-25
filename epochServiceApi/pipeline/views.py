@@ -50,14 +50,16 @@ def post(request):
         # 引数をJSON形式で受け取りそのまま引数に設定
         post_data = request.body
 
+
         # 呼び出すapiInfoは、環境変数より取得
-        apiInfo = "{}://{}:{}/".format(os.environ["EPOCH_CICD_PROTOCOL"], os.environ["EPOCH_CICD_HOST"], os.environ["EPOCH_CICD_PORT"])
+        apiInfo_cdcd = "{}://{}:{}/".format(os.environ["EPOCH_CICD_PROTOCOL"], os.environ["EPOCH_CICD_HOST"], os.environ["EPOCH_CICD_PORT"])
+        apiInfo_tekton = "{}://{}:{}/".format(os.environ["EPOCH_CONTROL_TEKTON_PROTOCOL"], os.environ["EPOCH_CONTROL_TEKTON_HOST"], os.environ["EPOCH_CONTROL_TEKTON_PORT"])
 
         output = []
 
         exec_stat = "パイプライン設定(GitHub webhooks)"
         # パイプライン設定(Github webhooks)
-        request_response = requests.post( apiInfo + "github/webhooks", headers=post_headers, data=post_data)
+        request_response = requests.post( apiInfo_cicd + "github/webhooks", headers=post_headers, data=post_data)
         logger.debug("github/webhooks:" + request_response.text)
         ret = json.loads(request_response.text)
         logger.debug(ret["result"])
@@ -72,7 +74,7 @@ def post(request):
 
         exec_stat = "パイプライン設定(TEKTON)"
         # パイプライン設定(TEKTON)
-        request_response = requests.post( apiInfo + "tekton/pipeline", headers=post_headers, data=post_data)
+        request_response = requests.post( apiInfo_tekton + "workspace/1/tekton/pipeline", headers=post_headers, data=post_data)
         logger.debug("tekton/pipeline:response:" + request_response.text)
         ret = json.loads(request_response.text)
         #ret = request_response.text
@@ -88,7 +90,7 @@ def post(request):
 
         exec_stat = "パイプライン設定(ITA - 初期化設定)"
         # パイプライン設定(ITA - 初期化設定)
-        request_response = requests.post( apiInfo + "ita/initialize", headers=post_headers, data=post_data)
+        request_response = requests.post( apiInfo_cicd + "ita/initialize", headers=post_headers, data=post_data)
         logger.debug("ita/initialize:response:" + request_response.text)
         ret = json.loads(request_response.text)
         logger.debug(ret["result"])
@@ -103,7 +105,7 @@ def post(request):
 
         exec_stat = "パイプライン設定(ITA - Git環境情報設定)"
         # パイプライン設定(ITA - Git環境情報設定)
-        request_response = requests.post( apiInfo + "ita/manifestGitEnv", headers=post_headers, data=post_data)
+        request_response = requests.post( apiInfo_cicd + "ita/manifestGitEnv", headers=post_headers, data=post_data)
         logger.debug("ita/manifestGitEnv:response:" + request_response.text)
         ret = json.loads(request_response.text)
         logger.debug(ret["result"])
@@ -118,7 +120,7 @@ def post(request):
 
         exec_stat = "パイプライン設定(ArgoCD)"
         # パイプライン設定(ArgoCD)
-        request_response = requests.post( apiInfo + "argocd/pipeline", headers=post_headers, data=post_data)
+        request_response = requests.post( apiInfo_cicd + "argocd/pipeline", headers=post_headers, data=post_data)
         logger.debug("argocd/pipeline:response:" + request_response.text)
         ret = json.loads(request_response.text)
         if ret["result"] == "200" or ret["result"] == "201":
