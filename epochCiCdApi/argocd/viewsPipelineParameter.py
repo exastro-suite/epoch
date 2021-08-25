@@ -58,7 +58,7 @@ def post(request):
         exec_detail = ""
 
         # 引数で指定されたCD環境を取得
-        logger.debug (request.body)
+        # logger.debug (request.body)
         request_json = json.loads(request.body)
         #print (request_json)
         request_ci_env = request_json["ci_config"]["environments"]
@@ -77,7 +77,7 @@ def post(request):
                 "returncode": "0401",
                 "errorStatement": app_name + exec_stat,
                 "errorDetail": exec_detail,
-                "command": e.cmd,
+                # "command": e.cmd,
                 "output": e.output.decode('utf-8'),
                 "traceback": traceback.format_exc(),
             }
@@ -117,7 +117,7 @@ def post(request):
                 "returncode": "0405",
                 "errorStatement": app_name + exec_stat,
                 "errorDetail": exec_detail,
-                "command": e.cmd,
+                # "command": e.cmd,
                 "output": e.output.decode('utf-8'),
                 "traceback": traceback.format_exc(),
             }
@@ -198,7 +198,7 @@ def post(request):
                     "returncode": "0402",
                     "errorStatement": app_name + exec_stat,
                     "errorDetail": exec_detail,
-                    "command": e.cmd,
+                    # "command": e.cmd,
                     "output": e.output.decode('utf-8'),
                     "traceback": traceback.format_exc(),
                 }
@@ -238,7 +238,7 @@ def execCommand(*args):
         response = {
             "result": e.returncode,
             "returncode": "0404",
-            "command": e.cmd,
+            # "command": e.cmd,
             "output": e.output.decode('utf-8'),
             "traceback": traceback.format_exc(),
         }
@@ -268,7 +268,7 @@ def get(request):
             response = {
                 "result": e.returncode,
                 "returncode": "0405",
-                "command": e.cmd,
+                # "command": e.cmd,
                 "output": e.output.decode('utf-8'),
                 "traceback": traceback.format_exc(),
             }
@@ -299,7 +299,7 @@ def get(request):
                 response = {
                     "result": e.returncode,
                     "returncode": "0406",
-                    "command": e.cmd,
+                    # "command": e.cmd,
                     "output": e.output.decode('utf-8'),
                     "traceback": traceback.format_exc(),
                 }

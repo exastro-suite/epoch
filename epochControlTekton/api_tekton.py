@@ -214,7 +214,7 @@ def apply_tekton_pipeline(workspace_id, kind, param):
                 globals.logger.debug('COMMAAND SUCCEED: kubectl apply -f {}\n{}'.format(path_yamlfile, result_kubectl.decode('utf-8')))
 
             except subprocess.CalledProcessError as e:
-                globals.logger.error('COMMAND ERROR:{} RETURN:{}\n{}'.format(e.cmd, e.returncode, e.output.decode('utf-8')))
+                globals.logger.error('COMMAND ERROR RETURN:{}\n{}'.format(e.returncode, e.output.decode('utf-8')))
                 raise # 再スロー
 
 
@@ -247,7 +247,7 @@ def delete_workspace_pipeline(workspace_id, kind):
                 globals.logger.debug('COMMAAND SUCCEED: kubectl delete -f {}\n{}'.format(path_yamlfile, result_kubectl.decode('utf-8')))
 
             except subprocess.CalledProcessError as e:
-                globals.logger.error('COMMAND ERROR:{} RETURN:{}\n{}'.format(e.cmd, e.returncode, e.output.decode('utf-8')))
+                globals.logger.error('COMMAND ERROR RETURN:{}\n{}'.format(e.returncode, e.output.decode('utf-8')))
                 # 削除失敗は無視
 
             # リソースを削除したら適用済みのyaml情報を削除する
@@ -279,7 +279,7 @@ def get_event_listener_info(workspace_id):
                 ], stderr=subprocess.STDOUT)
 
         except subprocess.CalledProcessError as e:
-            globals.logger.error('COMMAND ERROR:[{}] RETURN:{}\n{}'.format(e.cmd, e.returncode, e.output.decode('utf-8')))
+            globals.logger.error('COMMAND ERROR RETURN:{}\n{}'.format(e.returncode, e.output.decode('utf-8')))
             raise # 再スロー
 
         eventlisterinfo = json.loads(result_kubectl.decode('utf-8'))
@@ -345,7 +345,7 @@ def delete_tekton_pipelinerun(workspace_id):
         globals.logger.debug('COMMAAND SUCCEED: kubectl tkn pipelinerun delete --all -f\n{}'.format(result_kubectl.decode('utf-8')))
 
     except subprocess.CalledProcessError as e:
-        globals.logger.error('COMMAND ERROR:[{}] RETURN:{}\n{}'.format(e.cmd, e.returncode, e.output.decode('utf-8')))
+        globals.logger.error('COMMAND ERROR RETURN:{}\n{}'.format(e.returncode, e.output.decode('utf-8')))
         raise # 再スロー
 
 

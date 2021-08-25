@@ -161,7 +161,7 @@ def post(request):
         # 項目位置の取得
         column_indexes_gitlist = column_indexes(column_names_gitlist, gitlist_json['resultdata']['CONTENTS']['BODY'][0])
         logger.debug('---- Git Environments Index ----')
-        logger.debug(column_indexes_gitlist)
+        # logger.debug(column_indexes_gitlist)
 
         # Responseデータの初期化
         response = {"result":"200", "items":[]}
@@ -224,7 +224,7 @@ def post(request):
 
         logger.debug('---- Git Environments Post ----')
         #logger.debug(json.dumps(gitlist_edit).encode().decode('unicode-escape'))
-        logger.debug(json.dumps(gitlist_edit))
+        # logger.debug(json.dumps(gitlist_edit))
 
         gitlist_edit_resp = requests.post(ita_restapi_endpoint + '?no=' + ita_menu_gitenv_param, headers=edit_headers, data=json.dumps(gitlist_edit))
 
