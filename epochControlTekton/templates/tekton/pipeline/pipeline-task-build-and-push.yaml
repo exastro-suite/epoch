@@ -1,0 +1,99 @@
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: pipeline-task-build-and-push
+  namespace: {{ param.ci_config.pipeline_namespace }}
+  labels:
+    app.kubernetes.io/version: "0.3"
+  annotations:
+    tekton.dev/pipelines.minVersion: "0.17.0"
+    tekton.dev/tags: image-build
+    tekton.dev/displayName: "image build and push"
+spec:
+  description: >-
+    This Task builds source into a container image using Google's kaniko tool.
+
+    Kaniko doesn't depend on a Docker daemon and executes each
+    command within a Dockerfile completely in userspace. This enables
+    building container images in environments that can't easily or
+    securely run a Docker daemon, such as a standard Kubernetes cluster.
+
+  params:
+  - name: IMAGE
+    description: Name (reference) of the image to build.
+  - name: DOCKERFILE
+    description: Path to the Dockerfile to build.
+    default: ./Dockerfile
+  - name: CONTEXT
+    description: The build context used by Kaniko.
+    default: ./
+  - name: EXTRA_ARGS
+    default: ""
+  - name: BUILDER_IMAGE
+    description: The image on which builds will run (default is v1.5.1)
+    default: gcr.io/kaniko-project/executor:v1.5.1@sha256:c6166717f7fe0b7da44908c986137ecfeab21f31ec3992f6e128fff8a94be8a5
+  workspaces:
+  - name: source
+    description: Holds the context and docker file
+  - name: dockerconfig
+    description: Includes a docker `config.json`
+    optional: true
+    mountPath: /kaniko/.docker
+  results:
+  - name: IMAGE-DIGEST
+    description: Digest of the image just built.
+
+  steps:
+  - name: build-and-push
+    workingDir: $(workspaces.source.path)
+    image: $(params.BUILDER_IMAGE)
+    env:
+    - name: DOCKER_CONFIG
+      value: /kaniko/.docker
+    - name: HTTP_PROXY
+      value: "{{ param.proxy.http }}"
+    - name: http_proxy
+      value: "{{ param.proxy.http }}"
+    - name: HTTPS_PROXY
+      value: "{{ param.proxy.https }}"
+    - name: https_proxy
+      value: "{{ param.proxy.https }}"
+    - name: NO_PROXY
+      value: "{{ param.proxy.no_proxy }}"
+    - name: no_proxy
+      value: "{{ param.proxy.no_proxy }}"
+    command:
+    - /kaniko/executor
+    - $(params.EXTRA_ARGS)
+    - --dockerfile=$(params.DOCKERFILE)
+    - --context=$(workspaces.source.path)/$(params.CONTEXT)  # The user does not need to care the workspace and the source.
+    - --destination=$(params.IMAGE)
+#    - --oci-layout-path=$(workspaces.source.path)/$(params.CONTEXT)/image-digest
+    # Add Local Registry
+    - --skip-tls-verify
+    - --insecure
+    - --insecure-pull
+    # kaniko assumes it is running as root, which means this example fails on platforms
+    # that default to run containers as random uid (like OpenShift). Adding this securityContext
+    # makes it explicit that it needs to run as root.
+    - --build-arg
+    - HTTP_PROXY={{ param.proxy.http }}
+    - --build-arg
+    - HTTPS_PROXY={{ param.proxy.https }}
+    - --build-arg
+    - http_proxy={{ param.proxy.http }}
+    - --build-arg
+    - https_proxy={{ param.proxy.https }}
