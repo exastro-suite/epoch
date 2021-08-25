@@ -80,10 +80,10 @@ def post(request):
         #ret = request_response.text
         logger.debug(ret["result"])
         if ret["result"] == "200" or ret["result"] == "201":
-            output.append(ret["output"])
+            output.append(ret)
         else:
-            if "errorDetail" in ret:
-                exec_detail = ret["errorDetail"]
+            if "exception" in ret:
+                exec_detail = ret["exception"]
             else:
                 exec_detail = ""
             raise Exception
