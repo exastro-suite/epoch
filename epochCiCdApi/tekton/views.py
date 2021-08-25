@@ -67,7 +67,7 @@ def post(request):
         response = {
             "result":"ERROR",
             "returncode": e.returncode,
-            "command": e.cmd,
+            # "command": e.cmd,
             "output": e.output.decode('utf-8'),
             "traceback": traceback.format_exc(),
         }

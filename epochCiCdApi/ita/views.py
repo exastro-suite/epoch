@@ -105,7 +105,7 @@ def post(request):
             "result":"ERROR",
             "returncode": e.returncode,
             "errorDetail": exec_detail,
-            "command": e.cmd,
+            # "command": e.cmd,
             "output": e.output.decode('utf-8'),
             "traceback": traceback.format_exc(),
         }

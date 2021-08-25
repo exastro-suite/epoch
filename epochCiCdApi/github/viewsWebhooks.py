@@ -52,7 +52,7 @@ def index(request):
 def post(request):
     try:
         # 引数で指定されたCD環境を取得
-        logger.debug (request.body)
+        # logger.debug (request.body)
         request_json = json.loads(request.body)
         request_ci_confg = request_json["ci_config"]
 

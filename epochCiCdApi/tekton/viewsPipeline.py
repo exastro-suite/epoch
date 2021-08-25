@@ -152,7 +152,7 @@ def postCommon(request):
                 response = {
                     "result": e.returncode,
                     "returncode": "0107",
-                    "command": e.cmd,
+                    # "command": e.cmd,
                     "output": e.output.decode('utf-8'),
                     "traceback": traceback.format_exc(),
                 }
@@ -217,7 +217,7 @@ def postPipeline(request):
                 response = {
                     "result": e.returncode,
                     "returncode": "0103",
-                    "command": e.cmd,
+                    # "command": e.cmd,
                     "output": e.output.decode('utf-8'),
                     "traceback": traceback.format_exc(),
                 }
@@ -282,7 +282,7 @@ def postTrigger(request):
                 response = {
                     "result": e.returncode,
                     "returncode": "0105",
-                    "command": e.cmd,
+                    # "command": e.cmd,
                     "output": e.output.decode('utf-8'),
                     "traceback": traceback.format_exc(),
                 }
