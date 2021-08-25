@@ -2583,7 +2583,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
           wsDataJSON['application-code'][item][item + '-pipeline-tekton-branch']              = data_pipelines[i]['build']['branch'].join(',');
           wsDataJSON['application-code'][item][item + '-pipeline-tekton-docker-path']         = data_pipelines[i]['build']['dockerfile_path'];
           wsDataJSON['application-code'][item]['pipeline-tekton-static-analysis']             = data_pipelines[i]['static_analysis']['interface'];
-          wsDataJSON['application-code'][item][item + '-registry-service-output-destination'] = data_pipelines[i]['contaier_registry']['image'];
+          wsDataJSON['application-code'][item][item + '-registry-service-output-destination'] = data_pipelines[i]['container_registry']['image'];
         }
   
         wsDataJSON['environment'] = {};
@@ -2924,7 +2924,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
           'branch' :          (wsDataJSON['application-code'][i][i+'-pipeline-tekton-branch']? wsDataJSON['application-code'][i][i+'-pipeline-tekton-branch'].split(','): []),
           'dockerfile_path' : (wsDataJSON['application-code'][i][i+'-pipeline-tekton-docker-path']? wsDataJSON['application-code'][i][i+'-pipeline-tekton-docker-path'] : ""),
         },
-        'contaier_registry' : {
+        'container_registry' : {
           'image' :           (wsDataJSON['application-code'][i][i+'-registry-service-output-destination']? wsDataJSON['application-code'][i][i+'-registry-service-output-destination'] : ""),
         },
         'static_analysis' : {

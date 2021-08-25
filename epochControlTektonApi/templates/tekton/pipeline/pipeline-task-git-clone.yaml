@@ -42,7 +42,7 @@ spec:
       description: git url to clone
       type: string
     - name: revision
-      description: git revision to checkout (branch, tag, sha, ref…)
+      description: git revision to checkout (branch, tag, sha, ref...)
       type: string
       default: ""
     - name: refspec

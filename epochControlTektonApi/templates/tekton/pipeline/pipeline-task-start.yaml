@@ -49,7 +49,7 @@ spec:
       script: |
         #!/bin/bash
 
-        # 120分経過したpipelinerunのディレクトリを削除（エラー終了時にゴミが残った時の対策）
+        # Delete the directory of pipeline run after 120 minutes (measures when garbage remains at the end of error)
         find $(workspaces.source.path) -mindepth 1 -type d -mmin +120 -exec rm -rf {} \;
 
         python - <<EOF
