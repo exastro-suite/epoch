@@ -124,7 +124,7 @@ def post(request):
         salt = bcrypt.gensalt(rounds=10, prefix=b'2a')
         password = settings.ARGO_PASSWORD.encode("ascii")
         argoLogin = bcrypt.hashpw(password, salt).decode("ascii")
-        logger.debug("argocd pod password : {}".format(argoLogin))
+        # logger.debug("argocd pod password : {}".format(argoLogin))
         # bcryptでハッシュ化した内容でargocdのパスワードを初期化する
         datenow = datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y-%m-%dT%H:%M:%S%z')
         pdata ='{"stringData": { "admin.password": "' + argoLogin + '", "admin.passwordMtime": "\'' + datenow + '\'" }}'
@@ -149,7 +149,7 @@ def post(request):
             "result":"ERROR",
             "returncode": e.returncode,
             "errorDetail": exec_detail,
-            "command": e.cmd,
+            # "command": e.cmd,
             "output": e.output.decode('utf-8'),
             "traceback": traceback.format_exc(),
         }
