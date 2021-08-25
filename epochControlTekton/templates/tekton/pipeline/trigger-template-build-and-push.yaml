@@ -1,0 +1,84 @@
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerTemplate
+metadata:
+  name: trigger-template-build-and-push
+  namespace: {{ param.ci_config.pipeline_namespace }}
+spec:
+  params:
+  - name: workspace_id
+  - name: pipeline_id
+  - name: git_repositry_interface
+  - name: build_context_path
+  - name: build_dockerfile_path
+  - name: container_registry_image
+  - name: git_repository_url
+  - name: git_clone_revision
+  - name: git_branch
+  - name: git_repository_name
+  - name: git_webhook_header
+  - name: git_webhook_body
+  - name: pipeline_run_name
+  - name: pipeline_run_uid
+  - name: pipeline_sa
+  - name: pipeline_sa_reg_secret
+  resourcetemplates:
+  - apiVersion: tekton.dev/v1beta1
+    kind: PipelineRun
+    metadata:
+      generateName: pipeline-run-$(tt.params.git_repository_name)-
+      labels:
+        workspace_id: $(tt.params.workspace_id)
+        pipeline_id: $(tt.params.pipeline_id)
+    spec:
+      pipelineRef:
+        name: pipeline-build-and-push
+      params:
+      - name: workspace_id
+        value: $(tt.params.workspace_id)
+      - name: pipeline_id
+        value: $(tt.params.pipeline_id)
+      - name: git_repositry_interface
+        value: $(tt.params.git_repositry_interface)
+      - name: build_context_path
+        value: $(tt.params.build_context_path)
+      - name: build_dockerfile_path
+        value: $(tt.params.build_dockerfile_path)
+      - name: container_registry_image
+        value: $(tt.params.container_registry_image)
+      - name: git_repository_url
+        value: $(tt.params.git_repository_url)
+      - name: git_clone_revision
+        value: $(tt.params.git_clone_revision)
+      - name: git_branch
+        value: $(tt.params.git_branch)
+      - name: git_repository_name
+        value: $(tt.params.git_repository_name)
+      - name: git_webhook_header
+        value: $(tt.params.git_webhook_header)
+      - name: git_webhook_body
+        value: $(tt.params.git_webhook_body)
+      - name: pipeline_run_name
+        value: $(tt.params.pipeline_run_name)
+      - name: pipeline_run_uid
+        value: $(tt.params.pipeline_run_uid)
+      serviceAccountName: $(tt.params.pipeline_sa)
+      workspaces:
+        - name: git-source
+          persistentVolumeClaim:
+            claimName: pipeline-pvc
+        - name: dockerconfig
+          secret:
+            secretName: $(tt.params.pipeline_sa_reg_secret)

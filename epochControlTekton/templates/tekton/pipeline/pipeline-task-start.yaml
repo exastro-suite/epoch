@@ -1,0 +1,93 @@
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: pipeline-task-start
+  namespace: {{ param.ci_config.pipeline_namespace }}
+  labels:
+    app.kubernetes.io/version: "0.1"
+  annotations:
+    tekton.dev/pipelines.minVersion: "0.12.1"
+    tekton.dev/tags: start
+    tekton.dev/displayName: "pipeline start"
+spec:
+  params:
+    - name: workspace_id
+    - name: pipeline_id
+    - name: git_repositry_interface
+    - name: git_repository_url
+    - name: git_branch
+    - name: container_registry_image
+    - name: git_webhook_header
+    - name: git_webhook_body
+    - name: pipeline_run_name
+    - name: pipeline_run_uid
+  workspaces:
+  - name: source
+    description: Holds the context and docker file
+  results:
+    - name: container_registry_image_tag
+    - name: task_id
+  steps:
+    - name: pipeline-start-task
+      image: python
+      env:
+      - name: API_TEKTON_TASK
+        value: "http://epoch-control-tekton-api.epoch-system.svc:8000"
+      script: |
+        #!/bin/bash
+
+        # 120分経過したpipelinerunのディレクトリを削除（エラー終了時にゴミが残った時の対策）
+        find $(workspaces.source.path) -mindepth 1 -type d -mmin +120 -exec rm -rf {} \;
+
+        python - <<EOF
+        import urllib.request
+        import json
+
+        req_url="$API_TEKTON_TASK/workspace/$(params.workspace_id)/tekton/task"
+
+        req_header = {
+          'Content-Type': 'application/json',
+        }
+        req_body = json.dumps({
+          'pipeline_id' :             $(params.pipeline_id),
+          'git_repositry_interface' : '$(params.git_repositry_interface)',
+          'git_repository_url' :      '$(params.git_repository_url)',
+          'git_branch' :              '$(params.git_branch)',
+          'container_registry_image' :'$(params.container_registry_image)',
+          'git_webhook_header' :      '$(params.git_webhook_header)',
+          'git_webhook_body' :        '$(params.git_webhook_body)',
+          'pipeline_run_name' :       '$(params.pipeline_run_name)',
+          'pipeline_run_uid' :        '$(params.pipeline_run_uid)',
+        })
+        
+        request = urllib.request.Request(req_url, data=req_body.encode(), method='POST', headers=req_header)
+
+        with urllib.request.urlopen(request) as response:
+            body = json.loads(response.read())
+            headers = response.getheaders()
+            status = response.getcode()
+
+        if not ( status == 200 or status == 201 ):
+            raise Exception('HTTP Reseponse Error HTTP-CODE = {}'.format(status))
+          
+        with open('$(results.task_id.path)', mode='w') as fp:
+            fp.write(str(body['param']['task_id']))
+
+        with open('$(results.container_registry_image_tag.path)', mode='w') as fp:
+            fp.write(body['param']['container_registry_image_tag'])
+
+        EOF
+
