@@ -29,7 +29,7 @@ spec:
     spec:
       containers:
       - name: epoch-reverse-proxy-tekton
-        image: exastro/epochrevproxytekton:0.1.1_20210825_1700
+        image: exastro/epochrevproxytekton:0.1.1_20210826_1100
 
 ---
 apiVersion: v1
