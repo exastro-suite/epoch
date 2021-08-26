@@ -69,6 +69,8 @@ spec:
             configMapKeyRef:
               name: proxy-setting-config
               key: HTTPS_PROXY
+        - name: EPOCH_NO_PROXY
+          value: ""
         volumeMounts:
         - name: epoch-control-tekton-conf
           mountPath: /etc/epoch/epochControlTektonApi
