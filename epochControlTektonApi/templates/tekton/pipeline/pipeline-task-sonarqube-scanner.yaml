@@ -1,0 +1,96 @@
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: pipeline-task-sonarqube-scanner
+  namespace: {{ param.ci_config.pipeline_namespace }}
+  labels:
+    app.kubernetes.io/version: "0.1"
+  annotations:
+    tekton.dev/pipelines.minVersion: "0.12.1"
+    tekton.dev/tags: security
+    tekton.dev/displayName: "sonarqube scanner"
+spec:
+  description: >-
+    The following task can be used to perform static analysis on the source code
+    provided the SonarQube server is hosted
+
+    SonarQube is the leading tool for continuously inspecting the Code Quality and Security
+    of your codebases, all while empowering development teams. Analyze over 25 popular
+    programming languages including C#, VB.Net, JavaScript, TypeScript and C++. It detects
+    bugs, vulnerabilities and code smells across project branches and pull requests.
+
+  workspaces:
+    - name: source-dir
+    - name: sonar-settings
+  params:
+    - name: SONAR_HOST_URL
+      description: Host URL where the sonarqube server is running
+      default: ""
+    - name: SONAR_PROJECT_KEY
+      description: Project's unique key
+      default: ""
+    - name: subdirectory
+      description: "devide subdirectory each pipelineRun name"
+      default: ""
+  steps:
+    - name: sonar-properties-create
+      image: registry.access.redhat.com/ubi8/ubi-minimal:8.2
+      workingDir: $(workspaces.source-dir.path)/$(subdirectory)
+      script: |
+        #!/usr/bin/env bash
+
+        replaceValues() {
+          filename=$1
+          thekey=$2
+          newvalue=$3
+
+          if ! grep -R "^[#]*\s*${thekey}=.*" $filename >/dev/null; then
+            echo "APPENDING because '${thekey}' not found"
+            echo "" >>$filename
+            echo "$thekey=$newvalue" >>$filename
+          else
+            echo "SETTING because '${thekey}' found already"
+            sed -ir "s|^[#]*\s*${thekey}=.*|$thekey=$newvalue|" $filename
+          fi
+        }
+
+        if [[ -f $(workspaces.sonar-settings.path)/sonar-project.properties ]]; then
+          echo "using user provided sonar-project.properties file"
+          cp $(workspaces.sonar-settings.path)/sonar-project.properties $(workspaces.source-dir.path)/$(subdirectory)/sonar-project.properties
+        fi
+
+        if [[ -f $(workspaces.source-dir.path)/$(subdirectory)/sonar-project.properties ]]; then
+          if [[ -n "$(params.SONAR_HOST_URL)" ]]; then
+            replaceValues $(workspaces.source-dir.path)/$(subdirectory)/sonar-project.properties sonar.host.url $(params.SONAR_HOST_URL)
+          fi
+          if [[ -n "$(params.SONAR_PROJECT_KEY)" ]]; then
+            replaceValues $(workspaces.source-dir.path)/$(subdirectory)/sonar-project.properties sonar.projectKey $(params.SONAR_PROJECT_KEY)
+          fi
+        else
+          touch sonar-project.properties
+          echo "sonar.projectKey=$(params.SONAR_PROJECT_KEY)" >> sonar-project.properties
+          echo "sonar.host.url=$(params.SONAR_HOST_URL)" >> sonar-project.properties
+          echo "sonar.sources=." >> sonar-project.properties
+        fi
+
+        echo "---------------------------"
+        cat $(workspaces.source-dir.path)/$(subdirectory)/sonar-project.properties
+
+    - name: sonar-scan
+      image: docker.io/sonarsource/sonar-scanner-cli:4.5@sha256:b8c95a37025f3c13162118cd55761ea0b2a13d1837f9deec51b7b6d82c52040a #tag: 4.5
+      workingDir: $(workspaces.source-dir.path)/$(subdirectory)
+      command:
+        - sonar-scanner

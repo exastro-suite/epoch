@@ -11,14 +11,18 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+#{% for item in param.ci_config.pipelines %}---
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
-  name: pipeline-build-and-push
+  name: pipeline-build-and-push-{{ loop.index }}
   namespace: {{ param.ci_config.pipeline_namespace }}
 spec:
   workspaces:
     - name: git-source
+    #{% if item.static_analysis.interface == "sonarQube" %}
+    - name: sonar-settings
+    #{% endif %}
     - name: dockerconfig
   params:
     - name: workspace_id
@@ -82,11 +86,32 @@ spec:
           value: "true"
         - name: sslVerify
           value: "false"
+    #{% if item.static_analysis.interface == "sonarQube" %}
+    - name: task-sonarqube-scanner
+      taskRef:
+        name: pipeline-task-sonarqube-scanner
+      runAfter:
+        - task-git-clone
+      workspaces:
+        - name: source-dir
+          workspace: git-source
+        - name: sonar-settings
+          workspace: sonar-settings
+      params:
+        - name: SONAR_HOST_URL
+          value: "http://sonarqube.epoch-system.svc.cluster.local:9000/"
+        - name: subdirectory
+          value: $(context.pipelineRun.name)
+    #{% endif %}
     - name: task-build-and-push
       taskRef:
         name: pipeline-task-build-and-push
       runAfter:
+        #{% if item.static_analysis.interface == "sonarQube" %}
+        - task-sonarqube-scanner
+        #{% else %}
         - task-git-clone
+        #{% endif %}
       workspaces:
         - name: source
           workspace: git-source
@@ -116,3 +141,4 @@ spec:
           value: "$(context.pipelineRun.name)"
         #- name: container_registry_image_digest
         #  value: "$(tasks.task-build-and-push.results.IMAGE-DIGEST)"
+{% endfor %}

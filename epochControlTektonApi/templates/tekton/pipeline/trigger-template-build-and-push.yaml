@@ -11,10 +11,11 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+#{% for item in param.ci_config.pipelines %}---
 apiVersion: triggers.tekton.dev/v1alpha1
 kind: TriggerTemplate
 metadata:
-  name: trigger-template-build-and-push
+  name: trigger-template-build-and-push-{{ loop.index }}
   namespace: {{ param.ci_config.pipeline_namespace }}
 spec:
   params:
@@ -44,7 +45,7 @@ spec:
         pipeline_id: $(tt.params.pipeline_id)
     spec:
       pipelineRef:
-        name: pipeline-build-and-push
+        name: pipeline-build-and-push-{{ loop.index }}
       params:
       - name: workspace_id
         value: $(tt.params.workspace_id)
@@ -79,6 +80,12 @@ spec:
         - name: git-source
           persistentVolumeClaim:
             claimName: pipeline-pvc
+        #{% if item.static_analysis.interface == "sonarQube" %}
+        - name: sonar-settings
+          configmap:
+            name: sonar-settings-config-{{ loop.index }}
+        #{% endif %}
         - name: dockerconfig
           secret:
             secretName: $(tt.params.pipeline_sa_reg_secret)
+{% endfor %}

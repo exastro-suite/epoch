@@ -25,7 +25,7 @@ spec:
         - ref: trigger-binding-webhook-github
         - ref: trigger-binding-pipeline-{{ loop.index }}
       template:
-        ref: trigger-template-build-and-push
+        ref: trigger-template-build-and-push-{{ loop.index }}
       interceptors:
         - cel:
             filter: >
