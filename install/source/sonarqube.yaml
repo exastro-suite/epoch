@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sonarqube
+  labels:
+    app: sonarqube
+  namespace: epoch-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sonarqube
+  template:
+    metadata:
+      labels:
+        app: sonarqube
+    spec:
+      hostname: sonarqube
+      containers:
+      - name: sonarqube
+        image: sonarqube
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sonarqube
+  labels:
+    app: sonarqube
+  namespace: epoch-system
+spec:
+  type: NodePort
+  selector:
+    app: sonarqube
+  ports:
+  - name: http
+    port: 9000
+    targetPort: 9000
+    nodePort: 30907
+
