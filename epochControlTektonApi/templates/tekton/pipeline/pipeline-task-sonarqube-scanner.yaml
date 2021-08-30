@@ -48,7 +48,7 @@ spec:
   steps:
     - name: sonar-properties-create
       image: registry.access.redhat.com/ubi8/ubi-minimal:8.2
-      workingDir: $(workspaces.source-dir.path)/$(subdirectory)
+      workingDir: $(workspaces.source-dir.path)/$(params.subdirectory)
       script: |
         #!/usr/bin/env bash
 
@@ -69,15 +69,15 @@ spec:
 
         if [[ -f $(workspaces.sonar-settings.path)/sonar-project.properties ]]; then
           echo "using user provided sonar-project.properties file"
-          cp $(workspaces.sonar-settings.path)/sonar-project.properties $(workspaces.source-dir.path)/$(subdirectory)/sonar-project.properties
+          cp $(workspaces.sonar-settings.path)/sonar-project.properties $(workspaces.source-dir.path)/$(params.subdirectory)/sonar-project.properties
         fi
 
-        if [[ -f $(workspaces.source-dir.path)/$(subdirectory)/sonar-project.properties ]]; then
+        if [[ -f $(workspaces.source-dir.path)/$(params.subdirectory)/sonar-project.properties ]]; then
           if [[ -n "$(params.SONAR_HOST_URL)" ]]; then
-            replaceValues $(workspaces.source-dir.path)/$(subdirectory)/sonar-project.properties sonar.host.url $(params.SONAR_HOST_URL)
+            replaceValues $(workspaces.source-dir.path)/$(params.subdirectory)/sonar-project.properties sonar.host.url $(params.SONAR_HOST_URL)
           fi
           if [[ -n "$(params.SONAR_PROJECT_KEY)" ]]; then
-            replaceValues $(workspaces.source-dir.path)/$(subdirectory)/sonar-project.properties sonar.projectKey $(params.SONAR_PROJECT_KEY)
+            replaceValues $(workspaces.source-dir.path)/$(params.subdirectory)/sonar-project.properties sonar.projectKey $(params.SONAR_PROJECT_KEY)
           fi
         else
           touch sonar-project.properties
@@ -87,10 +87,10 @@ spec:
         fi
 
         echo "---------------------------"
-        cat $(workspaces.source-dir.path)/$(subdirectory)/sonar-project.properties
+        cat $(workspaces.source-dir.path)/$(params.subdirectory)/sonar-project.properties
 
     - name: sonar-scan
       image: docker.io/sonarsource/sonar-scanner-cli:4.5@sha256:b8c95a37025f3c13162118cd55761ea0b2a13d1837f9deec51b7b6d82c52040a #tag: 4.5
-      workingDir: $(workspaces.source-dir.path)/$(subdirectory)
+      workingDir: $(workspaces.source-dir.path)/$(params.subdirectory)
       command:
         - sonar-scanner
