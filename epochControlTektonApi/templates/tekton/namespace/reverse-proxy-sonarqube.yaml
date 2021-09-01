@@ -29,7 +29,7 @@ spec:
     spec:
       containers:
       - name: epoch-reverse-proxy-sonarqube
-        image: exastro/epochrevproxysonarqube:0.1.2_20210901_0920
+        image: exastro/epochrevproxysonarqube:0.1.2_20210901_2024
 
 ---
 apiVersion: v1
