@@ -66,6 +66,7 @@ for YAMLFILE in ${YAMLFILES[@]}; do
     fi
     echo    ""                                      >>  ${ALL_MANIFESTS}
     echo    "#---- ${YAMLFILE}"                     >>  ${ALL_MANIFESTS}
+    echo    "---"                                   >>  ${ALL_MANIFESTS}
     cat     "${SOURCE_MANIFEST}/${YAMLFILE}"        >>  ${ALL_MANIFESTS}
 done
 
