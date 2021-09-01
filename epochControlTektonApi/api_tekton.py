@@ -160,9 +160,6 @@ def post_tekton_pipeline(workspace_id):
             # TEKTON pipeline用の各種リソースの適用
             apply_tekton_pipeline(workspace_id, YAML_KIND_PIPELINE, param)
 
-            # event listen情報取得(response用)
-            eventlistener = get_event_listener_info(workspace_id)
-
         except Exception as e:
             try:
                 # 適用途中のpipelineを削除
@@ -172,7 +169,7 @@ def post_tekton_pipeline(workspace_id):
 
             raise   # エラーをスロー
 
-        return jsonify({"result": "200", "eventlistener": eventlistener}), 200
+        return jsonify({"result": "200"}), 200
 
     except Exception as e:
         return common.serverError(e)
@@ -272,52 +269,6 @@ def delete_workspace_pipeline(workspace_id, kind):
             da_tekton.delete_tekton_pipeline_yaml(cursor, fetch_row['yaml_id'])
 
             db.commit()
-
-
-def get_event_listener_info(workspace_id):
-    """tekton event listener情報取得
-
-    Args:
-        workspace_id (int): ワークスペースID
-
-    Returns:
-        dict: tekton event listener情報
-    """
-    globals.logger.debug('start get_event_listener_info workspace_id:{}'.format(workspace_id))
-
-    for i in range(globals.config['RESOURCE_CREATION_WAIT']):   # 作成されるまで繰り返し
-
-        # kubectlにてeventlistener情報を取得する
-        try:
-            result_kubectl = subprocess.check_output(
-                ['kubectl', 'get', 'eventlistener',
-                '-n', tekton_pipeline_namespace(workspace_id),
-                '-o', 'json',
-                '--field-selector', 'metadata.name={}'.format(event_listener_name)
-                ], stderr=subprocess.STDOUT)
-
-        except subprocess.CalledProcessError as e:
-            globals.logger.error('COMMAND ERROR RETURN:{}\n{}'.format(e.returncode, e.output.decode('utf-8')))
-            raise # 再スロー
-
-        eventlisterinfo = json.loads(result_kubectl.decode('utf-8'))
-
-        if len(eventlisterinfo['items']) > 0:
-            try:
-                eventlistener = {}
-                eventlistener['name'] = eventlisterinfo['items'][0]['status']['configuration']['generatedName']
-                eventlistener['address'] = eventlisterinfo['items'][0]['status']['address']['url']
-                # 情報取得に成功したらreturnする
-                globals.logger.debug('event listener:{}'.format(json.dumps(eventlistener)))
-                return eventlistener
-            except Exception as e:
-                pass
-
-        time.sleep(1)
-
-    # ループする間にリソースが作成されないときは例外を発生させて終了
-    raise Exception('tekton event listener not found')
-
 
 
 @app.route('/workspace/<int:workspace_id>/tekton/pipeline', methods=['DELETE'])
