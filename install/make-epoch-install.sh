@@ -40,6 +40,7 @@ YAMLFILES+=("tekton-pipeline-release.yaml")
 YAMLFILES+=("tekton-trigger-release.yaml")
 YAMLFILES+=("tekton-trigger-interceptors.yaml")
 YAMLFILES+=("tekton-dashbord-release.yaml")
+YAMLFILES+=("tekton-dashbord-nodeport.yaml")
 # -----------------------------------
 
 cat <<EOF > ${ALL_MANIFESTS}
