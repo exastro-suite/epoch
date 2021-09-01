@@ -2329,8 +2329,8 @@ $content.find('.modal-open, .workspace-status-item').on('click', function(){
       };
       break;
     case 'pipelineTektonCheck':
-      $('.modal-block-main').html('<a href="' + workspace_api_conf.links.tekton + '" target="_blank">パイプライン確認</a>');
-      $('.modal-block-main').html('<a href="' + workspace_api_conf.links.sonarqube + '" target="_blank">静的解析(SonarQube)確認</a>');
+      $('.modal-block-main').html('<a href="' + workspace_api_conf.links.tekton + '" target="_blank">パイプライン確認</a><br>'
+        + '<a href="' + workspace_api_conf.links.sonarqube + '" target="_blank">静的解析(SonarQube)確認</a>');
       break;
     case 'registryServiceCheck':
       $('.modal-block-main').html('<a href="' + workspace_api_conf.links.registry + '" target="_blank">確認</a>');
