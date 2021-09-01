@@ -18,6 +18,30 @@ BASEDIR=`dirname $0`
 ALL_MANIFESTS="${BASEDIR}/epoch-install.yaml"
 SOURCE_MANIFEST="${BASEDIR}/source"
 
+# ---- source内のyamlファイル定義 ----
+YAMLFILES=()
+YAMLFILES+=("epochSystem.yaml")
+YAMLFILES+=("proxySetting.yaml")
+YAMLFILES+=("epochCiCdApiConfig.yaml")
+YAMLFILES+=("epochCiCdApiSecret.yaml")
+YAMLFILES+=("epochCiCdApi.yaml")
+YAMLFILES+=("epochControlTektonApi.yaml")
+YAMLFILES+=("epochRsOrganizationApi.yaml")
+YAMLFILES+=("epochRsWorkspaceApi.yaml")
+YAMLFILES+=("epochServiceApi.yaml")
+YAMLFILES+=("epochUi.yaml")
+YAMLFILES+=("organization_db.yaml")
+YAMLFILES+=("workspace_db.yaml")
+YAMLFILES+=("tekton_pipeline_db.yaml")
+YAMLFILES+=("sonarqube.yaml")
+YAMLFILES+=("reverse-proxy-sonarqube.yaml")
+
+YAMLFILES+=("tektonNamespace.yaml")
+YAMLFILES+=("trigger-release.yaml")
+YAMLFILES+=("pipeline-release.yaml")
+YAMLFILES+=("dashbord-release.yaml")
+# -----------------------------------
+
 cat <<EOF > ${ALL_MANIFESTS}
 #   Copyright 2019 NEC Corporation
 #
@@ -34,30 +58,25 @@ cat <<EOF > ${ALL_MANIFESTS}
 #   limitations under the License.
 EOF
 
-echo    "#---- epochSystem.yaml"                >>   ${ALL_MANIFESTS}
-cat     "${SOURCE_MANIFEST}/epochSystem.yaml"   >>   ${ALL_MANIFESTS}
-echo    ""                                      >>   ${ALL_MANIFESTS}
 
-echo    "#---- tektonNamespace.yaml"            >>   ${ALL_MANIFESTS}
-echo    "---"                                   >>   ${ALL_MANIFESTS}
-cat     "${SOURCE_MANIFEST}/tektonNamespace.yaml" >>   ${ALL_MANIFESTS}
-echo    ""                                      >>   ${ALL_MANIFESTS}
+for YAMLFILE in ${YAMLFILES[@]}; do
+    if [ ! -f "${SOURCE_MANIFEST}/${YAMLFILE}" ]; then
+        echo "ERROR: not found ${YAMLFILE}"
+        exit 1
+    fi
+    echo    ""                                      >>  ${ALL_MANIFESTS}
+    echo    "#---- ${YAMLFILE}"                     >>  ${ALL_MANIFESTS}
+    echo    "---"                                   >>  ${ALL_MANIFESTS}
+    cat     "${SOURCE_MANIFEST}/${YAMLFILE}"        >>  ${ALL_MANIFESTS}
+done
 
-for yamlfile in $( ls ${SOURCE_MANIFEST}/epoch*.yaml ); do
-    if [ `basename "${yamlfile}"` != "epochSystem.yaml" ]; then
-        echo    "#---- `basename ${yamlfile}`"  >>   ${ALL_MANIFESTS}
-        echo    "---"                           >>   ${ALL_MANIFESTS}
-        cat     ${yamlfile}                     >>   ${ALL_MANIFESTS}
-        echo    ""                              >>   ${ALL_MANIFESTS}
-    fi;
-done;
+for YAMLFILEPATH in $(ls ${SOURCE_MANIFEST}/*.yaml); do
+    YAMLNAME=$(basename "${YAMLFILEPATH}")
 
-for yamlfile in $( ls ${SOURCE_MANIFEST}/*.yaml | grep -v "^${SOURCE_MANIFEST}/epoch"); do
-    if [ `basename "${yamlfile}"` != "tektonNamespace.yaml" ]; then
-        echo    "#---- `basename ${yamlfile}`"  >>   ${ALL_MANIFESTS}
-        echo    "---"                           >>   ${ALL_MANIFESTS}
-        cat     ${yamlfile}                     >>   ${ALL_MANIFESTS}
-        echo    ""                              >>   ${ALL_MANIFESTS}
-    fi;
-done;
+    ONLIST=$(for item in "${YAMLFILES[@]}"; do echo "${item}"; done | grep "${YAMLNAME}" | wc -l)
+    if [ ${ONLIST} -eq 0 ]; then
+        echo "WARNING: not listed file : ${YAMLNAME}"
+    fi
+done
 
+echo "SUCCEED !!"

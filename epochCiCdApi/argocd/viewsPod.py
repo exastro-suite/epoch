@@ -82,11 +82,19 @@ def post(request):
 
         logger.debug("argocd pod kubectl apply")
         # argocd pod create
-        stdout_cd = subprocess.check_output(["kubectl","apply","-n",name,"-f",(resource_dir + "/argocd_install.yaml")],stderr=subprocess.STDOUT)
+        stdout_cd = subprocess.check_output(["kubectl","apply","-n",name,"-f",(resource_dir + "/argocd_install_v2_1_1.yaml")],stderr=subprocess.STDOUT)
 
         output += "argocd" + "{" + stdout_cd.decode('utf-8') + "},"
 
         logger.debug("argocd pod output:" + output)
+
+        logger.debug("argocd nodeport kubectl apply")
+        # argocd nodeport patch
+        stdout_cd = subprocess.check_output(["kubectl","apply","-n",name,"-f",(resource_dir + "/argocd_nodeport.yaml")],stderr=subprocess.STDOUT)
+
+        output += "argocd nodeport" + "{" + stdout_cd.decode('utf-8') + "},"
+
+        logger.debug("argocd nodeport output:" + output)
 
         # 対象となるdeploymentを定義
         deployments = [ "deployment/argocd-server",
