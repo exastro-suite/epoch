@@ -109,6 +109,7 @@ def post(request):
                  "NO_PROXY=" + os.environ['EPOCH_ARGOCD_NO_PROXY'],
                  "no_proxy=" + os.environ['EPOCH_ARGOCD_NO_PROXY'] ]
 
+        logger.debug("argocd kubectl set env start")
         exec_detail = "環境変数[PROXY]を確認してください"
         for deployment_name in deployments:
             for env_name in envs:
@@ -117,6 +118,7 @@ def post(request):
 
                 output += deployment_name + "." + env_name + "{" + stdout_cd.decode('utf-8') + "},"
         exec_detail = ""
+        logger.debug("argocd kubectl set env complete")
 
         logger.debug("argocd rolesetting kubectl apply")
         # role bindingの再設定 (ns:epoch-workspace用)
