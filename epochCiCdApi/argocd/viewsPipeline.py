@@ -68,7 +68,7 @@ def post(request):
                 "output": e.output.decode('utf-8'),
                 "traceback": traceback.format_exc(),
             }
-            logger.debug (response)
+            # logger.debug (response)
             return JsonResponse(response, status=500)
 
         # 設定済みのリポジトリ情報をクリア
@@ -123,7 +123,7 @@ def post(request):
                     "output": e.output.decode('utf-8'),
                     "traceback": traceback.format_exc(),
                 }
-                logger.debug (response)
+                # logger.debug (response)
                 return JsonResponse(response, status=500)
 
         response = {
@@ -133,7 +133,7 @@ def post(request):
                 #stdout_cd.decode('utf-8'),
             ],
         }
-        logger.debug (response)
+        # logger.debug (response)
         return JsonResponse(response, status=200)
 
     except Exception as e:
