@@ -20,7 +20,7 @@
 NS_NAME_EPOCH=epoch-system
 NS_NAME_WORKSPACE=epoch-workspace
 NS_NAME_PIPELINE=epoch-tekton-pipelines
-NS_NAME_PIPELINE_V011=epoch-tekton-pipelines-1
+NS_NAME_PIPELINE_V011=epoch-tekton-pipeline-1
 
 BASEDIR=`dirname "$0"`
 
