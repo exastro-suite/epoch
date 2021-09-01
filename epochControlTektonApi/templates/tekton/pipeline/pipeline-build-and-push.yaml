@@ -99,7 +99,7 @@ spec:
           workspace: sonar-settings
       params:
         - name: SONAR_HOST_URL
-          value: "http://sonarqube.epoch-system.svc.cluster.local:9000/"
+          value: "http://sonarqube.{{ param.ci_config.pipeline_namespace }}.svc.cluster.local:9000/"
         - name: subdirectory
           value: $(context.pipelineRun.name)
     #{% endif %}

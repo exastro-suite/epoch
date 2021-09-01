@@ -22,6 +22,9 @@ import time
 import re
 from urllib.parse import urlparse
 import base64
+import requests
+from requests.auth import HTTPBasicAuth
+import traceback
 
 import globals
 import common
@@ -40,6 +43,8 @@ templates = {
         'namespace.yaml',
         'pipeline-pvc.yaml',
         'reverse-proxy.yaml',
+        'sonarqube.yaml',
+        'reverse-proxy-sonarqube.yaml',
     ],
     "pipeline" : [
         'pipeline-sa.yaml',
@@ -105,6 +110,9 @@ def post_tekton_pipeline(workspace_id):
         # namespace、eventlistener設定
         param['ci_config']['pipeline_namespace'] = tekton_pipeline_namespace(workspace_id)
         param['ci_config']['event_listener_name'] = event_listener_name
+        # sonarqube設定
+        param['ci_config']['sonarqube_password'] = os.environ['EPOCH_SONARQUBE_PASSWORD']
+        # proxy設定
         param['proxy'] = {
             'http': os.environ['EPOCH_HTTP_PROXY'],
             'https': os.environ['EPOCH_HTTPS_PROXY'],
@@ -145,6 +153,9 @@ def post_tekton_pipeline(workspace_id):
                 pipeline['build_refs'] = None
             else:
                 pipeline['build_refs'] = '[{}]'.format(','.join(map(lambda x: '\'refs/heads/'+x+'\'', pipeline['build']['branch'])))
+
+            # sonarqube用
+            pipeline['sonar_project_name'] = re.sub('\\.git$', '', re.sub('^https?://[^/][^/]*/', '', pipeline["git_repositry"]["url"]))
         #
         # TEKTON pipelineの削除
         #
@@ -156,6 +167,10 @@ def post_tekton_pipeline(workspace_id):
         try:
             # TEKTON pipeline用のnamespaceの適用
             apply_tekton_pipeline(workspace_id, YAML_KIND_NAMESPACE, param)
+
+            # SonarQubeの初期設定を行う
+            sonar_token = sonarqube_initialize(workspace_id, param)
+            param['ci_config']['sonar_token'] = sonar_token
 
             # TEKTON pipeline用の各種リソースの適用
             apply_tekton_pipeline(workspace_id, YAML_KIND_PIPELINE, param)
@@ -173,6 +188,74 @@ def post_tekton_pipeline(workspace_id):
 
     except Exception as e:
         return common.serverError(e)
+
+
+def sonarqube_initialize(workspace_id, param):
+    """SonarQubeの初期設定
+        adminのパスワード変更, TOKENの払い出しを行う
+
+    Args:
+        workspace_id (int): ワークスペースID
+        param (dict): ワークスペースパラメータ
+    """
+    globals.logger.debug('start sonarqube_initialize workspace_id:{}'.format(workspace_id))
+
+    host = "http://sonarqube.{}.svc:9000/".format(param["ci_config"]["pipeline_namespace"])
+    sonarqube_user_name = 'admin'
+    sonarqube_user_password_old = 'admin'
+    sonarqube_user_password = param['ci_config']['sonarqube_password']
+    sonarqube_project_key_name = 'epoch_key'
+
+    # パスワード変更
+    try_count = 10
+    for i in range(try_count):
+        globals.logger.debug('password change count: ' + str(i))
+
+        # SonarQubeコンテナが立ち上がるまで繰り返し試行
+        try:
+            time.sleep(10)
+
+            api_path = "api/users/change_password"
+            get_query = "?login={}&previousPassword={}&password={}".format(sonarqube_user_name, sonarqube_user_password_old, sonarqube_user_password)
+
+            api_uri = host + api_path + get_query
+            response = requests.post(api_uri, auth=HTTPBasicAuth(sonarqube_user_name, sonarqube_user_password_old), timeout=3)
+
+            globals.logger.debug('code: {}, message: {}'.format(str(response.status_code), response.text))
+            if response.status_code == 204:
+                globals.logger.debug('SonarQube password change SUCCEED')
+                break
+            if response.status_code == 401:
+                globals.logger.debug('SonarQube password has already changed')
+                break
+
+        except Exception as e:
+            #globals.logger.error(''.join(list(traceback.TracebackException.from_exception(e).format())))
+            #raise # 再スロー
+            pass
+
+    # TOKEN 削除 -> 払い出し
+    try:
+        get_query = '?login={}&name={}'.format(sonarqube_user_name, sonarqube_project_key_name)
+
+        # 削除
+        api_path = 'api/user_tokens/revoke'
+        api_uri = host + api_path + get_query
+        response = requests.post(api_uri, auth=HTTPBasicAuth(sonarqube_user_name, sonarqube_user_password), timeout=3)
+
+        # 払い出し
+        api_path = 'api/user_tokens/generate'
+        api_uri = host + api_path + get_query
+        response = requests.post(api_uri, auth=HTTPBasicAuth(sonarqube_user_name, sonarqube_user_password), timeout=3)
+        response.raise_for_status()
+        ret_data = json.loads(response.text)
+
+        globals.logger.debug('SonarQube generate token SUCCEED')
+        return ret_data['token']
+
+    except Exception as e:
+        globals.logger.error(''.join(list(traceback.TracebackException.from_exception(e).format())))
+        raise # 再スロー
 
 
 def apply_tekton_pipeline(workspace_id, kind, param):

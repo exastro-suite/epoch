@@ -16,7 +16,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: epoch-reverse-proxy-sonarqube
-  namespace: epoch-system
+  namespace: {{ param.ci_config.pipeline_namespace }}
 spec:
   selector:
     matchLabels:
@@ -38,7 +38,7 @@ metadata:
   name: epoch-reverse-proxy-sonarqube
   labels:
     name: epoch-reverse-proxy-sonarqube
-  namespace: epoch-system
+  namespace: {{ param.ci_config.pipeline_namespace }}
 spec:
   type: NodePort
   ports:
