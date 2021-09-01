@@ -156,7 +156,7 @@ def post(request):
         gitlist_json = json.loads(gitlist_resp.text)
         logger.debug('---- Git Environments ----')
         #logger.debug(gitlist_resp.text.encode().decode('unicode-escape'))
-        logger.debug(gitlist_resp.text)
+        #logger.debug(gitlist_resp.text)
 
         # 項目位置の取得
         column_indexes_gitlist = column_indexes(column_names_gitlist, gitlist_json['resultdata']['CONTENTS']['BODY'][0])
