@@ -13,6 +13,7 @@
 #   limitations under the License.
 
 #---- epochSystem.yaml
+---
 #   Copyright 2019 NEC Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,6 +33,7 @@ metadata:
   name: epoch-system
 
 #---- proxySetting.yaml
+---
 #   Copyright 2019 NEC Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -55,6 +57,7 @@ data:
   HTTPS_PROXY: ""
 
 #---- epochCiCdApiConfig.yaml
+---
 #   Copyright 2019 NEC Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -85,6 +88,7 @@ data:
   WEBHOOK_PORT: "30804"
 
 #---- epochCiCdApiSecret.yaml
+---
 #   Copyright 2019 NEC Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -111,6 +115,7 @@ stringData:
   ITA_PASSWORD: "fmSCuPLsbvG7KCMRrtT9"
 
 #---- epochCiCdApi.yaml
+---
 #   Copyright 2019 NEC Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -199,6 +204,7 @@ spec:
     name: epoch-cicd-api
 
 #---- epochControlTektonApi.yaml
+---
 #   Copyright 2019 NEC Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -295,6 +301,7 @@ spec:
     name: epoch-control-tekton-api
 
 #---- epochRsOrganizationApi.yaml
+---
 #   Copyright 2019 NEC Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -378,6 +385,7 @@ spec:
     name: epoch-rs-organization-api
 
 #---- epochRsWorkspaceApi.yaml
+---
 #   Copyright 2019 NEC Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -461,6 +469,7 @@ spec:
     name: epoch-rs-workspace-api
 
 #---- epochServiceApi.yaml
+---
 #   Copyright 2019 NEC Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -571,6 +580,7 @@ spec:
     name: epoch-service-api
 
 #---- epochUi.yaml
+---
 #   Copyright 2019 NEC Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -721,6 +731,7 @@ spec:
     name: epoch-ui
 
 #---- organization_db.yaml
+---
 #   Copyright 2019 NEC Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -840,6 +851,7 @@ spec:
     name: organization-db
 
 #---- workspace_db.yaml
+---
 #   Copyright 2019 NEC Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -967,6 +979,7 @@ spec:
     name: workspace-db
 
 #---- tekton_pipeline_db.yaml
+---
 #   Copyright 2019 NEC Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -1097,6 +1110,7 @@ spec:
     name: tekton-pipeline-db
 
 #---- sonarqube.yaml
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -1139,6 +1153,7 @@ spec:
 
 
 #---- reverse-proxy-sonarqube.yaml
+---
 #   Copyright 2019 NEC Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -1191,6 +1206,7 @@ spec:
     name: epoch-reverse-proxy-sonarqube
 
 #---- tektonNamespace.yaml
+---
 #   Copyright 2019 NEC Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -1210,6 +1226,7 @@ metadata:
   name: tekton-pipelines
 
 #---- trigger-release.yaml
+---
 # Copyright 2019 The Tekton Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -2462,6 +2479,7 @@ spec:
 ---
 
 #---- pipeline-release.yaml
+---
 # Copyright 2019 The Tekton Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -4463,6 +4481,7 @@ spec:
 ---
 
 #---- dashbord-release.yaml
+---
 #   Copyright 2019 NEC Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
