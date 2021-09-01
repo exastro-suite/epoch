@@ -33,8 +33,6 @@ YAMLFILES+=("epochUi.yaml")
 YAMLFILES+=("organization_db.yaml")
 YAMLFILES+=("workspace_db.yaml")
 YAMLFILES+=("tekton_pipeline_db.yaml")
-YAMLFILES+=("sonarqube.yaml")
-YAMLFILES+=("reverse-proxy-sonarqube.yaml")
 
 YAMLFILES+=("tekton-pipeline-release.yaml")
 YAMLFILES+=("tekton-trigger-release.yaml")
