@@ -36,10 +36,10 @@ YAMLFILES+=("tekton_pipeline_db.yaml")
 YAMLFILES+=("sonarqube.yaml")
 YAMLFILES+=("reverse-proxy-sonarqube.yaml")
 
-YAMLFILES+=("tektonNamespace.yaml")
-YAMLFILES+=("trigger-release.yaml")
-YAMLFILES+=("pipeline-release.yaml")
-YAMLFILES+=("dashbord-release.yaml")
+YAMLFILES+=("tekton-pipeline-release.yaml")
+YAMLFILES+=("tekton-trigger-release.yaml")
+YAMLFILES+=("tekton-trigger-interceptors.yaml")
+YAMLFILES+=("tekton-dashbord-release.yaml")
 # -----------------------------------
 
 cat <<EOF > ${ALL_MANIFESTS}
