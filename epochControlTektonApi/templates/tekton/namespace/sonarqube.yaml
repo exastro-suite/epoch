@@ -11,21 +11,43 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-#{% for item in param.ci_config.pipelines %}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sonarqube
+  labels:
+    app: sonarqube
+  namespace: {{ param.ci_config.pipeline_namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sonarqube
+  template:
+    metadata:
+      labels:
+        app: sonarqube
+    spec:
+      hostname: sonarqube
+      containers:
+      - name: sonarqube
+        image: sonarqube
+
 ---
 apiVersion: v1
-kind: ConfigMap
+kind: Service
 metadata:
-  name: sonar-settings-config-{{ loop.index }}
+  name: sonarqube
+  labels:
+    app: sonarqube
   namespace: {{ param.ci_config.pipeline_namespace }}
-data:
-  sonar-project.properties: |
-{% if item.static_analysis.interface == "sonarQube" %}
-    sonar.projectKey=epoch-pipeline-{{ loop.index }}
-    sonar.projectName={{ item.sonar_project_name }}
-    sonar.projectVersion=0.1
-    sonar.login={{ param.ci_config.sonar_token }}
-{% else %}
-    setting not used
-{% endif %}
-{% endfor %}
+spec:
+  type: NodePort
+  selector:
+    app: sonarqube
+  ports:
+  - name: http
+    port: 9000
+    targetPort: 9000
+    nodePort: 30907
+
