@@ -235,6 +235,18 @@ data:
 
 ---
 
+apiVersion: v1
+kind: Secret
+metadata:
+  name: epoch-control-tekton-api-secret
+  namespace: epoch-system
+type: Opaque
+stringData:
+  SONARQUBE_USER: "admin"
+  SONARQUBE_PASSWORD: "hb35d2cNhWdnFvwtBtMY"
+
+---
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -278,6 +290,10 @@ spec:
               key: HTTPS_PROXY
         - name: EPOCH_NO_PROXY
           value: ""
+        envFrom:
+          - prefix: EPOCH_
+            secretRef:
+              name: epoch-control-tekton-api-secret
         volumeMounts:
         - name: epoch-control-tekton-conf
           mountPath: /etc/epoch/epochControlTektonApi
@@ -1108,102 +1124,6 @@ spec:
     targetPort: 3306
   selector:
     name: tekton-pipeline-db
-
-#---- sonarqube.yaml
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: sonarqube
-  labels:
-    app: sonarqube
-  namespace: epoch-system
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: sonarqube
-  template:
-    metadata:
-      labels:
-        app: sonarqube
-    spec:
-      hostname: sonarqube
-      containers:
-      - name: sonarqube
-        image: sonarqube
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: sonarqube
-  labels:
-    app: sonarqube
-  namespace: epoch-system
-spec:
-  type: NodePort
-  selector:
-    app: sonarqube
-  ports:
-  - name: http
-    port: 9000
-    targetPort: 9000
-    nodePort: 30907
-
-
-#---- reverse-proxy-sonarqube.yaml
----
-#   Copyright 2019 NEC Corporation
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: epoch-reverse-proxy-sonarqube
-  namespace: epoch-system
-spec:
-  selector:
-    matchLabels:
-      name: epoch-reverse-proxy-sonarqube
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        name: epoch-reverse-proxy-sonarqube
-    spec:
-      containers:
-      - name: epoch-reverse-proxy-sonarqube
-        image: exastro/epochrevproxysonarqube:0.1.2_20210901_0920
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: epoch-reverse-proxy-sonarqube
-  labels:
-    name: epoch-reverse-proxy-sonarqube
-  namespace: epoch-system
-spec:
-  type: NodePort
-  ports:
-  - name: https
-    port: 4432
-    targetPort: 4432
-    nodePort: 30807
-  selector:
-    name: epoch-reverse-proxy-sonarqube
 
 #---- tekton-pipeline-release.yaml
 ---
