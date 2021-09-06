@@ -25,6 +25,9 @@ backgroundAurora();
 // 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 const wsDataJSON = {
+  // 
+  'parameter-info': {
+  },
   'workspace': {
   },
   'environment' : {
@@ -453,6 +456,7 @@ const wsModalJSON = {
           },
           'defaultTitle': '環境',
           'emptyText': '環境の登録がありません。環境追加ボタンから追加してください。',
+          'deletConfirmText': '登録済みのデータがあります。削除しますか？',
           'item': {
             'environmentName': {
               'type': 'input',
@@ -615,7 +619,7 @@ const wsModalJSON = {
       'cdExecutionCondition': {
         'title': '実行条件',
         'item': {
-          'comitList': {
+          'cdExecutionConditionBlock': {
             'type': 'loading',
             'id': 'cd-execution-condition'            
           }
@@ -623,17 +627,25 @@ const wsModalJSON = {
       },
       'cdExecutionManifestParameter': {
         'title': 'Manifestパラメータ',
-        'item': {
-          'comitList': {
-            'type': 'loading',
-            'id': 'cd-execution-manifest-parameter'            
+        'tab': {
+          'type': 'reference',
+          'id': 'cd-execution-manifest-parameter',
+          'target': {
+            'key1': 'manifests',
+            'key2': 'file_name'
+          },
+          'emptyText': 'テンプレートファイルの登録がありません。Kubernetes Manifestテンプレートの設定からテンプレートファイルを追加してください。',
+          'item': {
+            'cdExecutionManifestParameterBlock': {
+              'type': 'loading'
+            }
           }
         }
       },
       'cdExecutionArgo': {
         'title': 'ArgoCDパイプライン',
         'item': {
-          'comitList': {
+          'cdExecutionArgoBlock': {
             'type': 'loading',
             'id': 'cd-execution-argo'            
           }
@@ -1353,7 +1365,8 @@ const setParameterData = function( $modal ){
           enviromentID =  $input.attr('data-enviroment'),
           name = $input.attr('name'),
           value = $input.val();
-    if ( wsDataJSON['environment'] !== undefined ) {
+    if ( enviromentID !== '__parameterItemInfo__') {
+      if ( wsDataJSON['environment'] === undefined )  wsDataJSON['environment'] = new Object();
       if ( wsDataJSON['environment'][ enviromentID ] !== undefined ) {
         if ( wsDataJSON['environment'][ enviromentID ]['parameter'] === undefined ) {
           wsDataJSON['environment'][ enviromentID ]['parameter'] = new Object();
@@ -1362,9 +1375,14 @@ const setParameterData = function( $modal ){
           wsDataJSON['environment'][ enviromentID ]['parameter'][ fileID ] = new Object();
         }
         wsDataJSON['environment'][ enviromentID ]['parameter'][ fileID ][ name ] = value;
-        } else {
-        window.console.error( enviromentID + ' not found.');
       }
+    } else {
+      // パラメータ説明
+      if ( wsDataJSON['parameter-info'] === undefined )  wsDataJSON['parameter-info'] = new Object();
+      if ( wsDataJSON['parameter-info'][ fileID ] === undefined ) {
+        wsDataJSON['parameter-info'][ fileID ] = new Object();
+      }
+      wsDataJSON['parameter-info'][ fileID ][ name ] = value;
     }
   });
   
@@ -1832,12 +1850,13 @@ const inputParameter = function(){
     // 読み込みが完了したら
     const $tabBlock = $( this ),
           tabID = $tabBlock.attr('id'),
-          parameterSpan = '<span class="item-parameter" data-value="$2">$1</span>',
-          envNumber = Object.keys( wsDataJSON['environment'] ).length;
+          parameterSpan = '<span class="item-parameter" data-value="$2">$1</span>';
           
     let $parameter = $(''
     + '<div class="item-parameter-block">'
       + '<div class="item-parameter-input-area">'
+      + '</div>'
+      + '<div class="item-parameter-move">'
       + '</div>'
       + '<div class="item-parameter-code">'
         + '<pre class="item-parameter-pre prettyprint linenums lang-yaml">'
@@ -1857,9 +1876,15 @@ const inputParameter = function(){
     });
     
     let parameterArea = '';
+
+    // 予約項目説明
+    const itemFixedInfo = {
+      'image': 'イメージ',
+      'image_tag': 'イメージタグ名'
+    };
     
     // 環境が登録済みか？
-    if ( Object.keys( wsDataJSON.environment).length ) {
+    if ( Object.keys( wsDataJSON.environment ).length ) {
       parameterArea += ''
       + '<table class="item-parameter-table">'
         + '<thead>'
@@ -1868,10 +1893,18 @@ const inputParameter = function(){
       // thead 環境名
       for ( const key in wsDataJSON.environment ) {          
         parameterArea += ''
-        + '<th class="item-parameter-cell"><div class="item-parameter-cell-i">' + wsDataJSON.environment[key].text + '</div></th>';
+        + '<th class="item-parameter-cell">'
+          + '<div class="item-parameter-cell-i">'
+            + wsDataJSON.environment[key].text
+          + '</div>'
+        + '</th>';
       }
-      parameterArea += '</tr>'
-      + '</thead>'
+      parameterArea += ''
+            + '<th class="item-parameter-cell item-parameter-info">'
+              + '<div class="item-parameter-cell-i">項目説明</div>'
+            + '</th>'
+          + '</tr>'
+        + '</thead>'
       + '<tbody>';
       for ( const parameterID in parameterList ) {
         const parameterName = parameterList[parameterID].replace(/^{{\s(.+)\s}}$/,'$1');
@@ -1894,15 +1927,34 @@ const inputParameter = function(){
             + '</div>'
           + '</td>';
         }
-        parameterArea += '</tr>'
+        // 項目説明
+        parameterArea += '<td class="item-parameter-cell item-parameter-info"><div class="item-parameter-input-w">';
+        if ( itemFixedInfo[parameterName] === undefined ) {
+          const name = '__parameterItemInfo__-' + tabID + '-' + parameterID;
+          let value = modal.searchValue( wsDataJSON['parameter-info'][tabID], name );
+          if ( value === undefined ) value = '';
+          parameterArea += ''
+          + '<input type="text" '
+            + 'value="' + value + '" '
+            + 'class="item-text" '
+            + 'placeholder="項目説明 : ' + parameterName + '" '
+            + 'name="' + name + '" '
+            + 'data-file="' + tabID + '" '
+            + 'data-enviroment="__parameterItemInfo__" '
+            + 'data-parameter="' + parameterID + '">';
+        } else {
+          parameterArea += '<span class="item-parameter-fixed-info">' + itemFixedInfo[parameterName] + '</span>';
+        }        
+        parameterArea += '</div></td></tr>';
       }
       parameterArea += '</tbody>'
       + '</table>';
+    } else {
+      parameterArea += '<div class="item-parameter-empty-block"><div class="modal-empty-block">環境の登録がありません。</div></div>'
     }
     $parameter.find('.item-parameter-input-area').html( parameterArea );
     
     $tabBlock.html( $parameter );
-    
     
     $parameter.find('.item-text').on({
       // フォーカスでコードを指定位置にスクロール
@@ -1916,6 +1968,59 @@ const inputParameter = function(){
         $p.addClass('select');
         $code.stop( 0,0 ).animate({ scrollTop: $l.position().top + $code.scrollTop() }, 300, 'swing');
       }  
+    });
+
+    $parameter.find('.item-parameter-move').on({
+      'mousedown': function( md ){
+        const $move = $( this ),
+              $window = $( window ),
+              $parent = $move.closest('.item-parameter-block'),
+              $blockA = $move.prev('.item-parameter-input-area'),
+              $blockB = $move.next('.item-parameter-code'),
+              moveSize = $move.outerHeight() / 2,
+              parentSize = $parent.innerHeight(),
+              mdY = md.pageY,
+              aSize = $blockA.outerHeight(),
+              bSize = $blockB.outerHeight(),
+              minHeight = 80,
+              maxHeight = parentSize - minHeight - ( moveSize * 2 );
+        
+        let   aSetSize, bSetSize,
+              moveY = 0;
+        
+        getSelection().removeAllRanges();
+        
+        const sizeSet = function( a, b ){
+          $blockA.css('height', a );
+          $blockB.css('height', b );
+        };
+        sizeSet( aSize, bSize );
+        
+        $parent.addClass('active');
+        $window.on({
+          'mousemove.parameterSlide': function( mm ){
+            moveY = mdY - mm.pageY;
+            aSetSize = aSize - moveY;
+            bSetSize = bSize + moveY;
+            if ( aSetSize < minHeight ) {
+              aSetSize = minHeight;
+              bSetSize = maxHeight;
+            }
+            if ( bSetSize < minHeight ) {
+              bSetSize = minHeight;
+              aSetSize = maxHeight;
+            }
+            sizeSet( aSetSize, bSetSize );
+          },
+          'mouseup.parameterSlide': function(){
+            $window.off('mousemove.parameterSlide mouseup.parameterSlide');
+            $parent.removeClass('active');
+            aSetSize = ( aSetSize + moveSize ) / parentSize * 100;
+            bSetSize = 100 - aSetSize;
+            sizeSet('calc(' + aSetSize + '% - ' + moveSize + 'px)', 'calc(' + bSetSize + '% - ' + moveSize + 'px)');
+          }
+        });
+      }
     });
 
     // コードハイライト
@@ -1995,51 +2100,84 @@ const cdExecution = function(){
     }
   });
   
-  // Manifestパラメータ
-  $manifest.html('');
   
-  // ArgoCDパイプライン
-  const deployList = function( environmentName, repository, url, namespace ){
-    return ''
-      + '<tr class="c-table-row">'
-        + '<th class="c-table-col c-table-col-header"><div class="c-table-ci">環境名</div></th>'
-        + '<td class="c-table-col"><div class="c-table-ci">' + fn.textEntities( environmentName ) + '</div></td>'
-      + '</tr>'
-      + '<tr class="c-table-row">'
-        + '<th class="c-table-col c-table-col-header"><div class="c-table-ci">Manifestリポジトリ</div></th>'
-        + '<td class="c-table-col"><div class="c-table-ci">' + fn.textEntities( repository ) + '</div></td>'
-      + '</tr>'
-      + '<tr class="c-table-row">'
-        + '<th class="c-table-col c-table-col-header"><div class="c-table-ci">Kubernetes API Server URL</th>'
-        //+ '<td class="c-table-col"><div class="c-table-ci">' + fn.textEntities( url ) + '</div></td>'
-        + '<td class="c-table-col"><div class="c-table-ci">' + (fn.textEntities( url ) == null? "": fn.textEntities( url )) + '</div></td>'
-      + '</tr>'
-      + '<tr class="c-table-row">'
-        + '<th class="c-table-col c-table-col-header"><div class="c-table-ci">Namespace</th>'
-        + '<td class="c-table-col"><div class="c-table-ci">' + fn.textEntities( namespace ) + '</div></td>'
-      + '</tr>';
+  // 選択されていません。
+  const notSelected = function(){
+    return '<div class="modal-empty-block">環境が選択されていません。</div>';
   };
-  $argo.html(''
-    + '<p>以下の内容でDeployします。よろしいですか？</p>'
-    + '<table id="deploy-chack" class="c-table">'
-      + deployList('','','','')
-    + '</table>'
-  + '');
+  
+  // Manifestパラメータ
+  $manifest.find('.modal-tab-body-block').html( notSelected() );
+  
+  // テーブルHTML
+  const tableHTML = function( table ){
+    let html = '<table class="c-table">';
+    for ( const key in table ) {
+      html += ''
+      + '<tr class="c-table-row">'
+        + '<th class="c-table-col c-table-col-header"><div class="c-table-ci">' + key + '</div></th>'
+        + '<td class="c-table-col"><div class="c-table-ci">' + fn.textEntities( table[key] ) + '</div></td>'
+      + '</tr>';
+    }
+    html += '</table>';
+    return html;
+  };
+  $argo.html( notSelected() );
   
   // 環境選択
-  const $deployTable = $modal.find('#deploy-chack');
   $modal.find('#cd-execution-environment-select').on('change', function(){
-    const key = $( this ).val();
-    if ( key !== 'none') {
-      const name = envList[key].text,
-            repository = envList[key][key+'-git-service-argo-repository-url'],
-            url = envList[key][key+'-environment-url'],
-            namespace = envList[key][key+'-environment-namespace'];
-      $deployTable.html( deployList(name,repository,url,namespace) );
+    const envID = $( this ).val(),
+          deploy = envList[envID],
+          rKey = envID + '-git-service-argo-repository-url',
+          nKey = envID + '-environment-namespace',
+          sKey = envID + '-environment-deploy-select',
+          uKey = envID + '-environment-url',
+          uDefault = 'https://Kubernetes.default.svc';
+    
+    if ( envID !== 'none') {
+    
+      // パラメーター
+      $manifest.find('.modal-tab-body-block').each(function(){
+        const $parameter = $( this ),
+              fileID = $parameter.attr('id');
+        if ( deploy['parameter'] !== undefined && deploy['parameter'][fileID] !== undefined ) {
+          const envPara = deploy['parameter'][fileID],
+                paraList = {};
+          for ( const key in envPara ) {
+            const paraReg = new RegExp('^' + envID + '-' + fileID + '-');
+            paraList[ key.replace( paraReg, '') ] = envPara[key];
+          }          
+          $parameter.html( tableHTML( paraList ) );
+        } else {
+          $parameter.html('<div class="modal-empty-block">Manifestパラメータの登録がありません。</div>')
+        }
+      });  
+    
+      // Deploy環境
+      const name = deploy['text'],
+            repository = ( deploy[rKey] !== undefined )? deploy[rKey]: '',
+            namespace  = ( deploy[nKey] !== undefined )? deploy[nKey]: '';
+      let url;
+      if ( deploy[sKey] === 'internal') {
+        // 内部
+        url = uDefault;
+      } else if ( deploy[sKey] === 'external') {
+        // 外部
+        url = ( deploy[uKey] !== undefined )? deploy[uKey]: '';
+      } else {
+        url = '';
+      }
       wsDataJSON['cd-execution-param']['operation-search-key'] = repository;
+      $argo.html('<p>以下の内容でDeployします。よろしいですか？</p>'
+      + tableHTML({
+        '環境名': name,
+        'Manifestリポジトリ': repository,
+        'Kubernetes API Server URL': url,
+        'Namespace': namespace
+      }) );
       $okButton.prop('disabled', false );
     } else {
-      $deployTable.html( deployList('','','','') );
+      $argo.add(  $manifest.find('.modal-tab-body-block') ).html( notSelected() );
       wsDataJSON['cd-execution-param']['operation-search-key'] = '';
       $okButton.prop('disabled', true );
     }
@@ -2557,6 +2695,10 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
   
         data_workspace = data['result']['output'][0];
 
+        if(data_workspace['parameter-info']) {
+          wsDataJSON['parameter-info'] = data_workspace['parameter-info']
+        }
+        
         if(data_workspace['common']) {
           wsDataJSON['workspace'] = {
             'workspace-name' :                    data_workspace['common']['name'],
@@ -2594,7 +2736,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
           wsDataJSON['environment'][item] = {};
           wsDataJSON['environment'][item]['text']                         = data_environments[i]['name'];
           wsDataJSON['environment'][item][item + '-environment-name']     = data_environments[i]['name'];
-          wsDataJSON['environment'][item][item + '-deploy-select']        = data_environments[i]['deploy_destination']['cluster_kind'];
+          wsDataJSON['environment'][item][item + '-environment-deploy-select'] = data_environments[i]['deploy_destination']['cluster_kind'];
           wsDataJSON['environment'][item][item + '-environment-url']      = data_environments[i]['deploy_destination']['cluster_url'];
           wsDataJSON['environment'][item][item + '-environment-namespace']= data_environments[i]['deploy_destination']['namespace'];
           wsDataJSON['environment'][item][item + '-environment-authentication-token']= data_environments[i]['deploy_destination']['authentication_token'];
@@ -2699,6 +2841,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       $('#error_statement').html('');
       $('#error_detail').html('');
 
+      update_mode = "";
       console.log("CALL : ワークスペース情報登録");
       if (workspace_id == null) {
         api_param = {
@@ -2707,6 +2850,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
           "data": JSON.stringify(reqbody),
           dataType: "json",
         }
+        update_mode = "作成"; 
       } else {
         api_param = {
           "type": "PUT",
@@ -2714,6 +2858,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
           "data": JSON.stringify(reqbody),
           dataType: "json",
         }
+        update_mode = "更新"; 
       }
   
       $.ajax(api_param).done(function(data) {
@@ -2721,7 +2866,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         console.log("--- data ----");
         console.log(JSON.stringify(data));
         created_workspace_id = data['rows'][0]['workspace_id'];
-        //workspace_id = created_workspace_id;
+        workspace_id = created_workspace_id;
 
         // 成功
         resolve();
@@ -2735,11 +2880,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       //
       //  ワークスペース作成API
       //
-      if(workspace_id == null) {
-        $('#progress_message').html('STEP 2/4 : ワークスペースを作成しています');
-      } else {
-        $('#progress_message').html('STEP 2/4 : ワークスペースを更新しています');
-      }
+      $('#progress_message').html('STEP 2/4 : ワークスペースを' + update_mode + 'しています');
       console.log("CALL : ワークスペース作成");
   
       $.ajax({
@@ -2772,11 +2913,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       //
       // パイプライン作成API
       //
-      if(workspace_id == null) {
-        $('#progress_message').html('STEP 3/4 :   パイプラインを作成しています');
-      } else {
-        $('#progress_message').html('STEP 3/4 :   パイプラインを更新しています');
-      }
+      $('#progress_message').html('STEP 3/4 :   パイプラインを' + update_mode + 'しています');
       console.log("CALL : パイプライン作成");
   
       $.ajax({
@@ -2834,12 +2971,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       });
     })}).then(() => {
       // 実行中ダイアログ表示
-      if(workspace_id == null) {
-        $('#progress_message').html('【COMPLETE】 ワークスペースを作成しました（ワークスペースID:'+created_workspace_id+'）');
-        workspace_id = created_workspace_id;
-      } else {
-        $('#progress_message').html('【COMPLETE】 ワークスペースを更新しました（ワークスペースID:'+workspace_id+'）');
-      }
+      $('#progress_message').html('【COMPLETE】 ワークスペースを' + update_mode + 'しました（ワークスペースID:'+created_workspace_id+'）');
       $('#progress-message-ok').prop("disabled", false);
       // CI/CD実行タブを表示
       $('#cicd-tab-item').css('visibility','visible');
@@ -2849,13 +2981,10 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
     }).catch((errorinfo) => {
       // 実行中ダイアログ表示
 
-      if(created_workspace_id != null) {
-        $('#progress_message').html('【ERROR】 ワークスペースの作成に失敗しました（ワークスペースID:'+created_workspace_id+'）');
-        // workspace_id = created_workspace_id;
-      } else if(workspace_id == null) {
-        $('#progress_message').html('【ERROR】 ワークスペースの作成に失敗しました');
+      if(workspace_id == null) {
+        $('#progress_message').html('【ERROR】 ワークスペースの' + update_mode + 'に失敗しました');
       } else {
-        $('#progress_message').html('【ERROR】 ワークスペースの更新に失敗しました（ワークスペースID:'+workspace_id+'）');
+        $('#progress_message').html('【ERROR】 ワークスペースの' + update_mode + 'に失敗しました（ワークスペースID:'+created_workspace_id+'）');
       }
       try {
         if(errorinfo.error_statement) {
@@ -2887,6 +3016,10 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
     reqbody = {};
   
     // 新IFの設定
+
+    // manifestパラメータの項目名
+    reqbody['parameter-info'] = wsDataJSON['parameter-info'];
+
     // パラメータ設定 -  共通
     reqbody['common'] = {
       "name"  :   (wsDataJSON['workspace']['workspace-name']? wsDataJSON['workspace']['workspace-name'] : ""),
