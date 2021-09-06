@@ -131,11 +131,17 @@ modalFunction.prototype = {
               $tabBlock.on({
                 'keydown': function(e){
                   if ( e.keyCode === 13 ) {
-                    modal.openTab( $(this) );
+                    const $tab = $(this);
+                    if ( !$tab.is('.open') ) {
+                      modal.openTab( $tab );
+                    }
                   }
                 },
                 'click': function(){
-                  modal.openTab( $(this) );
+                  const $tab = $(this);
+                  if ( !$tab.is('.open') ) {
+                    modal.openTab( $tab );
+                  }
                 },
                 'mouseenter': function(){
                   modal.tabSize( $(this) );
@@ -235,9 +241,6 @@ modalFunction.prototype = {
                 $knob.css('left', Math.round( ratio * 100 ) + '%' );
               });
               
-              
-              
-              
             } else {
               $fader.remove();
             }
@@ -319,16 +322,22 @@ modalFunction.prototype = {
     'setParameter': function( parentKey ){
       const modal = this,
             inputTarget = 'input[type="text"], input[type="number"], input[type="password"], input[type="radio"]:checked, textarea';
-  
-      modal.$modal.find( inputTarget ).each( function(){
-        const $input = $( this ),
-              name = $input.attr('name'),
-              value = $input.val();
+      
+      const setValue = function( key, value ){
         if ( parentKey === undefined ) {
-          modal.valueJSON[ name ] = value;
+          modal.valueJSON[ key ] = value;
         } else {
           if ( modal.valueJSON[ parentKey ] === undefined ) modal.valueJSON[ parentKey ] = {};
-          modal.valueJSON[ parentKey ][ name ] = value;
+          modal.valueJSON[ parentKey ][ key ] = value;
+        }      
+      };
+      modal.$modal.find( inputTarget ).each( function(){
+        const $input = $( this ),
+              key = $input.attr('name'),
+              value = $input.val();
+        // 自由項目は除く
+        if ( !$input.is('.item-freeitem-input') ) {
+          setValue( key, value );
         }
       });
     },
@@ -466,9 +475,9 @@ modalFunction.prototype = {
        Tab
     \* -------------------------------------------------- */
     'createTabBody': function( tab ){
-      const modal = this,
-            type = tab.type,
-            modalClass = ( type === 'add')? 'modal-tab-block modal-tab-add-block': 'modal-tab-block',
+            const modal = this,
+            tabType = tab.type,
+            modalClass = ( tabType === 'add')? 'modal-tab-block modal-tab-add-block': 'modal-tab-block',
             $tab = $('<div/>', {'id': tab.id, 'class': modalClass }),
             $tabMenu = $('<div/>', {'class': 'modal-tab-menu'}),
             $tabBody = $('<div/>', {'class': 'modal-tab-body'}),
@@ -483,7 +492,7 @@ modalFunction.prototype = {
           })
         );
       };
-      if ( type === 'add' || type === 'reference') {
+      if ( tabType === 'add' || tabType === 'reference') {
         const target = modal.valueJSON[ tab.target.key1 ],
               type = modal.typeJudgment( target );
         let length = 0;
@@ -503,7 +512,7 @@ modalFunction.prototype = {
               }).append(
                 $('<div/>', {'class': 'modal-tab-name'}).append(
                   $('<span/>', {'class': 'modal-tab-text', 'text': target[key][tab.target.key2] }),
-                  ( type === 'add')? $('<span/>', {'class': 'modal-tab-delete'}): ''
+                  ( tabType === 'add')? $('<span/>', {'class': 'modal-tab-delete'}): ''
                 )
               )
             );
@@ -521,23 +530,41 @@ modalFunction.prototype = {
               $html( key, key );
             }
           } else if ( type === 'array') {
-            for ( let i = 0; i < length; i++ ) {
-              // マニュフェストならfile_idをidとする
-              const key = ( target[i]['file_id'] !== undefined )? target[i].file_id: i;
-              $html( i, key );
+            if ( tab.target.key1 === 'manifests') {
+              // マニュフェストはfile_nameでソートする
+              const sortKey = 'file_name';
+              target.sort(function( a, b ){
+                const as = a[sortKey].toLowerCase(),
+                      bs = b[sortKey].toLowerCase();
+                if ( as < bs ) {
+                    return -1;
+                } else if ( as > bs ) {
+                    return 1;
+                } else {
+                  return 0;
+                }
+              });
+              for ( let i = 0; i < length; i++ ) {
+                $html( i, target[i].file_id );
+              }
+            } else {
+              for ( let i = 0; i < length; i++ ) {
+                $html( i, i );
+              }
             }
           }
         } else {
           emptyTab();
         }
-      } else if ( type === 'common') {
+      } else if ( tabType === 'common') {
         if ( tab.tabs !== undefined ) {
           for ( const key in tab.tabs ) {
             $tabList.append(
               $('<li/>', {
                 'class': 'modal-tab-item',
                 'data-id': key,
-                'tabindex': 0
+                'tabindex': 0,
+                'data-default': tab.defaultTitle
               }).append(
                 $('<div/>', {'class': 'modal-tab-name'}).append(
                   $('<span/>', {'class': 'modal-tab-text', 'text': tab.tabs[key]['title'] })
@@ -561,7 +588,7 @@ modalFunction.prototype = {
       $tab.append( $tabMenu, $tabBody );
       
       // タブ削除イベント
-      if ( type === 'add') {
+      if ( tabType === 'add') {
         $tab.on('click', '.modal-tab-delete', function(){
           const $tabItem = $( this ).closest('.modal-tab-item'),
                 tabID = $tabItem.attr('data-id');
@@ -575,7 +602,7 @@ modalFunction.prototype = {
             tabDelete.push( tabID );
             $modal.attr('data-tab-delete', tabDelete.join(',') );
           }
-          $tabItem.add( $('#' + tabID ) ).remove();        
+          $tabItem.mouseleave().add( $('#' + tabID ) ).remove();        
           
           if ( !$tabList.find('.modal-tab-item').length ) {
             emptyTab();
@@ -605,11 +632,20 @@ modalFunction.prototype = {
        タブのサイズを調整する
     \* -------------------------------------------------- */
     'tabSize': function( $tab ){
-      const padding = 32,
-            offsetWidth = $tab.find('.modal-tab-text').get(0).offsetWidth,
-            scrollWidth = $tab.find('.modal-tab-text').get(0).scrollWidth;
+      const offsetWidth = $tab.find('.modal-tab-text').get(0).offsetWidth,
+            scrollWidth = $tab.find('.modal-tab-text').get(0).scrollWidth,
+            text = $tab.text();
+      
       if ( offsetWidth < scrollWidth ) {
-        $tab.css('width', scrollWidth + padding );
+        if ( $tab.is('.epoch-popup') ) {
+          if ( $tab.attr('title') !== undefined ) {
+            $tab.attr('title', text );
+          }
+        } else {
+          $tab.attr('title', text ).addClass('epoch-popup');
+        }
+      } else {
+        $tab.removeAttr('title').removeClass('epoch-popup');
       }
     },
     /* -------------------------------------------------- *\
@@ -711,7 +747,7 @@ modalFunction.prototype = {
           'input': function(){
             const $this = $( this ),
                   $tab = $this.closest('.modal-tab-block'),
-                  defaultTitle = $tab.find('.odal-tab-item').attr('data-default-title'),
+                  defaultTitle = $tab.find('.modal-tab-item').attr('data-default'),
                   id = $this.closest('.modal-tab-body-block').attr('id'),
                   val = $this.val(),
                   reg = new RegExp( text.regexp );
@@ -890,26 +926,23 @@ modalFunction.prototype = {
     'createFreeItem': function( free, tabNumber ){
       const $free = $('<dl/>', {'class': 'item-freeitem-block item-block'}),
             name = ( tabNumber !== undefined )? tabNumber + '-' + free.name: free.name,
-            value = this.searchValue( this.valueJSON, name ),
-            list = ( value === undefined )? {'':''}: value,
-            listLength = Object.keys( list ).length,
+            freeVal = this.searchValue( this.valueJSON, name ),
+            list = ( freeVal === undefined )? {'':''}: JSON.parse( freeVal ),
             className = ( free.class !== undefined )? ' ' + free.class: '';
       
       const addLine = function( key, value ){
         return ''
         + '<li class="item-freeitem-item">'
           + '<div class="item-freeitem-item-move"></div>'
-          + '<div class="item-freeitem-item-name"><input class="item-freeitem-input item-text" type="text" value="' + key + '" placeholder="項目名を入力してください。"></div>'
-          + '<div class="item-freeitem-item-content"><input class="item-freeitem-input item-text" type="text" value="' + value + '" placeholder="項目内容を入力してください。"></div>'
+          + '<div class="item-freeitem-item-name"><input class="item-freeitem-input item-text name" type="text" value="' + key + '" placeholder="項目名を入力してください。"></div>'
+          + '<div class="item-freeitem-item-content"><input class="item-freeitem-input item-text content" type="text" value="' + value + '" placeholder="項目内容を入力してください。"></div>'
           + '<div class="item-freeitem-item-delete"></div>'
         + '</li>';
       };
       
       let inputHTML = '<ul class="item-freeitem-list">';
-      for ( let i = 0; i < listLength; i++ ) {
-        for ( const key in list ) {
-          inputHTML += addLine( key, list[key] );
-        }
+      for ( const key in list ) {
+        inputHTML += addLine( key, list[key] );
       }
       inputHTML += '</ul>'
       + '<ul class="item-freeitem-menu-list">'
@@ -928,8 +961,73 @@ modalFunction.prototype = {
         )
       );
       
-      $free.find('.item-freeitem-add').on('click', function(){
-        $free.find('.item-freeitem-list').append( addLine('','') );
+      const deleteCheck = function(){
+        const $delete = $free.find('.item-freeitem-item-delete'),
+              $move = $free.find('.item-freeitem-item-move');
+        if ( $delete.length === 1 ) {
+          $delete.add( $move ).addClass('disabled');
+        } else {
+          $delete.add( $move ).removeClass('disabled');
+        }
+      };
+      deleteCheck();
+      
+      $free.find('.item-freeitem-add-button').on('click', function(){
+        const $add = $( addLine('','') );
+        $free.find('.item-freeitem-list').append( $add );
+        $add.find('.item-freeitem-input').eq(0).focus();
+        deleteCheck();
+      });
+      // 移動
+      $free.on('mousedown', '.item-freeitem-item-move', function( mde ){
+        getSelection().removeAllRanges();
+        
+        const $move = $( this ),
+              $window = $( window );
+        if ( !$move.is('.disabled') ) {
+          const $line = $move.closest('.item-freeitem-item'),
+                $list = $line.closest('.item-freeitem-list'),
+                height = $line.outerHeight(),
+                defaultY = $line.position().top,
+                $dummy = $('<li class="item-freeitem-dummy"></li>');
+          $list.addClass('active');
+          $line.addClass('move').css('top', defaultY ).after( $dummy )
+          $dummy.css('height', height );
+          
+          $window.on({
+            'mousemove.freeMove': function( mme ){
+              const maxY = $list.outerHeight() - height;
+              let positionY = defaultY + mme.pageY - mde.pageY;
+              if ( positionY < 0 ) positionY = 0;
+              if ( positionY > maxY ) positionY = maxY;
+              $line.css('top', positionY );
+              if ( $( mme.target ).closest('.item-freeitem-item').length ) {
+                const $target = $( mme.target ).closest('.item-freeitem-item'),
+                      targetNo = $target.index(),
+                      dummyNo = $dummy.index();
+                if ( targetNo < dummyNo ) {
+                  $target.before( $dummy );
+                } else {
+                  $target.after( $dummy );
+                }
+              }
+            },
+            'mouseup.freeUp': function(){
+              $window.off('mousemove.freeMove mouseup.freeUp');
+              $list.removeClass('active');
+              $line.removeClass('move');
+              $dummy.replaceWith( $line );
+            }
+          });
+        }
+      });
+      // 削除
+      $free.on('click', '.item-freeitem-item-delete', function(){
+        const $delete = $( this );
+        if ( !$delete.is('.disabled') ) {
+          $delete.closest('.item-freeitem-item').remove();
+          deleteCheck();
+        }
       });
       return $free;
     },

@@ -17,15 +17,11 @@
 
 function epochTable() {}
 epochTable.prototype = {
-  'setup': function( target, thArray, tbArray ){
+  'setup': function( target, thArray, tbArray, option ){
       
       if ( tbArray.length ) { 
         const et = this;
       
-        et.pagingPage = 1;
-        et.pagingNumber = 100;
-        et.pagingTotalPage= 0;
-
         et.fn = new epochCommon();
         et.ws = new webStorage();
 
@@ -145,6 +141,10 @@ epochTable.prototype = {
             'class': 'ets'
           })
         );
+        
+        // ソート値
+        et.cSortCol = null;
+        et.cSortType = null;
 
         // $キャッシュ
         et.$header = et.$table.find('.eth');
@@ -169,13 +169,12 @@ epochTable.prototype = {
 
         et.$filterBlock = et.$table.find('.etf-ab');
 
-        // ページング
-        et.allPageNumber = 0;
-
         et.$target = $( target );
         et.th = thArray.concat(); // thead
         et.tb = tbArray.concat(); // tbody
         et.tdCopy = tbArray.concat(); // 初期値として使う
+        
+        et.pagingTotalPage = 0;
 
         et.$target.html( et.$table );
 
@@ -185,6 +184,8 @@ epochTable.prototype = {
         et.setFilter();
         et.setFilterStatus();
 
+        et.option( option );
+        
         et.setBodyHTML();
 
         // フィルタオープン
@@ -199,8 +200,11 @@ epochTable.prototype = {
             case 'filter-clear':
               $button.mouseleave();
               et.clearFilter();
-              et.sortClear();
-              et.pagingPage = 1;
+              et.option({
+                'page': 1,
+                'sortCol': et.cSortCol,
+                'sortType': et.cSortType
+              });
               et.setBodyHTML();
               break;
           }
@@ -214,8 +218,11 @@ epochTable.prototype = {
               et.getFilterValue();
               et.setFilter();
               et.setFilterStatus();
-              et.pagingPage = 1;
-              et.sortClear();
+              et.option({
+                'page': 1,
+                'sortCol': et.cSortCol,
+                'sortType': et.cSortType
+              });
               et.setBodyHTML();
               et.$filter.hide();
               break;
@@ -238,8 +245,11 @@ epochTable.prototype = {
             }
             et.setFilter();
           }
-          et.pagingPage = 1;
-          et.sortClear();
+          et.option({
+            'page': 1,
+            'sortCol': et.cSortCol,
+            'sortType': et.cSortType
+          });
           et.setBodyHTML();
         });
 
@@ -367,8 +377,6 @@ epochTable.prototype = {
                 sort = sortType( $sort.attr('data-sort') ),
                 index = $sort.attr('data-column-index');
 
-          et.$thead.find('.et-cs').removeAttr('data-sort');
-          $sort.attr('data-sort', sort );
           et.sort( index, sort );
           et.setBodyHTML();
       });
@@ -468,7 +476,14 @@ epochTable.prototype = {
      ソート
   \* ------------------------------ */  
   'sort': function( index, order ){
-      const tb = this.tb;
+      const et = this,
+      tb = et.tb;
+
+      et.cSortCol = index;
+      et.cSortType = order;
+
+      et.$thead.find('.et-cs').removeAttr('data-sort');
+      et.$thead.find('.et-cs').eq( index ).attr('data-sort', order );
       tb.sort(function( a, b ){
           const aS = ( typeof a[index] === 'number' && isFinite( a[index] ) )?
                       a[index]: String( a[index] ).toLowerCase(),
@@ -851,12 +866,37 @@ epochTable.prototype = {
     et.$header.find('.etf-sal').html('');
     et.$header.find('.etf-b[data-button="filter-clear"]').prop('disabled', true );
   },
-  // 更新して再表示する
-  'update': function( tb ){
+  'option': function( option ) {
     const et = this;
-    et.tb = tb;
-    et.pagingPage = 1;
-              et.sortClear();
-              et.setBodyHTML();
+    if ( option === undefined ) option = {};
+    if ( option !== undefined ) {
+      // 表示するページ
+      if ( option.page === undefined ) {
+        et.pagingPage = 1;
+      } else {
+        et.pagingPage = option.page;
+      }
+      // 1頁に表示する行数
+      if ( option.pagingNumber === undefined ) {
+        if ( et.pagingNumber === undefined ) {
+          et.pagingNumber = 50;
+        }
+      } else {
+        et.pagingNumber = option.pagingNumber;
+      }
+    }
+    // ソート
+    if ( option.sortCol !== undefined && option.sortType !== undefined ) {
+      et.sort( option.sortCol, option.sortType );
+    } else if ( et.cSortCol !== null && et.cSortType !== null ) {
+      et.sort( et.cSortCol, et.cSortType );
+    }
+  },
+  // 更新して再表示する
+  'update': function( tb, option ){
+    const et = this;
+    et.tb = tb.concat();
+    et.option( option );
+    et.setBodyHTML();
   }
 };

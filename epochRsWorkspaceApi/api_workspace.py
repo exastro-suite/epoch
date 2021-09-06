@@ -461,6 +461,9 @@ def update_manifestParameter(workspace_id):
                         break
                 i += 1
 
+            # manifestパラメータの項目説明も更新に含める
+            db_specification["parameter-info"] = specification["parameter-info"]
+
             # workspace情報 update実行
             upd_cnt = da_workspace.update_workspace(cursor, db_specification, workspace_id)
 
