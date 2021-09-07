@@ -20,6 +20,8 @@ SOURCE_MANIFEST="${BASEDIR}/source"
 
 # ---- source内のyamlファイル定義 ----
 YAMLFILES=()
+YAMLFILES+=("tekton-pipeline-release.yaml")
+YAMLFILES+=("tekton-trigger-release.yaml")
 YAMLFILES+=("epochSystem.yaml")
 YAMLFILES+=("proxySetting.yaml")
 YAMLFILES+=("epochCiCdApiConfig.yaml")
@@ -34,11 +36,9 @@ YAMLFILES+=("organization_db.yaml")
 YAMLFILES+=("workspace_db.yaml")
 YAMLFILES+=("tekton_pipeline_db.yaml")
 
-YAMLFILES+=("tekton-pipeline-release.yaml")
-YAMLFILES+=("tekton-trigger-release.yaml")
-YAMLFILES+=("tekton-trigger-interceptors.yaml")
 YAMLFILES+=("tekton-dashbord-release.yaml")
 YAMLFILES+=("tekton-dashbord-nodeport.yaml")
+YAMLFILES+=("tekton-trigger-interceptors.yaml")
 # -----------------------------------
 
 cat <<EOF > ${ALL_MANIFESTS}

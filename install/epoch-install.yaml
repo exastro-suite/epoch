@@ -12,1119 +12,6 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-#---- epochSystem.yaml
----
-#   Copyright 2019 NEC Corporation
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: epoch-system
-
-#---- proxySetting.yaml
----
-#   Copyright 2019 NEC Corporation
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: proxy-setting-config
-  namespace: epoch-system
-data:
-  HTTP_PROXY: ""
-  HTTPS_PROXY: ""
-
-#---- epochCiCdApiConfig.yaml
----
-#   Copyright 2019 NEC Corporation
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: epoch-cicd-api-config
-  namespace: epoch-system
-data:
-  HTTP_PROXY: ""
-  HTTPS_PROXY: ""
-  NO_PROXY: "localhost,127.0.0.1"
-  ARGOCD_NO_PROXY: "localhost,127.0.0.1,kurbernetes.default.svc,kurbernetes.default.svc.cluster.local,10.96.0.1,argocd-server,argocd-dex-server,argocd-redis,argocd-repo-server,argocd-server-metrics"
-  ARGOCD_HOST: "argocd-server.epoch-workspace.svc"
-  ITA_HOST: "it-automation.epoch-workspace.svc"
-  ITA_PORT: "8084"
-  ITA_WORKER_HOST: "ita-worker.epoch-workspace.svc"
-  WEBHOOK_PORT: "30804"
-
-#---- epochCiCdApiSecret.yaml
----
-#   Copyright 2019 NEC Corporation
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
-apiVersion: v1
-kind: Secret
-metadata:
-  name: epoch-cicd-api-secret
-  namespace: epoch-system
-type: Opaque
-stringData:
-  ARGOCD_USER: "admin"
-  ARGOCD_PASSWORD: "iYSCKzx2wvxJnn4dCNwN"
-  ITA_USER: "administrator"
-  ITA_PASSWORD: "fmSCuPLsbvG7KCMRrtT9"
-
-#---- epochCiCdApi.yaml
----
-#   Copyright 2019 NEC Corporation
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: epoch-system-crb
-subjects:
-- kind: ServiceAccount
-  name: default
-  namespace: epoch-system
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: cluster-admin
-
----
-
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: epoch-cicd-api
-  namespace: epoch-system
-spec:
-  selector:
-    matchLabels:
-      name: epoch-cicd-api
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        name: epoch-cicd-api
-    spec:
-      containers:
-      - name: epoch-cicd-api
-        image: exastro/epochcicdapi:0.1.2_20210902_1330
-        env:
-          - name: HTTP_PROXY
-            valueFrom:
-              configMapKeyRef:
-                name: proxy-setting-config
-                key: HTTP_PROXY
-          - name: HTTPS_PROXY
-            valueFrom:
-              configMapKeyRef:
-                name: proxy-setting-config
-                key: HTTPS_PROXY
-          - name: NO_PROXY
-            value: localhost,127.0.0.1,10.96.0.1,kurbernetes.default.svc,kurbernetes.default.svc.cluster.local,it-automation.epoch-workspace.svc,argocd-server.epoch-workspace.svc
-          - name: PYTHONIOENCODING
-            value: utf-8
-        envFrom:
-          - prefix: EPOCH_
-            configMapRef:
-              name: epoch-cicd-api-config
-          - prefix: EPOCH_
-            secretRef:
-              name: epoch-cicd-api-secret
-
----
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: epoch-cicd-api
-  labels:
-    name: epoch-cicd-api
-  namespace: epoch-system
-spec:
-  type: ClusterIP
-  ports:
-  - name: http
-    port: 8000
-    targetPort: 8000
-  selector:
-    name: epoch-cicd-api
-
-#---- epochControlTektonApi.yaml
----
-#   Copyright 2019 NEC Corporation
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: epoch-control-tekton-conf
-  namespace: epoch-system
-data:
-  api_tekton.conf: |
-    TZ='Asia/Tokyo'
-    MYSQL_HOST='tekton-pipeline-db'
-    MYSQL_PORT='3306'
-    MYSQL_DATABASE='tekton_pipeline_db'
-    MYSQL_USER='app_user'
-    MYSQL_PASSWORD='password'
-    RESOURCE_CREATION_WAIT=60
-
----
-
-apiVersion: v1
-kind: Secret
-metadata:
-  name: epoch-control-tekton-api-secret
-  namespace: epoch-system
-type: Opaque
-stringData:
-  SONARQUBE_USER: "admin"
-  SONARQUBE_PASSWORD: "hb35d2cNhWdnFvwtBtMY"
-
----
-
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: epoch-control-tekton-api
-  namespace: epoch-system
-spec:
-  selector:
-    matchLabels:
-      name: epoch-control-tekton-api
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        name: epoch-control-tekton-api
-    spec:
-      volumes:
-      - name: epoch-control-tekton-conf
-        configMap:
-          name: epoch-control-tekton-conf
-      containers:
-      - name: epoch-control-tekton-api
-        image: exastro/epochcontroltektonapi:0.1.2_20210902_1400
-        env:
-        - name: CONFIG_API_TEKTON_PATH
-          value: "/etc/epoch/epochControlTektonApi/api_tekton.conf"
-        - name: FLASK_ENV
-          value: "development"
-        - name: API_TEKTON_PORT
-          value: "8000"
-        - name: PYTHONIOENCODING
-          value: utf-8
-        - name: EPOCH_HTTP_PROXY
-          valueFrom:
-            configMapKeyRef:
-              name: proxy-setting-config
-              key: HTTP_PROXY
-        - name: EPOCH_HTTPS_PROXY
-          valueFrom:
-            configMapKeyRef:
-              name: proxy-setting-config
-              key: HTTPS_PROXY
-        - name: EPOCH_NO_PROXY
-          value: ""
-        envFrom:
-          - prefix: EPOCH_
-            secretRef:
-              name: epoch-control-tekton-api-secret
-        volumeMounts:
-        - name: epoch-control-tekton-conf
-          mountPath: /etc/epoch/epochControlTektonApi
-
----
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: epoch-control-tekton-api
-  labels:
-    name: epoch-control-tekton-api
-  namespace: epoch-system
-spec:
-  type: NodePort
-  ports:
-  - name: http
-    port: 8000
-    targetPort: 8000
-  selector:
-    name: epoch-control-tekton-api
-
-#---- epochRsOrganizationApi.yaml
----
-#   Copyright 2019 NEC Corporation
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: epoch-rs-organization-conf
-  namespace: epoch-system
-data:
-  api_organization.conf: |
-    TZ='Asia/Tokyo'
-    MYSQL_HOST='organization-db'
-    MYSQL_PORT='3306'
-    MYSQL_DATABASE='organization_db'
-    MYSQL_USER='app_user'
-    MYSQL_PASSWORD='password'
-
----
-
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: epoch-rs-organization-api
-  namespace: epoch-system
-spec:
-  selector:
-    matchLabels:
-      name: epoch-rs-organization-api
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        name: epoch-rs-organization-api
-    spec:
-      volumes:
-      - name: epoch-rs-organization-conf
-        configMap:
-          name: epoch-rs-organization-conf
-      containers:
-      - name: epoch-rs-organization-api
-        image: exastro/epochrsorganizationapi:0.1.0_20210805_1100
-        env:
-        - name: CONFIG_API_ORGANIZATION_PATH
-          value: "/etc/epoch/epochRsOrganizationApi/api_organization.conf"
-        - name: FLASK_ENV
-          value: "development"
-        - name: API_ORGANIZATION_PORT
-          value: "8000"
-        - name: PYTHONIOENCODING
-          value: utf-8
-        volumeMounts:
-        - name: epoch-rs-organization-conf
-          mountPath: /etc/epoch/epochRsOrganizationApi
-
----
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: epoch-rs-organization-api
-  labels:
-    name: epoch-rs-organization-api
-  namespace: epoch-system
-spec:
-  type: NodePort
-  ports:
-  - name: http
-    port: 8000
-    targetPort: 8000
-  selector:
-    name: epoch-rs-organization-api
-
-#---- epochRsWorkspaceApi.yaml
----
-#   Copyright 2019 NEC Corporation
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: epoch-rs-workspace-conf
-  namespace: epoch-system
-data:
-  api_workspace.conf: |
-    TZ='Asia/Tokyo'
-    MYSQL_HOST='workspace-db'
-    MYSQL_PORT='3306'
-    MYSQL_DATABASE='workspace_db'
-    MYSQL_USER='app_user'
-    MYSQL_PASSWORD='password'
-
----
-
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: epoch-rs-workspace-api
-  namespace: epoch-system
-spec:
-  selector:
-    matchLabels:
-      name: epoch-rs-workspace-api
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        name: epoch-rs-workspace-api
-    spec:
-      volumes:
-      - name: epoch-rs-workspace-conf
-        configMap:
-          name: epoch-rs-workspace-conf
-      containers:
-      - name: epoch-rs-workspace-api
-        image: exastro/epochrsworkspaceapi:0.1.0_20210805_1100
-        env:
-        - name: CONFIG_API_WORKSPACE_PATH
-          value: "/etc/epoch/epochRsWorkspaceApi/api_workspace.conf"
-        - name: FLASK_ENV
-          value: "development"
-        - name: API_WORKSPACE_PORT
-          value: "8000"
-        - name: PYTHONIOENCODING
-          value: utf-8
-        volumeMounts:
-        - name: epoch-rs-workspace-conf
-          mountPath: /etc/epoch/epochRsWorkspaceApi
-
----
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: epoch-rs-workspace-api
-  labels:
-    name: epoch-rs-workspace-api
-  namespace: epoch-system
-spec:
-  type: NodePort
-  ports:
-  - name: http
-    port: 8000
-    targetPort: 8000
-  selector:
-    name: epoch-rs-workspace-api
-
-#---- epochServiceApi.yaml
----
-#   Copyright 2019 NEC Corporation
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
-
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: epoch-service-crb
-subjects:
-- kind: ServiceAccount
-  name: default
-  namespace: epoch-system
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: cluster-admin
-
----
-
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: epoch-service-api-config
-  namespace: epoch-system
-data:
-  EPOCH_CICD_PROTOCOL: "http"
-  EPOCH_CICD_HOST: "epoch-cicd-api"
-  EPOCH_CICD_PORT: "8000"
-  EPOCH_CONTROL_TEKTON_PROTOCOL: "http"
-  EPOCH_CONTROL_TEKTON_HOST: "epoch-control-tekton-api"
-  EPOCH_CONTROL_TEKTON_PORT: "8000"
-  EPOCH_RS_WORKSPACE_PROTOCOL: "http"
-  EPOCH_RS_WORKSPACE_HOST: "epoch-rs-workspace-api"
-  EPOCH_RS_WORKSPACE_PORT: "8000"
-  EPOCH_RS_ORGANIZATION_PROTOCOL: "http"
-  EPOCH_RS_ORGANIZATION_HOST: "epoch-rs-organization-api"
-  EPOCH_RS_ORGANIZATION_PORT: "8000"
-  PYTHONIOENCODING: utf-8
-
-# ---
-
-# apiVersion: v1
-# kind: Secret
-# metadata:
-#   name: epoch-service-api-secret
-#   namespace: epoch-system
-# type: Opaque
-# stringData:
-#   ENV_NAME: value
-
----
-
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: epoch-service-api
-  namespace: epoch-system
-spec:
-  selector:
-    matchLabels:
-      name: epoch-service-api
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        name: epoch-service-api
-    spec:
-      containers:
-      - name: epoch-service-api
-        image: exastro/epochserviceapi:0.1.1_20210826_1100
-        env:
-        - name: PYTHONIOENCODING
-          value: utf-8
-        envFrom:
-          - configMapRef:
-              name: epoch-service-api-config
-          # - prefix: EPOCH_
-          #   secretRef:
-          #     name: epoch-service-api-secret
-
----
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: epoch-service-api
-  labels:
-    name: epoch-service-api
-  namespace: epoch-system
-spec:
-  type: NodePort
-  ports:
-  - name: http
-    port: 8000
-    targetPort: 8000
-    nodePort: 30081
-  selector:
-    name: epoch-service-api
-
-#---- epochUi.yaml
----
-#   Copyright 2019 NEC Corporation
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: epoch-ui-conf
-  namespace: epoch-system
-data:
-  workspace_api_conf.js: |
-    var location_host = window.location.hostname;
-    var location_prot = window.location.protocol;
-
-    var api_port = "30081";
-    var api_url_base = location_prot + "//" + location_host + ":" + api_port
-
-    if ( location_prot == "https:" ) {
-      api_port = window.location.port;
-      api_url_base = location_prot + "//" + location_host + ":" + api_port + "/api"
-    }
-
-    var workspace_api_conf = {
-        "links" : {
-            "tekton"    : location_prot + "//" + location_host + ":" + (location_prot == "https:"? "30801": "30901") + "/",
-            "registry"  : "https://hub.docker.com/repositories",
-            "argo"      : location_prot + "//" + location_host + ":" + "30906" + "/",
-            "ita"       : location_prot + "//" + location_host + ":" + (location_prot == "https:"? "30805": "30905") + "/default/menu/01_browse.php?no=2100180006",
-            "sonarqube" : location_prot + "//" + location_host + ":" + (location_prot == "https:"? "30807": "30907") + "/",
-        },
-        "test": {
-            "default_workspace_id": 1
-        },
-        "api" : {
-            "resource": {
-                "get" :     api_url_base + "/workspace/info/{workspace_id}/",
-                "post" :    api_url_base + "/workspace/info/",
-                "put" :     api_url_base + "/workspace/info/{workspace_id}/",
-            },
-            "workspace": {
-                "post":     api_url_base + "/workspace/pod/",
-                "wait": 30000,
-            },
-            "pipeline": {
-                "post":     api_url_base + "/pipeline/",
-            },
-            "pipelineParameter": {
-                "post":     api_url_base + "/pipelineParameter/",
-            },
-            "manifestParameter": {
-                "post":     api_url_base + "/workspace/{workspace_id}/manifestParameter",
-            },
-            "manifestTemplate": {
-                "post" :    api_url_base + "/workspace/{workspace_id}/manifests/",
-                "get" :     api_url_base + "/workspace/{workspace_id}/manifests/",
-                "delete" :  api_url_base + "/workspace/{workspace_id}/manifests/{file_id}",
-            },
-            "cdExecDesignation": {
-                "post" :    api_url_base + "/cdExecDesignation/",
-            }
-        }
-    }
-  organization_api_conf.js: |
-    var location_host = window.location.hostname;
-    var location_prot = window.location.protocol;
-
-    var api_port = "30081";
-    var api_url_base = location_prot + "//" + location_host + ":" + api_port
-
-    if ( location_prot == "https:" ) {
-      api_port = window.location.port;
-      api_url_base = location_prot + "//" + location_host + ":" + api_port + "/api"
-    }
-
-    console.log('api_url_base:' + api_url_base);
-
-    var organization_api_conf = {
-        "api" : {
-            "resource": {
-                "get_all"  : api_url_base + "/organization/",
-                "get"  : api_url_base + "/organization/{organization_id}/",
-                "post" : api_url_base + "/organization/",
-                "put"  : api_url_base + "/organization/{organization_id}/",
-            }
-        },
-        "parameter" : {
-
-        }
-    }
-
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: epoch-ui
-  namespace: epoch-system
-spec:
-  selector:
-    matchLabels:
-      name: epoch-ui
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        name: epoch-ui
-    spec:
-      volumes:
-      - name: epoch-ui-conf
-        configMap:
-          name: epoch-ui-conf
-      containers:
-      - name: epoch-ui
-        image: exastro/epochui:0.1.2_20210902_1330
-        volumeMounts:
-        - name: epoch-ui-conf
-          mountPath: /app/epoch/epochUi/common/js/config
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: epoch-ui
-  labels:
-    name: epoch-ui
-  namespace: epoch-system
-spec:
-  type: NodePort
-  ports:
-  - name: http
-    port: 8000
-    targetPort: 8000
-    nodePort: 30080
-  - name: https
-    port: 4430
-    targetPort: 4430
-    nodePort: 30443
-  selector:
-    name: epoch-ui
-
-#---- organization_db.yaml
----
-#   Copyright 2019 NEC Corporation
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: organization-db-myconf
-  namespace: epoch-system
-data:
-  my.cnf: |
-    [mysqld]
-    character-set-server=utf8mb4
-    collation-server=utf8mb4_bin
-    secure_file_priv=/tmp
-    [client]
-    default-character-set=utf8mb4
-
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: organization-db-initdb
-  namespace: epoch-system
-data:
-  organization.sql: |
-    create database organization_db
-      CHARACTER SET utf8mb4
-      COLLATE utf8mb4_unicode_ci;
-    create user app_user IDENTIFIED WITH mysql_native_password BY 'password';
-    GRANT ALL ON organization_db.* TO app_user;
-    use organization_db;
-    create table organization (
-      organization_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
-      organization_name varchar(256) not null,
-      additional_information json,
-      create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
-      update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    );
-    create table organization_history (
-      history_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
-      organization_id int unsigned not null,
-      organization_name varchar(256) not null,
-      additional_information json,
-      update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    );
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: organization-db
-  namespace: epoch-system
-spec:
-  selector:
-    matchLabels:
-      name: organization-db
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        name: organization-db
-    spec:
-      volumes:
-      - name: mysqlconf-volume
-        configMap:
-          name: organization-db-myconf
-      # COMMENT OUT:Persistent data retention
-      #- name: mysqldata
-      #  hostPath:
-      #    path: /var/data/epoch/organization_db/mysql
-      #    type: DirectoryOrCreate
-      - name: mysqlinitdb-volume
-        configMap:
-          name: organization-db-initdb
-      containers:
-      - name: mysql
-        image: mysql
-        volumeMounts:
-        # COMMENT OUT:Persistent data retention
-        #- name: mysqldata
-        #  mountPath: /var/lib/mysql
-        - name: mysqlconf-volume
-          mountPath: /etc/mysql
-        - name: mysqlinitdb-volume
-          mountPath: /docker-entrypoint-initdb.d
-        env:
-        - name: MYSQL_ROOT_PASSWORD
-          value: password
-        - name: TZ
-          value: "Asia/Tokyo"
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: organization-db
-  labels:
-    name: organization-db
-  namespace: epoch-system
-spec:
-  type: ClusterIP
-  ports:
-  - name: mysql
-    port: 3306
-    targetPort: 3306
-  selector:
-    name: organization-db
-
-#---- workspace_db.yaml
----
-#   Copyright 2019 NEC Corporation
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: workspace-db-myconf
-  namespace: epoch-system
-data:
-  my.cnf: |
-    [mysqld]
-    character-set-server=utf8mb4
-    collation-server=utf8mb4_bin
-    secure_file_priv=/tmp
-    [client]
-    default-character-set=utf8mb4
-
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: workspace-db-initdb
-  namespace: epoch-system
-data:
-  workspace.sql: |
-    create database workspace_db
-      CHARACTER SET utf8mb4
-      COLLATE utf8mb4_unicode_ci;
-    create user app_user IDENTIFIED WITH mysql_native_password BY 'password';
-    GRANT ALL ON workspace_db.* TO app_user;
-    use workspace_db;
-    create table workspace (
-      workspace_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
-      organization_id  int unsigned not null,
-      specification json,
-      create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
-      update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    );
-    create table workspace_history (
-      history_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
-      workspace_id int unsigned not null,
-      organization_id  int unsigned not null,
-      specification json,
-      update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    );
-    create table manifest (
-      id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
-      workspace_id int unsigned not null,
-      file_name varchar(1024) not null,
-      file_text text not null,
-      create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
-      update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    );
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: workspace-db
-  namespace: epoch-system
-spec:
-  selector:
-    matchLabels:
-      name: workspace-db
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        name: workspace-db
-    spec:
-      volumes:
-      - name: mysqlconf-volume
-        configMap:
-          name: workspace-db-myconf
-      # COMMENT OUT:Persistent data retention
-      #- name: mysqldata
-      #  hostPath:
-      #    path: /var/data/epoch/workspace_db/mysql
-      #    type: DirectoryOrCreate
-      - name: mysqlinitdb-volume
-        configMap:
-          name: workspace-db-initdb
-      containers:
-      - name: mysql
-        image: mysql
-        volumeMounts:
-        # COMMENT OUT:Persistent data retention
-        #- name: mysqldata
-        #  mountPath: /var/lib/mysql
-        - name: mysqlconf-volume
-          mountPath: /etc/mysql
-        - name: mysqlinitdb-volume
-          mountPath: /docker-entrypoint-initdb.d
-        env:
-        - name: MYSQL_ROOT_PASSWORD
-          value: password
-        - name: TZ
-          value: "Asia/Tokyo"
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: workspace-db
-  labels:
-    name: workspace-db
-  namespace: epoch-system
-spec:
-  type: ClusterIP
-  ports:
-  - name: mysql
-    port: 3306
-    targetPort: 3306
-  selector:
-    name: workspace-db
-
-#---- tekton_pipeline_db.yaml
----
-#   Copyright 2019 NEC Corporation
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: tekton-pipeline-db-myconf
-  namespace: epoch-system
-data:
-  my.cnf: |
-    [mysqld]
-    character-set-server=utf8mb4
-    collation-server=utf8mb4_bin
-    secure_file_priv=/tmp
-    [client]
-    default-character-set=utf8mb4
-
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: tekton-pipeline-db-initdb
-  namespace: epoch-system
-data:
-  tekton-pipeline.sql: |
-    create database tekton_pipeline_db
-      CHARACTER SET utf8mb4
-      COLLATE utf8mb4_unicode_ci;
-    create user app_user IDENTIFIED WITH mysql_native_password BY 'password';
-    GRANT ALL ON tekton_pipeline_db.* TO app_user;
-    use tekton_pipeline_db;
-    create table tekton_pipeline_yaml (
-      yaml_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
-      workspace_id int unsigned not null,
-      kind varchar(16),
-      filename varchar(256),
-      yamltext text,
-      index(workspace_id)
-    );
-    create table tekton_pipeline_task (
-      task_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
-      workspace_id int unsigned not null,
-      pipeline_id int unsigned not null,
-      pipeline_run_name varchar(128),
-      pipeline_run_uid  varchar(128),
-      status varchar(16) not null,
-      git_repository_url varchar(1024) not null,
-      git_branch varchar(1024),
-      container_registry_image varchar(1024),
-      container_registry_image_tag varchar(1024),
-      container_registry_image_digest varchar(1024),
-      git_webhook_header text,
-      git_webhook_body text,
-      create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
-      index(pipeline_run_name)
-    );
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: tekton-pipeline-db
-  namespace: epoch-system
-spec:
-  selector:
-    matchLabels:
-      name: tekton-pipeline-db
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        name: tekton-pipeline-db
-    spec:
-      volumes:
-      - name: mysqlconf-volume
-        configMap:
-          name: tekton-pipeline-db-myconf
-      # COMMENT OUT:Persistent data retention
-      #- name: mysqldata
-      #  hostPath:
-      #    path: /var/data/epoch/tekton_pipeline_db/mysql
-      #    type: DirectoryOrCreate
-      - name: mysqlinitdb-volume
-        configMap:
-          name: tekton-pipeline-db-initdb
-      containers:
-      - name: mysql
-        image: mysql
-        volumeMounts:
-        # COMMENT OUT:Persistent data retention
-        #- name: mysqldata
-        #  mountPath: /var/lib/mysql
-        - name: mysqlconf-volume
-          mountPath: /etc/mysql
-        - name: mysqlinitdb-volume
-          mountPath: /docker-entrypoint-initdb.d
-        env:
-        - name: MYSQL_ROOT_PASSWORD
-          value: password
-        - name: TZ
-          value: "Asia/Tokyo"
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: tekton-pipeline-db
-  labels:
-    name: tekton-pipeline-db
-  namespace: epoch-system
-spec:
-  type: ClusterIP
-  ports:
-  - name: mysql
-    port: 3306
-    targetPort: 3306
-  selector:
-    name: tekton-pipeline-db
-
 #---- tekton-pipeline-release.yaml
 ---
 # Copyright 2019 The Tekton Authors
@@ -4757,174 +3644,1118 @@ spec:
 
 ---
 
-#---- tekton-trigger-interceptors.yaml
+#---- epochSystem.yaml
 ---
-# Copyright 2020 The Tekton Authors
+#   Copyright 2019 NEC Corporation
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+#       http://www.apache.org/licenses/LICENSE-2.0
 #
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: epoch-system
+
+#---- proxySetting.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: proxy-setting-config
+  namespace: epoch-system
+data:
+  HTTP_PROXY: ""
+  HTTPS_PROXY: ""
+
+#---- epochCiCdApiConfig.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: epoch-cicd-api-config
+  namespace: epoch-system
+data:
+  HTTP_PROXY: ""
+  HTTPS_PROXY: ""
+  NO_PROXY: "localhost,127.0.0.1"
+  ARGOCD_NO_PROXY: "localhost,127.0.0.1,kurbernetes.default.svc,kurbernetes.default.svc.cluster.local,10.96.0.1,argocd-server,argocd-dex-server,argocd-redis,argocd-repo-server,argocd-server-metrics"
+  ARGOCD_HOST: "argocd-server.epoch-workspace.svc"
+  ITA_HOST: "it-automation.epoch-workspace.svc"
+  ITA_PORT: "8084"
+  ITA_WORKER_HOST: "ita-worker.epoch-workspace.svc"
+  WEBHOOK_PORT: "30804"
+
+#---- epochCiCdApiSecret.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: epoch-cicd-api-secret
+  namespace: epoch-system
+type: Opaque
+stringData:
+  ARGOCD_USER: "admin"
+  ARGOCD_PASSWORD: "iYSCKzx2wvxJnn4dCNwN"
+  ITA_USER: "administrator"
+  ITA_PASSWORD: "fmSCuPLsbvG7KCMRrtT9"
+
+#---- epochCiCdApi.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: epoch-system-crb
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: epoch-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+
+---
 
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: tekton-triggers-core-interceptors
-  namespace: tekton-pipelines
-  labels:
-    app.kubernetes.io/name: core-interceptors
-    app.kubernetes.io/component: interceptors
-    app.kubernetes.io/instance: default
-    app.kubernetes.io/version: "v0.16.0"
-    app.kubernetes.io/part-of: tekton-triggers
-    # tekton.dev/release value replaced with inputs.params.versionTag in triggers/tekton/publish.yaml
-    triggers.tekton.dev/release: "v0.16.0"
+  name: epoch-cicd-api
+  namespace: epoch-system
 spec:
-  replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: core-interceptors
-      app.kubernetes.io/component: interceptors
-      app.kubernetes.io/instance: default
-      app.kubernetes.io/part-of: tekton-triggers
+      name: epoch-cicd-api
+  replicas: 1
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: core-interceptors
-        app.kubernetes.io/component: interceptors
-        app.kubernetes.io/instance: default
-        app.kubernetes.io/version: "v0.16.0"
-        app.kubernetes.io/part-of: tekton-triggers
-        app: tekton-triggers-core-interceptors
-        triggers.tekton.dev/release: "v0.16.0"
-        # version value replaced with inputs.params.versionTag in triggers/tekton/publish.yaml
-        version: "v0.16.0"
+        name: epoch-cicd-api
     spec:
-      serviceAccountName: tekton-triggers-core-interceptors
       containers:
-        - name: tekton-triggers-core-interceptors
-          image: "gcr.io/tekton-releases/github.com/tektoncd/triggers/cmd/interceptors:v0.16.0@sha256:6c7db03e0caf6fab13192b54ececd53926beae759efe9cbe1aa709cd707be687"
-          args: ["-logtostderr", "-stderrthreshold", "INFO"]
-          env:
-            - name: SYSTEM_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-            - name: CONFIG_LOGGING_NAME
-              value: config-logging-triggers
-            - name: CONFIG_OBSERVABILITY_NAME
-              value: config-observability-triggers
-            - name: METRICS_DOMAIN
-              value: tekton.dev/triggers
-          readinessProbe:
-            httpGet:
-              path: /ready
-              port: 8082
-              scheme: HTTP
-            initialDelaySeconds: 5
-            periodSeconds: 10
-            timeoutSeconds: 5
-          securityContext:
-            allowPrivilegeEscalation: false
-            # User 65532 is the distroless nonroot user ID
-            runAsUser: 65532
-            runAsGroup: 65532
-            capabilities:
-              drop:
-                - all
+      - name: epoch-cicd-api
+        image: exastro/epochcicdapi:0.1.2_20210902_1330
+        env:
+          - name: HTTP_PROXY
+            valueFrom:
+              configMapKeyRef:
+                name: proxy-setting-config
+                key: HTTP_PROXY
+          - name: HTTPS_PROXY
+            valueFrom:
+              configMapKeyRef:
+                name: proxy-setting-config
+                key: HTTPS_PROXY
+          - name: NO_PROXY
+            value: localhost,127.0.0.1,10.96.0.1,kurbernetes.default.svc,kurbernetes.default.svc.cluster.local,it-automation.epoch-workspace.svc,argocd-server.epoch-workspace.svc
+          - name: PYTHONIOENCODING
+            value: utf-8
+        envFrom:
+          - prefix: EPOCH_
+            configMapRef:
+              name: epoch-cicd-api-config
+          - prefix: EPOCH_
+            secretRef:
+              name: epoch-cicd-api-secret
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: epoch-cicd-api
+  labels:
+    name: epoch-cicd-api
+  namespace: epoch-system
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+  selector:
+    name: epoch-cicd-api
+
+#---- epochControlTektonApi.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: epoch-control-tekton-conf
+  namespace: epoch-system
+data:
+  api_tekton.conf: |
+    TZ='Asia/Tokyo'
+    MYSQL_HOST='tekton-pipeline-db'
+    MYSQL_PORT='3306'
+    MYSQL_DATABASE='tekton_pipeline_db'
+    MYSQL_USER='app_user'
+    MYSQL_PASSWORD='password'
+    RESOURCE_CREATION_WAIT=60
+
+---
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: epoch-control-tekton-api-secret
+  namespace: epoch-system
+type: Opaque
+stringData:
+  SONARQUBE_USER: "admin"
+  SONARQUBE_PASSWORD: "hb35d2cNhWdnFvwtBtMY"
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: epoch-control-tekton-api
+  namespace: epoch-system
+spec:
+  selector:
+    matchLabels:
+      name: epoch-control-tekton-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: epoch-control-tekton-api
+    spec:
+      volumes:
+      - name: epoch-control-tekton-conf
+        configMap:
+          name: epoch-control-tekton-conf
+      containers:
+      - name: epoch-control-tekton-api
+        image: exastro/epochcontroltektonapi:0.1.2_20210902_1400
+        env:
+        - name: CONFIG_API_TEKTON_PATH
+          value: "/etc/epoch/epochControlTektonApi/api_tekton.conf"
+        - name: FLASK_ENV
+          value: "development"
+        - name: API_TEKTON_PORT
+          value: "8000"
+        - name: PYTHONIOENCODING
+          value: utf-8
+        - name: EPOCH_HTTP_PROXY
+          valueFrom:
+            configMapKeyRef:
+              name: proxy-setting-config
+              key: HTTP_PROXY
+        - name: EPOCH_HTTPS_PROXY
+          valueFrom:
+            configMapKeyRef:
+              name: proxy-setting-config
+              key: HTTPS_PROXY
+        - name: EPOCH_NO_PROXY
+          value: ""
+        envFrom:
+          - prefix: EPOCH_
+            secretRef:
+              name: epoch-control-tekton-api-secret
+        volumeMounts:
+        - name: epoch-control-tekton-conf
+          mountPath: /etc/epoch/epochControlTektonApi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: epoch-control-tekton-api
+  labels:
+    name: epoch-control-tekton-api
+  namespace: epoch-system
+spec:
+  type: NodePort
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+  selector:
+    name: epoch-control-tekton-api
+
+#---- epochRsOrganizationApi.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: epoch-rs-organization-conf
+  namespace: epoch-system
+data:
+  api_organization.conf: |
+    TZ='Asia/Tokyo'
+    MYSQL_HOST='organization-db'
+    MYSQL_PORT='3306'
+    MYSQL_DATABASE='organization_db'
+    MYSQL_USER='app_user'
+    MYSQL_PASSWORD='password'
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: epoch-rs-organization-api
+  namespace: epoch-system
+spec:
+  selector:
+    matchLabels:
+      name: epoch-rs-organization-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: epoch-rs-organization-api
+    spec:
+      volumes:
+      - name: epoch-rs-organization-conf
+        configMap:
+          name: epoch-rs-organization-conf
+      containers:
+      - name: epoch-rs-organization-api
+        image: exastro/epochrsorganizationapi:0.1.0_20210805_1100
+        env:
+        - name: CONFIG_API_ORGANIZATION_PATH
+          value: "/etc/epoch/epochRsOrganizationApi/api_organization.conf"
+        - name: FLASK_ENV
+          value: "development"
+        - name: API_ORGANIZATION_PORT
+          value: "8000"
+        - name: PYTHONIOENCODING
+          value: utf-8
+        volumeMounts:
+        - name: epoch-rs-organization-conf
+          mountPath: /etc/epoch/epochRsOrganizationApi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: epoch-rs-organization-api
+  labels:
+    name: epoch-rs-organization-api
+  namespace: epoch-system
+spec:
+  type: NodePort
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+  selector:
+    name: epoch-rs-organization-api
+
+#---- epochRsWorkspaceApi.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: epoch-rs-workspace-conf
+  namespace: epoch-system
+data:
+  api_workspace.conf: |
+    TZ='Asia/Tokyo'
+    MYSQL_HOST='workspace-db'
+    MYSQL_PORT='3306'
+    MYSQL_DATABASE='workspace_db'
+    MYSQL_USER='app_user'
+    MYSQL_PASSWORD='password'
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: epoch-rs-workspace-api
+  namespace: epoch-system
+spec:
+  selector:
+    matchLabels:
+      name: epoch-rs-workspace-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: epoch-rs-workspace-api
+    spec:
+      volumes:
+      - name: epoch-rs-workspace-conf
+        configMap:
+          name: epoch-rs-workspace-conf
+      containers:
+      - name: epoch-rs-workspace-api
+        image: exastro/epochrsworkspaceapi:0.1.3_20210907_1000
+        env:
+        - name: CONFIG_API_WORKSPACE_PATH
+          value: "/etc/epoch/epochRsWorkspaceApi/api_workspace.conf"
+        - name: FLASK_ENV
+          value: "development"
+        - name: API_WORKSPACE_PORT
+          value: "8000"
+        - name: PYTHONIOENCODING
+          value: utf-8
+        volumeMounts:
+        - name: epoch-rs-workspace-conf
+          mountPath: /etc/epoch/epochRsWorkspaceApi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: epoch-rs-workspace-api
+  labels:
+    name: epoch-rs-workspace-api
+  namespace: epoch-system
+spec:
+  type: NodePort
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+  selector:
+    name: epoch-rs-workspace-api
+
+#---- epochServiceApi.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: epoch-service-crb
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: epoch-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: epoch-service-api-config
+  namespace: epoch-system
+data:
+  EPOCH_CICD_PROTOCOL: "http"
+  EPOCH_CICD_HOST: "epoch-cicd-api"
+  EPOCH_CICD_PORT: "8000"
+  EPOCH_CONTROL_TEKTON_PROTOCOL: "http"
+  EPOCH_CONTROL_TEKTON_HOST: "epoch-control-tekton-api"
+  EPOCH_CONTROL_TEKTON_PORT: "8000"
+  EPOCH_RS_WORKSPACE_PROTOCOL: "http"
+  EPOCH_RS_WORKSPACE_HOST: "epoch-rs-workspace-api"
+  EPOCH_RS_WORKSPACE_PORT: "8000"
+  EPOCH_RS_ORGANIZATION_PROTOCOL: "http"
+  EPOCH_RS_ORGANIZATION_HOST: "epoch-rs-organization-api"
+  EPOCH_RS_ORGANIZATION_PORT: "8000"
+  PYTHONIOENCODING: utf-8
+
+# ---
+
+# apiVersion: v1
+# kind: Secret
+# metadata:
+#   name: epoch-service-api-secret
+#   namespace: epoch-system
+# type: Opaque
+# stringData:
+#   ENV_NAME: value
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: epoch-service-api
+  namespace: epoch-system
+spec:
+  selector:
+    matchLabels:
+      name: epoch-service-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: epoch-service-api
+    spec:
+      containers:
+      - name: epoch-service-api
+        image: exastro/epochserviceapi:0.1.1_20210826_1100
+        env:
+        - name: PYTHONIOENCODING
+          value: utf-8
+        envFrom:
+          - configMapRef:
+              name: epoch-service-api-config
+          # - prefix: EPOCH_
+          #   secretRef:
+          #     name: epoch-service-api-secret
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: epoch-service-api
+  labels:
+    name: epoch-service-api
+  namespace: epoch-system
+spec:
+  type: NodePort
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+    nodePort: 30081
+  selector:
+    name: epoch-service-api
+
+#---- epochUi.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: epoch-ui-conf
+  namespace: epoch-system
+data:
+  workspace_api_conf.js: |
+    var location_host = window.location.hostname;
+    var location_prot = window.location.protocol;
+
+    var api_port = "30081";
+    var api_url_base = location_prot + "//" + location_host + ":" + api_port
+
+    if ( location_prot == "https:" ) {
+      api_port = window.location.port;
+      api_url_base = location_prot + "//" + location_host + ":" + api_port + "/api"
+    }
+
+    var workspace_api_conf = {
+        "links" : {
+            "tekton"    : location_prot + "//" + location_host + ":" + (location_prot == "https:"? "30801": "30901") + "/",
+            "registry"  : "https://hub.docker.com/repositories",
+            "argo"      : location_prot + "//" + location_host + ":" + "30906" + "/",
+            "ita"       : location_prot + "//" + location_host + ":" + (location_prot == "https:"? "30805": "30905") + "/default/menu/01_browse.php?no=2100180006",
+            "sonarqube" : location_prot + "//" + location_host + ":" + (location_prot == "https:"? "30807": "30907") + "/",
+        },
+        "test": {
+            "default_workspace_id": 1
+        },
+        "api" : {
+            "resource": {
+                "get" :     api_url_base + "/workspace/info/{workspace_id}/",
+                "post" :    api_url_base + "/workspace/info/",
+                "put" :     api_url_base + "/workspace/info/{workspace_id}/",
+            },
+            "workspace": {
+                "post":     api_url_base + "/workspace/pod/",
+                "wait": 30000,
+            },
+            "pipeline": {
+                "post":     api_url_base + "/pipeline/",
+            },
+            "pipelineParameter": {
+                "post":     api_url_base + "/pipelineParameter/",
+            },
+            "manifestParameter": {
+                "post":     api_url_base + "/workspace/{workspace_id}/manifestParameter",
+            },
+            "manifestTemplate": {
+                "post" :    api_url_base + "/workspace/{workspace_id}/manifests/",
+                "get" :     api_url_base + "/workspace/{workspace_id}/manifests/",
+                "delete" :  api_url_base + "/workspace/{workspace_id}/manifests/{file_id}",
+            },
+            "cdExecDesignation": {
+                "post" :    api_url_base + "/cdExecDesignation/",
+            }
+        }
+    }
+  organization_api_conf.js: |
+    var location_host = window.location.hostname;
+    var location_prot = window.location.protocol;
+
+    var api_port = "30081";
+    var api_url_base = location_prot + "//" + location_host + ":" + api_port
+
+    if ( location_prot == "https:" ) {
+      api_port = window.location.port;
+      api_url_base = location_prot + "//" + location_host + ":" + api_port + "/api"
+    }
+
+    console.log('api_url_base:' + api_url_base);
+
+    var organization_api_conf = {
+        "api" : {
+            "resource": {
+                "get_all"  : api_url_base + "/organization/",
+                "get"  : api_url_base + "/organization/{organization_id}/",
+                "post" : api_url_base + "/organization/",
+                "put"  : api_url_base + "/organization/{organization_id}/",
+            }
+        },
+        "parameter" : {
+
+        }
+    }
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: epoch-ui
+  namespace: epoch-system
+spec:
+  selector:
+    matchLabels:
+      name: epoch-ui
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: epoch-ui
+    spec:
+      volumes:
+      - name: epoch-ui-conf
+        configMap:
+          name: epoch-ui-conf
+      containers:
+      - name: epoch-ui
+        image: exastro/epochui:0.1.3_20210907_1000
+        volumeMounts:
+        - name: epoch-ui-conf
+          mountPath: /app/epoch/epochUi/common/js/config
+
 ---
 apiVersion: v1
 kind: Service
 metadata:
+  name: epoch-ui
   labels:
-    app.kubernetes.io/name: tekton-triggers-core-interceptors
-    app.kubernetes.io/component: interceptors
-    app.kubernetes.io/instance: default
-    app.kubernetes.io/version: "v0.16.0"
-    app.kubernetes.io/part-of: tekton-triggers
-    triggers.tekton.dev/release: "v0.16.0"
-    app: tekton-triggers-core-interceptors
-    version: "v0.16.0"
-  name: tekton-triggers-core-interceptors
-  namespace: tekton-pipelines
+    name: epoch-ui
+  namespace: epoch-system
 spec:
+  type: NodePort
   ports:
-    - name: "http"
-      port: 80
-      targetPort: 8082
+  - name: http
+    port: 8000
+    targetPort: 8000
+    nodePort: 30080
+  - name: https
+    port: 4430
+    targetPort: 4430
+    nodePort: 30443
   selector:
-    app.kubernetes.io/name: core-interceptors
-    app.kubernetes.io/component: interceptors
-    app.kubernetes.io/instance: default
-    app.kubernetes.io/part-of: tekton-triggers
+    name: epoch-ui
+
+#---- organization_db.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: organization-db-myconf
+  namespace: epoch-system
+data:
+  my.cnf: |
+    [mysqld]
+    character-set-server=utf8mb4
+    collation-server=utf8mb4_bin
+    secure_file_priv=/tmp
+    [client]
+    default-character-set=utf8mb4
 
 ---
-# Copyright 2021 The Tekton Authors
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
-apiVersion: triggers.tekton.dev/v1alpha1
-kind: ClusterInterceptor
+apiVersion: v1
+kind: ConfigMap
 metadata:
-  name: cel
-spec:
-  clientConfig:
-    service:
-      name: tekton-triggers-core-interceptors
-      namespace: tekton-pipelines
-      path: "cel"
----
-apiVersion: triggers.tekton.dev/v1alpha1
-kind: ClusterInterceptor
-metadata:
-  name: bitbucket
-spec:
-  clientConfig:
-    service:
-      name: tekton-triggers-core-interceptors
-      namespace: tekton-pipelines
-      path: "bitbucket"
----
-apiVersion: triggers.tekton.dev/v1alpha1
-kind: ClusterInterceptor
-metadata:
-  name: github
-spec:
-  clientConfig:
-    service:
-      name: tekton-triggers-core-interceptors
-      namespace: tekton-pipelines
-      path: "github"
----
-apiVersion: triggers.tekton.dev/v1alpha1
-kind: ClusterInterceptor
-metadata:
-  name: gitlab
-spec:
-  clientConfig:
-    service:
-      name: tekton-triggers-core-interceptors
-      namespace: tekton-pipelines
-      path: "gitlab"
+  name: organization-db-initdb
+  namespace: epoch-system
+data:
+  organization.sql: |
+    create database organization_db
+      CHARACTER SET utf8mb4
+      COLLATE utf8mb4_unicode_ci;
+    create user app_user IDENTIFIED WITH mysql_native_password BY 'password';
+    GRANT ALL ON organization_db.* TO app_user;
+    use organization_db;
+    create table organization (
+      organization_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
+      organization_name varchar(256) not null,
+      additional_information json,
+      create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
+      update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    );
+    create table organization_history (
+      history_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
+      organization_id int unsigned not null,
+      organization_name varchar(256) not null,
+      additional_information json,
+      update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    );
 
 ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: organization-db
+  namespace: epoch-system
+spec:
+  selector:
+    matchLabels:
+      name: organization-db
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: organization-db
+    spec:
+      volumes:
+      - name: mysqlconf-volume
+        configMap:
+          name: organization-db-myconf
+      # COMMENT OUT:Persistent data retention
+      #- name: mysqldata
+      #  hostPath:
+      #    path: /var/data/epoch/organization_db/mysql
+      #    type: DirectoryOrCreate
+      - name: mysqlinitdb-volume
+        configMap:
+          name: organization-db-initdb
+      containers:
+      - name: mysql
+        image: mysql
+        volumeMounts:
+        # COMMENT OUT:Persistent data retention
+        #- name: mysqldata
+        #  mountPath: /var/lib/mysql
+        - name: mysqlconf-volume
+          mountPath: /etc/mysql
+        - name: mysqlinitdb-volume
+          mountPath: /docker-entrypoint-initdb.d
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: password
+        - name: TZ
+          value: "Asia/Tokyo"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: organization-db
+  labels:
+    name: organization-db
+  namespace: epoch-system
+spec:
+  type: ClusterIP
+  ports:
+  - name: mysql
+    port: 3306
+    targetPort: 3306
+  selector:
+    name: organization-db
+
+#---- workspace_db.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: workspace-db-myconf
+  namespace: epoch-system
+data:
+  my.cnf: |
+    [mysqld]
+    character-set-server=utf8mb4
+    collation-server=utf8mb4_bin
+    secure_file_priv=/tmp
+    [client]
+    default-character-set=utf8mb4
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: workspace-db-initdb
+  namespace: epoch-system
+data:
+  workspace.sql: |
+    create database workspace_db
+      CHARACTER SET utf8mb4
+      COLLATE utf8mb4_unicode_ci;
+    create user app_user IDENTIFIED WITH mysql_native_password BY 'password';
+    GRANT ALL ON workspace_db.* TO app_user;
+    use workspace_db;
+    create table workspace (
+      workspace_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
+      organization_id  int unsigned not null,
+      specification json,
+      create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
+      update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    );
+    create table workspace_history (
+      history_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
+      workspace_id int unsigned not null,
+      organization_id  int unsigned not null,
+      specification json,
+      update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    );
+    create table manifest (
+      id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
+      workspace_id int unsigned not null,
+      file_name varchar(1024) not null,
+      file_text text not null,
+      create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
+      update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    );
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: workspace-db
+  namespace: epoch-system
+spec:
+  selector:
+    matchLabels:
+      name: workspace-db
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: workspace-db
+    spec:
+      volumes:
+      - name: mysqlconf-volume
+        configMap:
+          name: workspace-db-myconf
+      # COMMENT OUT:Persistent data retention
+      #- name: mysqldata
+      #  hostPath:
+      #    path: /var/data/epoch/workspace_db/mysql
+      #    type: DirectoryOrCreate
+      - name: mysqlinitdb-volume
+        configMap:
+          name: workspace-db-initdb
+      containers:
+      - name: mysql
+        image: mysql
+        volumeMounts:
+        # COMMENT OUT:Persistent data retention
+        #- name: mysqldata
+        #  mountPath: /var/lib/mysql
+        - name: mysqlconf-volume
+          mountPath: /etc/mysql
+        - name: mysqlinitdb-volume
+          mountPath: /docker-entrypoint-initdb.d
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: password
+        - name: TZ
+          value: "Asia/Tokyo"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: workspace-db
+  labels:
+    name: workspace-db
+  namespace: epoch-system
+spec:
+  type: ClusterIP
+  ports:
+  - name: mysql
+    port: 3306
+    targetPort: 3306
+  selector:
+    name: workspace-db
+
+#---- tekton_pipeline_db.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tekton-pipeline-db-myconf
+  namespace: epoch-system
+data:
+  my.cnf: |
+    [mysqld]
+    character-set-server=utf8mb4
+    collation-server=utf8mb4_bin
+    secure_file_priv=/tmp
+    [client]
+    default-character-set=utf8mb4
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tekton-pipeline-db-initdb
+  namespace: epoch-system
+data:
+  tekton-pipeline.sql: |
+    create database tekton_pipeline_db
+      CHARACTER SET utf8mb4
+      COLLATE utf8mb4_unicode_ci;
+    create user app_user IDENTIFIED WITH mysql_native_password BY 'password';
+    GRANT ALL ON tekton_pipeline_db.* TO app_user;
+    use tekton_pipeline_db;
+    create table tekton_pipeline_yaml (
+      yaml_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
+      workspace_id int unsigned not null,
+      kind varchar(16),
+      filename varchar(256),
+      yamltext text,
+      index(workspace_id)
+    );
+    create table tekton_pipeline_task (
+      task_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
+      workspace_id int unsigned not null,
+      pipeline_id int unsigned not null,
+      pipeline_run_name varchar(128),
+      pipeline_run_uid  varchar(128),
+      status varchar(16) not null,
+      git_repository_url varchar(1024) not null,
+      git_branch varchar(1024),
+      container_registry_image varchar(1024),
+      container_registry_image_tag varchar(1024),
+      container_registry_image_digest varchar(1024),
+      git_webhook_header text,
+      git_webhook_body text,
+      create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
+      index(pipeline_run_name)
+    );
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tekton-pipeline-db
+  namespace: epoch-system
+spec:
+  selector:
+    matchLabels:
+      name: tekton-pipeline-db
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: tekton-pipeline-db
+    spec:
+      volumes:
+      - name: mysqlconf-volume
+        configMap:
+          name: tekton-pipeline-db-myconf
+      # COMMENT OUT:Persistent data retention
+      #- name: mysqldata
+      #  hostPath:
+      #    path: /var/data/epoch/tekton_pipeline_db/mysql
+      #    type: DirectoryOrCreate
+      - name: mysqlinitdb-volume
+        configMap:
+          name: tekton-pipeline-db-initdb
+      containers:
+      - name: mysql
+        image: mysql
+        volumeMounts:
+        # COMMENT OUT:Persistent data retention
+        #- name: mysqldata
+        #  mountPath: /var/lib/mysql
+        - name: mysqlconf-volume
+          mountPath: /etc/mysql
+        - name: mysqlinitdb-volume
+          mountPath: /docker-entrypoint-initdb.d
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: password
+        - name: TZ
+          value: "Asia/Tokyo"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tekton-pipeline-db
+  labels:
+    name: tekton-pipeline-db
+  namespace: epoch-system
+spec:
+  type: ClusterIP
+  ports:
+  - name: mysql
+    port: 3306
+    targetPort: 3306
+  selector:
+    name: tekton-pipeline-db
 
 #---- tekton-dashbord-release.yaml
 ---
@@ -5426,3 +5257,172 @@ spec:
     app.kubernetes.io/instance: default
     app.kubernetes.io/name: dashboard
     app.kubernetes.io/part-of: tekton-dashboard
+
+#---- tekton-trigger-interceptors.yaml
+---
+# Copyright 2020 The Tekton Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tekton-triggers-core-interceptors
+  namespace: tekton-pipelines
+  labels:
+    app.kubernetes.io/name: core-interceptors
+    app.kubernetes.io/component: interceptors
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/version: "v0.16.0"
+    app.kubernetes.io/part-of: tekton-triggers
+    # tekton.dev/release value replaced with inputs.params.versionTag in triggers/tekton/publish.yaml
+    triggers.tekton.dev/release: "v0.16.0"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: core-interceptors
+      app.kubernetes.io/component: interceptors
+      app.kubernetes.io/instance: default
+      app.kubernetes.io/part-of: tekton-triggers
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: core-interceptors
+        app.kubernetes.io/component: interceptors
+        app.kubernetes.io/instance: default
+        app.kubernetes.io/version: "v0.16.0"
+        app.kubernetes.io/part-of: tekton-triggers
+        app: tekton-triggers-core-interceptors
+        triggers.tekton.dev/release: "v0.16.0"
+        # version value replaced with inputs.params.versionTag in triggers/tekton/publish.yaml
+        version: "v0.16.0"
+    spec:
+      serviceAccountName: tekton-triggers-core-interceptors
+      containers:
+        - name: tekton-triggers-core-interceptors
+          image: "gcr.io/tekton-releases/github.com/tektoncd/triggers/cmd/interceptors:v0.16.0@sha256:6c7db03e0caf6fab13192b54ececd53926beae759efe9cbe1aa709cd707be687"
+          args: ["-logtostderr", "-stderrthreshold", "INFO"]
+          env:
+            - name: SYSTEM_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: CONFIG_LOGGING_NAME
+              value: config-logging-triggers
+            - name: CONFIG_OBSERVABILITY_NAME
+              value: config-observability-triggers
+            - name: METRICS_DOMAIN
+              value: tekton.dev/triggers
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8082
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+          securityContext:
+            allowPrivilegeEscalation: false
+            # User 65532 is the distroless nonroot user ID
+            runAsUser: 65532
+            runAsGroup: 65532
+            capabilities:
+              drop:
+                - all
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/name: tekton-triggers-core-interceptors
+    app.kubernetes.io/component: interceptors
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/version: "v0.16.0"
+    app.kubernetes.io/part-of: tekton-triggers
+    triggers.tekton.dev/release: "v0.16.0"
+    app: tekton-triggers-core-interceptors
+    version: "v0.16.0"
+  name: tekton-triggers-core-interceptors
+  namespace: tekton-pipelines
+spec:
+  ports:
+    - name: "http"
+      port: 80
+      targetPort: 8082
+  selector:
+    app.kubernetes.io/name: core-interceptors
+    app.kubernetes.io/component: interceptors
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/part-of: tekton-triggers
+
+---
+# Copyright 2021 The Tekton Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: ClusterInterceptor
+metadata:
+  name: cel
+spec:
+  clientConfig:
+    service:
+      name: tekton-triggers-core-interceptors
+      namespace: tekton-pipelines
+      path: "cel"
+---
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: ClusterInterceptor
+metadata:
+  name: bitbucket
+spec:
+  clientConfig:
+    service:
+      name: tekton-triggers-core-interceptors
+      namespace: tekton-pipelines
+      path: "bitbucket"
+---
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: ClusterInterceptor
+metadata:
+  name: github
+spec:
+  clientConfig:
+    service:
+      name: tekton-triggers-core-interceptors
+      namespace: tekton-pipelines
+      path: "github"
+---
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: ClusterInterceptor
+metadata:
+  name: gitlab
+spec:
+  clientConfig:
+    service:
+      name: tekton-triggers-core-interceptors
+      namespace: tekton-pipelines
+      path: "gitlab"
+
+---
