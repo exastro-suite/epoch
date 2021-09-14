@@ -104,8 +104,6 @@ spec:
         env:
         - name: MYSQL_ROOT_PASSWORD
           value: password
-        - name: TZ
-          value: "Asia/Tokyo"
 
 ---
 apiVersion: v1

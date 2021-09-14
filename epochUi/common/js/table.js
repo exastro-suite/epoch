@@ -21,17 +21,24 @@ epochTable.prototype = {
       
       if ( tbArray.length ) { 
         const et = this;
-      
+        
         et.fn = new epochCommon();
         et.ws = new webStorage();
-
+        
+        // Option set
+        et.option = {};
+        if ( option === undefined ) option = {};
+        if ( option.filter !== undefined ) et.option.filter = option.filter;
+        
+        // Table main
         et.$table = $('<div/>', {
           'class': 'epoch-table-container'
-        }).append(
-          // Header
-          $('<div/>', {
-            'class': 'eth'
-          }).append(''
+        });
+        
+        // Filter
+        if ( option.filter !== 'off') {
+          const etHeaderHTML = ''
+          + '<div class="eth">'
             + '<div class="etf-s">'
               + '<div class="etf-si">'
                 + '<button class="etf-b epoch-popup-m" data-button="filter-open" title="フィルタを追加します。">'
@@ -50,73 +57,8 @@ epochTable.prototype = {
                 + '</button>'
               + '</div>'
             + '</div>'
-          ),
-          // Body
-          $('<div/>', {
-            'class': 'etb'
-          }).append(
-            // Table
-            $('<table/>', {
-              'class': 'et'
-            }).append(
-              // thead
-              $('<thead/>', {
-                'class': 'et-h'
-              }),
-              // tbody
-              $('<tbody/>', {
-                'class': 'et-b'
-              })
-            )
-          ),
-          // Footer
-          $('<div/>', {
-            'class': 'ett'
-          }).append(
-            $('<div/>', {
-              'class': 'etp'
-            }).append(''
-              + '<div class="etp-w">'
-                + '<div class="etp-ih">表示する行数</div>'
-                + '<div class="etp-ib">'
-                  + '<div class="etp-s">'
-                    + '<div class="etp-sn"></div>'
-                    + '<ul class="etp-sl">'
-                      + '<li class="etp-si"><input type="radio" name="etp-s-r" id="etp-s-r100" class="etp-sr" value="100"><label for="etp-s-r100" class="etp-sb">100</label></li>'
-                      + '<li class="etp-si"><input type="radio" name="etp-s-r" id="etp-s-r50" class="etp-sr" value="50"><label for="etp-s-r50" class="etp-sb">50</label></li>'
-                      + '<li class="etp-si"><input type="radio" name="etp-s-r" id="etp-s-r25" class="etp-sr" value="25"><label for="etp-s-r25" class="etp-sb">25</label></li>'
-                      + '<li class="etp-si"><input type="radio" name="etp-s-r" id="etp-s-r10" class="etp-sr" value="10"><label for="etp-s-r10" class="etp-sb">10</label></li>'
-                    + '</ul>'
-                  + '</div>'
-                + '</div>'
-                + '<div class="etp-if">行</div>'
-              + '</div>'
-              + '<div class="etp-w">'
-                + '<div class="etp-ib etp-ns"></div>'
-                + '<div class="etp-ib">-</div>'
-                + '<div class="etp-ib etp-ne"></div>'
-                + '<div class="etp-ib">/</div>'
-                + '<div class="etp-ib etp-na"></div>'
-                + '<div class="etp-if">件</div>'
-              + '</div>'
-              + '<div class="etp-w">'
-                + '<div class="etp-ib etp-pc"></div>'
-                + '<div class="etp-ib">/</div>'
-                + '<div class="etp-ib etp-pa"></div>'
-                + '<div class="etp-if">頁</div>'
-              + '</div>'
-              + '<div class="etp-w">'
-                + '<div class="etp-ib"><button class="etp-b" data-button="start"></button></div>'
-                + '<div class="etp-ib"><button class="etp-b" data-button="prev"></button></div>'
-                + '<div class="etp-ib"><button class="etp-b" data-button="next"></button></div>'
-                + '<div class="etp-ib"><button class="etp-b" data-button="end"></button></div>'
-              + '</div>'
-            )
-          ),
-          // Filter
-          $('<div/>', {
-            'class': 'etf-c'
-          }).append(''
+          + '</div>'
+          + '<div class="etf-c">'
             + '<div class="etf-a">'
               + '<div class="etf-ah">'
                 + '<div class="etf-ah-t">フィルタ</div>'
@@ -135,13 +77,70 @@ epochTable.prototype = {
                 + '</ul>'
               + '</div>'
             + '</div>'
-          ),
-          // Style
-          $('<style/>', {
-            'class': 'ets'
-          })
-        );
+          + '</div>';
+          et.$table.addClass('et-filter').append( etHeaderHTML );
+        }
         
+        // Body
+        const etBodyHTML= ''
+        + '<div class="etb">'
+          + '<table class="et">'
+            + '<thead class="et-h">'
+            + '</thead>'
+            + '<tbody class="et-b">'
+            + '</tbody>'
+          + '</table>'
+        + '</div>';
+        et.$table.append( etBodyHTML );
+        
+        // Footer
+        const etFooterHTML = ''
+        + '<div class="ett">'
+          + '<div class="etp">'
+            + '<div class="etp-w">'
+              + '<div class="etp-ih">表示する行数</div>'
+              + '<div class="etp-ib">'
+                + '<div class="etp-s">'
+                  + '<div class="etp-sn"></div>'
+                  + '<ul class="etp-sl">'
+                    + '<li class="etp-si"><input type="radio" name="etp-s-r" id="etp-s-r100" class="etp-sr" value="100"><label for="etp-s-r100" class="etp-sb">100</label></li>'
+                    + '<li class="etp-si"><input type="radio" name="etp-s-r" id="etp-s-r50" class="etp-sr" value="50"><label for="etp-s-r50" class="etp-sb">50</label></li>'
+                    + '<li class="etp-si"><input type="radio" name="etp-s-r" id="etp-s-r25" class="etp-sr" value="25"><label for="etp-s-r25" class="etp-sb">25</label></li>'
+                    + '<li class="etp-si"><input type="radio" name="etp-s-r" id="etp-s-r10" class="etp-sr" value="10"><label for="etp-s-r10" class="etp-sb">10</label></li>'
+                  + '</ul>'
+                + '</div>'
+              + '</div>'
+              + '<div class="etp-if">行</div>'
+            + '</div>'
+            + '<div class="etp-w">'
+              + '<div class="etp-ib etp-ns"></div>'
+              + '<div class="etp-ib">-</div>'
+              + '<div class="etp-ib etp-ne"></div>'
+              + '<div class="etp-ib">/</div>'
+              + '<div class="etp-ib etp-na"></div>'
+              + '<div class="etp-if">件</div>'
+            + '</div>'
+            + '<div class="etp-w">'
+              + '<div class="etp-ib etp-pc"></div>'
+              + '<div class="etp-ib">/</div>'
+              + '<div class="etp-ib etp-pa"></div>'
+              + '<div class="etp-if">頁</div>'
+            + '</div>'
+            + '<div class="etp-w">'
+              + '<div class="etp-ib"><button class="etp-b" data-button="start"></button></div>'
+              + '<div class="etp-ib"><button class="etp-b" data-button="prev"></button></div>'
+              + '<div class="etp-ib"><button class="etp-b" data-button="next"></button></div>'
+              + '<div class="etp-ib"><button class="etp-b" data-button="end"></button></div>'
+            + '</div>'
+          + '</div>'
+        + '</div>';
+        et.$table.append( etFooterHTML );
+          
+        // Style
+        const etStyleHTML = ''
+        + '<style class="ets"></style>';
+        et.$table.append( etStyleHTML );
+
         // ソート値
         et.cSortCol = null;
         et.cSortType = null;
@@ -175,7 +174,7 @@ epochTable.prototype = {
         et.tdCopy = tbArray.concat(); // 初期値として使う
         
         et.pagingTotalPage = 0;
-
+                
         et.$target.html( et.$table );
 
         et.setHeaderHTML();
@@ -184,74 +183,77 @@ epochTable.prototype = {
         et.setFilter();
         et.setFilterStatus();
 
-        et.option( option );
+        et.setting( option );
         
         et.setBodyHTML();
-
-        // フィルタオープン
-        et.$header.find('.etf-b').on('click', function(){
-          const $button = $( this ),
-                type = $button.attr('data-button');
-          switch( type ) {
-            case 'filter-open':
-              et.$filter.show();
-              et.setFilterValue();
-              break;
-            case 'filter-clear':
-              $button.mouseleave();
-              et.clearFilter();
-              et.option({
-                'page': 1,
-                'sortCol': et.cSortCol,
-                'sortType': et.cSortType
-              });
-              et.setBodyHTML();
-              break;
-          }
-        });
-        // フィルタダイアログ
-        et.$filter.find('.epoch-button, .etf-ah-cb').on('click', function(){
-          const $button = $( this ),
-                type = $button.attr('data-button');
-          switch( type ) {
-            case 'ok':
-              et.getFilterValue();
-              et.setFilter();
-              et.setFilterStatus();
-              et.option({
-                'page': 1,
-                'sortCol': et.cSortCol,
-                'sortType': et.cSortType
-              });
-              et.setBodyHTML();
-              et.$filter.hide();
-              break;
-            case 'cancel':
-              et.$filter.hide();
-              break;
-          }
-        });
-        // フィルタ削除
-        et.$header.find('.etf-sa').on('click', '.etf-sad-di', function(){
-          const $button = $( this ),
-                colNumber = $button.attr('data-col');
-          $button.mouseleave();
-          if ( et.$header.find(('.etf-sai')).length === 1 ) {
-            et.clearFilter();
-          } else {
-            $button.closest('.etf-sai').remove();
-            if ( et.th[colNumber] !== undefined && et.th[colNumber]['filterOption'] !== undefined ) {
-              delete et.th[colNumber]['filterOption'];
+        
+        // フィルタイベント
+        if ( option.filter !== 'off') {
+          // フィルタオープン
+          et.$header.find('.etf-b').on('click', function(){
+            const $button = $( this ),
+                  type = $button.attr('data-button');
+            switch( type ) {
+              case 'filter-open':
+                et.$filter.show();
+                et.setFilterValue();
+                break;
+              case 'filter-clear':
+                $button.mouseleave();
+                et.clearFilter();
+                et.option({
+                  'page': 1,
+                  'sortCol': et.cSortCol,
+                  'sortType': et.cSortType
+                });
+                et.setBodyHTML();
+                break;
             }
-            et.setFilter();
-          }
-          et.option({
-            'page': 1,
-            'sortCol': et.cSortCol,
-            'sortType': et.cSortType
           });
-          et.setBodyHTML();
-        });
+          // フィルタダイアログ
+          et.$filter.find('.epoch-button, .etf-ah-cb').on('click', function(){
+            const $button = $( this ),
+                  type = $button.attr('data-button');
+            switch( type ) {
+              case 'ok':
+                et.getFilterValue();
+                et.setFilter();
+                et.setFilterStatus();
+                et.option({
+                  'page': 1,
+                  'sortCol': et.cSortCol,
+                  'sortType': et.cSortType
+                });
+                et.setBodyHTML();
+                et.$filter.hide();
+                break;
+              case 'cancel':
+                et.$filter.hide();
+                break;
+            }
+          });
+          // フィルタ削除
+          et.$header.find('.etf-sa').on('click', '.etf-sad-di', function(){
+            const $button = $( this ),
+                  colNumber = $button.attr('data-col');
+            $button.mouseleave();
+            if ( et.$header.find(('.etf-sai')).length === 1 ) {
+              et.clearFilter();
+            } else {
+              $button.closest('.etf-sai').remove();
+              if ( et.th[colNumber] !== undefined && et.th[colNumber]['filterOption'] !== undefined ) {
+                delete et.th[colNumber]['filterOption'];
+              }
+              et.setFilter();
+            }
+            et.setting({
+              'page': 1,
+              'sortCol': et.cSortCol,
+              'sortType': et.cSortType
+            });
+            et.setBodyHTML();
+          });
+        }
 
         // ページング
         et.$footer.find('.etp-b').on('click', function(){
@@ -474,16 +476,17 @@ epochTable.prototype = {
   },
   /* ------------------------------ *\
      ソート
-  \* ------------------------------ */  
+  \* ------------------------------ */
   'sort': function( index, order ){
       const et = this,
-      tb = et.tb;
-
+            tb = et.tb;
+      
       et.cSortCol = index;
       et.cSortType = order;
-
+      
       et.$thead.find('.et-cs').removeAttr('data-sort');
       et.$thead.find('.et-cs').eq( index ).attr('data-sort', order );
+          
       tb.sort(function( a, b ){
           const aS = ( typeof a[index] === 'number' && isFinite( a[index] ) )?
                       a[index]: String( a[index] ).toLowerCase(),
@@ -866,7 +869,7 @@ epochTable.prototype = {
     et.$header.find('.etf-sal').html('');
     et.$header.find('.etf-b[data-button="filter-clear"]').prop('disabled', true );
   },
-  'option': function( option ) {
+  'setting': function( option ) {
     const et = this;
     if ( option === undefined ) option = {};
     if ( option !== undefined ) {
@@ -896,7 +899,7 @@ epochTable.prototype = {
   'update': function( tb, option ){
     const et = this;
     et.tb = tb.concat();
-    et.option( option );
+    et.setting( option );
     et.setBodyHTML();
   }
 };

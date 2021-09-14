@@ -18,7 +18,6 @@ metadata:
   namespace: epoch-system
 data:
   api_organization.conf: |
-    TZ='Asia/Tokyo'
     MYSQL_HOST='organization-db'
     MYSQL_PORT='3306'
     MYSQL_DATABASE='organization_db'
