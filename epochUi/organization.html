@@ -1,5 +1,5 @@
 <!--
-#   Copyright 2019 NEC Corporation
+#   Copyright 2021 NEC Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>オーガナイゼーション作成 | EPOCH</title>
+<title>オーガナイゼーション | EPOCH</title>
 
 
 <link rel="stylesheet" href="common/css/datepicker.css">
@@ -32,14 +32,9 @@
 <script src="common/js/common.js"></script>
 <script src="common/js/table.js"></script>
 <script src="common/js/modal.js"></script>
-<script src="common/js/datepicker.js"></script>
 
 <script src="common/js/organization.js"></script>
 <script src="common/js/config/organization_api_conf.js"></script>
-
-<!-- オーロラ背景 -->
-<script src="common/library/p5/p5.min.js"></script>
-<script src="common/js/background.js"></script>
 
 <!-- コードハイライト -->
 <link rel="stylesheet" href="common/library/prettify/prettify.css">
@@ -209,7 +204,7 @@
       </li>
       <li class="header-menu-item"><a href="#" class="header-menu-link epoch-popup-m" title="ヘルプ"><svg viewBox="0 0 64 64" class="icon-header-svg"><use href="#icon-header-question" /></svg></a></li>
       <li class="header-menu-item"><a href="#" class="header-menu-link epoch-popup-m" title="通知"><svg viewBox="0 0 64 64" class="icon-header-svg"><use href="#icon-header-notice" /></svg></a></li>
-      <!--<li class="header-menu-item"><a href="#" class="header-menu-link epoch-popup-m" title="11111111111111111111111"><svg viewBox="0 0 64 64" class="icon-header-svg"><use href="#icon-header-setting" /></svg></a></li>-->
+      <li class="header-menu-item"><a href="#" class="header-menu-link epoch-popup-m" title="11111111111111111111111"><svg viewBox="0 0 64 64" class="icon-header-svg"><use href="#icon-header-setting" /></svg></a></li>
     </ul>
   </div>
 </header>
@@ -219,11 +214,11 @@
   <aside id="side">
     <nav class="main-menu">
       <ul class="main-menu-list">
-        <!--<li class="main-menu-item"><a href="#" class="main-menu-link"><svg viewBox="0 0 64 64" class="icon-menu-svg"><use href="#icon-menu-account" /></svg><span class="main-menu-text">アカウント</span></a></li>-->
-        <li class="main-menu-item"><a href="organization-list.html" class="main-menu-link"><svg viewBox="0 0 64 64" class="icon-menu-svg"><use href="#icon-menu-organization" /></svg><span class="main-menu-text">オーガナイゼーション</span></a></li>
-        <!--<li class="main-menu-item"><a href="#" class="main-menu-link"><svg viewBox="0 0 64 64" class="icon-menu-svg"><use href="#icon-menu-role" /></svg><span class="main-menu-text">ロール</span></a></li>-->
+        <li class="main-menu-item"><a href="#" class="main-menu-link"><svg viewBox="0 0 64 64" class="icon-menu-svg"><use href="#icon-menu-account" /></svg><span class="main-menu-text">アカウント</span></a></li>
+        <li class="main-menu-item"><a href="#" class="main-menu-link"><svg viewBox="0 0 64 64" class="icon-menu-svg"><use href="#icon-menu-organization" /></svg><span class="main-menu-text">オーガナイゼーション</span></a></li>
+        <li class="main-menu-item"><a href="#" class="main-menu-link"><svg viewBox="0 0 64 64" class="icon-menu-svg"><use href="#icon-menu-role" /></svg><span class="main-menu-text">ロール</span></a></li>
         <li class="main-menu-item"><a href="#" class="main-menu-link"><svg viewBox="0 0 64 64" class="icon-menu-svg"><use href="#icon-menu-workspace" /></svg><span class="main-menu-text">ワークスペース</span></a></li>
-        <!--<li class="main-menu-item"><a href="#" class="main-menu-link"><svg viewBox="0 0 64 64" class="icon-menu-svg"><use href="#icon-menu-export-import" /></svg><span class="main-menu-text">エクスポート・インポート</span></a></li>-->
+        <li class="main-menu-item"><a href="#" class="main-menu-link"><svg viewBox="0 0 64 64" class="icon-menu-svg"><use href="#icon-menu-export-import" /></svg><span class="main-menu-text">エクスポート・インポート</span></a></li>
       </ul>
     </nav>
   </aside>
@@ -233,166 +228,39 @@
     <nav class="topic-path">
       <ol class="topic-path-list">
         <li class="topic-path-item"><a href="#" class="topic-path-link">ホーム</a></li>
-        <li class="topic-path-item"><a href="./organization-list.html" class="topic-path-link">オーガナイゼーション</a></li>
-        <li class="topic-path-item"><span class="topic-path-current">新規オーガナイゼーション</span></li>
+        <li class="topic-path-item"><span class="topic-path-current">オーガナイゼーション</span></li>
       </ol>
     </nav>
+
     <div class="content-header">
-<!--
-      <div class="content-setting workspace-mode-setting">
-        <button class="modal-open workspace-button epoch-popup" data-button="workspace" data-status="unentered" title="ワークスペース名とワークスペースの説明を設定します。">
-          <svg viewBox="0 0 64 64" class="workspace-button-svg">
-            <use href="#icon-gear"></use>
-          </svg>
-        </button>
-      </div>
       <div class="content-title">
-        <h1 class="content-title-heading"></h1>
+        <h1 class="content-title-heading">
+          <svg viewBox="0 0 64 64" class="content-title-svg">
+            <use href="#icon-menu-organization"></use>
+          </svg>
+          オーガナイゼーション
+        </h1>
       </div>
       <div class="content-note">
-        <div class="content-note-inner"></div>
+        <div class="content-note-inner">オーガナイゼーションの一覧です。</div>
       </div>
--->
+      <div class="content-header-menu">
+        <ul class="content-menu-list">
+          <li class="content-menu-item">
+            <button class="modal-open content-menu-button epoch-popup" data-button="newOrganization" title="オーガナイゼーションを追加します。">
+              <svg viewBox="0 0 64 64" class="content-menu-button-svg">
+                <use href="#icon-menu-organization"></use>
+              </svg>
+              <div class="button-plus"></div>
+            </button>
+          </li>
+        </ul>
+      </div>
     </div>
 
-  <div class="content-body">
-    <div id="workspace">
-      <div class="workspace-header">
-<!--
-        <div class="workspace-tab">
-          <ul class="workspace-tab-list">
--->
-            <!-- <li class="workspace-tab-item"><a href="#" class="workspace-tab-link">一覧に戻る</a></li> -->
-<!--
-            <li class="workspace-tab-item"><a href="#setting" class="workspace-tab-link current">ワークスペース設定</a></li>
-            <li class="workspace-tab-item"><a href="#running" class="workspace-tab-link">CI/CD実行</a></li>
-          </ul>
-        </div>
-        <div class="workspace-header-menu">
-          <ul class="workspace-status-list">
-            <li class="workspace-status-item" data-button="gitService">
-              <div class="workspace-status-item-name">アプリケーション<br>コード</div>
-              <div class="workspace-status-item-number application"></div>
-            </li>
-            <li class="workspace-status-item" data-button="pipelineArgo">
-              <div class="workspace-status-item-name">環境</div>
-              <div class="workspace-status-item-number environment"></div>
-            </li>
-            <li class="workspace-status-item" data-button="kubernetesManifestTemplate">
-              <div class="workspace-status-item-name">Kubernetes Manifest<br>テンプレート</div>
-              <div class="workspace-status-item-number template"></div>
-            </li>
-          </ul>
-          <ul class="workspace-setting-list">
-            <li class="workspace-setting-item">
-              <button class="workspace-setting-button epoch-popup-m" data-button="workspaceSetting" title="ワークスペース画面設定">
-                <svg viewBox="0 0 64 64" class="workspace-setting-button-svg">
-                <path class="st-setting" d="M3.41,51.15V3.41h47.74V24.6c1.18,0.28,2.32,0.65,3.41,1.11V3.41c0-1.88-1.53-3.41-3.41-3.41H3.41
-                  C1.53,0,0,1.53,0,3.41v47.74c0,1.88,1.53,3.41,3.41,3.41h22.3c-0.46-1.09-0.83-2.23-1.11-3.41H3.41z"/>
-                <path class="st-setting" d="M11.08,6.82c-1.41,0-2.56,1.15-2.56,2.56v11.93c0,1.41,1.15,2.56,2.56,2.56c1.41,0,2.56-1.15,2.56-2.56V9.38
-                  C13.64,7.97,12.49,6.82,11.08,6.82z"/>
-                <path class="st-setting" d="M43.48,6.82c-1.41,0-2.56,1.15-2.56,2.56v11.93c0,1.41,1.15,2.56,2.56,2.56s2.56-1.15,2.56-2.56V9.38
-                  C46.03,7.97,44.88,6.82,43.48,6.82z"/>
-                <path class="st-setting" d="M11.08,30.69c-1.41,0-2.56,1.15-2.56,2.56v11.93c0,1.41,1.15,2.56,2.56,2.56c1.41,0,2.56-1.15,2.56-2.56V33.25
-                  C13.64,31.84,12.49,30.69,11.08,30.69z"/>
-                <rect x="16.2" y="10.23" class="st-setting" width="22.16" height="10.23"/>
-                <path class="st-setting" d="M16.2,34.1v10.23h7.86c0.28-3.75,1.5-7.24,3.43-10.23H16.2z"/>
-                <path class="st-setting" d="M64,48.56v-5.12L59.43,43c-0.35-1.58-0.98-3.05-1.82-4.37l2.93-3.55l-3.62-3.62l-3.55,2.93
-                  c-1.32-0.84-2.79-1.46-4.37-1.81L48.56,28h-5.12L43,32.59c-1.58,0.35-3.05,0.97-4.37,1.81l-3.55-2.93l-3.62,3.62l2.93,3.55
-                  c-0.84,1.32-1.47,2.8-1.82,4.37L28,43.44v5.12L32.57,49c0.35,1.58,0.97,3.06,1.81,4.39l-2.92,3.53l3.62,3.62l3.53-2.91
-                  c1.33,0.85,2.81,1.47,4.39,1.82L43.44,64h5.12l0.44-4.55c1.59-0.35,3.07-0.98,4.39-1.82l3.53,2.91l3.62-3.62l-2.92-3.53
-                  c0.84-1.33,1.46-2.81,1.81-4.39L64,48.56z M46,53.28c-4.01,0-7.27-3.25-7.27-7.27s3.25-7.27,7.27-7.27s7.27,3.25,7.27,7.27
-                  S50.01,53.28,46,53.28z"/>
-                </svg>
-              </button>
-            </li>
-          </ul>
-        </div>
--->
-      </div>
 
-      <div class="workspace-body">
-        <div class="content-background">
-          <div class="content-background-canvas" id="content-Aurora"></div>
-        </div>
-          <div style="margin-top:50px; margin-left:100px;">
-            <form name="organization-data">
-              <table>
-              <tr>
-              <td>
-                <span style="color: white">オーガナイゼーション名</span>
-              </td>
-              <td>
-                <input class="organization_name" name="organization_name" type="text" size="100" placeholder="オーガナイゼーション名を入力してください"/>
-              </td>
-              </tr>
-              <tr>
-                <td height="50px;" valign="bottom">
-                  <span style="color: white">オーガナイゼーション情報</span>
-                </td>
-              </tr>
-              <tr>
-              <td>
-                <input class="add_info_key" name="add_info_key" type="text" size="40" placeholder="項目名を入力してください"/>
-              </td>
-              <td>
-                <input class="add_info_value" name="add_info_value"type="text" size="100" placeholder="項目の値を入力してください"/>
-              </td>
-              </tr>
-              <tr>
-              <td>
-                <input class="add_info_key" name="add_info_key" type="text" size="40" placeholder="項目名を入力してください"/>
-              </td>
-              <td>
-                <input class="add_info_value" name="add_info_value"type="text" size="100" placeholder="項目の値を入力してください"/>
-              </td>
-              </tr>
-              <tr>
-              <td>
-                <input class="add_info_key" name="add_info_key" type="text" size="40" placeholder="項目名を入力してください"/>
-              </td>
-              <td>
-                <input class="add_info_value" name="add_info_value"type="text" size="100" placeholder="項目の値を入力してください"/>
-              </td>
-              </tr>
-              <tr>
-              <td>
-                <input class="add_info_key" name="add_info_key" type="text" size="40" placeholder="項目名を入力してください"/>
-              </td>
-              <td>
-                <input class="add_info_value" name="add_info_value"type="text" size="100" placeholder="項目の値を入力してください"/>
-              </td>
-              </tr>
-              <tr>
-              <td>
-                <input class="add_info_key" name="add_info_key" type="text" size="40" placeholder="項目名を入力してください"/>
-              </td>
-              <td>
-                <input class="add_info_value" name="add_info_value"type="text" size="100" placeholder="項目の値を入力してください"/>
-              </td>
-              </tr>
-              </table>
-            </form>
-          </div>
-
-        <div class="workspace-setting-image">
-        </div>
-      </div>
-      <div class="workspace-footer">
-        <ul class="workspace-footer-menu-list">
-          <li class="workspace-footer-menu-item workspace-mode-setting">
-            <button id="apply-workspace-button" class="epoch-button workspace-footer-menu-button positive">オーガナイゼーション作成</button>
-          </li>
-        </ul>
-<!--
-        <ul class="workspace-footer-menu-list">
-          <li class="workspace-footer-menu-item workspace-mode-setting">
-            <button id="reset-button" class="epoch-button workspace-footer-menu-button negative">リセット</button>
-          </li>
-        </ul>
--->
-      </div>
-    </div>    
+  <div id="list" class="content-body">
+    
   </div>
   
 
@@ -406,38 +274,6 @@
 </footer>
 
 </div><!-- // #container -->
-
-<!-- モーダル画面の開始 -->
-<div id="modal-progress-container" class="progress-modal-container" style="display:none;">
-  <div id="modal-progress" class="modal" style="margin:0 auto;">
-    <div class="modal-header">
-      <div class="modal-title">処理状況</div>
-    </div>
-    <div class="modal-main">
-      <div class="modal-side">
-      </div>
-      <div class="modal-body">
-        <div class="input-group">
-          <div class="input-group-header">
-            <div class="input-group-title">進行状況</div>
-          </div>
-          <dl class="input-text-container">
-            <dd class="input-area" id="progress_message"></dd>
-          </dl>
-        </div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <ul class="modal-menu-list">
-        <li class="modal-menu-item">
-          <button id="progress-message-ok" class="modal-menu-button message-ok">OK</button>
-        </li>
-      </ul>
-    </div>
-  </div>
-</div>
-<!-- モーダル画面の終了 -->
-
 
 <script>initialScreen();</script>
 </body>

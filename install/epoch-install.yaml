@@ -3970,7 +3970,6 @@ metadata:
   namespace: epoch-system
 data:
   api_organization.conf: |
-    TZ='Asia/Tokyo'
     MYSQL_HOST='organization-db'
     MYSQL_PORT='3306'
     MYSQL_DATABASE='organization_db'
@@ -4054,7 +4053,6 @@ metadata:
   namespace: epoch-system
 data:
   api_workspace.conf: |
-    TZ='Asia/Tokyo'
     MYSQL_HOST='workspace-db'
     MYSQL_PORT='3306'
     MYSQL_DATABASE='workspace_db'
@@ -4478,8 +4476,6 @@ spec:
         env:
         - name: MYSQL_ROOT_PASSWORD
           value: password
-        - name: TZ
-          value: "Asia/Tokyo"
 
 ---
 apiVersion: v1
@@ -4606,8 +4602,6 @@ spec:
         env:
         - name: MYSQL_ROOT_PASSWORD
           value: password
-        - name: TZ
-          value: "Asia/Tokyo"
 
 ---
 apiVersion: v1
