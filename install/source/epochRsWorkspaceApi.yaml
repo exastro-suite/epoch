@@ -18,6 +18,7 @@ metadata:
   namespace: epoch-system
 data:
   api_workspace.conf: |
+    TZ='Asia/Tokyo'
     MYSQL_HOST='workspace-db'
     MYSQL_PORT='3306'
     MYSQL_DATABASE='workspace_db'
