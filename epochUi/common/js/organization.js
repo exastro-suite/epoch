@@ -62,6 +62,10 @@ function organization( list ) {
       {
         'type': 'hoverMenu',
         'menu': {
+          'workspace': {
+            'icon': 'icon-menu-workspace',
+            'text': 'ワークスペース一覧'
+          },
           'edit': {
             'icon': 'icon-edit',
             'text': '編集'
@@ -272,6 +276,10 @@ function organization( list ) {
                 }
               });
               break;
+            // workspace
+            case 'workspace':
+              window.location.href = "workspace.html";
+              break;
           }
         } else {
           window.console.warn('Specified organization(ID:' + idKey + ') does not exist.');
@@ -290,7 +298,7 @@ function organization( list ) {
 
           var param = {
             'organization_name': modalOrganization['data'].name,
-            'additional_information': JSON.parse(modalOrganization['data'].info)
+            'additional_information': modalOrganization['data'].info
           }
           console.log(JSON.stringify(param));
         
