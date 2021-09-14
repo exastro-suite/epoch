@@ -4000,7 +4000,7 @@ spec:
           name: epoch-rs-organization-conf
       containers:
       - name: epoch-rs-organization-api
-        image: exastro/epochrsorganizationapi:0.1.0_20210805_1100
+        image: exastro/epochrsorganizationapi:0.1.4_20210914_1700
         env:
         - name: CONFIG_API_ORGANIZATION_PATH
           value: "/etc/epoch/epochRsOrganizationApi/api_organization.conf"
@@ -4351,7 +4351,7 @@ spec:
           name: epoch-ui-conf
       containers:
       - name: epoch-ui
-        image: exastro/epochui:0.1.3_20210907_1000
+        image: exastro/epochui:0.1.4_20210914_1651
         volumeMounts:
         - name: epoch-ui-conf
           mountPath: /app/epoch/epochUi/common/js/config
