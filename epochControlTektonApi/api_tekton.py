@@ -473,6 +473,52 @@ def patch_tekton_task(workspace_id, task_id):
     except Exception as e:
         return common.serverError(e)
 
+@app.route('/workspace/<int:workspace_id>/tekton/pipelinerun', methods=['GET'])
+def get_tekton_pipelinerun(workspace_id):
+    """TEKTON pipeline実行結果取得
+
+    Args:
+        workspace_id (int): ワークスペースID
+
+    Returns:
+        Response: HTTP Respose
+    """
+    globals.logger.debug('CALL get_tekton_pipelinerun:{}'.format(workspace_id))
+
+    try:
+        # 正常応答
+        return jsonify({"result": "200"}), 200
+
+    except Exception as e:
+        return common.serverError(e)
+
+
+@app.route('/workspace/<int:workspace_id>/tekton/taskrun/<string:taskrun_name>/logs', methods=['GET'])
+def get_tekton_taskrun_logs(workspace_id, taskrun_name):
+    """TEKTON taskログ取得
+
+    Args:
+        workspace_id (int): ワークスペースID
+        taskrun_name (string): taskrun名
+    Returns:
+        Response: HTTP Respose
+    """
+    globals.logger.debug('CALL get_tekton_taskrun:{},{}'.format(workspace_id, taskrun_name))
+
+    try:
+        result_kubectl = subprocess.check_output(
+            ['kubectl', 'tkn', 'taskrun', 'logs', taskrun_name,
+            '-n', tekton_pipeline_namespace(workspace_id),
+            ], stderr=subprocess.STDOUT)
+        
+        globals.logger.debug('COMMAAND SUCCEED: kubectl tkn taskrun logs')
+
+        # 正常応答
+        return jsonify({"result": "200", "param" : result_kubectl.decode('utf-8')}), 200
+
+    except Exception as e:
+        return common.serverError(e)
+
 
 def tekton_pipeline_namespace(workspace_id):
     """TEKTON pipeline用namespace取得
