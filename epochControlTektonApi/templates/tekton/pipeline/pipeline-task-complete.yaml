@@ -35,7 +35,7 @@ spec:
       image: python
       env:
       - name: API_TEKTON_TASK
-        value: "http://epoch-control-tekton-api.epoch-system.svc:8000"
+        value: "http://epoch-rs-ci-result-api.epoch-system.svc:8000"
       script: |
         #!/bin/bash
 
