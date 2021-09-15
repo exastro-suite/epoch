@@ -17,7 +17,7 @@ metadata:
   name: epoch-rs-ci-result-conf
   namespace: epoch-system
 data:
-  api_organization.conf: |
+  api_ci_result.conf: |
     TZ='Asia/Tokyo'
     MYSQL_HOST='tekton-pipelinerun-db'
     MYSQL_PORT='3306'
@@ -49,10 +49,10 @@ spec:
           name: epoch-rs-ci-result-conf
       containers:
       - name: epoch-rs-ci-result-api
-        image: exastro/epochrsciresultapi:0.1.4_20210915_1700
+        image: exastro/epochrsciresultapi:0.1.4_20210915_1710
         env:
         - name: CONFIG_API_CI_RESULT_PATH
-          value: "/etc/epoch/epochRsOrganizationApi/api_ci_result.conf"
+          value: "/etc/epoch/epochRsCiResultApi/api_ci_result.conf"
         - name: FLASK_ENV
           value: "development"
         - name: API_CI_RESULT_PORT
