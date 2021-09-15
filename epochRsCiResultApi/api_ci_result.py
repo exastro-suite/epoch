@@ -16,12 +16,18 @@ from flask import Flask, request, abort, jsonify
 from datetime import datetime
 import os
 import json
+import re
 
 import globals
 import common
 from dbconnector import dbconnector
 from dbconnector import dbcursor
 import da_ci_result
+
+# タスクのステータス保存用
+TASK_STATUS_RUNNING='RUNNING'
+TASK_STATUS_COMPLETE='COMPLETE'
+TASK_STATUS_ERROR='ERROR'
 
 # 設定ファイル読み込み・globals初期化
 app = Flask(__name__)
@@ -38,7 +44,7 @@ def alive():
     """
     return jsonify({"result": "200", "time": str(datetime.now(globals.TZ))}), 200
 
-@app.route('/workspace/<int:workspace_id>/tekton/task', methods=['POST'])
+@app.route('/workspace/<int:workspace_id>/tekton/task', methods=['POST','PUT'])
 def post_tekton_task(workspace_id):
     """CI結果情報登録
 
@@ -64,7 +70,7 @@ def post_tekton_task(workspace_id):
 
             globals.logger.debug('insert task_id:{}'.format(str(task_id)))
 
-        return jsonify({"result": "200"}), 200
+        return jsonify({"result": "200", "param" : { "task_id": task_id, "container_registry_image_tag": image_tag }}), 200
 
     except Exception as e:
         return common.serverError(e, "tekton_pipeline_task db registration error")
