@@ -40,4 +40,5 @@ urlpatterns = [
     path('workspace/<int:workspace_id>/manifests/', include('manifestTemplate.urls')),
     path('cdExecDesignation/', include('cdExecDesignation.urls')),
     path('organization/', include('organization.urls')),
+    path('ciResult/', include('ciResult.urls')),
 ]
