@@ -1,18 +1,3 @@
-/*
-#   Copyright 2019 NEC Corporation
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
-*/
 // JavaScript Document
 
 function epochTable() {}
@@ -41,7 +26,7 @@ epochTable.prototype = {
           + '<div class="eth">'
             + '<div class="etf-s">'
               + '<div class="etf-si">'
-                + '<button class="etf-b epoch-popup-m" data-button="filter-open" title="フィルタを追加します。">'
+                + '<button class="etf-b epoch-popup-m" data-button="filter-open" title="フィルタ">'
                   + '<svg viewBox="0 0 64 64" class="etf-sis">'
                     + '<polygon points="64,0 36.88,0 27.12,0 0,0 0,10.47 27.12,35.02 27.12,64 36.88,57.02 36.88,35.02 64,10.47 "/>'
                   + '</svg>'
@@ -133,6 +118,7 @@ epochTable.prototype = {
               + '<div class="etp-ib"><button class="etp-b" data-button="end"></button></div>'
             + '</div>'
           + '</div>'
+          + '<div class="etd"></div>'
         + '</div>';
         et.$table.append( etFooterHTML );
           
@@ -165,6 +151,8 @@ epochTable.prototype = {
 
         et.$allPageNum = et.$table.find('.etp-pa');
         et.$currentPageNum = et.$table.find('.etp-pc');
+        
+        et.$datalist = et.$table.find('.etd');
 
         et.$filterBlock = et.$table.find('.etf-ab');
 
@@ -186,6 +174,7 @@ epochTable.prototype = {
         et.setting( option );
         
         et.setBodyHTML();
+        // et.datalistHTML();
         
         // フィルタイベント
         if ( option.filter !== 'off') {
@@ -201,7 +190,7 @@ epochTable.prototype = {
               case 'filter-clear':
                 $button.mouseleave();
                 et.clearFilter();
-                et.option({
+                et.setting({
                   'page': 1,
                   'sortCol': et.cSortCol,
                   'sortType': et.cSortType
@@ -219,7 +208,7 @@ epochTable.prototype = {
                 et.getFilterValue();
                 et.setFilter();
                 et.setFilterStatus();
-                et.option({
+                et.setting({
                   'page': 1,
                   'sortCol': et.cSortCol,
                   'sortType': et.cSortType
@@ -422,6 +411,8 @@ epochTable.prototype = {
               if ( tbd !== null ) {
                   switch( thd.type ){
                       case 'text':
+                          tbHTML += et.fn.textEntities( tbd );
+                          break;
                       case 'list':
                       case 'date':
                       case 'number':
@@ -445,7 +436,29 @@ epochTable.prototype = {
           tbHTML += '</tr>';
       }
       et.$tbody.html( tbHTML );
-      et.pagingCheck();
+      et.pagingCheck();      
+      
+  },
+  /* ------------------------------ *\
+     Filter input datalist
+  \* ------------------------------ */
+  'datalistHTML': function(){
+    const et = this,
+            th = et.th,
+            tb = et.tb,
+            tbL = tb.length,
+            datalist = {};
+    for ( let i = 0; i < tbL; i++ ) {
+      const col = tb[i].length;
+      for ( let j = 0; j < col; j++ ) {
+        if ( th[j].type === 'text' && th[j].filter === 'on') {
+          if ( datalist[j] === undefined ) datalist[j] = [];
+          if ( datalist[j].indexOf( tb[i][j] ) === -1 ) {
+            datalist[j].push( tb[i][j] );
+          }
+        }
+      }
+    }
   },
   /* ------------------------------ *\
      Hover Menu HTML
@@ -534,7 +547,7 @@ epochTable.prototype = {
         switch( th[i].type ) {
         case 'text':
           filterHTML += ''
-            + '<div class="etf-fb-iwf"><input type="text" class="etf-fb-i etf-fb-it"></div>'
+            + '<div class="etf-fb-iwf"><input type="text" class="etf-fb-i etf-fb-it" list="list' + i + '"></div>'
             + '<div class="etf-fb-iwf">'
               + '<ul class="etf-fb-fol">'
                 + '<li class="etf-fb-foi">'
