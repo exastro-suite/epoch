@@ -433,36 +433,36 @@ def get_tekton_pipelinerun(workspace_id):
         # TEKTON CLIにてpipelinerunのListの結果jsonをdictに変換
         plRunlist = json.loads(result_kubectl.decode('utf-8'))
 
-        if latest:
-            #
-            # 最新のみ返すとき
-            #
-            resRowsDict = {}
-            for plRunitem in plRunlist['items']:
-                resPlRunitem = get_responsePipelineRunItem(plRunitem)
+        resRows = []
+        if 'items' in plRunlist:
+            if latest:
+                #
+                # 最新のみ返すとき
+                #
+                resRowsDict = {}
+                for plRunitem in plRunlist['items']:
+                    resPlRunitem = get_responsePipelineRunItem(plRunitem)
 
-                idx = int(resPlRunitem['pipeline_id'])
+                    idx = int(resPlRunitem['pipeline_id'])
 
-                if idx in resRowsDict:
-                    # そのpipeline idの結果が既に存在するときはstart_timeで比較し、大きい方を残す                
-                    if resRowsDict[idx]['start_time'] < resPlRunitem['start_time']:
+                    if idx in resRowsDict:
+                        # そのpipeline idの結果が既に存在するときはstart_timeで比較し、大きい方を残す                
+                        if resRowsDict[idx]['start_time'] < resPlRunitem['start_time']:
+                            resRowsDict[idx] = resPlRunitem
+                    else:
+                        # そのpipeline idの結果が無いときは格納
                         resRowsDict[idx] = resPlRunitem
-                else:
-                    # そのpipeline idの結果が無いときは格納
-                    resRowsDict[idx] = resPlRunitem
 
-            # 結果をソートして格納
-            resRows = []
-            for idx in sorted(resRowsDict):
-                resRows.append(resRowsDict[idx])
-        else:
-            #
-            # 全件返すとき
-            #
-            resRows = []
-            for plRunitem in plRunlist['items']:
-                resPlRunitem = get_responsePipelineRunItem(plRunitem)
-                resRows.append(resPlRunitem)
+                # 結果をソートして格納
+                for idx in sorted(resRowsDict):
+                    resRows.append(resRowsDict[idx])
+            else:
+                #
+                # 全件返すとき
+                #
+                for plRunitem in plRunlist['items']:
+                    resPlRunitem = get_responsePipelineRunItem(plRunitem)
+                    resRows.append(resPlRunitem)
 
         globals.logger.debug(json.dumps(resRows))
 
@@ -484,15 +484,39 @@ def get_responsePipelineRunItem(plRunitem):
     # レスポンス用情報格納変数の初期化
     resPlRunitem = {}
 
+    # 各項目のキー値が存在しない場合を考慮して判断する
+    if 'startTime' in plRunitem['status']:
+        start_time = convert_date_format(plRunitem['status']['startTime'])
+    else:
+        start_time = ""
+
+    if 'completionTime' in plRunitem['status']:
+        completion_time = convert_date_format(plRunitem['status']['completionTime'])
+    else:
+        completion_time = ""
+
+    if 'conditions' in plRunitem['status']:
+        if 'reason' in plRunitem['status']['conditions'][0]:
+            status = plRunitem['status']['conditions'][0]['reason']
+        else:
+            status = ""
+    else:
+        status = ""
+
+    task_id = get_taskResult(plRunitem, 'task-start', 'task_id')
+    # task_idが無い場合は、まだ何も返せない
+    if task_id is None:
+        return None
+
     # 情報格納
     resPlRunitem['task_id'] = int(get_taskResult(plRunitem, 'task-start', 'task_id'))
     resPlRunitem['pipeline_id'] = int(plRunitem['metadata']['labels']['pipeline_id'])
     resPlRunitem['pipelinerun_name'] = plRunitem['metadata']['name']
     resPlRunitem['repository_url'] = get_pipelineParameter(plRunitem,'git_repository_url')
     resPlRunitem['build_branch'] = convert_branch(get_pipelineParameter(plRunitem,'git_branch'))
-    resPlRunitem['start_time'] = convert_date_format(plRunitem['status']['startTime'])
-    resPlRunitem['finish_time'] = convert_date_format(plRunitem['status']['completionTime'])
-    resPlRunitem['status'] = plRunitem['status']['conditions'][0]['reason']
+    resPlRunitem['start_time'] = start_time
+    resPlRunitem['finish_time'] = completion_time
+    resPlRunitem['status'] = status
     resPlRunitem['container_image'] = '{}:{}'.format(get_pipelineParameter(plRunitem,'container_registry_image'), get_taskResult(plRunitem, 'task-start', 'container_registry_image_tag'))
 
     # タスク情報の格納
@@ -536,9 +560,11 @@ def get_taskResult(plRunitem, taskname, resultName):
     # status.taskRuns[*]にtask毎、Result項目毎で格納されているので、タスク名、Result項目名が合致するものを探して値を返します
     for taskRun in plRunitem['status']['taskRuns'].values():
         if taskRun['pipelineTaskName'] == taskname:
-            for taskResult in taskRun['status']['taskResults']:
-                if taskResult['name'] == resultName:
-                    return taskResult['value']
+            # キー値が存在する場合のみ処理する
+            if 'taskResults' in taskRun['status']:
+                for taskResult in taskRun['status']['taskResults']:
+                    if taskResult['name'] == resultName:
+                        return taskResult['value']
     return None
 
 def get_taskStatus(plRunitem, taskname):
@@ -552,13 +578,32 @@ def get_taskStatus(plRunitem, taskname):
         (dict): タスクステータス情報
     """
     # status.taskRuns[*]にtaskの結果が格納されているので、指定タスク名の情報を探して値を返します
-    for taskrunname, taskrun in plRunitem['status']['taskRuns'].items():
+    for taskrun_name, taskrun in plRunitem['status']['taskRuns'].items():
         if taskrun['pipelineTaskName'] == taskname:
+            # 各項目のキー値が存在しない場合を考慮して判断する
+            if 'startTime' in taskrun['status']:
+                start_time = convert_date_format(taskrun['status']['startTime'])
+            else:
+                start_time = ""
+
+            if 'completionTime' in taskrun['status']:
+                completion_time = convert_date_format(taskrun['status']['completionTime'])
+            else:
+                completion_time = ""
+
+            if 'conditions' in taskrun['status']:
+                if 'reason' in taskrun['status']['conditions'][0]:
+                    status = taskrun['status']['conditions'][0]['reason']
+                else:
+                    status = ""
+            else:
+                status = ""
+
             return  {
-                        "taskrun_name" : taskrunname,
-                        "start_time" : convert_date_format(taskrun['status']['startTime']),
-                        "finish_time" : convert_date_format(taskrun['status']['completionTime']),
-                        "status" : taskrun['status']['conditions'][0]['reason'],
+                        "taskrun_name" : taskrun_name,
+                        "start_time" : start_time,
+                        "finish_time" : completion_time,
+                        "status" : status,
                     }
     return {}
 
