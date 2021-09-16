@@ -3793,7 +3793,7 @@ spec:
     spec:
       containers:
       - name: epoch-cicd-api
-        image: exastro/epochcicdapi:0.1.2_20210902_1330
+        image: exastro/epochcicdapi:0.1.4_20210916_1700
         env:
           - name: HTTP_PROXY
             valueFrom:
@@ -4393,6 +4393,7 @@ data:
             }
         }
     }
+    const ci_result_polling_span = 10000; // 10s
   organization_api_conf.js: |
     var location_host = window.location.hostname;
     var location_prot = window.location.protocol;
