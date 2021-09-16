@@ -443,15 +443,16 @@ def get_tekton_pipelinerun(workspace_id):
                 for plRunitem in plRunlist['items']:
                     resPlRunitem = get_responsePipelineRunItem(plRunitem)
 
-                    idx = int(resPlRunitem['pipeline_id'])
+                    if resPlRunitem is not None:
+                        idx = int(resPlRunitem['pipeline_id'])
 
-                    if idx in resRowsDict:
-                        # そのpipeline idの結果が既に存在するときはstart_timeで比較し、大きい方を残す                
-                        if resRowsDict[idx]['start_time'] < resPlRunitem['start_time']:
+                        if idx in resRowsDict:
+                            # そのpipeline idの結果が既に存在するときはstart_timeで比較し、大きい方を残す                
+                            if resRowsDict[idx]['start_time'] < resPlRunitem['start_time']:
+                                resRowsDict[idx] = resPlRunitem
+                        else:
+                            # そのpipeline idの結果が無いときは格納
                             resRowsDict[idx] = resPlRunitem
-                    else:
-                        # そのpipeline idの結果が無いときは格納
-                        resRowsDict[idx] = resPlRunitem
 
                 # 結果をソートして格納
                 for idx in sorted(resRowsDict):
