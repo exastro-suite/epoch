@@ -76,7 +76,7 @@ def get_pipelinerun(request, workspace_id):
         }
 
         # 呼び出すapiInfoは、環境変数より取得
-        apiInfo = "{}://{}:{}/".format(os.environ["EPOCH_CONTROL_TEKTON_PROTOCOL"], os.environ["EPOCH_CONTROL_TEKTON_HOST"], os.environ["EPOCH_CONTROL_TEKTON_PORT"])
+        apiInfo = "{}://{}:{}".format(os.environ["EPOCH_CONTROL_TEKTON_PROTOCOL"], os.environ["EPOCH_CONTROL_TEKTON_HOST"], os.environ["EPOCH_CONTROL_TEKTON_PORT"])
 
         # TEKTONパイプライン情報取得
         exec_stat = "pipelinerun情報取得"
@@ -157,7 +157,7 @@ def get_taskrun_logs(request, workspace_id, taskrun_name):
         }
 
         # 呼び出すapiInfoは、環境変数より取得
-        apiInfo = "{}://{}:{}/".format(os.environ["EPOCH_CONTROL_TEKTON_PROTOCOL"], os.environ["EPOCH_CONTROL_TEKTON_HOST"], os.environ["EPOCH_CONTROL_TEKTON_PORT"])
+        apiInfo = "{}://{}:{}".format(os.environ["EPOCH_CONTROL_TEKTON_PROTOCOL"], os.environ["EPOCH_CONTROL_TEKTON_HOST"], os.environ["EPOCH_CONTROL_TEKTON_PORT"])
 
         # TEKTONタスク実行ログ情報取得
         exec_stat = "taskrunログ情報取得"
