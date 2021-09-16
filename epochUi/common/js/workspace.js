@@ -1423,7 +1423,7 @@ const registryServiceInput = function(){
       $modal.find('.modal-tab-body-block').each(function(i){
         const $imageTarget = $( this ).find('.registry-service-output-destination');
         if ( inputArray[i][1] === null ) {
-          $imageTarget.val( value + '/' + inputArray[i][0] );
+          $imageTarget.val( value + '/' + inputArray[i][0] ).trigger('input');
         }
       });
     }
@@ -3245,5 +3245,43 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
   $('#progress-message-ok').on('click',() => {
     $('#modal-progress-container').css('display','none');
   });
+
+  /* ---------------- *\
+  |  ci result polling
+  \* ---------------- */
+  const ci_result_polling = function() {
+    // console.log("CALL : ci_result_polling");
+
+    $.ajax({
+      "type": "GET",
+      "url": workspace_api_conf.api.ciResult.pipelinerun.get.replace('{workspace_id}', workspace_id),
+      "data": {'latest': "True"}
+    }).done(function(response) {
+      // console.log("DONE : pipelinerun latest");
+      // console.log("--- data ----");
+      // console.log(JSON.stringify(response));
+
+      var run_status = "";
+      var current_pipelineruns = response.rows;
+      for(let i = 0; i < current_pipelineruns.length; i++) {
+        if(['Pending', 'Running'].includes(current_pipelineruns[i].status)) {
+          run_status = "running";
+          break;
+        }
+      }
+      $('#ws-pipeline-tekton .workspace-block-status').attr('data-status', run_status);
+
+    }).fail(function(error) {
+      console.log("FAIL : get pipelinerun");
+
+    }).always(function(result) {
+
+      setTimeout(ci_result_polling, ci_result_polling_span);
+    });
+
+  }
+  
+  // window onloadイベント
+  $(document).ready(function(){ ci_result_polling(); });
 
 });
