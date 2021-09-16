@@ -66,6 +66,14 @@ data:
             },
             "cdExecDesignation": {
                 "post" :    api_url_base + "/cdExecDesignation/",
+            },
+            "ciResult": {
+                "pipelinerun": {
+                    "get" :    api_url_base + "/ciResult/workspace/{workspace_id}/tekton/pipelinerun",
+                },
+                "taskrunlogs": {
+                    "get" :    api_url_base + "/ciResult/workspace/{workspace_id}/tekton/taskrun/{taskrun_name}/logs",
+                }
             }
         }
     }

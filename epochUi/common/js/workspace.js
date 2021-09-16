@@ -2467,8 +2467,10 @@ $content.find('.modal-open, .workspace-status-item').on('click', function(){
       };
       break;
     case 'pipelineTektonCheck':
-      $('.modal-block-main').html('<a href="' + workspace_api_conf.links.tekton + '" target="_blank">パイプライン確認</a><br>'
-        + '<a href="' + workspace_api_conf.links.sonarqube + '" target="_blank">静的解析(SonarQube)確認</a>');
+      $('.modal-block-main').html('<a href="' + workspace_api_conf.links.tekton + '" target="_blank">パイプライン確認</a><br />'
+        + '<a href="' + workspace_api_conf.links.sonarqube + '" target="_blank">静的解析(SonarQube)確認</a><br />'
+        + data_pipelinerun + '<br />'
+        + data_taskrunlogs);
       break;
     case 'registryServiceCheck':
       $('.modal-block-main').html('<a href="' + workspace_api_conf.links.registry + '" target="_blank">確認</a>');
@@ -2814,6 +2816,57 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
     });
   }
   
+  // CI実行結果(TEKTON)の読み込み
+  function getCiResultTekton(workspace_id, taskrun_name){
+
+    new Promise((resolve, reject) => {
+  
+      $.ajax({
+        "type": "GET",
+        "url": workspace_api_conf.api.ciResult.pipelinerun.get.replace('{workspace_id}', workspace_id),
+      }).done(function(data) {
+        console.log("DONE : CI実行結果(TEKTON)取得");
+        // console.log(typeof(data));
+        // console.log(JSON.stringify(data));
+  
+        data_pipelinerun = data['rows'];
+        // 成功
+        resolve();
+
+      }).fail(function() {
+        console.log("FAIL : CI実行結果(TEKTON)取得");
+        // 失敗
+        reject();
+      });
+
+    }).then(() => { return new Promise((resolve, reject) => {
+
+      $.ajax({
+        "type": "GET",
+        "url": workspace_api_conf.api.ciResult.taskrunlogs.get.replace('{workspace_id}', workspace_id).replace('{taskrun_name}', taskrun_name),
+      }).done(function(data) {
+        console.log("DONE : CI実行結果(TEKTON)取得");
+        // console.log(typeof(data));
+        // console.log(JSON.stringify(data));
+  
+        data_taskrunlogs = data['log'];
+        // 成功
+        resolve();
+
+      }).fail(function() {
+        console.log("FAIL : CI実行結果(TEKTON)取得");
+        // 失敗
+        reject();
+      });
+
+    });
+
+    }).catch(() => {
+      console.log('Fail !! : CI実行結果(TEKTON)取得');
+    });
+  }
+
+
   $('#apply-workspace-button').on('click',apply_workspace);
   function apply_workspace() {
   
