@@ -2467,10 +2467,11 @@ $content.find('.modal-open, .workspace-status-item').on('click', function(){
       };
       break;
     case 'pipelineTektonCheck':
+      data_pipelinerun = get_ci_result_tekton();
+
       $('.modal-block-main').html('<a href="' + workspace_api_conf.links.tekton + '" target="_blank">パイプライン確認</a><br />'
         + '<a href="' + workspace_api_conf.links.sonarqube + '" target="_blank">静的解析(SonarQube)確認</a><br />'
-        + data_pipelinerun + '<br />'
-        + data_taskrunlogs);
+        + JSON.stringify(data_pipelinerun));
       break;
     case 'registryServiceCheck':
       $('.modal-block-main').html('<a href="' + workspace_api_conf.links.registry + '" target="_blank">確認</a>');
@@ -2817,7 +2818,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
   }
   
   // CI実行結果(TEKTON)の読み込み
-  function getCiResultTekton(workspace_id, taskrun_name){
+  function get_ci_result_tekton(){
 
     new Promise((resolve, reject) => {
   
@@ -2827,11 +2828,11 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       }).done(function(data) {
         console.log("DONE : CI実行結果(TEKTON)取得");
         // console.log(typeof(data));
-        // console.log(JSON.stringify(data));
+        console.log(JSON.stringify(data));
   
         data_pipelinerun = data['rows'];
         // 成功
-        resolve();
+        resolve(data_pipelinerun);
 
       }).fail(function() {
         console.log("FAIL : CI実行結果(TEKTON)取得");
@@ -2839,25 +2840,11 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         reject();
       });
 
-    }).then(() => { return new Promise((resolve, reject) => {
+    }).then((data_pipelinerun) => { return new Promise((resolve, reject) => {
 
-      $.ajax({
-        "type": "GET",
-        "url": workspace_api_conf.api.ciResult.taskrunlogs.get.replace('{workspace_id}', workspace_id).replace('{taskrun_name}', taskrun_name),
-      }).done(function(data) {
-        console.log("DONE : CI実行結果(TEKTON)取得");
-        // console.log(typeof(data));
-        // console.log(JSON.stringify(data));
-  
-        data_taskrunlogs = data['log'];
-        // 成功
-        resolve();
-
-      }).fail(function() {
-        console.log("FAIL : CI実行結果(TEKTON)取得");
-        // 失敗
-        reject();
-      });
+      $('.modal-block-main').html('<a href="' + workspace_api_conf.links.tekton + '" target="_blank">パイプライン確認</a><br />'
+        + '<a href="' + workspace_api_conf.links.sonarqube + '" target="_blank">静的解析(SonarQube)確認</a><br />'
+        + '<pre>' + JSON.stringify(data_pipelinerun, null, "\t") + '</pre>');
 
     });
 
