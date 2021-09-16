@@ -77,7 +77,7 @@ spec:
     spec:
       containers:
       - name: epoch-service-api
-        image: exastro/epochserviceapi:0.1.1_20210826_1100
+        image: exastro/epochserviceapi:0.1.4_20210916_1700
         env:
         - name: PYTHONIOENCODING
           value: utf-8
