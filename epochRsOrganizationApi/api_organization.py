@@ -89,7 +89,7 @@ def list_organization():
             fetch_rows = da_organization.select_organization(cursor)
 
         # Response用のjsonに変換
-        response_rows = fetch_rows
+        response_rows = convert_organization_response(fetch_rows)
 
         return jsonify({"result": "200", "rows": response_rows, "time": str(datetime.now(globals.TZ))}), 200
 
@@ -115,7 +115,7 @@ def get_organization(organization_id):
 
         if len(fetch_rows) > 0:
             # Response用のjsonに変換
-            response_rows = fetch_rows
+            response_rows = convert_organization_response(fetch_rows)
 
             return jsonify({"result": "200", "rows": response_rows, "time": str(datetime.now(globals.TZ))}), 200
 
@@ -141,8 +141,10 @@ def convert_organization_response(fetch_rows):
             'organization_id': fetch_row['organization_id'],
             'organization_name': fetch_row['organization_name'],
             'additional_information': json.loads(fetch_row['additional_information']),
-            'create_at': fetch_row['create_at'],
-            'update_at': fetch_row['update_at'],
+            'create_at_str': fetch_row['create_at'].strftime("%Y/%m/%dT%H:%M:%SZ"),
+            'create_at_int': fetch_row['create_at'].timestamp(),
+            'update_at_str': fetch_row['update_at'].strftime("%Y/%m/%dT%H:%M:%SZ"),
+            'update_at_int': fetch_row['update_at'].timestamp(),
         }
         result.append(result_row)
     return result
