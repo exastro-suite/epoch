@@ -66,9 +66,18 @@ data:
             },
             "cdExecDesignation": {
                 "post" :    api_url_base + "/cdExecDesignation/",
+            },
+            "ciResult": {
+                "pipelinerun": {
+                    "get" :    api_url_base + "/ciResult/workspace/{workspace_id}/tekton/pipelinerun",
+                },
+                "taskrunlogs": {
+                    "get" :    api_url_base + "/ciResult/workspace/{workspace_id}/tekton/taskrun/{taskrun_name}/logs",
+                }
             }
         }
     }
+    const ci_result_polling_span = 10000; // 10s
   organization_api_conf.js: |
     var location_host = window.location.hostname;
     var location_prot = window.location.protocol;
@@ -120,7 +129,7 @@ spec:
           name: epoch-ui-conf
       containers:
       - name: epoch-ui
-        image: exastro/epochui:0.1.3_20210907_1000
+        image: exastro/epochui:0.1.4_20210916_1700
         volumeMounts:
         - name: epoch-ui-conf
           mountPath: /app/epoch/epochUi/common/js/config

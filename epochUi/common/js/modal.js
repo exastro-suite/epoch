@@ -1,18 +1,3 @@
-/*
-#   Copyright 2019 NEC Corporation
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
-*/
 // JavaScript Document
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -95,7 +80,7 @@ modalFunction.prototype = {
         const modal = this,
               $modal = modal.createMain( modal.modalJSON[target], width );
         modal.$modal = $modal;
-  
+        
         if ( type === undefined ) type = 'main';
         
         if ( type === 'main') {
@@ -154,8 +139,8 @@ modalFunction.prototype = {
                 }
               }, '.modal-tab-item');
             });
-          }          
-
+          }
+          
           // 入力欄Radioセレクト
           if ( $modal.find('.input-pickup-select').length ) {
             $modal.find('.input-pickup-select:checked').each( function(){
@@ -163,88 +148,9 @@ modalFunction.prototype = {
             });            
             $modal.find('.input-pickup-select').on('change', function(){
               modal.pikupInput( $(this) );
+              modal.inputErrorCheck();
             });
           }
-          
-          // 数値入力とフェーダー
-          $modal.find('.item-number-range').each(function(){
-            const $fader = $( this ),
-                  $input = $fader.prev();
-            let   val = $input.val(),
-                  min = $input.attr('data-min'),
-                  max = $input.attr('data-max');
-            if ( min !== 'none' && max !== 'none') {
-              min = Number( min );
-              max = Number( max );
-              if ( val === '' || val === undefined ) val = min;
-              
-              const inputRange = max - min,
-                    $knob = $fader.find('.item-number-range-knob');
-              let   width = $fader.width(),
-                    ratio = val / inputRange,
-                    positionX = Math.round( width * ratio );
-                    
-              $knob.css('left', Math.round( ratio * 100 ) + '%');
-              
-              $fader.on('mousedown', function( mde ){
-                // 選択を解除する
-                getSelection().removeAllRanges();
-                
-                $fader.addClass('active');
-                const clickX = mde.pageX - $fader.offset().left;
-                
-                val = $input.val();
-                width = $fader.width();
-                ratio = clickX / width;
-                positionX = Math.round( width * ratio );
-                
-                $knob.css('left', Math.round( ratio * 100 ) + '%' );
-                $input.val( Math.round( inputRange * ratio ) + min );
-
-                const $window = $( window );
-                
-                $window.on({
-                  'mouseup.faderKnob': function(){
-                    $fader.removeClass('active');
-                    $window.off('mouseup.faderKnob mousemove.faderKnob');
-                    positionX = Math.round( width * ratio );
-                  },
-                  'mousemove.faderKnob': function( mme ){
-                    const moveX = mme.pageX - mde.pageX;
-                    
-                    ratio = ( positionX + moveX ) / width;
-                    if ( ratio <= 0 ) ratio = 0;
-                    if ( ratio >= 1 ) ratio = 1;                    
-                    
-                    $knob.css('left', Math.round( ratio * 100 ) + '%' );
-                    $input.val( Math.round( inputRange * ratio ) + min );
-                  }
-                });
-              
-              });
-              
-              $input.on('input', function(){
-                val = $input.val();
-                if ( val < min || val === '') {
-                  $input.val( min );
-                  val = min;
-                }
-                if ( val > max ) {
-                  $input.val( max );
-                  val = max;
-                }
-                
-                width = $fader.width();
-                ratio = val / inputRange;
-                positionX = Math.round( width * ratio );
-                
-                $knob.css('left', Math.round( ratio * 100 ) + '%' );
-              });
-              
-            } else {
-              $fader.remove();
-            }
-          });
           
           modal.focusOn('#modal-container', '#container');
           
@@ -266,6 +172,9 @@ modalFunction.prototype = {
         if ( funcs.callback !== undefined ) {
           funcs.callback();
         }
+        
+        // 入力チェック
+        modal.inputErrorCheck();
         
         // モーダルを開いた際、.modal-bodyの最初の要素をフォーカスする
         const $modalBodyInput = $modal.find('.modal-body').find( modal.focusElements );
@@ -340,6 +249,20 @@ modalFunction.prototype = {
           setValue( key, value );
         }
       });
+      
+      // 自由項目
+      modal.$modal.find('.item-freeitem').each( function(){
+        const $free = $( this ),
+              key = $free.attr('name'),
+              free = {};
+        $free.find('.item-freeitem-item').each( function(){
+          const $item = $( this ),
+                key = $item.find('.item-freeitem-input.name').val(),
+                value = $item.find('.item-freeitem-input.content').val();
+          free[key] = value;
+        });
+        setValue( key, JSON.stringify( free ));        
+      });
     },
     /* -------------------------------------------------- *\
        main
@@ -372,7 +295,8 @@ modalFunction.prototype = {
        footer
     \* -------------------------------------------------- */
     'createFooter': function createModal( footer ){
-      const $footer = $('<ul/>', {'class': 'modal-menu-list'});
+      const modal = this,
+            $footer = $('<ul/>', {'class': 'modal-menu-list'});
       for ( const key in footer ) {
         $footer.append(
           $('<li/>', {'class': 'modal-menu-item'}).append(
@@ -384,6 +308,46 @@ modalFunction.prototype = {
           )
         );
       }
+      
+      // 未入力とエラー数表示
+      $footer.append(''
+        + '<li class="modal-menu-item modal-error-item">'
+          + '<div class="modal-error-info modal-required-count">必須項目残り<span class="modal-required-count-num"></span>件</div>'
+          + '<div class="modal-error-info modal-error-count">エラー件数<span class="modal-error-count-num"></span>件</div>'
+        + '</li>'
+      );
+      
+      // 未入力、エラー項目にスクロール
+      $footer.find('.modal-error-info').on('click', function(){
+        const $modal = modal.$modal,
+              $main = $modal.find('.modal-main'),
+              $target = ( $( this ).is('.modal-required-count') )? $modal.find('.required-error').eq(0): $modal.find('.input-error, .count-error').eq(0);
+              
+        // 対象がタブ内の場合
+        const $tabBlock = $target.closest('.modal-tab-body-block');
+        if ( $tabBlock.length ) {
+          const tabID = $tabBlock.attr('id');
+          modal.openTab( $main.find('.modal-tab-item[data-id="' + tabID + '"]'), false );
+        }
+
+        const mainScroll = $main.scrollTop(),
+              $itemBlock = $target.closest('.item-block'),
+              targetScrollTop = $itemBlock.position().top + mainScroll - 8;
+        $modal.find('.modal-main').animate({'scrollTop': targetScrollTop }, 300, 'swing', function(){
+          // スクロールが終わったらフォーカス
+          $target.focus();
+          
+          // 強調表示
+          const emClassName = 'select-emphasis';
+          if ( !$itemBlock.is('.' + emClassName ) ) {
+            $itemBlock.addClass( emClassName );
+            setTimeout( function(){
+              $itemBlock.removeClass( emClassName );
+            }, 1000 );
+          }          
+        });
+      });
+            
       return $footer;
     },
     /* -------------------------------------------------- *\
@@ -408,29 +372,29 @@ modalFunction.prototype = {
             }
           };
           const $button = buttonCheck( block[key] );
-          $modalBody.append(
-            $('<div/>', {'class': 'modal-block'}).append(
-              ( block[key].title !== undefined )?
-              $('<div/>', {'class': 'modal-block-header'}).append(
-                $('<div/>', {'class': 'modal-block-title', 'text': block[key].title }),
-                ( $button !== false )? $button: ''
-              ): '',
-              $('<div/>', {'class': 'modal-block-main'}).append(
-                ( block[key].tab !== undefined )?
-                  modal.createTabBody( block[key].tab ):
-                  modal.createItem( block[key].item )
-              )
+          
+          const $modalBlock = $('<div/>', {'class': 'modal-block'}).append(
+            ( block[key].title !== undefined )?
+            $('<div/>', {'class': 'modal-block-header'}).append(
+              $('<div/>', {'class': 'modal-block-title', 'text': block[key].title }),
+              ( $button !== false )? $button: ''
+            ): '',
+            $('<div/>', {'class': 'modal-block-main'}).append(
+              ( block[key].tab !== undefined )?
+                modal.createTabBody( block[key].tab ):
+                modal.createItem( block[key].item )
             )
           );
+          $modalBody.append( $modalBlock );
           // タブ追加イベント
-          if ( $modalBody.find('.modal-tab-add-button').length ) {
-            $modalBody.find('.modal-tab-add-button').on('click', function(){
-              if ( $modalBody.find('.modal-tab-empty').length ) {
-                $modalBody.find('.modal-tab-empty').removeClass('modal-tab-empty');
-                $modalBody.find('.modal-empty-block').remove();
+          if ( $modalBlock.find('.modal-tab-add-button').length ) {
+            $modalBlock.find('.modal-tab-add-button').on('click', function(){
+              if ( $modalBlock.find('.modal-tab-empty').length ) {
+                $modalBlock.find('.modal-tab-empty').removeClass('modal-tab-empty');
+                $modalBlock.find('.modal-empty-block').remove();
               }
               const tabID = modal.getUniqueID();
-              
+
               const $item = $('<li/>', {
                 'class': 'modal-tab-item',
                 'data-id': tabID,
@@ -442,9 +406,9 @@ modalFunction.prototype = {
                   $('<span/>', {'class': 'modal-tab-delete'})
                 )
               );
-              $modalBody.find('.modal-tab-list').append( $item );
+              $modalBlock.find('.modal-tab-list').append( $item );
                 
-              $modalBody.find('.modal-tab-body').append(
+              $modalBlock.find('.modal-tab-body').append(
                 $('<div/>', {
                   'id': tabID,
                   'class': 'modal-tab-body-block'
@@ -454,7 +418,7 @@ modalFunction.prototype = {
               );
               
               // 追加されたタブに入力選択処理
-              const $addTab = $modalBody.find('#' + tabID );
+              const $addTab = $modalBlock.find('#' + tabID );
               if ( $addTab.find('.input-pickup-select').length ) {
                 $addTab.find('.input-pickup-select:checked').each( function(){
                   modal.pikupInput( $(this) );
@@ -463,8 +427,8 @@ modalFunction.prototype = {
                   modal.pikupInput( $(this) );
                 });
               }
-              
               modal.openTab( $item );
+              modal.inputErrorCheck();
             });            
           }
         }
@@ -475,7 +439,7 @@ modalFunction.prototype = {
        Tab
     \* -------------------------------------------------- */
     'createTabBody': function( tab ){
-            const modal = this,
+      const modal = this,
             tabType = tab.type,
             modalClass = ( tabType === 'add')? 'modal-tab-block modal-tab-add-block': 'modal-tab-block',
             $tab = $('<div/>', {'id': tab.id, 'class': modalClass }),
@@ -508,7 +472,7 @@ modalFunction.prototype = {
                 'class': 'modal-tab-item',
                 'data-id': id,
                 'tabindex': 0,
-                'data-default': target[key][tab.target.key2]
+                'data-default': tab.defaultTitle
               }).append(
                 $('<div/>', {'class': 'modal-tab-name'}).append(
                   $('<span/>', {'class': 'modal-tab-text', 'text': target[key][tab.target.key2] }),
@@ -553,6 +517,7 @@ modalFunction.prototype = {
               }
             }
           }
+
         } else {
           emptyTab();
         }
@@ -563,8 +528,7 @@ modalFunction.prototype = {
               $('<li/>', {
                 'class': 'modal-tab-item',
                 'data-id': key,
-                'tabindex': 0,
-                'data-default': tab.defaultTitle
+                'tabindex': 0
               }).append(
                 $('<div/>', {'class': 'modal-tab-name'}).append(
                   $('<span/>', {'class': 'modal-tab-text', 'text': tab.tabs[key]['title'] })
@@ -602,13 +566,15 @@ modalFunction.prototype = {
             tabDelete.push( tabID );
             $modal.attr('data-tab-delete', tabDelete.join(',') );
           }
-          $tabItem.mouseleave().add( $('#' + tabID ) ).remove();        
+          $tabItem.mouseleave().add( $('#' + tabID ) ).remove();
           
           if ( !$tabList.find('.modal-tab-item').length ) {
             emptyTab();
           } else {
             modal.openTab( $tabMenu.find('.modal-tab-item').eq(0) );
           }
+          
+          modal.inputErrorCheck();
           
         });
       }
@@ -618,14 +584,22 @@ modalFunction.prototype = {
     /* -------------------------------------------------- *\
        タブを開く
     \* -------------------------------------------------- */
-    'openTab': function( $tab ){
+    'openTab': function( $tab, focusFlag ){
+      if ( focusFlag === undefined ) focusFlag = true;
+      
       const $tabBlock = $tab.closest('.modal-tab-block'),
             tabNumber = $tabBlock.find('.modal-tab-item').index( $tab.get(0) );
       $tabBlock.find('.open').removeClass('open');
       $tabBlock.find('.modal-tab-item').css('width', 'auto').attr('tabindex', 0 );
       
       $tab.addClass('open').attr('tabindex', -1 );
-      $tabBlock.find('.modal-tab-body-block').eq( tabNumber ).addClass('open').find( this.focusElements ).eq(0).focus();
+      $tabBlock.find('.modal-tab-body-block').eq( tabNumber ).addClass('open');
+      
+      
+      // 開いた最初の入力要素にフォーカス
+      if ( focusFlag !== false ) {      
+        $tabBlock.find('.modal-tab-body-block.open').find( this.focusElements ).eq(0).focus();
+      }
       this.tabSize( $tab );
     },
     /* -------------------------------------------------- *\
@@ -688,60 +662,370 @@ modalFunction.prototype = {
       }
     },
     /* -------------------------------------------------- *\
+       Item common
+    \* -------------------------------------------------- */
+    'createCommonItem': function( type, data, tab ){
+      const modal = this,
+            $dl = $('<dl/>', {'class': 'item-' + type + '-block item-block'}),
+            title = ( data.title === undefined )? '': data.title;
+      
+      // Title
+      if ( title !== '') {
+        const $dt = $('<dt/>', {'class': 'item-' + type + '-header item-header'}).append(
+          $('<span/>', {'class': 'item-header-cell item-title'}).append(
+            $('<span/>', {'class': 'item-title-text', 'text': title })
+          )
+        );
+        // テキストとテキストエリアは入力文字数を表示する
+        if ( ['text','textarea','password','number'].indexOf( type ) !== -1 ) {
+          let wordCountHTML = ''
+          + '<span class="item-header-cell item-word-count">'
+            + '<span class="item-word-count-inner">';
+
+          if ( type !== 'number') {
+            wordCountHTML += '<span class="item-word-number">0</span>';
+          }
+
+          // 最小最大文字数
+          if ( data.min !== undefined && data.max !== undefined ) {
+            const min = data.min,
+                  max = data.max;
+            wordCountHTML += '<span class="item-word-min-max">' + min + ' - ' + max + '</span>';
+          }
+
+          wordCountHTML += '</span></span>';
+          $dt.append( wordCountHTML );
+        }
+        // 必須マーク
+        if ( data.required !== undefined ) {
+          $dt.append('<span class="item-header-cell item-required"><span class="item-required-mark">必須</span></span>');
+        }
+        
+        $dl.append( $dt );
+      }
+      
+      // Body
+      const $inputDD = $('<dd/>', {'class': 'item-' + type + '-area'});
+      switch( type ) {
+        case 'text':
+        case 'textarea':
+          $inputDD.append( modal.createCommonInput( type, data, tab ) );
+          break;
+        case 'password':
+          $inputDD.append(
+            modal.createCommonInput( type, data, tab ),
+            $('<span/>', {'class': 'item-password-eye'}).append(
+              '<svg viewBox="0 0 64 64" class="workspace-button-svg"><use href="#icon-eye-close" /></svg>'
+            )
+          );
+          break;
+        case 'number':
+          $inputDD.append(
+            modal.createCommonInput( type, data, tab ),
+            '<div class="item-number-range">'
+              + '<div class="item-number-range-knob"></div>'
+              + '<div class="item-number-range-lower"></div>'
+              + '<div class="item-number-range-tooltip"></div>'
+            + '</div>'
+          );
+          break;
+        case 'radio':
+          $inputDD.append('<ul class="item-radio-list"></ul');
+      }
+      $dl.append( $inputDD );
+      
+      // Note
+      if ( data.note !== undefined ) {
+        // テキストを無害化し改行（\n）を置換
+        const text = $('<div/>', {'text': data.note }).html().replace(/\n/g, '<br>');
+        $dl.append( $('<dd/>', {'class': 'item-note item-' + type + '-note', 'html': text }) );
+      }
+      
+      // Event
+      if ( ['text', 'textarea', 'password'].indexOf( type) !== -1 ) {
+        modal.commonItemEbvent( $dl );
+      }
+      if ( type === 'number') {
+        modal.faderEvent( $dl );
+      }
+      
+      // 入力チェック
+      if ( ['text', 'password'].indexOf( type) !== -1 ) {
+        if ( data.validation !== undefined ) {
+          const $error = $('<div/>', {'class': 'item-error item-' + type + '-error', 'text': data.inputError }),
+                $input = $dl.find('input'),
+                value = $input.val();
+          $dl.find('.item-' + type + '-area').append( $error );
+
+          const errorCheck = function( $target, val ){
+            const reg = new RegExp( data.validation );
+            if ( val !== undefined ) {
+              if ( !reg.test( val ) && val !== '') {
+                $target.addClass('input-error');
+              } else {
+                $target.removeClass('input-error');
+              }
+            } else {
+              $target.removeClass('input-error');
+            }
+          };
+          // 初回チェック
+          errorCheck( $input.add( $error ), value );
+          
+          // フォーカス時にエラーの場合、入力ごとにチェックを入れる
+          $input.on('focus', function(){
+            const $this = $( this );
+            if ( $this.is('.input-error') ) {
+              $input.on('input.errorInputCheck', function(){
+                const val = $this.val();
+                errorCheck( $input, val );
+              });
+            }
+          });
+          
+          // フォーカスが外れた時にチェック
+          $input.on('blur', function(){
+            const $this = $( this ),
+                  val = $this.val();
+            $input.off('input.errorInputCheck');
+            errorCheck( $input.add( $error ), val );
+            if ( modal.$modal !== undefined ) modal.inputErrorCheck();
+          });
+        }
+      }
+      
+      return $dl;
+    },
+    /* -------------------------------------------------- *\
+       Item common ( textarea, text, number, password )
+    \* -------------------------------------------------- */
+    'createCommonInput': function( type, data, tab ){
+      const defName = ( data.name !== undefined )? data.name: '',
+            name = ( tab !== undefined )? tab + '-' + defName: defName,
+            defValue = ( data.value !== undefined )? data.value: '',
+            inputValue = this.searchValue( this.valueJSON, name ),
+            value = ( inputValue === undefined )? defValue: inputValue,
+            className = ( data.class !== undefined )? ' ' + data.class: '',
+            placeholder = ( data.placeholder !== undefined )? data.placeholder: '';
+      
+      let $input;
+      if ( type !== 'textarea') {
+        $input = $('<input>', {
+          'type': type,
+          'name': name,
+          'data-name': defName,
+          'class': 'item-' + type + ' ' + defName + className,
+          'placeholder' : placeholder,
+          'value': value        
+        });
+      } else if ( type === 'textarea') {
+        $input = $('<textarea/>', {
+          'type': type,
+          'name': name,
+          'data-name': defName,
+          'class': 'item-' + type + ' ' + defName + className,
+          'placeholder' : placeholder,
+          'text': value        
+        });
+      }
+      if ( data.required !== undefined ) $input.attr('required', 'required');
+      if ( data.min !== undefined ) $input.attr('data-min', data.min );
+      if ( data.max !== undefined ) $input.attr('data-max', data.max );
+      
+      if ( type === 'number') $input.attr('autocomplete', 'off');
+      
+      return $input;
+    },
+    /*
+    */
+    'requiredCheck': function( $input ) {
+      const val = $input.val();
+      if ( $input.attr('required') !== undefined ) {
+        if ( val === '' || val === null ) {
+          $input.addClass('required-error');
+        } else {
+          $input.removeClass('required-error');
+        }
+      }
+    },
+    /* -------------------------------------------------- *\
+       Item event ( textarea, text, password )
+    \* -------------------------------------------------- */
+    'commonItemEbvent': function( $item ){
+      const modal = this,
+            $input = $item.find('input, textarea'),
+            $count = $item.find('.item-word-number'),
+            min = $input.attr('data-min'),
+            max = $input.attr('data-max'),
+            value = $input.val(),
+            length = value.length;
+      
+      modal.requiredCheck( $input );
+      
+      const numCheck = function( num ){
+        
+        // 入力範囲内かチェック
+        if ( num > 0 ) {
+          if ( min !== undefined && max !== undefined ) {
+            if ( num >= min && num <= max ) {
+              $input.add( $count ).removeClass('count-error');
+            } else {
+              $input.add( $count ).addClass('count-error');
+            }
+          }
+        } else {
+          $input.add( $count ).removeClass('count-error');
+        }
+      };
+      
+      let inputTimerID;
+      $input.on('input', function(){
+        const $i = $( this ),
+              v = $i.val();
+       $count.text( v.length );
+        
+        // 入力チェック
+        clearTimeout( inputTimerID );
+        inputTimerID = setTimeout( function(){
+          numCheck( v.length );
+          modal.requiredCheck( $input );
+          modal.inputErrorCheck();
+        }, 50 );
+      });
+      
+       $count.text( length );
+       numCheck( length );
+       
+    },
+    /* -------------------------------------------------- *\
+       フェーダーイベント
+    \* -------------------------------------------------- */
+    'faderEvent': function( $item ) {
+      const modal = this,
+            $window = $( window ),
+            $fader = $item.find('.item-number-range'),
+            $input = $item.find('.item-number'),
+            $knob = $item.find('.item-number-range-knob'),
+            $lower = $fader.find('.item-number-range-lower'),
+            $tooltip = $fader.find('.item-number-range-tooltip'),
+            min = Number( $input.attr('data-min') ),
+            max = Number( $input.attr('data-max') ),
+            inputRange = max - min;
+
+      let   width = $fader.width(),
+            val = $input.val(),
+            ratio, positionX;
+      
+      modal.requiredCheck( $input );
+      
+      // 位置をセット
+      const setPosition = function(){
+        const p =  Math.round( ratio * 100 ) + '%';
+        $knob.css('left', p );
+        $lower.css('width', p );
+      };
+      // 割合から位置と値をセット
+      const ratioVal = function(){
+        if ( ratio <= 0 ) ratio = 0;
+        if ( ratio >= 1 ) ratio = 1;
+        val = Math.round( inputRange * ratio ) + min;
+        $input.val( val );
+        
+        setPosition();
+      };
+      // 値から位置をセット
+      const valPosition = function(){
+        if ( val === '') val = min;
+        ratio = ( val - min ) / inputRange;
+        if ( Number.isNaN( ratio ) ) ratio = 0;
+        positionX = Math.round( width * ratio );
+        
+        setPosition();
+        modal.requiredCheck( $input );
+      };
+      valPosition();
+      
+      $fader.on({
+        'mousedown': function( mde ){
+          if ( mde.button === 0 ) {
+            getSelection().removeAllRanges();
+
+            $fader.addClass('active');
+            const clickX = mde.pageX - $fader.offset().left;
+
+            width = $fader.width();
+            ratio = clickX / width;
+            positionX = Math.round( width * ratio );
+
+            ratioVal();
+
+            $window.on({
+              'mouseup.faderKnob': function(){
+                $fader.removeClass('active');
+                $window.off('mouseup.faderKnob mousemove.faderKnob');
+                valPosition();
+              },
+              'mousemove.faderKnob': function( mme ){
+                const moveX = mme.pageX - mde.pageX;
+                ratio = ( positionX + moveX ) / width;                  
+                ratioVal();
+              }
+            });
+          }
+        },
+        // ツールチップ
+        'mouseenter': function(){
+          const left =  $fader.offset().left,
+                top = $fader.offset().top;
+          $tooltip.show();
+          width = $fader.width();
+          $window.on({
+            'mousemove.faderTooltip': function( mme ){
+              const tRatio = ( mme.pageX - left ) / width;
+              let   tVal = Math.round( inputRange * tRatio ) + min;
+              if ( tVal < min ) tVal = min;
+              if ( tVal > max ) tVal = max ;
+              $tooltip.text( tVal );
+              $tooltip.css({
+                'left': mme.pageX,
+                'top': top
+              });
+            }
+          });
+        },
+        'mouseleave': function(){
+          $tooltip.hide();
+          $window.off('mousemove.faderTooltip');
+        }
+      });
+      
+      $input.on('input', function(){
+        val = $input.val();
+        width = $fader.width();
+        if ( val !== '') {
+          if ( val < min ) {
+            $input.val( min );
+            val = min;
+          }
+          if ( val > max ) {
+            $input.val( max );
+            val = max;
+          }
+        } else {
+          val = '';
+        }
+        valPosition();
+      });
+    },
+    /* -------------------------------------------------- *\
        input TEXT
     \* -------------------------------------------------- */
     'createInput': function( text, tabNumber ){
       const modal = this,
-            $input = $('<dl/>', {'class': 'item-text-block item-block'}),
-            name = ( tabNumber !== undefined )? tabNumber + '-' + text.name: text.name,
-            value = this.searchValue( this.valueJSON, name ),
-            className = ( text.class !== undefined )? ' ' + text.class: '';
-      if ( text.max === undefined ) text.max = 0;
-      $input.append(
-        $('<dt/>', {'class': 'item-text-title item-title', 'text': text.title }),
-        ( text.max > 0 )? $('<dd/>', {'class': 'item-text-length', 'text': '000/000' }): '',
-        $('<dd/>', {'class': 'item-text-area'}).append(
-          $('<input>', {
-            'type': 'text',
-            'name': name,
-            'data-name': text.name,
-            'class': 'item-text ' + text.name + className,
-            'placeholder' : text.placeholder,
-            'value': value        
-          })
-        ),
-        ( text.note !== undefined )? $('<dd/>', {'class': 'item-note item-text-note', 'text':  text.note }): ''
-      );
-      // 入力チェック
-      if ( text.validation !== undefined ) {
-        $input.append( $('<dd/>', {'class': 'item-text-error', 'text': text.inputError }) );
-        
-        const reg = new RegExp( text.validation ),
-              $error = $input.find('.item-text-error');
-        
-        const errorCheck = function( val ){
-          if ( val !== undefined ) {
-            if ( !val.match( reg ) && val !== '') {
-              $error.addClass('input-error');
-            } else {
-              $error.removeClass('input-error');
-            }
-          } else {
-            $error.removeClass('input-error');
-          }
-        };
-        errorCheck( value );
-        if ( modal.$modal !== undefined ) modal.errorCheck();
+            $item = modal.createCommonItem('text', text, tabNumber );
 
-        $input.find('.item-text').on('blur', function(){
-          const $this = $( this ),
-                val = $this.val();
-          errorCheck( val );
-          if ( modal.$modal !== undefined ) modal.errorCheck();
-        });
-      }
       // タブ名と入力を合わせる
-      const $tabNameInput = $input.find('.tab-name-link');
+      const $tabNameInput = $item.find('.tab-name-link');
       if ( $tabNameInput.length ) {
         $tabNameInput.on({
           'input': function(){
@@ -761,61 +1045,25 @@ modalFunction.prototype = {
           }
         });
       }
-      return $input;
+      return $item;
     },
     /* -------------------------------------------------- *\
        Number
     \* -------------------------------------------------- */
     'createNumber': function( number, tabNumber ){
-      const $number = $('<dl/>', {'class': 'item-number-block item-block'}),
-            name = ( tabNumber !== undefined )? tabNumber + '-' + number.name: number.name,
-            value = this.searchValue( this.valueJSON, name ),
-            className = ( number.class !== undefined )? ' ' + number.class: '',
-            min = ( number.min !== undefined )? Number( number.min ): 'none',
-            max = ( number.max !== undefined )? Number( number.max ): 'none';
-      $number.append(
-        $('<dt/>', {'class': 'item-number-title item-title', 'text': number.title }),
-        $('<dd/>', {'class': 'item-number-area'}).append(
-          $('<input>', {
-            'type': 'number',
-            'name': name,
-            'data-name': number.name,
-            'data-min': min,
-            'data-max': max,
-            'autocomplete': 'off',
-            'class': 'item-number ' + number.name + className,
-            'placeholder' : number.placeholder,
-            'value': value        
-          }),
-          $('<div/>', {'class':'item-number-range'}).append($('<div/>', {'class': 'item-number-range-knob'}))
-        ),
-        ( number.note !== undefined )? $('<dd/>', {'class': 'item-note item-number-note', 'text':  number.note }): ''
-      );
+      const modal = this,
+            $item = modal.createCommonItem('number', number, tabNumber );
       
-      return $number;
+      return $item;
     },
     /* -------------------------------------------------- *\
        Textarea
     \* -------------------------------------------------- */
     'createTextarea': function( textarea, tabNumber ){
-      const $textarea = $('<dl/>', {'class': 'item-textarea-block item-block'}),
-            name = ( tabNumber !== undefined )? tabNumber + '-' + textarea.name: textarea.name,
-            value = this.searchValue( this.valueJSON, name ),
-            className = ( textarea.class !== undefined )? ' ' + textarea.class: '';
-      $textarea.append(
-        $('<dt/>', {'class': 'item-textarea-title item-title', 'text': textarea.title }),
-        $('<dd/>', {'class': 'item-textarea-area'}).append(
-          $('<textarea/>', {
-            'name': name,
-            'data-name': textarea.name,
-            'class': 'item-textarea ' + textarea.name + className,
-            'placeholder' : textarea.placeholder,
-            'text': value        
-          }),
-          ( textarea.note !== undefined )? $('<dd/>', {'class': 'item-note item-textarea-note', 'text':  textarea.note }): ''
-        )
-      );
-      return $textarea;
+      const modal = this,
+            $item = modal.createCommonItem('textarea', textarea, tabNumber );
+            
+      return $item;
     },
     /* -------------------------------------------------- *\
        Reference
@@ -840,28 +1088,27 @@ modalFunction.prototype = {
        input PASSWORD
     \* -------------------------------------------------- */
     'createPassword': function( password, tabNumber ){
-      const $input = $('<dl/>', {'class': 'item-password-block item-block'}),
-            name = ( tabNumber !== undefined )? tabNumber + '-' + password.name: password.name,
-            value = this.searchValue( this.valueJSON, name ),
-            className = ( password.class !== undefined )? ' ' + password.class: '';
-      $input.append(
-        $('<dt/>', {'class': 'item-password-title item-title', 'text': password.title }),
-        $('<dd/>', {'class': 'item-password-area'}).append(
-          $('<input>', {
-            'type': 'password',
-            'name': name,
-            'class': 'item-password ' + password.name + className,
-            'placeholder' : password.placeholder,
-            'value': value
-          }),
-          $('<span/>', {
-            'class': 'item-password-eye'
-          }).append('<svg viewBox="0 0 64 64" class="workspace-button-svg"><use href="#icon-eye-close" /></svg>')
-        ),
-        ( password.note !== undefined )? $('<dd/>', {'class': 'item-note item-password-note', 'text':  password.note }): ''
-      );
+      const modal = this,
+            $item = modal.createCommonItem('password', password, tabNumber ),
+            $pass = $item.find('.item-password');
+      
+      const passwrodClassCheck = function( val ){
+        if ( val === '') {
+          $pass.removeClass('password-input');
+        } else {
+          $pass.addClass('password-input');
+        }
+      };
+      passwrodClassCheck( $pass.val() );
+      
+      // パスワード入力１文字以上あれば
+      $item.find('.item-password').on('input', function(){
+        const val = $( this ).val();
+        passwrodClassCheck( val );
+      });
+      
       // パスワード入力マスク解除
-      $input.find('.item-password-eye').on({
+      $item.find('.item-password-eye').on({
         'mousedown' : function(){
           var $eye = $( this ),
               $input = $eye.prev('input');
@@ -878,25 +1125,23 @@ modalFunction.prototype = {
           });
         }
       });
-      return $input;
+      
+      return $item;
     },
     /* -------------------------------------------------- *\
        input RADIO
     \* -------------------------------------------------- */
     'createRadio': function( radio, tabNumber ){
-      const $radio = $('<dl/>', {'class': 'item-radio-block item-block'}).prepend(
-              ( radio.title !== undefined )? $('<dt/>', {'class': 'item-radio-title item-title', 'text': radio.title }): '',
-              $('<dd/>', {'class': 'item-radio-area'}).append(
-                $('<ul/>', {'class': 'item-radio-list'})
-              ),
-              ( radio.note !== undefined )? $('<dd/>', {'class': 'item-note item-radio-note', 'text':  radio.note }): ''
-            ),
-            name = ( tabNumber !== undefined )? tabNumber + '-' + radio.name: radio.name,
+      const modal = this,
+            $item = modal.createCommonItem('radio', radio, tabNumber );
+            
+      const name = ( tabNumber !== undefined )? tabNumber + '-' + radio.name: radio.name,
             checkedValue = this.searchValue( this.valueJSON, name ),
             checked = ( checkedValue !== undefined )? name + '-' + checkedValue: undefined,
             className = ( radio.class !== undefined )? ' ' + radio.class: '';
+      
       for ( const key in radio.item ) {
-        $radio.find('.item-radio-list').append(
+        $item.find('.item-radio-list').append(
           $('<li/>', {'class': 'item-radio-item'}).append(
             $('<input>', {
               'class': 'item-radio' + className,
@@ -914,18 +1159,20 @@ modalFunction.prototype = {
         );
       }
       if ( checked !== undefined ) {
-        $radio.find('#' + checked ).prop('checked', true );
+        $item.find('#' + checked ).prop('checked', true );
       } else {
-        $radio.find('.item-radio').eq(0).prop('checked', true );
+        $item.find('.item-radio').eq(0).prop('checked', true );
       }
-      return $radio;
+      return $item;
     },
     /* -------------------------------------------------- *\
        自由
     \* -------------------------------------------------- */
     'createFreeItem': function( free, tabNumber ){
-      const $free = $('<dl/>', {'class': 'item-freeitem-block item-block'}),
-            name = ( tabNumber !== undefined )? tabNumber + '-' + free.name: free.name,
+      const modal = this,
+            $item = modal.createCommonItem('freeitem', free, tabNumber );
+            
+      const name = ( tabNumber !== undefined )? tabNumber + '-' + free.name: free.name,
             freeVal = this.searchValue( this.valueJSON, name ),
             list = ( freeVal === undefined )? {'':''}: JSON.parse( freeVal ),
             className = ( free.class !== undefined )? ' ' + free.class: '';
@@ -949,21 +1196,18 @@ modalFunction.prototype = {
         + '<li class="item-freeitem-menu-item"><button class="epoch-button item-freeitem-add-button add" type="button">項目を追加する</button></li>'
       + '</ul>';
       
-      $free.append(
-        $('<dt/>', {'class': 'item-freeitem-title item-title', 'text': free.title }),
-        $('<dd/>', {'class': 'item-freeitem-area'}).append(
-          $('<div/>', {
-            'name': name,
-            'data-name': free.name,
-            'class': 'item-freeitem ' + free.name + className,
-            'html': inputHTML
-          })
-        )
-      );
+      $item.find('.item-freeitem-area').append(
+        $('<div/>', {
+          'name': name,
+          'data-name': free.name,
+          'class': 'item-freeitem ' + free.name + className,
+          'html': inputHTML
+        })
+      );      
       
       const deleteCheck = function(){
-        const $delete = $free.find('.item-freeitem-item-delete'),
-              $move = $free.find('.item-freeitem-item-move');
+        const $delete = $item.find('.item-freeitem-item-delete'),
+              $move = $item.find('.item-freeitem-item-move');
         if ( $delete.length === 1 ) {
           $delete.add( $move ).addClass('disabled');
         } else {
@@ -972,14 +1216,14 @@ modalFunction.prototype = {
       };
       deleteCheck();
       
-      $free.find('.item-freeitem-add-button').on('click', function(){
+      $item.find('.item-freeitem-add-button').on('click', function(){
         const $add = $( addLine('','') );
-        $free.find('.item-freeitem-list').append( $add );
+        $item.find('.item-freeitem-list').append( $add );
         $add.find('.item-freeitem-input').eq(0).focus();
         deleteCheck();
       });
       // 移動
-      $free.on('mousedown', '.item-freeitem-item-move', function( mde ){
+      $item.on('mousedown', '.item-freeitem-item-move', function( mde ){
         getSelection().removeAllRanges();
         
         const $move = $( this ),
@@ -1022,14 +1266,14 @@ modalFunction.prototype = {
         }
       });
       // 削除
-      $free.on('click', '.item-freeitem-item-delete', function(){
+      $item.on('click', '.item-freeitem-item-delete', function(){
         const $delete = $( this );
         if ( !$delete.is('.disabled') ) {
           $delete.closest('.item-freeitem-item').remove();
           deleteCheck();
         }
       });
-      return $free;
+      return $item;
     },
     /* -------------------------------------------------- *\
        メッセージ
@@ -1049,17 +1293,48 @@ modalFunction.prototype = {
       return $free;
     },
     /* -------------------------------------------------- *\
-       入力内にエラーがあればOKボタンを無効化する
+       未入力・エラーの表示
     \* -------------------------------------------------- */
-    'errorCheck': function(){
+    'errorCount': function( requiredNum, errorNum ){
+      const $modal = this.$modal,
+            $requiredCount = $modal.find('.modal-required-count'),
+            $errorCount = $modal.find('.modal-error-count');
+    
+
+        if ( requiredNum === 0 ) {
+          $requiredCount.hide();
+        } else {
+          $requiredCount.show();
+          $requiredCount.find('.modal-required-count-num').text( requiredNum );
+        }
+
+        if ( errorNum === 0 ) {
+          $errorCount.hide();
+        } else {
+          $errorCount.show();
+          $errorCount.find('.modal-error-count-num').text( errorNum );
+        }
+    },
+    /* -------------------------------------------------- *\
+       入力内に未入力（必須）、エラーがあればOKボタンを無効化する
+    \* -------------------------------------------------- */
+    'inputErrorCheck': function(){
       const modal = this;
       if ( modal.$modal !== undefined ) {
-        const $okButton = modal.$modal.find('.modal-menu-button[data-button="ok"]');
-        if ( modal.$modal.find('.input-error').length ) {
+        const $target = modal.$modal.find('input, textarea').not(':disabled'),
+              $okButton = modal.$modal.find('.modal-menu-button[data-button="ok"]'),
+              inputError = $target.filter('.input-error').length,
+              countError = $target.filter('.count-error').length,
+              requiredError = $target.filter('.required-error').length,
+              errorCount = inputError + countError + requiredError;
+        
+        if ( errorCount > 0 ) {
           $okButton.prop('disabled', true );
         } else {
           $okButton.prop('disabled', false );
         }
+
+        modal.errorCount( requiredError, inputError + countError );
       }
     },
     /* -------------------------------------------------- *\

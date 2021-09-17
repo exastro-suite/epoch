@@ -3793,7 +3793,7 @@ spec:
     spec:
       containers:
       - name: epoch-cicd-api
-        image: exastro/epochcicdapi:0.1.2_20210902_1330
+        image: exastro/epochcicdapi:0.1.4_20210916_1700
         env:
           - name: HTTP_PROXY
             valueFrom:
@@ -3900,7 +3900,7 @@ spec:
           name: epoch-control-tekton-conf
       containers:
       - name: epoch-control-tekton-api
-        image: exastro/epochcontroltektonapi:0.1.2_20210902_1400
+        image: exastro/epochcontroltektonapi:0.1.4_20210916_1701
         env:
         - name: CONFIG_API_TEKTON_PATH
           value: "/etc/epoch/epochControlTektonApi/api_tekton.conf"
@@ -4000,7 +4000,7 @@ spec:
           name: epoch-rs-organization-conf
       containers:
       - name: epoch-rs-organization-api
-        image: exastro/epochrsorganizationapi:0.1.0_20210805_1100
+        image: exastro/epochrsorganizationapi:0.1.4_20210914_1700
         env:
         - name: CONFIG_API_ORGANIZATION_PATH
           value: "/etc/epoch/epochRsOrganizationApi/api_organization.conf"
@@ -4116,6 +4116,91 @@ spec:
   selector:
     name: epoch-rs-workspace-api
 
+#---- epochRsCiResultApi.yaml
+---
+#   Copyright 2021 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: epoch-rs-ci-result-conf
+  namespace: epoch-system
+data:
+  api_ci_result.conf: |
+    TZ='Asia/Tokyo'
+    MYSQL_HOST='tekton-pipelinerun-db'
+    MYSQL_PORT='3306'
+    MYSQL_DATABASE='tekton_pipelinerun_db'
+    MYSQL_USER='app_user'
+    MYSQL_PASSWORD='password'
+    RESOURCE_CREATION_WAIT=60
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: epoch-rs-ci-result-api
+  namespace: epoch-system
+spec:
+  selector:
+    matchLabels:
+      name: epoch-rs-ci-result-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: epoch-rs-ci-result-api
+    spec:
+      volumes:
+      - name: epoch-rs-ci-result-conf
+        configMap:
+          name: epoch-rs-ci-result-conf
+      containers:
+      - name: epoch-rs-ci-result-api
+        image: exastro/epochrsciresultapi:0.1.4_20210916_1700
+        env:
+        - name: CONFIG_API_CI_RESULT_PATH
+          value: "/etc/epoch/epochRsCiResultApi/api_ci_result.conf"
+        - name: FLASK_ENV
+          value: "development"
+        - name: API_CI_RESULT_PORT
+          value: "8000"
+        - name: PYTHONIOENCODING
+          value: utf-8
+        volumeMounts:
+        - name: epoch-rs-ci-result-conf
+          mountPath: /etc/epoch/epochRsCiResultApi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: epoch-rs-ci-result-api
+  labels:
+    name: epoch-rs-ci-result-api
+  namespace: epoch-system
+spec:
+  type: NodePort
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+  selector:
+    name: epoch-rs-ci-result-api
+
 #---- epochServiceApi.yaml
 ---
 #   Copyright 2019 NEC Corporation
@@ -4197,7 +4282,7 @@ spec:
     spec:
       containers:
       - name: epoch-service-api
-        image: exastro/epochserviceapi:0.1.1_20210826_1100
+        image: exastro/epochserviceapi:0.1.4_20210916_1700
         env:
         - name: PYTHONIOENCODING
           value: utf-8
@@ -4297,9 +4382,18 @@ data:
             },
             "cdExecDesignation": {
                 "post" :    api_url_base + "/cdExecDesignation/",
+            },
+            "ciResult": {
+                "pipelinerun": {
+                    "get" :    api_url_base + "/ciResult/workspace/{workspace_id}/tekton/pipelinerun",
+                },
+                "taskrunlogs": {
+                    "get" :    api_url_base + "/ciResult/workspace/{workspace_id}/tekton/taskrun/{taskrun_name}/logs",
+                }
             }
         }
     }
+    const ci_result_polling_span = 10000; // 10s
   organization_api_conf.js: |
     var location_host = window.location.hostname;
     var location_prot = window.location.protocol;
@@ -4351,7 +4445,7 @@ spec:
           name: epoch-ui-conf
       containers:
       - name: epoch-ui
-        image: exastro/epochui:0.1.3_20210907_1000
+        image: exastro/epochui:0.1.4_20210916_1700
         volumeMounts:
         - name: epoch-ui-conf
           mountPath: /app/epoch/epochUi/common/js/config
@@ -4478,8 +4572,6 @@ spec:
         env:
         - name: MYSQL_ROOT_PASSWORD
           value: password
-        - name: TZ
-          value: "Asia/Tokyo"
 
 ---
 apiVersion: v1
@@ -4606,8 +4698,6 @@ spec:
         env:
         - name: MYSQL_ROOT_PASSWORD
           value: password
-        - name: TZ
-          value: "Asia/Tokyo"
 
 ---
 apiVersion: v1
@@ -4756,6 +4846,129 @@ spec:
     targetPort: 3306
   selector:
     name: tekton-pipeline-db
+
+#---- tekton_pipelinerun_db.yaml
+---
+#   Copyright 2021 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tekton-pipelinerun-db-myconf
+  namespace: epoch-system
+data:
+  my.cnf: |
+    [mysqld]
+    character-set-server=utf8mb4
+    collation-server=utf8mb4_bin
+    secure_file_priv=/tmp
+    [client]
+    default-character-set=utf8mb4
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tekton-pipelinerun-db-initdb
+  namespace: epoch-system
+data:
+  tekton-pipeline.sql: |
+    create database tekton_pipelinerun_db
+      CHARACTER SET utf8mb4
+      COLLATE utf8mb4_unicode_ci;
+    create user app_user IDENTIFIED WITH mysql_native_password BY 'password';
+    GRANT ALL ON tekton_pipelinerun_db.* TO app_user;
+    use tekton_pipelinerun_db;
+    create table tekton_pipeline_task (
+      task_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
+      workspace_id int unsigned not null,
+      pipeline_id int unsigned not null,
+      pipeline_run_name varchar(128),
+      pipeline_run_uid  varchar(128),
+      status varchar(16) not null,
+      git_repository_url varchar(1024) not null,
+      git_branch varchar(1024),
+      container_registry_image varchar(1024),
+      container_registry_image_tag varchar(1024),
+      container_registry_image_digest varchar(1024),
+      git_webhook_header text,
+      git_webhook_body text,
+      create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
+      index(pipeline_run_name)
+    );
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tekton-pipelinerun-db
+  namespace: epoch-system
+spec:
+  selector:
+    matchLabels:
+      name: tekton-pipelinerun-db
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: tekton-pipelinerun-db
+    spec:
+      volumes:
+      - name: mysqlconf-volume
+        configMap:
+          name: tekton-pipelinerun-db-myconf
+      # COMMENT OUT:Persistent data retention
+      #- name: mysqldata
+      #  hostPath:
+      #    path: /var/data/epoch/tekton_pipelinerun_db/mysql
+      #    type: DirectoryOrCreate
+      - name: mysqlinitdb-volume
+        configMap:
+          name: tekton-pipelinerun-db-initdb
+      containers:
+      - name: mysql
+        image: mysql
+        volumeMounts:
+        # COMMENT OUT:Persistent data retention
+        #- name: mysqldata
+        #  mountPath: /var/lib/mysql
+        - name: mysqlconf-volume
+          mountPath: /etc/mysql
+        - name: mysqlinitdb-volume
+          mountPath: /docker-entrypoint-initdb.d
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: password
+        - name: TZ
+          value: "Asia/Tokyo"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tekton-pipelinerun-db
+  labels:
+    name: tekton-pipelinerun-db
+  namespace: epoch-system
+spec:
+  type: ClusterIP
+  ports:
+  - name: mysql
+    port: 3306
+    targetPort: 3306
+  selector:
+    name: tekton-pipelinerun-db
 
 #---- tekton-dashbord-release.yaml
 ---

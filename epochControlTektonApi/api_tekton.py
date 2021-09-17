@@ -25,6 +25,7 @@ import base64
 import requests
 from requests.auth import HTTPBasicAuth
 import traceback
+from datetime import timedelta, timezone
 
 import globals
 import common
@@ -400,10 +401,9 @@ def delete_tekton_pipelinerun(workspace_id):
         globals.logger.error('COMMAND ERROR RETURN:{}\n{}'.format(e.returncode, e.output.decode('utf-8')))
         raise # 再スロー
 
-
-@app.route('/workspace/<int:workspace_id>/tekton/task', methods=['POST'])
-def post_tekton_task(workspace_id):
-    """tekton_pipeline_task生成
+@app.route('/workspace/<int:workspace_id>/tekton/pipelinerun', methods=['GET'])
+def get_tekton_pipelinerun(workspace_id):
+    """TEKTON pipeline実行結果取得
 
     Args:
         workspace_id (int): ワークスペースID
@@ -411,64 +411,250 @@ def post_tekton_task(workspace_id):
     Returns:
         Response: HTTP Respose
     """
-    globals.logger.debug('CALL post_tekton_task:{}'.format(workspace_id))
+    globals.logger.debug('CALL get_tekton_pipelinerun:{}'.format(workspace_id))
 
     try:
-        # image tagの生成
-        image_tag = '{}.{}'.format(re.sub(r'.*/', '', request.json['git_branch']), datetime.now(globals.TZ).strftime("%Y%m%d-%H%M%S"))
+        #    latest (bool): 最新のみ
+        if request.args.get('latest') is not None:
+            latest = request.args.get('latest') == "True"
+        else:
+            latest = False
 
-        with dbconnector() as db, dbcursor(db) as cursor:
+        try:
+            # TEKTON CLIにてpipelinerunのListを取得
+            result_kubectl = subprocess.check_output(
+                ['kubectl', 'tkn', 'pipelinerun', 'list', '-o', 'json', '-n', tekton_pipeline_namespace(workspace_id),], stderr=subprocess.STDOUT)
 
-            info = request.json
-            info['workspace_id'] = workspace_id
-            info['status'] = TASK_STATUS_RUNNING
-            info['container_registry_image_tag'] = image_tag
+        except subprocess.CalledProcessError as e:
+            # コマンド実行エラー
+            globals.logger.debug('COMMAND ERROR RETURN:{}\n{}'.format(e.returncode, e.output.decode('utf-8')))
+            raise # 再スロー
 
-            # tekton_pipeline_task情報の登録(戻り値:task_id)
-            task_id = da_tekton.insert_tekton_pipeline_task(cursor, info)
+        # TEKTON CLIにてpipelinerunのListの結果jsonをdictに変換
+        plRunlist = json.loads(result_kubectl.decode('utf-8'))
 
-            # こちらはDBCloseに纏めてコミットされることを考慮しているため単一コミットはしない
+        resRows = []
+        if 'items' in plRunlist:
+            if latest:
+                #
+                # 最新のみ返すとき
+                #
+                resRowsDict = {}
+                for plRunitem in plRunlist['items']:
+                    resPlRunitem = get_responsePipelineRunItem(plRunitem)
 
-        return jsonify({"result": "200", "param" : { "task_id": task_id, "container_registry_image_tag": image_tag }}), 200
+                    if resPlRunitem is not None:
+                        idx = int(resPlRunitem['pipeline_id'])
+
+                        if idx in resRowsDict:
+                            # そのpipeline idの結果が既に存在するときはstart_timeで比較し、大きい方を残す                
+                            if resRowsDict[idx]['start_time'] < resPlRunitem['start_time']:
+                                resRowsDict[idx] = resPlRunitem
+                        else:
+                            # そのpipeline idの結果が無いときは格納
+                            resRowsDict[idx] = resPlRunitem
+
+                # 結果をソートして格納
+                for idx in sorted(resRowsDict):
+                    resRows.append(resRowsDict[idx])
+            else:
+                #
+                # 全件返すとき
+                #
+                for plRunitem in plRunlist['items']:
+                    resPlRunitem = get_responsePipelineRunItem(plRunitem)
+                    resRows.append(resPlRunitem)
+
+        globals.logger.debug(json.dumps(resRows))
+
+        # 正常応答
+        return jsonify({"result": "200", "rows": resRows}), 200
 
     except Exception as e:
         return common.serverError(e)
 
+def get_responsePipelineRunItem(plRunitem):
+    """TEKTON CLI pipelinerun list結果の 1 pipelinerun結果を解析し、レスポンスの1明細分データを生成する
 
-@app.route('/workspace/<int:workspace_id>/tekton/task/<int:task_id>', methods=['PATCH'])
-def patch_tekton_task(workspace_id, task_id):
-    """tekton_pipeline_task更新
+    Args:
+        plRunitem (dict): TEKTON CLI pipelinerun listの結果明細(1 pipelinerun)
+
+    Returns:
+        dict: レスポンスの1明細分データ
+    """
+    # レスポンス用情報格納変数の初期化
+    resPlRunitem = {}
+
+    # 各項目のキー値が存在しない場合を考慮して判断する
+    if 'startTime' in plRunitem['status']:
+        start_time = convert_date_format(plRunitem['status']['startTime'])
+    else:
+        start_time = ""
+
+    if 'completionTime' in plRunitem['status']:
+        completion_time = convert_date_format(plRunitem['status']['completionTime'])
+    else:
+        completion_time = ""
+
+    if 'conditions' in plRunitem['status']:
+        if 'reason' in plRunitem['status']['conditions'][0]:
+            status = plRunitem['status']['conditions'][0]['reason']
+        else:
+            status = ""
+    else:
+        status = ""
+
+    task_id = get_taskResult(plRunitem, 'task-start', 'task_id')
+    # task_idが無い場合は、まだ何も返せない
+    if task_id is None:
+        return None
+
+    # 情報格納
+    resPlRunitem['task_id'] = int(get_taskResult(plRunitem, 'task-start', 'task_id'))
+    resPlRunitem['pipeline_id'] = int(plRunitem['metadata']['labels']['pipeline_id'])
+    resPlRunitem['pipelinerun_name'] = plRunitem['metadata']['name']
+    resPlRunitem['repository_url'] = get_pipelineParameter(plRunitem,'git_repository_url')
+    resPlRunitem['build_branch'] = convert_branch(get_pipelineParameter(plRunitem,'git_branch'))
+    resPlRunitem['start_time'] = start_time
+    resPlRunitem['finish_time'] = completion_time
+    resPlRunitem['status'] = status
+    resPlRunitem['container_image'] = '{}:{}'.format(get_pipelineParameter(plRunitem,'container_registry_image'), get_taskResult(plRunitem, 'task-start', 'container_registry_image_tag'))
+
+    # タスク情報の格納
+    resPlRunitem['tasks'] = []
+    for task in plRunitem['status']['pipelineSpec']['tasks']:
+        resPlRunitem['tasks'].append(
+            dict({'name' : task['name']}, **get_taskStatus(plRunitem, task['name']))            
+        )
+
+    return  resPlRunitem
+
+
+def get_pipelineParameter(plRunitem, parameterName):
+    """パイプラインパラメータ値取得
+
+    Args:
+        plRunitem (dict): TEKTON CLI pipelinerun listの結果明細(1 pipelinerun)
+        parameterName (str): パラメータ名
+
+    Returns:
+        str: パラメータ値
+    """
+    # spec.params配下にpipelinerunのパラメータが配列化されているので、nameが合致するものを探してvalueを返す
+    for param in plRunitem['spec']['params']:
+        if param['name'] == parameterName:
+            return param['value']
+
+    return None
+
+def get_taskResult(plRunitem, taskname, resultName):
+    """タスク名、Result項目名を指定しタスクResult値を取得する
+
+    Args:
+        plRunitem (dict): TEKTON CLI pipelinerun listの結果明細(1 pipelinerun)
+        taskname (str): タスク名
+        resultName (str): Result項目名
+
+    Returns:
+        (str): タスクResult値
+    """
+    # status.taskRuns[*]にtask毎、Result項目毎で格納されているので、タスク名、Result項目名が合致するものを探して値を返します
+    for taskRun in plRunitem['status']['taskRuns'].values():
+        if taskRun['pipelineTaskName'] == taskname:
+            # キー値が存在する場合のみ処理する
+            if 'taskResults' in taskRun['status']:
+                for taskResult in taskRun['status']['taskResults']:
+                    if taskResult['name'] == resultName:
+                        return taskResult['value']
+    return None
+
+def get_taskStatus(plRunitem, taskname):
+    """タスクステータス（状態、開始日時、終了日時）取得
+
+    Args:
+        plRunitem (dict): TEKTON CLI pipelinerun listの結果明細(1 pipelinerun)
+        taskname (str): タスク名
+
+    Returns:
+        (dict): タスクステータス情報
+    """
+    # status.taskRuns[*]にtaskの結果が格納されているので、指定タスク名の情報を探して値を返します
+    for taskrun_name, taskrun in plRunitem['status']['taskRuns'].items():
+        if taskrun['pipelineTaskName'] == taskname:
+            # 各項目のキー値が存在しない場合を考慮して判断する
+            if 'startTime' in taskrun['status']:
+                start_time = convert_date_format(taskrun['status']['startTime'])
+            else:
+                start_time = ""
+
+            if 'completionTime' in taskrun['status']:
+                completion_time = convert_date_format(taskrun['status']['completionTime'])
+            else:
+                completion_time = ""
+
+            if 'conditions' in taskrun['status']:
+                if 'reason' in taskrun['status']['conditions'][0]:
+                    status = taskrun['status']['conditions'][0]['reason']
+                else:
+                    status = ""
+            else:
+                status = ""
+
+            return  {
+                        "taskrun_name" : taskrun_name,
+                        "start_time" : start_time,
+                        "finish_time" : completion_time,
+                        "status" : status,
+                    }
+    return {}
+
+def convert_branch(branch):
+    """branchパラメータをレスポンス(表示)形式に変換
+
+    Args:
+        branch (str): branchパラメータ
+
+    Returns:
+        str: branchパラメータ レスポンス(表示)形式
+    """
+    # branchパラメータの"refs/heads/"の部分を取り除く
+    return re.sub('^.*/', '', branch)
+
+
+def convert_date_format(tekton_date_string):
+    """TEKTON結果日時を表示形式(JST)に変換
+
+    Args:
+        tekton_date_string (str): TEKTON結果日時
+
+    Returns:
+        str: 日時表示形式(JST)
+    """
+    # TEKTONのGMT時間を日本時間(JST)で取得
+    return datetime.strptime(tekton_date_string, '%Y-%m-%dT%H:%M:%SZ').astimezone(timezone(timedelta(hours=9))).strftime('%Y/%m/%d %H:%M:%S')
+
+@app.route('/workspace/<int:workspace_id>/tekton/taskrun/<taskrun_name>/logs', methods=['GET'])
+def get_tekton_taskrun_logs(workspace_id, taskrun_name):
+    """TEKTON taskログ取得
 
     Args:
         workspace_id (int): ワークスペースID
-        task_id (int): タスクID
-
+        taskrun_name (string): taskrun名
     Returns:
         Response: HTTP Respose
     """
-    globals.logger.debug('CALL patch_tekton_task:{},{}'.format(workspace_id, task_id))
+    globals.logger.debug('CALL get_tekton_taskrun:{},{}'.format(workspace_id, taskrun_name))
 
     try:
-        # # SQL生成
-        # sqlstmt = ( 'UPDATE tekton_pipeline_task SET '
-        #             + ','.join(map(lambda x: '{} = %({})s'.format(x,x), request.json.keys()))
-        #             + ' WHERE task_id = %(task_id)s' )
-
-        # # 更新パラメータ
-        # update_param = request.json.copy()
-        # update_param['task_id'] = task_id
-
-        # 更新実行
-        with dbconnector() as db, dbcursor(db) as cursor:
-            upd_cnt = da_tekton.update_tekton_pipeline_task(cursor, request.json, task_id)
-
-            if upd_cnt == 0:
-                # データがないときは404応答
-                db.rollback()
-                return jsonify({"result": "404" }), 404
+        result_kubectl = subprocess.check_output(
+            ['kubectl', 'tkn', 'taskrun', 'logs', taskrun_name,
+            '-n', tekton_pipeline_namespace(workspace_id),
+            ], stderr=subprocess.STDOUT)
+        
+        globals.logger.debug('COMMAAND SUCCEED: kubectl tkn taskrun logs')
 
         # 正常応答
-        return jsonify({"result": "200"}), 200
+        return jsonify({"result": "200", "log" : result_kubectl.decode('utf-8')}), 200
 
     except Exception as e:
         return common.serverError(e)
