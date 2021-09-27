@@ -24,6 +24,7 @@ import datetime, pytz
 import time
 import base64
 import logging
+import yaml
 
 from django.shortcuts import render
 from django.http import HttpResponse
@@ -33,6 +34,7 @@ from django.views.decorators.http import require_http_methods
 
 logger = logging.getLogger('apilog')
 
+WAIT_ITA_POD_UP = 120 # ITA Pod起動待ち時間
 WAIT_ITA_IMPORT = 60 # ITA Import最大待ち時間
 
 @require_http_methods(['POST'])
@@ -43,6 +45,28 @@ def post(request):
     try:
         # パラメータ情報(JSON形式)
         payload = json.loads(request.body)
+
+        namespace = "epoch-workspace"
+        # *-*-*-* podが立ち上がるのを待つ *-*-*-*
+        start_time = time.time()
+        while True:
+            logger.debug("waiting for ita pod up...")
+            logger.debug(datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'))
+            time.sleep(3)
+
+            if is_ita_pod_running(namespace):
+                break
+
+            # timeout
+            current_time = time.time()
+            if (current_time - start_time) > WAIT_ITA_POD_UP:
+                logger.debug("ITA pod start Time out")
+                response = {
+                    "result": "500",
+                    "output": "ITA Pod起動確認 Time out",
+                    "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
+                }
+                return JsonResponse(response, status=500)
 
         host = os.environ["EPOCH_ITA_HOST"] + ":" + os.environ["EPOCH_ITA_PORT"]
         user_id = os.environ["EPOCH_ITA_USER"]
@@ -55,7 +79,7 @@ def post(request):
         ita_db_user = "ita_db_user"
         ita_db_password = "ita_db_password"
         command = "mysql -u %s -p%s %s < /app/epoch/tmp/ita_table_update.sql" % (ita_db_user, ita_db_password, ita_db_name)
-        stdout_ita = subprocess.check_output(["kubectl", "exec", "-i", "-n", "epoch-workspace", "deployment/it-automation", "--", "bash", "-c", command], stderr=subprocess.STDOUT)
+        stdout_ita = subprocess.check_output(["kubectl", "exec", "-i", "-n", namespace, "deployment/it-automation", "--", "bash", "-c", command], stderr=subprocess.STDOUT)
 
         # POST送信する
         # ヘッダ情報
@@ -258,3 +282,15 @@ def post(request):
             "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
         }
         return JsonResponse(response, status=500)
+
+
+def is_ita_pod_running(namespace):
+
+    stdout_pod_describe = subprocess.check_output(["kubectl", "get", "pods", "-n", namespace, "-l", "app=it-automation", "-o", "json"], stderr=subprocess.STDOUT)
+
+    # pod_describe = yaml.load(stdout_pod_describe)
+    pod_describe = json.loads(stdout_pod_describe)
+    # logger.debug('--- stdout_pod_describe ---')
+    # logger.debug(stdout_pod_describe)
+
+    return (pod_describe['items'][0]['status']['phase'] == "Running")
