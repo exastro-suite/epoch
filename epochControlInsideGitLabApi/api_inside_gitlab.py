@@ -126,6 +126,7 @@ def post_gitlab_repos(workspace_id):
 
         # リポジトリの存在チェック
         ret_exists = exists_repositry(user, token, url)
+        globals.logger.debug('CALL exists_repositry:ret:{}'.format(ret_exists))
         # すでにリポジトリが存在したので200で終了
         if ret_exists:
             return jsonify({"result": "200"}), 200
@@ -134,7 +135,7 @@ def post_gitlab_repos(workspace_id):
         url_group_id = get_group_id(user, token, url)
         # すでにリポジトリが存在したので200で終了
         if url_group_id is None:
-            Exception("group not found")
+            raise Exception("group not found")
 
         # ヘッダ情報
         post_headers = {
@@ -142,23 +143,26 @@ def post_gitlab_repos(workspace_id):
             'Content-Type': 'application/json',
         }
 
+        # URLの分割
+        json_url = get_url_split(url)
+
         # 引数をJSON形式で構築
         post_data = json.dumps({
-            "name": url_name,
+            "name": json_url['repos_name'],
             "public": "true",
             "namespace_id": url_group_id,
         })
-
 
         api_url = "{}://{}:{}/api/v4/projects".format(API_PROTOCOL, API_BASE_URL, API_PORT)
         # create projectのPOST送信
         response = requests.post(api_url, headers=post_headers, data=post_data)
 
         globals.logger.debug('code: {}, message: {}'.format(str(response.status_code), response.text))
-        # if response.status_code == 204:
-        #     globals.logger.debug('SonarQube password change SUCCEED')
-        # if response.status_code == 401:
-        #     globals.logger.debug('SonarQube password has already changed')
+        # 正常に作成された場合は201が応答されるので正常終了
+        if response.status_code == 201:
+            globals.logger.debug('gitlab project create SUCCEED')
+        else:
+            raise Exception("project create error:{}".format(response.text))
 
         return jsonify({"result": "201"}), 201
 
@@ -200,7 +204,7 @@ def exists_repositry(user, token, url):
 
     # それ以外はrepository errorを返す
     else:
-        Exception("repository error")
+        raise Exception("repository error:{}".format(response.text))
 
     return ret
 
@@ -215,7 +219,30 @@ def get_group_id(user, token, url):
     Returns:
         int: group_id(namespace_id)
     """
-    return None
+    # ヘッダ情報
+    post_headers = {
+        'PRIVATE-TOKEN': token,
+        'Content-Type': 'application/json',
+    }
+
+    # URLの分割
+    json_url = get_url_split(url)
+
+    api_url = "{}://{}:{}/api/v4/groups/{}".format(API_PROTOCOL, API_BASE_URL, API_PORT,json_url['group_name'])
+
+    # 単一のグループ詳細を取得する
+    response = requests.get(api_url, headers=post_headers)
+
+    # グループが存在する場合はグループIDを返す
+    if response.status_code == 200:
+        ret_data = json.loads(response.text)
+        ret_id = int(ret_data['id'])
+
+    # グループが存在しなかったらFalseを返す
+    else:
+        raise Exception("group error:{}".format(response.text))
+
+    return ret_id
 
 def get_url_split(url):
     """urlの解析分割
@@ -226,16 +253,22 @@ def get_url_split(url):
     Returns:
         json: URLをbase_url, group_name, repos_nameに分割した値
     """
+    # 正規表現を使って、urlからベースurl
+    base_url = re.search('^https?://[^/][^/]*/',url).group()
     # 正規表現を使って、urlからグループ名、レポジトリ名を取得する
-    group_name = re.sub('\\.git$','',re.sub('^https?://[^/][^/]*/','',url))
-    repos_name = re.sub('\\.git$','',re.sub('^https?://[^/][^/]*/','',url))
+    repos_url = re.sub('\\.git$','',re.sub('^https?://[^/][^/]*/','',url))
+    # 1つめで、xxxx/xxxx形式になっているので、"/"で分割して前半部をグループ名、後半部をレポジトリ名（プロジェクト名）で設定する
+    split_url = repos_url.split('/')
+    if len(split_url) != 2:
+        raise Exception("url error")
 
-
+    group_name = split_url[0]
+    repos_name = split_url[1]
 
     json_url = {
-        "base_url": "xxx",
-        "group_name": "xxx",
-        "repos_name": "xxx",
+        "base_url": base_url,
+        "group_name": group_name,
+        "repos_name": repos_name ,
     }
 
     return json_url

@@ -41,13 +41,13 @@ spec:
           name: epoch-control-inside-gitlab-conf
       containers:
       - name: epoch-control-inside-gitlab-api
-        image: exastro/epoch-control-inside-gitlab-api:0.1.5_20210929_100
+        image: exastro/epoch-control-inside-gitlab-api:0.1.5_20210929_1000
         env:
-        - name: CONFIG_API_TEKTON_PATH
+        - name: CONFIG_API_INSIDE_GITLAB_PATH
           value: "/etc/epoch/epochControlInsideGitLabApi/api_inside_gitlab.conf"
         - name: FLASK_ENV
           value: "development"
-        - name: API_TEKTON_PORT
+        - name: API_INSIDE_GITLAB_PORT
           value: "8000"
         - name: PYTHONIOENCODING
           value: utf-8
@@ -63,10 +63,6 @@ spec:
               key: HTTPS_PROXY
         - name: EPOCH_NO_PROXY
           value: ""
-        envFrom:
-          - prefix: EPOCH_
-            secretRef:
-              name: epoch-control-inside-gitlab-api-secret
         volumeMounts:
         - name: epoch-control-inside-gitlab-conf
           mountPath: /etc/epoch/epochControlInsideGitLabApi
