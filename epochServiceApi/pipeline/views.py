@@ -86,7 +86,7 @@ def post(request):
                 git_projects.append(iac_data)
         # create project
         for proj_data in git_projects:
-            request_response = requests.post( apiInfo_gitlab + "workspace/1/gitlab/repos", headers=post_headers, data=proj_data)
+            request_response = requests.post( apiInfo_gitlab + "workspace/1/gitlab/repos", headers=post_headers, data=json.dumps(proj_data))
             logger.debug("workspace/1/gitlab/repos:" + request_response.text)
             ret = json.loads(request_response.text)
             logger.debug(ret["result"])
