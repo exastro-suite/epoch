@@ -50,41 +50,41 @@ def alive():
     return jsonify({"result": "200", "time": str(datetime.now(globals.TZ))}), 200
 
 
-@app.route('/workspace/<int:workspace_id>/gitlab/pod', methods=['POST'])
-def post_gitlab_pod(workspace_id):
-    """GitLab pod生成
+# @app.route('/workspace/<int:workspace_id>/gitlab/pod', methods=['POST'])
+# def post_gitlab_pod(workspace_id):
+#     """GitLab pod生成
 
-    Args:
-        workspace_id (int): ワークスペースID
+#     Args:
+#         workspace_id (int): ワークスペースID
 
-    Returns:
-        Response: HTTP Respose
-    """
-    globals.logger.debug('CALL post_gitlab_pod:{}'.format(workspace_id))
+#     Returns:
+#         Response: HTTP Respose
+#     """
+#     globals.logger.debug('CALL post_gitlab_pod:{}'.format(workspace_id))
 
-    try:
-        return jsonify({"result": "200"}), 200
+#     try:
+#         return jsonify({"result": "200"}), 200
 
-    except Exception as e:
-        return common.serverError(e)
+#     except Exception as e:
+#         return common.serverError(e)
 
-@app.route('/workspace/<int:workspace_id>/gitlab/initialize', methods=['POST'])
-def post_gitlab_initialize(workspace_id):
-    """GitLab 初期設定
+# @app.route('/workspace/<int:workspace_id>/gitlab/initialize', methods=['POST'])
+# def post_gitlab_initialize(workspace_id):
+#     """GitLab 初期設定
 
-    Args:
-        workspace_id (int): ワークスペースID
+#     Args:
+#         workspace_id (int): ワークスペースID
 
-    Returns:
-        Response: HTTP Respose
-    """
-    globals.logger.debug('CALL post_gitlab_initialize:{}'.format(workspace_id))
+#     Returns:
+#         Response: HTTP Respose
+#     """
+#     globals.logger.debug('CALL post_gitlab_initialize:{}'.format(workspace_id))
 
-    try:
-        return jsonify({"result": "200"}), 200
+#     try:
+#         return jsonify({"result": "200"}), 200
 
-    except Exception as e:
-        return common.serverError(e)
+#     except Exception as e:
+#         return common.serverError(e)
 
 @app.route('/workspace/<int:workspace_id>/gitlab/webhooks', methods=['POST'])
 def post_gitlab_webhooks(workspace_id):
@@ -99,7 +99,60 @@ def post_gitlab_webhooks(workspace_id):
     globals.logger.debug('CALL post_gitlab_webhooks:{}'.format(workspace_id))
 
     try:
-        return jsonify({"result": "200"}), 200
+        #
+        # パラメータ項目設定
+        #
+        user = request.json['git_repositry']['user']
+        token = request.json['git_repositry']['token']
+        url = request.json['git_repositry']['url']
+        webhooks_url = request.json['webhooks_url']
+
+        # リポジトリの存在チェック
+        ret_exists = exists_repositry(user, token, url)
+        globals.logger.debug('CALL exists_repositry:ret:{}'.format(ret_exists))
+        # すでにリポジトリが存在したので200で終了
+        if ret_exists:
+            return jsonify({"result": "200"}), 200
+
+        # グループID取得
+        url_group_id = get_group_id(user, token, url)
+        # すでにリポジトリが存在したので200で終了
+        if url_group_id is None:
+            raise Exception("group not found")
+
+        # ヘッダ情報
+        post_headers = {
+            'PRIVATE-TOKEN': token,
+            'Content-Type': 'application/json',
+        }
+
+        # URLの分割
+        json_url = get_url_split(url)
+
+        # 引数をJSON形式で構築
+        post_data = json.dumps({
+            "id": "{}%2F{}".format(json_url['group_name'], json_url['repos_name']),
+            "url": webhooks_url + ':' + os.environ['EPOCH_WEBHOOK_PORT'],
+            "push_events": True
+        })
+
+        api_url = "{}://{}:{}/api/v4/projects/{}%2F{}/hooks".format(API_PROTOCOL, API_BASE_URL, API_PORT, json_url['group_name'], json_url['repos_name'])
+        # create webhookのPOST送信
+        request_response = requests.post(api_url, headers=post_headers, data=post_data)
+
+        globals.logger.debug('code: {}, message: {}'.format(str(request_response.status_code), request_response.text))
+        # 正常に作成された場合は201が応答されるので正常終了
+        if request_response.status_code == 201:
+            globals.logger.debug('gitlab project create SUCCEED')
+        else:
+            raise Exception("project create error:{}".format(request_response.text))
+
+        response = {
+            "result": "201",
+            "output": "gitlab_webhook{" + request_response.text + "}"
+        }
+
+        return jsonify(response), 201
 
     except Exception as e:
         return common.serverError(e)
@@ -155,16 +208,21 @@ def post_gitlab_repos(workspace_id):
 
         api_url = "{}://{}:{}/api/v4/projects".format(API_PROTOCOL, API_BASE_URL, API_PORT)
         # create projectのPOST送信
-        response = requests.post(api_url, headers=post_headers, data=post_data)
+        request_response = requests.post(api_url, headers=post_headers, data=post_data)
 
-        globals.logger.debug('code: {}, message: {}'.format(str(response.status_code), response.text))
+        globals.logger.debug('code: {}, message: {}'.format(str(request_response.status_code), request_response.text))
         # 正常に作成された場合は201が応答されるので正常終了
-        if response.status_code == 201:
+        if request_response.status_code == 201:
             globals.logger.debug('gitlab project create SUCCEED')
         else:
-            raise Exception("project create error:{}".format(response.text))
+            raise Exception("project create error:{}".format(request_response.text))
 
-        return jsonify({"result": "201"}), 201
+        response = {
+            "result": "201",
+            "output": "gitlab_project{" + request_response.text + "}"
+        }
+
+        return jsonify(response), 201
 
     except Exception as e:
         return common.serverError(e)
