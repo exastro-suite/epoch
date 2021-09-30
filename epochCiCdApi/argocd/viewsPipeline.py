@@ -104,12 +104,16 @@ def post(request):
                     gitUrl = ci_env["git_url"]
                     gitUsername = ci_env["git_user"]
                     gitPassword = ci_env["git_password"]
+                    housing = ci_env["git_housing"]
                     break
             
             try:
                 exec_detail = "IaCリポジトリの設定内容を確認してください"
                 # レポジトリの情報を追加
-                stdout_cd = subprocess.check_output(["argocd","repo","add",gitUrl,"--username",gitUsername,"--password",gitPassword],stderr=subprocess.STDOUT)
+                if housing == "inner":
+                    stdout_cd = subprocess.check_output(["argocd","repo","add","--insecure-ignore-host-key",gitUrl,"--username",gitUsername,"--password",gitPassword],stderr=subprocess.STDOUT)
+                else:
+                    stdout_cd = subprocess.check_output(["argocd","repo","add",gitUrl,"--username",gitUsername,"--password",gitPassword],stderr=subprocess.STDOUT)
                 logger.debug ("argocd repo add:" + str(stdout_cd))
 
                 output += "repo_add : {" + stdout_cd.decode('utf-8') + "},"

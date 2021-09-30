@@ -182,13 +182,20 @@ def post_gitlab_repos(workspace_id):
         globals.logger.debug('CALL exists_repositry:ret:{}'.format(ret_exists))
         # すでにリポジトリが存在したので200で終了
         if ret_exists:
-            return jsonify({"result": "200"}), 200
+            return jsonify({"result": "200", "output": "exists repositry"}), 200
 
-        # グループID取得
-        url_group_id = get_group_id(user, token, url)
-        # すでにリポジトリが存在したので200で終了
-        if url_group_id is None:
-            raise Exception("group not found")
+        # URLの分割
+        json_url = get_url_split(url)
+
+        # 分割したグループ名がユーザー名と一致しない場合は、グループIDを取得する
+        if json_url['group_name'] != user:
+            # グループID取得
+            url_group_id = get_group_id(user, token, url)
+            # グループが存在しない場合は、Exceptionで終了する
+            if url_group_id is None:
+                raise Exception("group not found")
+        else:
+            url_group_id = None
 
         # ヘッダ情報
         post_headers = {
@@ -196,15 +203,18 @@ def post_gitlab_repos(workspace_id):
             'Content-Type': 'application/json',
         }
 
-        # URLの分割
-        json_url = get_url_split(url)
-
         # 引数をJSON形式で構築
-        post_data = json.dumps({
+        post_data = {
             "name": json_url['repos_name'],
             "public": "true",
-            "namespace_id": url_group_id,
-        })
+            "initialize_with_readme": "true",
+        }
+
+        # グループ指定有無を判定
+        if url_group_id is not None:
+            post_data["namespace_id"] = url_group_id
+
+        post_data = json.dumps(post_data)
 
         api_url = "{}://{}:{}/api/v4/projects".format(API_PROTOCOL, API_BASE_URL, API_PORT)
         # create projectのPOST送信
