@@ -207,6 +207,7 @@ def post_gitlab_repos(workspace_id):
         post_data = {
             "name": json_url['repos_name'],
             "public": "true",
+            "initialize_with_readme": "true",
         }
 
         # グループ指定有無を判定
