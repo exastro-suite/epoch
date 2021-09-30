@@ -143,9 +143,9 @@ def post_gitlab_webhooks(workspace_id):
         globals.logger.debug('code: {}, message: {}'.format(str(request_response.status_code), request_response.text))
         # 正常に作成された場合は201が応答されるので正常終了
         if request_response.status_code == 201:
-            globals.logger.debug('gitlab project create SUCCEED')
+            globals.logger.debug('gitlab webhook create SUCCEED')
         else:
-            raise Exception("project create error:{}".format(request_response.text))
+            raise Exception("webhook create error:{}".format(request_response.text))
 
         response = {
             "result": "201",
