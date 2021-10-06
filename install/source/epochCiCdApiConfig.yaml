@@ -26,3 +26,6 @@ data:
   ITA_PORT: "8084"
   ITA_WORKER_HOST: "ita-worker.epoch-workspace.svc"
   WEBHOOK_PORT: "30804"
+  RS_WORKSPACE_PROTOCOL: "http"
+  RS_WORKSPACE_HOST: "epoch-rs-workspace-api"
+  RS_WORKSPACE_PORT: "8000"

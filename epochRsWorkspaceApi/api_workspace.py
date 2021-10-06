@@ -23,6 +23,7 @@ from dbconnector import dbconnector
 from dbconnector import dbcursor
 import da_workspace
 import da_manifest
+import da_workspace_access
 
 # 設定ファイル読み込み・globals初期化
 app = Flask(__name__)
@@ -160,7 +161,7 @@ def update_workspace(workspace_id):
     try:
         # Requestからspecification項目を生成する
         specification = convert_workspace_specification(request.json)
-      
+
         exec_stat = "DB接続"
         with dbconnector() as db, dbcursor(db) as cursor:
             # workspace情報 update実行
@@ -444,7 +445,7 @@ def update_manifestParameter(workspace_id):
     try:
         # Requestからspecification項目を生成する
         specification = request.json
-      
+
         with dbconnector() as db, dbcursor(db) as cursor:
             # workspace情報取得
             workspaceInfo = da_workspace.select_workspace_id(cursor, workspace_id)
@@ -476,6 +477,98 @@ def update_manifestParameter(workspace_id):
             response_rows = workspaceInfo
 
         return jsonify({"result": "200", "rows": response_rows })
+
+    except Exception as e:
+        return common.serverError(e)
+
+
+@app.route('/workspace/<int:workspace_id>/access', methods=['POST'])
+def workspace_access_registration(workspace_id):
+    """ワークスペースアクセス情報登録
+
+    Args:
+        workspace_id (int): ワークスペースID
+
+    Returns:
+        response: HTTP Respose
+    """
+    globals.logger.debug("CALL workspace_access_registration:{}".format(workspace_id))
+
+    try:
+        # 登録内容は基本的に、引数のJsonの値を使用する(追加項目があればここで記載)
+        info = request.json
+        with dbconnector() as db, dbcursor(db) as cursor:
+            
+            # ワークスペースアクセス情報 insert実行
+            id = da_workspace_access.insert_workspace_access(cursor, workspace_id, info)
+
+            globals.logger.debug('insert id:{}'.format(str(id)))
+
+        return jsonify({"result": "200", "id": id}), 200
+
+    except Exception as e:
+        return common.serverError(e)
+
+@app.route('/workspace/<int:workspace_id>/access', methods=['GET'])
+def workspace_access_get(workspace_id):
+    """ワークスペースアクセス情報登録
+
+    Args:
+        workspace_id (int): ワークスペースID
+
+    Returns:
+        response: HTTP Respose
+    """
+    globals.logger.debug("CALL workspace_access_get:{}".format(workspace_id))
+
+    try:
+        # 登録内容は基本的に、引数のJsonの値を使用する(追加項目があればここで記載)
+        with dbconnector() as db, dbcursor(db) as cursor:
+            
+            # ワークスペースアクセス情報 insert実行
+            fetch_rows = da_workspace_access.select_workspace_access(cursor, workspace_id)
+
+            if len(fetch_rows) == 0:
+                # データがないときは404応答
+                db.rollback()
+                return jsonify({"result": "404" }), 404
+
+        # Response用のjsonに変換
+        response_rows = fetch_rows
+
+        return jsonify({"result": "200", "rows": response_rows }, 200)
+
+    except Exception as e:
+        return common.serverError(e)
+
+
+
+@app.route('/workspace/<int:workspace_id>/access/<int:id>', methods=['DELETE'])
+def workspace_access_delete(workspace_id, id):
+    """ワークスペースアクセス情報削除
+
+    Args:
+        workspace_id (int): ワークスペースID
+        id (int): ワークスペースアクセス情報ID
+
+    Returns:
+        response: HTTP Respose
+    """
+    globals.logger.debug("CALL workspace_access_delete:workspace_id:{}, id:{}".format(workspace_id, id))
+
+    try:
+        with dbconnector() as db, dbcursor(db) as cursor:
+            # ワークスペースアクセス情報 delete実行
+            upd_cnt = da_workspace_access.delete_workspace_access(cursor, workspace_id, id)
+    
+            globals.logger.debug("workspace_access:ret:{}".format(upd_cnt))
+
+            if upd_cnt == 0:
+                # データがないときは404応答
+                db.rollback()
+                return jsonify({"result": "404" }), 404
+
+        return jsonify({"result": "200"}), 200
 
     except Exception as e:
         return common.serverError(e)

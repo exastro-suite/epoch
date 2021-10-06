@@ -29,6 +29,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from . import views_init_data
+from . import views_access
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -37,4 +39,6 @@ urlpatterns = [
     path('argocd/', include('argocd.urls')),
     path('ita/', include('ita.urls')),
     path('github/', include('github.urls')),
+    path('workspace/<int:workspace_id>/initData', views_init_data.index),
+    path('workspace/<int:workspace_id>/access', views_access.index),
 ]
