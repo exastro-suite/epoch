@@ -33,7 +33,6 @@ from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('echoapi/', include('echoapi.urls')),
-    path('tekton/', include('tekton.urls')),
     path('argocd/', include('argocd.urls')),
     path('ita/', include('ita.urls')),
     path('github/', include('github.urls')),

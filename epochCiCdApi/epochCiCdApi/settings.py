@@ -72,7 +72,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'echoapi',
-    'tekton',
     'argocd',
     'ita',
     'github',
