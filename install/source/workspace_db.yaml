@@ -62,8 +62,7 @@ data:
       update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     );
     create table workspace_access (
-      id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
-      workspace_id int unsigned not null,
+      workspace_id int unsigned not null PRIMARY KEY,
       info json,
       create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
       update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP

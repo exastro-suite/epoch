@@ -500,11 +500,43 @@ def workspace_access_registration(workspace_id):
         with dbconnector() as db, dbcursor(db) as cursor:
             
             # ワークスペースアクセス情報 insert実行
-            id = da_workspace_access.insert_workspace_access(cursor, workspace_id, info)
+            da_workspace_access.insert_workspace_access(cursor, workspace_id, info)
 
-            globals.logger.debug('insert id:{}'.format(str(id)))
+            globals.logger.debug('insert workspace_id:{}'.format(workspace_id))
 
-        return jsonify({"result": "200", "id": id}), 200
+        return jsonify({"result": "200"}), 200
+
+    except Exception as e:
+        return common.serverError(e)
+
+@app.route('/workspace/<int:workspace_id>/access', methods=['PUT'])
+def workspace_access_update(workspace_id):
+    """ワークスペースアクセス情報更新
+
+    Args:
+        workspace_id (int): ワークスペースID
+
+    Returns:
+        response: HTTP Respose
+    """
+    globals.logger.debug("CALL workspace_access_update:{}".format(workspace_id))
+
+    try:
+        # 登録内容は基本的に、引数のJsonの値を使用する(追加項目があればここで記載)
+        info = request.json
+        with dbconnector() as db, dbcursor(db) as cursor:
+            
+            # ワークスペースアクセス情報 update実行
+            upd_cnt = da_workspace_access.update_workspace_access(cursor, workspace_id, info)
+
+            globals.logger.debug('update workspace_id:{}'.format(workspace_id))
+
+            if upd_cnt == 0:
+                # データがないときは404応答
+                db.rollback()
+                return jsonify({"result": "404" }), 404
+
+        return jsonify({"result": "200"}), 200
 
     except Exception as e:
         return common.serverError(e)
@@ -533,17 +565,17 @@ def workspace_access_get(workspace_id):
                 db.rollback()
                 return jsonify({"result": "404" }), 404
 
-        # Response用のjsonに変換
-        response_rows = fetch_rows
+        # Response用のjsonに変換[変換が必要な場合は関数化する]
+        response_row = json.loads(fetch_rows[0]["info"])
 
-        return jsonify({"result": "200", "rows": response_rows }, 200)
+        return jsonify(response_row), 200
 
     except Exception as e:
         return common.serverError(e)
 
 
 
-@app.route('/workspace/<int:workspace_id>/access/<int:id>', methods=['DELETE'])
+@app.route('/workspace/<int:workspace_id>/access', methods=['DELETE'])
 def workspace_access_delete(workspace_id, id):
     """ワークスペースアクセス情報削除
 
@@ -554,12 +586,12 @@ def workspace_access_delete(workspace_id, id):
     Returns:
         response: HTTP Respose
     """
-    globals.logger.debug("CALL workspace_access_delete:workspace_id:{}, id:{}".format(workspace_id, id))
+    globals.logger.debug("CALL workspace_access_delete:workspace_id:{}".format(workspace_id))
 
     try:
         with dbconnector() as db, dbcursor(db) as cursor:
             # ワークスペースアクセス情報 delete実行
-            upd_cnt = da_workspace_access.delete_workspace_access(cursor, workspace_id, id)
+            upd_cnt = da_workspace_access.delete_workspace_access(cursor, workspace_id)
     
             globals.logger.debug("workspace_access:ret:{}".format(upd_cnt))
 

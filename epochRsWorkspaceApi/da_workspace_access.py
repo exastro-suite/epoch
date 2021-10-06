@@ -41,14 +41,13 @@ def insert_workspace_access(cursor, workspace_id, info):
     # 追加したワークスペースIDをreturn
     return cursor.lastrowid
 
-def update_workspace_access(cursor, workspace_id, spec, id):
+def update_workspace_access(cursor, workspace_id, info):
     """ワークスペースアクセス情報更新
 
     Args:
         cursor (mysql.connector.cursor): カーソル
         workspace_id (int): ワークスペースID
         info (Dict)): ワークスペースアクセス情報のJson形式
-        id (int): ワークスペースアクセス情報ID
 
     Returns:
         int: アップデート件数
@@ -57,24 +56,21 @@ def update_workspace_access(cursor, workspace_id, spec, id):
     # ワークスペースアクセス情報 update実行
     cursor.execute('UPDATE workspace_access' \
                     ' SET info = %(info)s' \
-                    ' WHERE workspace_id = %(workspace_id)s' \
-                    ' AND id = %(id)s',
+                    ' WHERE workspace_id = %(workspace_id)s',
         {
             'workspace_id' : workspace_id,
-            'id' : id,
             'info': json.dumps(info),
         }
     )
     # 更新した件数をreturn
     return cursor.rowcount
 
-def delete_workspace_access(cursor, workspace_id, id):
+def delete_workspace_access(cursor, workspace_id):
     """ワークスペースアクセス情報削除
 
     Args:
         cursor (mysql.connector.cursor): カーソル
         workspace_id (Int)): ワークスペースID
-        id (Int)): ワークスペースアクセス情報ID
 
     Returns:
         int: 削除件数
@@ -82,11 +78,9 @@ def delete_workspace_access(cursor, workspace_id, id):
     """
     # ワークスペースアクセス情報 delete実行
     cursor.execute('DELETE FROM workspace_access' \
-                    ' WHERE workspace_id = %(workspace_id)s'\
-                        ' AND id = %(id)s',
+                    ' WHERE workspace_id = %(workspace_id)s',
         {
             'workspace_id' : workspace_id,
-            'id' : id
         }
     )
     # 削除した件数をreturn
@@ -103,30 +97,9 @@ def select_workspace_access(cursor, workspace_id):
         dict: select結果
     """
     # select実行
-    cursor.execute('SELECT * FROM workspace_access WHERE workspace_id = %(workspace_id)s ORDER BY id',
+    cursor.execute('SELECT * FROM workspace_access WHERE workspace_id = %(workspace_id)s',
         {
             'workspace_id' : workspace_id,
-        }
-    )
-    rows = cursor.fetchall()
-    return rows
-
-def select_workspace_access_id(cursor, workspace_id, id):
-    """ワークスペースアクセス情報取得(id指定)
-
-    Args:
-        cursor (mysql.connector.cursor): カーソル
-        workspace_id (int): ワークスペースID
-        id (int): ワークスペースアクセス情報ID
-
-    Returns:
-        dict: select結果
-    """
-    # select実行
-    cursor.execute('SELECT * FROM workspace_access WHERE workspace_id = %(workspace_id)s and id = %(id)s ORDER BY id',
-        {
-            'workspace_id' : workspace_id,
-            'id' : id
         }
     )
     rows = cursor.fetchall()
