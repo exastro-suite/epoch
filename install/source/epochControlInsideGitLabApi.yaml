@@ -1,4 +1,4 @@
-#   Copyright 2019 NEC Corporation
+#   Copyright 2021 NEC Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -14,60 +14,40 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: epoch-control-tekton-conf
+  name: epoch-control-inside-gitlab-conf
   namespace: epoch-system
 data:
-  api_tekton.conf: |
+  api_inside_gitlab.conf: |
     TZ='Asia/Tokyo'
-    MYSQL_HOST='tekton-pipeline-db'
-    MYSQL_PORT='3306'
-    MYSQL_DATABASE='tekton_pipeline_db'
-    MYSQL_USER='app_user'
-    MYSQL_PASSWORD='password'
-    RESOURCE_CREATION_WAIT=60
-
 ---
-
-apiVersion: v1
-kind: Secret
-metadata:
-  name: epoch-control-tekton-api-secret
-  namespace: epoch-system
-type: Opaque
-stringData:
-  SONARQUBE_USER: "admin"
-  SONARQUBE_PASSWORD: "hb35d2cNhWdnFvwtBtMY"
-
----
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: epoch-control-tekton-api
+  name: epoch-control-inside-gitlab-api
   namespace: epoch-system
 spec:
   selector:
     matchLabels:
-      name: epoch-control-tekton-api
+      name: epoch-control-inside-gitlab-api
   replicas: 1
   template:
     metadata:
       labels:
-        name: epoch-control-tekton-api
+        name: epoch-control-inside-gitlab-api
     spec:
       volumes:
-      - name: epoch-control-tekton-conf
+      - name: epoch-control-inside-gitlab-conf
         configMap:
-          name: epoch-control-tekton-conf
+          name: epoch-control-inside-gitlab-conf
       containers:
-      - name: epoch-control-tekton-api
-        image: exastro/epochcontroltektonapi:0.1.5_20210930_1340
+      - name: epoch-control-inside-gitlab-api
+        image: exastro/epoch-control-inside-gitlab-api:0.1.5_20210930_1420
         env:
-        - name: CONFIG_API_TEKTON_PATH
-          value: "/etc/epoch/epochControlTektonApi/api_tekton.conf"
+        - name: CONFIG_API_INSIDE_GITLAB_PATH
+          value: "/etc/epoch/epochControlInsideGitLabApi/api_inside_gitlab.conf"
         - name: FLASK_ENV
           value: "development"
-        - name: API_TEKTON_PORT
+        - name: API_INSIDE_GITLAB_PORT
           value: "8000"
         - name: PYTHONIOENCODING
           value: utf-8
@@ -83,22 +63,16 @@ spec:
               key: HTTPS_PROXY
         - name: EPOCH_NO_PROXY
           value: ""
-        envFrom:
-          - prefix: EPOCH_
-            secretRef:
-              name: epoch-control-tekton-api-secret
         volumeMounts:
-        - name: epoch-control-tekton-conf
-          mountPath: /etc/epoch/epochControlTektonApi
-
+        - name: epoch-control-inside-gitlab-conf
+          mountPath: /etc/epoch/epochControlInsideGitLabApi
 ---
-
 apiVersion: v1
 kind: Service
 metadata:
-  name: epoch-control-tekton-api
+  name: epoch-control-inside-gitlab-api
   labels:
-    name: epoch-control-tekton-api
+    name: epoch-control-inside-gitlab-api
   namespace: epoch-system
 spec:
   type: NodePort
@@ -107,4 +81,4 @@ spec:
     port: 8000
     targetPort: 8000
   selector:
-    name: epoch-control-tekton-api
+    name: epoch-control-inside-gitlab-api

@@ -39,6 +39,9 @@ data:
   EPOCH_CONTROL_TEKTON_PROTOCOL: "http"
   EPOCH_CONTROL_TEKTON_HOST: "epoch-control-tekton-api"
   EPOCH_CONTROL_TEKTON_PORT: "8000"
+  EPOCH_CONTROL_INSIDE_GITLAB_PROTOCOL: "http"
+  EPOCH_CONTROL_INSIDE_GITLAB_HOST: "epoch-control-inside-gitlab-api"
+  EPOCH_CONTROL_INSIDE_GITLAB_PORT: "8000"
   EPOCH_RS_WORKSPACE_PROTOCOL: "http"
   EPOCH_RS_WORKSPACE_HOST: "epoch-rs-workspace-api"
   EPOCH_RS_WORKSPACE_PORT: "8000"
@@ -77,7 +80,7 @@ spec:
     spec:
       containers:
       - name: epoch-service-api
-        image: exastro/epochserviceapi:0.1.4_20210916_1700
+        image: exastro/epochserviceapi:0.1.5_20210930_1405
         env:
         - name: PYTHONIOENCODING
           value: utf-8

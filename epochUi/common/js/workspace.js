@@ -3117,6 +3117,8 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         'account_select'    : wsDataJSON['git-service-argo']['git-service-argo-account-select'],
         'manifests'         : [],
       }
+      prmenv['git_housing'] = (wsDataJSON['git-service-argo']['git-service-argo-select']=='epoch'? 'inner': 'outer');
+      prmenv['git_interface'] = (wsDataJSON['git-service-argo']['git-service-argo-select']=='epoch'? 'gitlab': wsDataJSON['git-service-argo']['git-service-argo-select']);
       if (wsDataJSON['git-service-argo']['git-service-argo-account-select'] == "applicationCode") {
         // アプリケーションコードと同じ
         prmenv['git_user'] = wsDataJSON['git-service']['git-service-user'];

@@ -22,7 +22,11 @@ spec:
     #{% for item in param.ci_config.pipelines %}
     - bindings:
         - ref: trigger-binding-common
+        #{% if param.ci_config.pipelines_common.git_repositry.housing == "inner" %}
+        - ref: trigger-binding-webhook-gitlab
+        #{% else %}
         - ref: trigger-binding-webhook-github
+        #{% endif %}
         - ref: trigger-binding-pipeline-{{ loop.index }}
       template:
         ref: trigger-template-build-and-push-{{ loop.index }}
