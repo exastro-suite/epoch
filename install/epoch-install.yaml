@@ -3890,6 +3890,8 @@ spec:
           value: "8000"
         - name: PYTHONIOENCODING
           value: utf-8
+        - name: EPOCH_WEBHOOK_PORT
+          value: "30804"
         - name: EPOCH_HTTP_PROXY
           valueFrom:
             configMapKeyRef:
@@ -4331,6 +4333,9 @@ data:
   EPOCH_CONTROL_TEKTON_PROTOCOL: "http"
   EPOCH_CONTROL_TEKTON_HOST: "epoch-control-tekton-api"
   EPOCH_CONTROL_TEKTON_PORT: "8000"
+  EPOCH_CONTROL_INSIDE_GITLAB_PROTOCOL: "http"
+  EPOCH_CONTROL_INSIDE_GITLAB_HOST: "epoch-control-inside-gitlab-api"
+  EPOCH_CONTROL_INSIDE_GITLAB_PORT: "8000"
   EPOCH_RS_WORKSPACE_PROTOCOL: "http"
   EPOCH_RS_WORKSPACE_HOST: "epoch-rs-workspace-api"
   EPOCH_RS_WORKSPACE_PORT: "8000"

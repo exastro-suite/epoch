@@ -51,6 +51,8 @@ spec:
           value: "8000"
         - name: PYTHONIOENCODING
           value: utf-8
+        - name: EPOCH_WEBHOOK_PORT
+          value: "30804"
         - name: EPOCH_HTTP_PROXY
           valueFrom:
             configMapKeyRef:

@@ -99,7 +99,7 @@ def post(request):
                     exec_detail = ""
                 raise Exception
 
-        if request_body['ci_config']['pipelines_common']['git_repositry']['housing'] == 'inner':
+        if request_body['ci_config']['pipelines_common']['git_repositry']['housing'] == 'outer':
             exec_stat = "パイプライン設定(GitHub webhooks)"
             # パイプライン設定(Github webhooks)
             request_response = requests.post( apiInfo_cicd + "github/webhooks", headers=post_headers, data=post_data)
@@ -123,9 +123,10 @@ def post(request):
                         'user': request_body['ci_config']['pipelines_common']['git_repositry']['user'],
                         'token': request_body['ci_config']['pipelines_common']['git_repositry']['token'],
                         'url': pipeline_ap['git_repositry']['url'],
-                    }
+                    },
+                    'webhooks_url': pipeline_ap['webhooks_url'],
                 }
-                request_response = requests.post( apiInfo_gitlab + "workspace/1/gitlab/webhooks", headers=post_headers, data=ap_data)
+                request_response = requests.post( apiInfo_gitlab + "workspace/1/gitlab/webhooks", headers=post_headers, data=json.dumps(ap_data))
                 logger.debug("workspace/1/gitlab/webhooks:" + request_response.text)
                 ret = json.loads(request_response.text)
                 logger.debug(ret["result"])
@@ -215,5 +216,3 @@ def post(request):
             "traceback": traceback.format_exc(),
         }
         return JsonResponse(response, status=500)
-
-

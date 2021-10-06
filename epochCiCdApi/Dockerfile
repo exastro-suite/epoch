@@ -32,8 +32,6 @@ RUN echo "RUN START"  \
 &&  chmod +x /usr/local/bin/argocd \
 &&  curl -sSL -k -o /usr/local/bin/kubectl-argo-rollouts https://github.com/argoproj/argo-rollouts/releases/latest/download/kubectl-argo-rollouts-darwin-amd64 \
 &&  chmod +x /usr/local/bin/kubectl-argo-rollouts \
-&&  curl -sSL -k -LO https://github.com/tektoncd/cli/releases/download/v0.16.0/tkn_0.16.0_Linux_x86_64.tar.gz \
-&&  tar xvzf tkn_0.16.0_Linux_x86_64.tar.gz -C /usr/local/bin/ tkn \
 &&  echo "RUN FINISH"
 
 WORKDIR /app
