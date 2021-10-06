@@ -105,20 +105,14 @@ def post_gitlab_webhooks(workspace_id):
         user = request.json['git_repositry']['user']
         token = request.json['git_repositry']['token']
         url = request.json['git_repositry']['url']
-        webhooks_url = request.json['webhooks_url']
+        webhooks_url = request.json['webhooks_url'] + ':' + os.environ['EPOCH_WEBHOOK_PORT']
 
-        # リポジトリの存在チェック
-        ret_exists = exists_repositry(user, token, url)
-        globals.logger.debug('CALL exists_repositry:ret:{}'.format(ret_exists))
-        # すでにリポジトリが存在したので200で終了
+        # webhookの存在チェック
+        ret_exists = exists_webhook(user, token, url, webhooks_url)
+        globals.logger.debug('CALL exists_webhook:ret:{}'.format(ret_exists))
+        # すでにwebhookが存在したので200で終了
         if ret_exists:
-            return jsonify({"result": "200"}), 200
-
-        # グループID取得
-        url_group_id = get_group_id(user, token, url)
-        # すでにリポジトリが存在したので200で終了
-        if url_group_id is None:
-            raise Exception("group not found")
+            return jsonify({"result": "200", "output": "gitlab_webhook{ already exists webhook}"}), 200
 
         # ヘッダ情報
         post_headers = {
@@ -132,11 +126,13 @@ def post_gitlab_webhooks(workspace_id):
         # 引数をJSON形式で構築
         post_data = json.dumps({
             "id": "{}%2F{}".format(json_url['group_name'], json_url['repos_name']),
-            "url": webhooks_url + ':' + os.environ['EPOCH_WEBHOOK_PORT'],
-            "push_events": True
+            "url": webhooks_url,
+            "push_events": True,
+            "enable_ssl_verification": False,
         })
 
         api_url = "{}://{}:{}/api/v4/projects/{}%2F{}/hooks".format(API_PROTOCOL, API_BASE_URL, API_PORT, json_url['group_name'], json_url['repos_name'])
+        globals.logger.debug('api_url: {}'.format(api_url))
         # create webhookのPOST送信
         request_response = requests.post(api_url, headers=post_headers, data=post_data)
 
@@ -182,7 +178,7 @@ def post_gitlab_repos(workspace_id):
         globals.logger.debug('CALL exists_repositry:ret:{}'.format(ret_exists))
         # すでにリポジトリが存在したので200で終了
         if ret_exists:
-            return jsonify({"result": "200", "output": "exists repositry"}), 200
+            return jsonify({"result": "200", "output": "gitlab_project{ already exists repositry}"}), 200
 
         # URLの分割
         json_url = get_url_split(url)
@@ -341,6 +337,48 @@ def get_url_split(url):
 
     return json_url
 
+def exists_webhook(user, token, url, webhooks_url):
+    """webhookの存在チェック
+
+    Args:
+        user (str): ユーザーID
+        token (str): token
+        url (str): リポジトリURL
+
+    Returns:
+        bool: True:あり、False:なし
+    """
+    # ヘッダ情報
+    post_headers = {
+        'PRIVATE-TOKEN': token,
+        'Content-Type': 'application/json',
+    }
+
+    # URLの分割
+    json_url = get_url_split(url)
+
+    api_url = "{}://{}:{}/api/v4/projects/{}%2F{}/hooks".format(API_PROTOCOL, API_BASE_URL, API_PORT,json_url['group_name'],json_url['repos_name'])
+
+    # webhookの一覧を取得する
+    response = requests.get(api_url, headers=post_headers)
+
+    # webhookが存在する場合はTrueを返す
+    if response.status_code == 200:
+        webhook_list = json.loads(response.text)
+        globals.logger.debug('webhook_list: {}'.format(response.text))
+        ret = False
+        for item in webhook_list:
+            if item['url'] == webhooks_url:
+                ret = True
+                break
+
+    # それ以外はwebhook errorを返す
+    else:
+        raise Exception("webhook error:{}".format(response.text))
+
+    return ret
+
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('API_INSIDE_GITLAB_PORT', '8000')), threaded=True)
+

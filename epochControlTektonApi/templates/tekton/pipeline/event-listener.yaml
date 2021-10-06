@@ -33,7 +33,11 @@ spec:
       interceptors:
         - cel:
             filter: >
+              {% if param.ci_config.pipelines_common.git_repositry.housing == "inner" %}
+              body.repository.git_http_url == '{{ item.git_repositry.url }}'
+              {% else %}
               body.repository.clone_url == '{{ item.git_repositry.url }}'
+              {% endif %}
               {% if item.build.branch|count > 0 %}
                 && ( body.ref.startsWith("refs/tags/") || body.ref in {{ item.build_refs }} )
               {% endif %}
