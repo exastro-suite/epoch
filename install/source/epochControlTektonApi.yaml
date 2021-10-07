@@ -28,18 +28,6 @@ data:
 
 ---
 
-apiVersion: v1
-kind: Secret
-metadata:
-  name: epoch-control-tekton-api-secret
-  namespace: epoch-system
-type: Opaque
-stringData:
-  SONARQUBE_USER: "admin"
-  SONARQUBE_PASSWORD: "hb35d2cNhWdnFvwtBtMY"
-
----
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -83,10 +71,12 @@ spec:
               key: HTTPS_PROXY
         - name: EPOCH_NO_PROXY
           value: ""
-        envFrom:
-          - prefix: EPOCH_
-            secretRef:
-              name: epoch-control-tekton-api-secret
+        - name: EPOCH_RS_WORKSPACE_PROTOCOL
+          value: "http"
+        - name: EPOCH_RS_WORKSPACE_HOST
+          value: "epoch-rs-workspace-api"
+        - name: EPOCH_RS_WORKSPACE_PORT
+          value: "8000"
         volumeMounts:
         - name: epoch-control-tekton-conf
           mountPath: /etc/epoch/epochControlTektonApi

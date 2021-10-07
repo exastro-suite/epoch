@@ -174,17 +174,16 @@ def get(request):
 
         logger.debug ("CALL argocd.pipeline get")
 
+        workspace_id = 1 # 仮
+        access_data = get_access_info(workspace_id)
+
         # 引数で指定されたCD環境を取得
         logger.debug (request.body)
         request_json = json.loads(request.body)
         request_ci_env = request_json["ci_config"]["environments"]
         request_cd_env = request_json["cd_config"]["environments"]
-        argo_host = settings.ARGO_SVC
-        argo_id = settings.ARGO_ID
-        argo_password = settings.ARGO_PASSWORD
-
-        workspace_id = 1 # 仮
-        access_data = get_access_info(workspace_id)
+        argo_host = os.environ['EPOCH_ARGOCD_HOST']
+        argo_id = access_data['ARGOCD_USER']
         argo_password = access_data['ARGOCD_PASSWORD']
 
         try:

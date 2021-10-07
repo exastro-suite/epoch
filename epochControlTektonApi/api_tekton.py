@@ -104,6 +104,8 @@ def post_tekton_pipeline(workspace_id):
     globals.logger.debug('CALL post_tekton_pipeline:{}'.format(workspace_id))
 
     try:
+        access_data = get_access_info(workspace_id)
+
         #
         # パラメータ項目設定(テンプレート展開用変数設定)
         #
@@ -112,7 +114,7 @@ def post_tekton_pipeline(workspace_id):
         param['ci_config']['pipeline_namespace'] = tekton_pipeline_namespace(workspace_id)
         param['ci_config']['event_listener_name'] = event_listener_name
         # sonarqube設定
-        param['ci_config']['sonarqube_password'] = os.environ['EPOCH_SONARQUBE_PASSWORD']
+        param['ci_config']['sonarqube_password'] = access_data['SONARQUBE_PASSWORD']
         # proxy設定
         param['proxy'] = {
             'http': os.environ['EPOCH_HTTP_PROXY'],
@@ -201,15 +203,21 @@ def sonarqube_initialize(workspace_id, param):
     """
     globals.logger.debug('start sonarqube_initialize workspace_id:{}'.format(workspace_id))
 
+    access_data = get_access_info(workspace_id)
+    
     host = "http://sonarqube.{}.svc:9000/".format(param["ci_config"]["pipeline_namespace"])
-    sonarqube_user_name = 'admin'
-    sonarqube_user_password_old = 'admin'
-    sonarqube_user_password = param['ci_config']['sonarqube_password']
+    sonarqube_user_name = access_data['SONARQUBE_USER']
+    sonarqube_user_password = access_data['SONARQUBE_PASSWORD']
+    sonarqube_user_initial_password = 'admin'
+    epoch_user_name = access_data['SONARQUBE_EPOCH_USER']
+    epoch_user_password = access_data['SONARQUBE_EPOCH_PASSWORD']
     sonarqube_project_key_name = 'epoch_key'
 
-    # パスワード変更
+    # 初期設定
     try_count = 10
     for i in range(try_count):
+
+        # パスワード変更
         globals.logger.debug('password change count: ' + str(i))
 
         # SonarQubeコンテナが立ち上がるまで繰り返し試行
@@ -217,10 +225,10 @@ def sonarqube_initialize(workspace_id, param):
             time.sleep(10)
 
             api_path = "api/users/change_password"
-            get_query = "?login={}&previousPassword={}&password={}".format(sonarqube_user_name, sonarqube_user_password_old, sonarqube_user_password)
+            get_query = "?login={}&previousPassword={}&password={}".format(sonarqube_user_name, sonarqube_user_initial_password, sonarqube_user_password)
 
             api_uri = host + api_path + get_query
-            response = requests.post(api_uri, auth=HTTPBasicAuth(sonarqube_user_name, sonarqube_user_password_old), timeout=3)
+            response = requests.post(api_uri, auth=HTTPBasicAuth(sonarqube_user_name, sonarqube_user_initial_password), timeout=3)
 
             globals.logger.debug('code: {}, message: {}'.format(str(response.status_code), response.text))
             if response.status_code == 204:
@@ -231,8 +239,29 @@ def sonarqube_initialize(workspace_id, param):
                 break
 
         except Exception as e:
-            #globals.logger.error(''.join(list(traceback.TracebackException.from_exception(e).format())))
-            #raise # 再スロー
+            pass
+
+        # ユーザ作成
+        globals.logger.debug('user create: ' + str(i))
+
+        # SonarQubeコンテナが立ち上がるまで繰り返し試行
+        try:
+            api_path = "api/users/create"
+            get_query = "?login={}&name={}&password={}".format(sonarqube_user_name, epoch_user_name, epoch_user_password)
+            api_uri = host + api_path + get_query
+
+            # ユーザ作成API呼び出し
+            response = requests.post(api_uri, auth=HTTPBasicAuth(sonarqube_user_name, sonarqube_user_password), timeout=3)
+            
+            globals.logger.debug('code: {}, message: {}'.format(str(response.status_code), response.text))
+            if response.status_code == 204:
+                globals.logger.debug('SonarQube user create SUCCEED')
+                break
+            if response.status_code == 401:
+                globals.logger.debug('SonarQube user create failed')
+                break
+
+        except Exception as e:
             pass
 
     # TOKEN 削除 -> 払い出し
@@ -673,6 +702,46 @@ def tekton_pipeline_namespace(workspace_id):
     # return  'ws-tekton-pipeline-{}'.format(workspace_id)
     return  'epoch-tekton-pipeline-{}'.format(workspace_id)
 
+def get_access_info(workspace_id):
+    """ワークスペースアクセス情報取得
+
+    Args:
+        workspace_id (int): ワークスペースID
+
+    Returns:
+        json: アクセス情報
+    """
+    try:
+        # url設定
+        api_info = "{}://{}:{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'], os.environ['EPOCH_RS_WORKSPACE_HOST'], os.environ['EPOCH_RS_WORKSPACE_PORT'])
+
+        # 内部のアクセスなのでProxyを退避して解除
+        http_proxy = os.environ['EPOCH_HTTP_PROXY']
+        https_proxy = os.environ['EPOCH_HTTPS_PROXY']
+        os.environ['EPOCH_HTTP_PROXY'] = ""
+        os.environ['EPOCH_HTTPS_PROXY'] = ""
+
+        # アクセス情報取得
+        # Select送信（workspace_access取得）
+        globals.logger.debug ("workspace_access get call: worksapce_id:{}".format(workspace_id))
+        request_response = requests.get( "{}/workspace/{}/access".format(api_info, workspace_id))
+        # logger.debug (request_response)
+
+        # 退避したProxyを戻す
+        os.environ['EPOCH_HTTP_PROXY'] = http_proxy
+        os.environ['EPOCH_HTTPS_PROXY'] = https_proxy
+
+        # 情報が存在する場合は、更新、存在しない場合は、登録
+        if request_response.status_code == 200:
+            ret = json.loads(request_response.text)
+        else:
+            raise Exception("workspace_access get error status:{}, responce:{}".format(request_response.status_code, request_response.text))
+
+        return ret
+
+    except Exception as e:
+        globals.logger.debug ("get_access_info Exception:{}".format(e.args))
+        raise # 再スロー
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('API_TEKTON_PORT', '8000')), threaded=True)

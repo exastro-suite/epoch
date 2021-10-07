@@ -3718,6 +3718,9 @@ data:
   ITA_PORT: "8084"
   ITA_WORKER_HOST: "ita-worker.epoch-workspace.svc"
   WEBHOOK_PORT: "30804"
+  RS_WORKSPACE_PROTOCOL: "http"
+  RS_WORKSPACE_HOST: "epoch-rs-workspace-api"
+  RS_WORKSPACE_PORT: "8000"
 
 #---- epochCiCdApiSecret.yaml
 ---
@@ -3956,18 +3959,6 @@ data:
 
 ---
 
-apiVersion: v1
-kind: Secret
-metadata:
-  name: epoch-control-tekton-api-secret
-  namespace: epoch-system
-type: Opaque
-stringData:
-  SONARQUBE_USER: "admin"
-  SONARQUBE_PASSWORD: "hb35d2cNhWdnFvwtBtMY"
-
----
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -4011,10 +4002,12 @@ spec:
               key: HTTPS_PROXY
         - name: EPOCH_NO_PROXY
           value: ""
-        envFrom:
-          - prefix: EPOCH_
-            secretRef:
-              name: epoch-control-tekton-api-secret
+        - name: EPOCH_RS_WORKSPACE_PROTOCOL
+          value: "http"
+        - name: EPOCH_RS_WORKSPACE_HOST
+          value: "epoch-rs-workspace-api"
+        - name: EPOCH_RS_WORKSPACE_PORT
+          value: "8000"
         volumeMounts:
         - name: epoch-control-tekton-conf
           mountPath: /etc/epoch/epochControlTektonApi
@@ -4744,6 +4737,12 @@ data:
       workspace_id int unsigned not null,
       file_name varchar(1024) not null,
       file_text text not null,
+      create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
+      update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    );
+    create table workspace_access (
+      workspace_id int unsigned not null PRIMARY KEY,
+      info json,
       create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
       update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     );

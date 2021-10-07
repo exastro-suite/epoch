@@ -131,8 +131,6 @@ def post(request):
 
         logger.debug("argocd pod password reset")
 
-        argo_password = settings.ARGO_PASSWORD
-
         workspace_id = 1 # 仮
         access_data = get_access_info(workspace_id)
         argo_password = access_data['ARGOCD_PASSWORD']

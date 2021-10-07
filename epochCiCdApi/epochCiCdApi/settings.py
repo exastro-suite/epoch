@@ -56,10 +56,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
-ARGO_SVC = os.environ['EPOCH_ARGOCD_HOST']
-ARGO_ID = os.environ['EPOCH_ARGOCD_USER']
-ARGO_PASSWORD = os.environ['EPOCH_ARGOCD_PASSWORD']
-
 
 # Application definition
 
