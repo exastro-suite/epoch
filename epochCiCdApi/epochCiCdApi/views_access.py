@@ -54,15 +54,15 @@ def post(request, workspace_id):
         info = {
             "ARGOCD_USER" : "admin",
             "ARGOCD_PASSWORD" : random_str(20),
-            "ARGOCD_EPOCH_USER" : "epoch_user",
+            "ARGOCD_EPOCH_USER" : "epoch-user",
             "ARGOCD_EPOCH_PASSWORD" : random_str(20),
             "ITA_USER" : "administrator",
             "ITA_PASSWORD" : random_str(20),
-            "ITA_EPOCH_USER" : "epoch_user",
+            "ITA_EPOCH_USER" : "epoch-user",
             "ITA_EPOCH_PASSWORD" : random_str(20),
             "SONARQUBE_USER" : "admin",
             "SONARQUBE_PASSWORD" : random_str(20),
-            "SONARQUBE_EPOCH_USER" : "epoch_user",
+            "SONARQUBE_EPOCH_USER" : "epoch-user",
             "SONARQUBE_EPOCH_PASSWORD" : random_str(20),
         }
 
@@ -89,14 +89,16 @@ def post(request, workspace_id):
         request_response = requests.get("{}/workspace/{}/access".format(apiInfo, workspace_id))
         # logger.debug (request_response)
 
-        # 情報が存在する場合は、更新、存在しない場合は、登録
+        # 情報が存在する場合は、作成しない、存在しない場合は、登録
         if request_response.status_code == 200:
-            # PUT送信（workspace_access更新）
-            logger.debug ("workspace_access put call: worksapce_id:{}".format(workspace_id))
-            request_response = requests.put("{}/workspace/{}/access".format(apiInfo, workspace_id), headers=post_headers, data=post_data)
-            # エラーの際は処理しない
-            if request_response.status_code != 200:
-                raise Exception(request_response.text)
+            logger.debug ("data found")
+            # 存在する場合は、作成しない
+            # # PUT送信（workspace_access更新）
+            # logger.debug ("workspace_access put call: worksapce_id:{}".format(workspace_id))
+            # request_response = requests.put("{}/workspace/{}/access".format(apiInfo, workspace_id), headers=post_headers, data=post_data)
+            # # エラーの際は処理しない
+            # if request_response.status_code != 200:
+            #     raise Exception(request_response.text)
 
         elif request_response.status_code == 404:
             # POST送信（workspace_access登録）
