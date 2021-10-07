@@ -233,10 +233,9 @@ def sonarqube_initialize(workspace_id, param):
             globals.logger.debug('code: {}, message: {}'.format(str(response.status_code), response.text))
             if response.status_code == 204:
                 globals.logger.debug('SonarQube password change SUCCEED')
-                break
+
             if response.status_code == 401:
                 globals.logger.debug('SonarQube password has already changed')
-                break
 
         except Exception as e:
             pass
