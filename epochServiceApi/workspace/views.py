@@ -47,6 +47,9 @@ def post(request):
         exec_stat = "初期化"
         exec_detail = ""
 
+        # ワークスペース複数化までは1固定
+        workspace_id = 1
+
         # ヘッダ情報
         headers = {
             'Content-Type': 'application/json',
@@ -62,7 +65,7 @@ def post(request):
 
         # post送信（アクセス情報生成）
         exec_stat = "ワークスペースアクセス情報生成"
-        response = requests.post(apiInfo + 'workspace/1/initData')
+        response = requests.post(apiInfo + 'workspace/{}/initData'.format(workspace_id))
         # 正常時以外はExceptionを発行して終了する
         if response.status_code != 200:
             raise Exception("ワークスペースアクセス情報の生成に失敗しました。 {}".format(response.status_code))
