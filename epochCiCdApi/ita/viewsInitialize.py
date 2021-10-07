@@ -71,6 +71,7 @@ def post(request):
         host = os.environ["EPOCH_ITA_HOST"] + ":" + os.environ["EPOCH_ITA_PORT"]
         user_id = os.environ["EPOCH_ITA_USER"]
         user_pass = os.environ["EPOCH_ITA_PASSWORD"]
+        #user_id, user_pass = get_workspace_initial_data()
 
         auth = base64.b64encode((user_id + ':' + user_pass).encode())
 
@@ -81,30 +82,8 @@ def post(request):
         command = "mysql -u %s -p%s %s < /app/epoch/tmp/ita_table_update.sql" % (ita_db_user, ita_db_password, ita_db_name)
         stdout_ita = subprocess.check_output(["kubectl", "exec", "-i", "-n", namespace, "deployment/it-automation", "--", "bash", "-c", command], stderr=subprocess.STDOUT)
 
-        # POST送信する
-        # ヘッダ情報
-        header = {
-            'host': host,
-            'Content-Type': 'application/json',
-            'Authorization': auth,
-            'X-Command': 'FILTER',
-        }
-
-        # フィルタ条件はなし
-        data = {
-        }
-
-        # json文字列に変換（"utf-8"形式に自動エンコードされる）
-        json_data = json.dumps(data)
-
-        # インポート結果取得
-        dialog_response = requests.post('http://' + host + '/default/menu/07_rest_api_ver1.php?no=2100000213', headers=header, data=json_data)
-        if dialog_response.status_code != 200:
-            raise Exception(dialog_response)
-
-        dialog_resp_data = json.loads(dialog_response.text)
         # すでに1度でもインポート済みの場合は、処理しない
-        if dialog_resp_data["resultdata"]["CONTENTS"]["RECORD_LENGTH"] > 0:
+        if is_already_imported(host, auth):
             logger.debug("ITA initialize Imported.(success)")
             response = {
                 "result": "200",
@@ -113,98 +92,8 @@ def post(request):
             }
             return JsonResponse(response, status=200)
 
-        # *-*-*-* ファイルアップロード *-*-*-*
-        logger.debug('---- upload kym file ----')
-        kym_file_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource/ita_kym/epoch_initialize.kym"
-        with open(kym_file_path, 'rb') as f:
-            kym_binary = f.read()
-        encoded_data = base64.b64encode(kym_binary).decode(encoding='utf-8')
-        upload_filename = os.path.basename(kym_file_path)
-
-        # POST送信する
-        # ヘッダ情報
-        header = {
-            'host': host,
-            'Content-Type': 'application/json',
-            'Authorization': auth,
-            'X-Command': 'UPLOAD',
-        }
-
-        # 実行パラメータ設定
-        data = {
-            "zipfile": {
-                "name": upload_filename,
-                "base64": encoded_data,
-            }
-        }
-
-        # json文字列に変換（"utf-8"形式に自動エンコードされる）
-        json_data = json.dumps(data)
-
-        logger.debug('---- ita file upload ---- HOST:' + host)
-        # リクエスト送信
-        upload_response = requests.post('http://' + host + '/default/menu/07_rest_api_ver1.php?no=2100000212', headers=header, data=json_data)
-        if upload_response.status_code != 200:
-            logger.debug(upload_response.text)
-            raise Exception(upload_response)
-
-        # print(upload_response.text)
-
-        up_resp_data = json.loads(upload_response.text)
-        if up_resp_data["status"] != "SUCCEED":
-            raise Exception(upload_response.text)
-
-        upload_id = up_resp_data["resultdata"]["upload_id"]
-        logger.debug('upload_id: ' + upload_id)
-
-        # menu_list再構築
-        menu_list = {}
-        for menu_group_id, menu_group_detail in up_resp_data["resultdata"]["IMPORT_LIST"].items():
-            if menu_group_id in menu_list:
-                menu_id_list = menu_list[menu_group_id]
-            else:
-                menu_id_list = []
-
-            for menu_detail in menu_group_detail["menu"]:
-                menu_id_list.append(int(menu_detail["menu_id"]))
-
-            menu_list[menu_group_id] = menu_id_list
-
-        # print(menu_list)
-
         # *-*-*-* インポート実行 *-*-*-*
-        logger.debug('---- execute menu import ----')
-
-        # POST送信する
-        # ヘッダ情報
-        header = {
-            'host': host,
-            'Content-Type': 'application/json',
-            'Authorization': auth,
-            'X-Command': 'EXECUTE',
-        }
-
-        # 実行パラメータ設定
-        data = menu_list
-        data["upload_id"] = "A_" + upload_id
-        data["data_portability_upload_file_name"] = upload_filename
-
-        # json文字列に変換（"utf-8"形式に自動エンコードされる）
-        json_data = json.dumps(data)
-
-        # リクエスト送信
-        exec_response = requests.post('http://' + host + '/default/menu/07_rest_api_ver1.php?no=2100000212', headers=header, data=json_data)
-        if exec_response.status_code != 200:
-            raise Exception(exec_response)
-
-        logger.debug(exec_response.text)
-
-        exec_resp_data = json.loads(exec_response.text)
-        if exec_resp_data["status"] != "SUCCEED" or exec_resp_data["resultdata"]["RESULTCODE"] != "000":
-            raise Exception(exec_response.text)
-
-        task_id = exec_resp_data["resultdata"]["TASK_ID"]
-        logger.debug('task_id: ' + task_id)
+        task_id = import_process(host, auth)
 
         # *-*-*-* インポート結果確認 *-*-*-*
         logger.debug('---- monitoring import dialog ----')
@@ -282,6 +171,156 @@ def post(request):
             "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
         }
         return JsonResponse(response, status=500)
+
+
+# def get_workspace_initial_data():
+    
+#     user_id = ""
+#     user_pass = ""
+
+#     return user_id, user_pass
+
+
+
+def is_already_imported(host, auth):
+    # POST送信する
+    # ヘッダ情報
+    header = {
+        'host': host,
+        'Content-Type': 'application/json',
+        'Authorization': auth,
+        'X-Command': 'FILTER',
+    }
+
+    # フィルタ条件はなし
+    data = {}
+
+    # json文字列に変換（"utf-8"形式に自動エンコードされる）
+    json_data = json.dumps(data)
+
+    # インポート結果取得
+    dialog_response = requests.post('http://' + host + '/default/menu/07_rest_api_ver1.php?no=2100000213', headers=header, data=json_data)
+    if dialog_response.status_code != 200:
+        raise Exception(dialog_response)
+
+    dialog_resp_data = json.loads(dialog_response.text)
+
+    if dialog_resp_data["resultdata"]["CONTENTS"]["RECORD_LENGTH"] > 0:
+        return True
+
+    return False
+
+
+def import_process(host, auth):
+
+    # *-*-*-* ファイルアップロード *-*-*-*
+    upload_id, upload_filename = kym_file_upload(host, auth)
+
+    # menu_list再構築
+    menu_list = {}
+    for menu_group_id, menu_group_detail in up_resp_data["resultdata"]["IMPORT_LIST"].items():
+        if menu_group_id in menu_list:
+            menu_id_list = menu_list[menu_group_id]
+        else:
+            menu_id_list = []
+
+        for menu_detail in menu_group_detail["menu"]:
+            menu_id_list.append(int(menu_detail["menu_id"]))
+
+        menu_list[menu_group_id] = menu_id_list
+
+    # print(menu_list)
+
+    # *-*-*-* インポート実行 *-*-*-*
+    task_id = import_execute(host, auth, upload_id, menu_list, upload_filename)
+
+    return task_id
+
+
+def kym_file_upload(host, auth):
+
+    logger.debug('---- upload kym file ----')
+
+    kym_file_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource/ita_kym/epoch_initialize.kym"
+    with open(kym_file_path, 'rb') as f:
+        kym_binary = f.read()
+    encoded_data = base64.b64encode(kym_binary).decode(encoding='utf-8')
+    upload_filename = os.path.basename(kym_file_path)
+
+    # POST送信する
+    # ヘッダ情報
+    header = {
+        'host': host,
+        'Content-Type': 'application/json',
+        'Authorization': auth,
+        'X-Command': 'UPLOAD',
+    }
+
+    # 実行パラメータ設定
+    data = {
+        "zipfile": {
+            "name": upload_filename,
+            "base64": encoded_data,
+        }
+    }
+
+    # json文字列に変換（"utf-8"形式に自動エンコードされる）
+    json_data = json.dumps(data)
+
+    logger.debug('---- ita file upload ---- HOST:' + host)
+    # リクエスト送信
+    upload_response = requests.post('http://' + host + '/default/menu/07_rest_api_ver1.php?no=2100000212', headers=header, data=json_data)
+    if upload_response.status_code != 200:
+        logger.debug(upload_response.text)
+        raise Exception(upload_response)
+
+    # print(upload_response.text)
+
+    up_resp_data = json.loads(upload_response.text)
+    if up_resp_data["status"] != "SUCCEED":
+        raise Exception(upload_response.text)
+
+    upload_id = up_resp_data["resultdata"]["upload_id"]
+    logger.debug('upload_id: ' + upload_id)
+
+    return upload_id, upload_filename
+
+
+def import_execute(host, auth, upload_id, menu_list, upload_filename):
+    logger.debug('---- execute menu import ----')
+
+    # POST送信する
+    # ヘッダ情報
+    header = {
+        'host': host,
+        'Content-Type': 'application/json',
+        'Authorization': auth,
+        'X-Command': 'EXECUTE',
+    }
+
+    # 実行パラメータ設定
+    data = menu_list
+    data["upload_id"] = "A_" + upload_id
+    data["data_portability_upload_file_name"] = upload_filename
+
+    # json文字列に変換（"utf-8"形式に自動エンコードされる）
+    json_data = json.dumps(data)
+
+    # リクエスト送信
+    exec_response = requests.post('http://' + host + '/default/menu/07_rest_api_ver1.php?no=2100000212', headers=header, data=json_data)
+    if exec_response.status_code != 200:
+        raise Exception(exec_response)
+
+    logger.debug(exec_response.text)
+
+    exec_resp_data = json.loads(exec_response.text)
+    if exec_resp_data["status"] != "SUCCEED" or exec_resp_data["resultdata"]["RESULTCODE"] != "000":
+        raise Exception(exec_response.text)
+
+    task_id = exec_resp_data["resultdata"]["TASK_ID"]
+    logger.debug('task_id: ' + task_id)
+
+    return task_id
 
 
 def is_ita_pod_running(namespace):

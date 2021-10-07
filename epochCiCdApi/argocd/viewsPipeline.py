@@ -179,10 +179,14 @@ def get(request):
         request_json = json.loads(request.body)
         request_ci_env = request_json["ci_config"]["environments"]
         request_cd_env = request_json["cd_config"]["environments"]
+        argo_host = settings.ARGO_SVC
+        argo_id = settings.ARGO_ID
+        argo_password = settings.ARGO_PASSWORD
+        #argo_id, argo_password = get_workspace_initial_data()
 
         try:
             # argocdにloginする
-            stdout_cd = subprocess.check_output(["argocd","login",settings.ARGO_SVC,"--insecure","--username",settings.ARGO_ID,"--password",settings.ARGO_PASSWORD],stderr=subprocess.STDOUT)
+            stdout_cd = subprocess.check_output(["argocd","login",argo_host,"--insecure","--username",argo_id,"--password",argo_password],stderr=subprocess.STDOUT)
 
             logger.debug ("argocd login:" + str(stdout_cd))
 
@@ -243,3 +247,10 @@ def get(request):
         }
         return JsonResponse(response)
 
+
+# def get_workspace_initial_data():
+
+#     argo_id = ""
+#     argo_password = ""
+
+#     return argo_id, argo_password

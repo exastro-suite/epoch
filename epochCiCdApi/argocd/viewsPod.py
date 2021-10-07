@@ -130,9 +130,12 @@ def post(request):
 
         logger.debug("argocd pod password reset")
 
+        argo_password = settings.ARGO_PASSWORD
+        #_, argo_password = get_workspace_initial_data()
+
         # argo CDのパスワード初期化
         salt = bcrypt.gensalt(rounds=10, prefix=b'2a')
-        password = settings.ARGO_PASSWORD.encode("ascii")
+        password = argo_password.encode("ascii")
         argoLogin = bcrypt.hashpw(password, salt).decode("ascii")
         # logger.debug("argocd pod password : {}".format(argoLogin))
         # bcryptでハッシュ化した内容でargocdのパスワードを初期化する
@@ -228,5 +231,12 @@ def createNamespace(name):
 
     except Exception as e:
         logger.debug("Except: %s" % (e))
-        return None 
-      
+        return None
+
+
+# def get_workspace_initial_data():
+
+#     argo_id = ""
+#     argo_password = ""
+
+#     return argo_id, argo_password
