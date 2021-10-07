@@ -77,7 +77,9 @@ def post(request, workspace_id):
         # 引数をJSON形式で受け取りそのまま引数に設定
         post_data = json.dumps(info)
 
-        # 内部のアクセスなのでプロキシを解除
+        # 内部のアクセスなのでProxyを退避して解除
+        http_proxy = os.environ['HTTP_PROXY']
+        https_proxy = os.environ['HTTPS_PROXY']
         os.environ['HTTP_PROXY'] = ""
         os.environ['HTTPS_PROXY'] = ""
 
@@ -106,6 +108,10 @@ def post(request, workspace_id):
 
         else:
             raise Exception("workspace_access post error status:{}, responce:{}".format(request_response.status_code, request_response.text))
+
+        # 退避したProxyを戻す
+        os.environ['HTTP_PROXY'] = http_proxy
+        os.environ['HTTPS_PROXY'] = https_proxy
 
         response = {
             "result":"200",
