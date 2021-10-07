@@ -48,6 +48,16 @@ def post(request):
 
         logger.debug ("CALL argocd.pipeline post")
 
+        # ワークスペース複数化するまでは1固定
+        workspace_id = 1
+
+        # ワークスペースアクセス情報取得
+        access_data = get_access_info(workspace_id)
+
+        argo_host = os.environ['EPOCH_ARGOCD_HOST']
+        argo_id = access_data['ARGOCD_USER']
+        argo_password = access_data['ARGOCD_PASSWORD']
+
         # 引数で指定されたCD環境を取得
         # logger.debug (request.body)
         request_json = json.loads(request.body)
@@ -56,7 +66,7 @@ def post(request):
 
         try:
             # argocdにloginする
-            stdout_cd = subprocess.check_output(["argocd","login",settings.ARGO_SVC,"--insecure","--username",settings.ARGO_ID,"--password",settings.ARGO_PASSWORD],stderr=subprocess.STDOUT)
+            stdout_cd = subprocess.check_output(["argocd","login",argo_host,"--insecure","--username",argo_id,"--password",argo_password],stderr=subprocess.STDOUT)
 
             logger.debug ("argocd login:" + str(stdout_cd))
 

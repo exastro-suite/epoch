@@ -30,6 +30,8 @@ from django.http import HttpResponse
 from django.http.response import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
+from epochCiCdApi.views_access import get_access_info
+
 logger = logging.getLogger('apilog')
 
 @csrf_exempt
@@ -45,11 +47,17 @@ def post(request):
         # パラメータ情報(JSON形式)
         payload = json.loads(request.body)
         
+        # ワークスペース複数化するまでは1固定
+        workspace_id = 1
+
+        # ワークスペースアクセス情報取得
+        access_info = get_access_info(workspace_id)
+
         operation_id = payload["operation_id"]
         conductor_class_no = payload["conductor_class_no"]
         preserve_datetime = payload["preserve_datetime"]
         host = os.environ['EPOCH_ITA_HOST'] + ':' + os.environ['EPOCH_ITA_PORT']
-        auth = base64.b64encode((os.environ['EPOCH_ITA_USER'] + ':' + os.environ['EPOCH_ITA_PASSWORD']).encode())
+        auth = base64.b64encode((access_info['ITA_USER'] + ':' + access_info['ITA_PASSWORD']).encode())
 
         # POST送信する
         # ヘッダ情報

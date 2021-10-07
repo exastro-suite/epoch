@@ -84,6 +84,7 @@ def post(request):
 
             # hooksのPOST送信
             logger.debug('- github.webhooks setting to git')
+            logger.debug('- https_proxy:{}, http_proxy:{}'.format(os.environ['HTTPS_PROXY'], os.environ['HTTP_PROXY']))
             logger.debug('- reequest URL:' + github_webhook_base_url + gitRepos + github_webhook_base_hooks)
             logger.debug('- webhook URL :' + webHooksUrl)
             request_response = requests.post( github_webhook_base_url + gitRepos + github_webhook_base_hooks, headers=post_headers, data=post_data)

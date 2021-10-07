@@ -31,10 +31,10 @@ from django.http.response import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
+from epochCiCdApi.views_access import get_access_info
+
 ita_host = os.environ['EPOCH_ITA_HOST']
 ita_port = os.environ['EPOCH_ITA_PORT']
-ita_user = os.environ['EPOCH_ITA_USER']
-ita_pass = os.environ['EPOCH_ITA_PASSWORD']
 
 # メニューID
 ite_menu_operation = '2100000304'
@@ -56,6 +56,15 @@ def index(request):
 
 @csrf_exempt
 def get(request):
+
+    # ワークスペース複数化するまでは1固定
+    workspace_id = 1
+
+    # ワークスペースアクセス情報取得
+    access_info = get_access_info(workspace_id)
+
+    ita_user = access_info['ITA_USER']
+    ita_pass = access_info['ITA_PASSWORD']
 
     # HTTPヘッダの生成
     filter_headers = {

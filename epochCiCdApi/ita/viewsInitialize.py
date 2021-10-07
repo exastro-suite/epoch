@@ -25,6 +25,8 @@ import time
 import base64
 import logging
 import yaml
+import hashlib
+
 
 from django.shortcuts import render
 from django.http import HttpResponse
@@ -47,6 +49,12 @@ def post(request):
     try:
         # パラメータ情報(JSON形式)
         payload = json.loads(request.body)
+
+        # ワークスペース複数化するまでは1固定
+        workspace_id = 1
+
+        # ワークスペースアクセス情報取得
+        access_info = get_access_info(workspace_id)
 
         namespace = "epoch-workspace"
         # *-*-*-* podが立ち上がるのを待つ *-*-*-*
@@ -74,18 +82,22 @@ def post(request):
         ita_db_name = "ita_db"
         ita_db_user = "ita_db_user"
         ita_db_password = "ita_db_password"
-        command = "mysql -u %s -p%s %s < /app/epoch/tmp/ita_table_update.sql" % (ita_db_user, ita_db_password, ita_db_name)
+        # command = "mysql -u %s -p%s %s < /app/epoch/tmp/ita_table_update.sql" % (ita_db_user, ita_db_password, ita_db_name)
+        command = "mysql -u %s -p%s %s -e'UPDATE A_ACCOUNT_LIST SET PW_LAST_UPDATE_TIME = \"2999-12-31 23:59:58\" WHERE USER_ID = 1;'" % (ita_db_user, ita_db_password, ita_db_name)
         stdout_ita = subprocess.check_output(["kubectl", "exec", "-i", "-n", namespace, "deployment/it-automation", "--", "bash", "-c", command], stderr=subprocess.STDOUT)
 
         # *-*-*-* 認証情報準備 *-*-*-*
         host = os.environ["EPOCH_ITA_HOST"] + ":" + os.environ["EPOCH_ITA_PORT"]
-        user_id = os.environ["EPOCH_ITA_USER"]
-        user_pass = os.environ["EPOCH_ITA_PASSWORD"]
+        user_id = access_info["ITA_USER"]
+        user_init_pass = "password"
+        user_pass = access_info["ITA_PASSWORD"]
 
+        # 変更後のパスワードでインポート済みを確認
         auth = base64.b64encode((user_id + ':' + user_pass).encode())
 
         # すでに1度でもインポート済みの場合は、処理しない
-        if is_already_imported(host, auth):
+        ret_is_import = is_already_imported(host, auth)
+        if ret_is_import == 200:
             logger.debug("ITA initialize Imported.(success)")
             response = {
                 "result": "200",
@@ -94,74 +106,86 @@ def post(request):
             }
             return JsonResponse(response, status=200)
 
-        # *-*-*-* インポート実行 *-*-*-*
-        task_id = import_process(host, auth)
+        # パスワード暗号化
+        init_auth = base64.b64encode((user_id + ':' + user_init_pass).encode())
+        auth = base64.b64encode((user_id + ':' + user_pass).encode())
 
-        # *-*-*-* インポート結果確認 *-*-*-*
-        logger.debug('---- monitoring import dialog ----')
+        # 一度もインポートしていないときに処理する
+        if ret_is_import == 0:
+            # *-*-*-* インポート実行(初期パスワードで実行) *-*-*-*
+            task_id = import_process(host, init_auth)
 
-        # POST送信する
-        # ヘッダ情報
-        header = {
-            'host': host,
-            'Content-Type': 'application/json',
-            'Authorization': auth,
-            'X-Command': 'FILTER',
-        }
+            # *-*-*-* インポート結果確認 *-*-*-*
+            logger.debug('---- monitoring import dialog ----')
 
-        # 実行パラメータ設定
-        data = {
-            "2": {
-                "LIST": [task_id]
+            # POST送信する
+            # ヘッダ情報
+            header = {
+                'host': host,
+                'Content-Type': 'application/json',
+                'Authorization': init_auth,
+                'X-Command': 'FILTER',
             }
-        }
 
-        # json文字列に変換（"utf-8"形式に自動エンコードされる）
-        json_data = json.dumps(data)
-
-        start_time = time.time()
-        while True:
-            logger.debug("monitoring...")
-            logger.debug(datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'))
-            time.sleep(3)
-
-            # リクエスト送信
-            dialog_response = requests.post('http://' + host + '/default/menu/07_rest_api_ver1.php?no=2100000213', headers=header, data=json_data)
-            if dialog_response.status_code != 200:
-                raise Exception(dialog_response)
-
-            # ファイルがあるメニューのため、response.textをデバッグ出力すると酷い目にあう
-            # print(dialog_response.text)
-
-            dialog_resp_data = json.loads(dialog_response.text)
-            if dialog_resp_data["status"] != "SUCCEED" or dialog_resp_data["resultdata"]["CONTENTS"]["RECORD_LENGTH"] != 1:
-                raise Exception(dialog_response.text)
-
-            record = dialog_resp_data["resultdata"]["CONTENTS"]["BODY"][1]
-            logger.debug(json.dumps(record))
-            if record[3] == u"完了(異常)":
-                raise Exception("ITAのメニューインポートに失敗しました")
-            if record[3] == u"完了":
-                break
-
-            # timeout
-            current_time = time.time()
-            if (current_time - start_time) > WAIT_ITA_IMPORT:
-                logger.debug("ITA menu import Time out")
-                response = {
-                    "result": "500",
-                    "output": "ITAメニューインポート状況確認 Time out",
-                    "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
+            # 実行パラメータ設定
+            data = {
+                "2": {
+                    "LIST": [task_id]
                 }
-                return JsonResponse(response, status=500)
+            }
+
+            # json文字列に変換（"utf-8"形式に自動エンコードされる）
+            json_data = json.dumps(data)
+
+            start_time = time.time()
+            while True:
+                logger.debug("monitoring...")
+                logger.debug(datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'))
+                time.sleep(3)
+
+                # リクエスト送信
+                dialog_response = requests.post('http://' + host + '/default/menu/07_rest_api_ver1.php?no=2100000213', headers=header, data=json_data)
+                if dialog_response.status_code != 200:
+                    raise Exception(dialog_response)
+
+                # ファイルがあるメニューのため、response.textをデバッグ出力すると酷い目にあう
+                # print(dialog_response.text)
+
+                dialog_resp_data = json.loads(dialog_response.text)
+                if dialog_resp_data["status"] != "SUCCEED" or dialog_resp_data["resultdata"]["CONTENTS"]["RECORD_LENGTH"] != 1:
+                    raise Exception(dialog_response.text)
+
+                record = dialog_resp_data["resultdata"]["CONTENTS"]["BODY"][1]
+                logger.debug(json.dumps(record))
+                if record[3] == u"完了(異常)":
+                    raise Exception("ITAのメニューインポートに失敗しました")
+                if record[3] == u"完了":
+                    break
+
+                # timeout
+                current_time = time.time()
+                if (current_time - start_time) > WAIT_ITA_IMPORT:
+                    logger.debug("ITA menu import Time out")
+                    response = {
+                        "result": "500",
+                        "output": "ITAメニューインポート状況確認 Time out",
+                        "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
+                    }
+                    return JsonResponse(response, status=500)
 
         # *-*-*-* パスワード変更 *-*-*-*
-        workspace_id = 1 # 仮
-        access_data = get_access_info(workspace_id)
-        af_user_pass = access_data['ITA_PASSWORD']
+        command = "mysql -u {} -p{} {} -e'UPDATE A_ACCOUNT_LIST".format(ita_db_user, ita_db_password, ita_db_name) + \
+                    " SET PASSWORD = \"{}\"".format(hashlib.md5((user_pass).encode()).hexdigest()) + \
+                    " WHERE USER_ID = 1;'"
+        stdout_ita = subprocess.check_output(["kubectl", "exec", "-i", "-n", namespace, "deployment/it-automation", "--", "bash", "-c", command], stderr=subprocess.STDOUT)
 
-        # 何らかの変更処理
-
+        # *-*-*-* EPOCHユーザー更新 *-*-*-*
+        command = "mysql -u {} -p{} {} -e'UPDATE A_ACCOUNT_LIST".format(ita_db_user, ita_db_password, ita_db_name) + \
+                    " SET USERNAME = \"{}\"".format(access_info["ITA_EPOCH_USER"]) + \
+                    " , PASSWORD = \"{}\"".format(hashlib.md5((access_info["ITA_EPOCH_PASSWORD"]).encode()).hexdigest()) + \
+                    " , PW_LAST_UPDATE_TIME = \"2999-12-31 23:59:58\"" + \
+                    " WHERE USER_ID = 2;'"
+        stdout_ita = subprocess.check_output(["kubectl", "exec", "-i", "-n", namespace, "deployment/it-automation", "--", "bash", "-c", command], stderr=subprocess.STDOUT)
 
         # *-*-*-* 結果 *-*-*-*
         logger.debug("ITA initialize finished.(success)")
@@ -201,15 +225,19 @@ def is_already_imported(host, auth):
 
     # インポート結果取得
     dialog_response = requests.post('http://' + host + '/default/menu/07_rest_api_ver1.php?no=2100000213', headers=header, data=json_data)
-    if dialog_response.status_code != 200:
+    if dialog_response.status_code != 200 and dialog_response.status_code != 401:
         raise Exception(dialog_response)
 
-    dialog_resp_data = json.loads(dialog_response.text)
+    if dialog_response.status_code == 200: 
+        dialog_resp_data = json.loads(dialog_response.text)
+        if dialog_resp_data["resultdata"]["CONTENTS"]["RECORD_LENGTH"] > 0:
+            ret = 200
+        else:
+            ret = 0
+    else:
+        ret = 401
 
-    if dialog_resp_data["resultdata"]["CONTENTS"]["RECORD_LENGTH"] > 0:
-        return True
-
-    return False
+    return ret
 
 
 def import_process(host, auth):
