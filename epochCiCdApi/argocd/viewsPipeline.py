@@ -27,9 +27,9 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.http.response import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-
-from django.views.decorators.csrf import csrf_exempt
 from kubernetes import client, config
+
+from epochCiCdApi.views_access import get_access_info
 
 logger = logging.getLogger('apilog')
 
@@ -182,7 +182,10 @@ def get(request):
         argo_host = settings.ARGO_SVC
         argo_id = settings.ARGO_ID
         argo_password = settings.ARGO_PASSWORD
-        #argo_id, argo_password = get_workspace_initial_data()
+
+        workspace_id = 1 # 仮
+        access_data = get_access_info(workspace_id)
+        argo_password = access_data['ARGOCD_PASSWORD']
 
         try:
             # argocdにloginする
@@ -246,11 +249,3 @@ def get(request):
             "traceback": traceback.format_exc(),
         }
         return JsonResponse(response)
-
-
-# def get_workspace_initial_data():
-
-#     argo_id = ""
-#     argo_password = ""
-
-#     return argo_id, argo_password

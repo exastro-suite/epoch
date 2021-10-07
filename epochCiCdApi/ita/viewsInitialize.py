@@ -32,6 +32,8 @@ from django.http.response import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
+from epochCiCdApi.views_access import get_access_info
+
 logger = logging.getLogger('apilog')
 
 WAIT_ITA_POD_UP = 120 # ITA Pod起動待ち時間
@@ -68,19 +70,19 @@ def post(request):
                 }
                 return JsonResponse(response, status=500)
 
-        host = os.environ["EPOCH_ITA_HOST"] + ":" + os.environ["EPOCH_ITA_PORT"]
-        user_id = os.environ["EPOCH_ITA_USER"]
-        user_pass = os.environ["EPOCH_ITA_PASSWORD"]
-        #user_id, user_pass = get_workspace_initial_data()
-
-        auth = base64.b64encode((user_id + ':' + user_pass).encode())
-
         # *-*-*-* パスワード更新済み判定とする *-*-*-*
         ita_db_name = "ita_db"
         ita_db_user = "ita_db_user"
         ita_db_password = "ita_db_password"
         command = "mysql -u %s -p%s %s < /app/epoch/tmp/ita_table_update.sql" % (ita_db_user, ita_db_password, ita_db_name)
         stdout_ita = subprocess.check_output(["kubectl", "exec", "-i", "-n", namespace, "deployment/it-automation", "--", "bash", "-c", command], stderr=subprocess.STDOUT)
+
+        # *-*-*-* 認証情報準備 *-*-*-*
+        host = os.environ["EPOCH_ITA_HOST"] + ":" + os.environ["EPOCH_ITA_PORT"]
+        user_id = os.environ["EPOCH_ITA_USER"]
+        user_pass = os.environ["EPOCH_ITA_PASSWORD"]
+
+        auth = base64.b64encode((user_id + ':' + user_pass).encode())
 
         # すでに1度でもインポート済みの場合は、処理しない
         if is_already_imported(host, auth):
@@ -153,6 +155,14 @@ def post(request):
                 }
                 return JsonResponse(response, status=500)
 
+        # *-*-*-* パスワード変更 *-*-*-*
+        workspace_id = 1 # 仮
+        access_data = get_access_info(workspace_id)
+        af_user_pass = access_data['ITA_PASSWORD']
+
+        # 何らかの変更処理
+
+
         # *-*-*-* 結果 *-*-*-*
         logger.debug("ITA initialize finished.(success)")
         response = {
@@ -171,15 +181,6 @@ def post(request):
             "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
         }
         return JsonResponse(response, status=500)
-
-
-# def get_workspace_initial_data():
-    
-#     user_id = ""
-#     user_pass = ""
-
-#     return user_id, user_pass
-
 
 
 def is_already_imported(host, auth):
