@@ -55,12 +55,20 @@ def post(request):
         # データ情報
         data = '{}'
 
-        # パラメータ情報(JSON形式)
-        payload = json.loads(request.body)
+        output = []
 
         # CiCd Api の呼び先設定
         apiInfo = "{}://{}:{}/".format(os.environ["EPOCH_CICD_PROTOCOL"], os.environ["EPOCH_CICD_HOST"], os.environ["EPOCH_CICD_PORT"])
-        output = []
+
+        # post送信（アクセス情報生成）
+        exec_stat = "ワークスペースアクセス情報生成"
+        response = requests.post(apiInfo + 'workspace/1/initData')
+        # 正常時以外はExceptionを発行して終了する
+        if response.status_code != 200:
+            raise Exception("ワークスペースアクセス情報の生成に失敗しました。 {}".format(response.status_code))
+        
+        # パラメータ情報(JSON形式)
+        payload = json.loads(request.body)
 
         # post送信（argocd/pod作成）
         exec_stat = "ArgoCDデプロイ"
