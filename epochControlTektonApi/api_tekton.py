@@ -246,17 +246,17 @@ def sonarqube_initialize(workspace_id, param):
         # SonarQubeコンテナが立ち上がるまで繰り返し試行
         try:
             api_path = "api/users/create"
-            get_query = "?login={}&name={}&password={}".format(sonarqube_user_name, epoch_user_name, epoch_user_password)
+            get_query = "?login={}&name={}&password={}".format(epoch_user_name, epoch_user_name, epoch_user_password)
             api_uri = host + api_path + get_query
 
             # ユーザ作成API呼び出し
             response = requests.post(api_uri, auth=HTTPBasicAuth(sonarqube_user_name, sonarqube_user_password), timeout=3)
             
             globals.logger.debug('code: {}, message: {}'.format(str(response.status_code), response.text))
-            if response.status_code == 204:
+            if response.status_code == 200:
                 globals.logger.debug('SonarQube user create SUCCEED')
                 break
-            if response.status_code == 401:
+            if response.status_code == 400:
                 globals.logger.debug('SonarQube user create failed')
                 break
 
