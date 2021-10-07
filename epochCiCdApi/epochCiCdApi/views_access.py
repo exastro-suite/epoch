@@ -54,15 +54,15 @@ def post(request, workspace_id):
         info = {
             "ARGOCD_USER" : "admin",
             "ARGOCD_PASSWORD" : random_str(20),
-            "ARGOCD_EPOCH_USER" : "epoch_user",
+            "ARGOCD_EPOCH_USER" : "epoch-user",
             "ARGOCD_EPOCH_PASSWORD" : random_str(20),
             "ITA_USER" : "administrator",
             "ITA_PASSWORD" : random_str(20),
-            "ITA_EPOCH_USER" : "epoch_user",
+            "ITA_EPOCH_USER" : "epoch-user",
             "ITA_EPOCH_PASSWORD" : random_str(20),
             "SONARQUBE_USER" : "admin",
             "SONARQUBE_PASSWORD" : random_str(20),
-            "SONARQUBE_EPOCH_USER" : "epoch_user",
+            "SONARQUBE_EPOCH_USER" : "epoch-user",
             "SONARQUBE_EPOCH_PASSWORD" : random_str(20),
         }
 
