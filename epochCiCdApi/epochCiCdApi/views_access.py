@@ -127,25 +127,8 @@ def post(request, workspace_id):
 @csrf_exempt    
 def get(request, workspace_id):
     try:
-        # url設定
-        api_info = "{}://{}:{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'], os.environ['EPOCH_RS_WORKSPACE_HOST'], os.environ['EPOCH_RS_WORKSPACE_PORT'])
-
-        # 内部のアクセスなのでプロキシを解除
-        os.environ['HTTP_PROXY'] = ""
-        os.environ['HTTPS_PROXY'] = ""
-
-        # アクセス情報取得
-        # Select送信（workspace_access取得）
-        logger.debug ("workspace_access get call: worksapce_id:{}".format(workspace_id))
-        request_response = requests.get( "{}/workspace/{}/access".format(api_info, workspace_id))
-        # logger.debug (request_response)
-        # 情報が存在する場合は、更新、存在しない場合は、登録
-        if request_response.status_code == 200:
-            ret = json.loads(request_response.text)
-            logger.debug (ret["ARGOCD_USER"])
-
-        else:
-            raise Exception("workspace_access get error status:{}, responce:{}".format(request_response.status_code, request_response.text))
+        ret = get_access_info(workspace_id)
+        logger.debug (ret["ARGOCD_USER"])
 
         response = {
             "result":"200",
@@ -153,7 +136,7 @@ def get(request, workspace_id):
         }
         return JsonResponse(response, status=200)
 
-    except Exception as e:
+    except Exception:
         logger.debug("Exception workspace.access")
         logger.debug("- traceback.format_exc")
         logger.debug(traceback.format_exc())
@@ -163,6 +146,48 @@ def get(request, workspace_id):
             "output": traceback.format_exc(),
         }
         return JsonResponse(response, status=500)
+
+@csrf_exempt    
+def get_access_info(workspace_id):
+    """ワークスペースアクセス情報取得
+
+    Args:
+        workspace_id (int): ワークスペースID
+
+    Returns:
+        json: アクセス情報
+    """
+    try:
+        # url設定
+        api_info = "{}://{}:{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'], os.environ['EPOCH_RS_WORKSPACE_HOST'], os.environ['EPOCH_RS_WORKSPACE_PORT'])
+
+        # 内部のアクセスなのでProxyを退避して解除
+        http_proxy = os.environ['HTTP_PROXY']
+        https_proxy = os.environ['HTTPS_PROXY']
+        os.environ['HTTP_PROXY'] = ""
+        os.environ['HTTPS_PROXY'] = ""
+
+        # アクセス情報取得
+        # Select送信（workspace_access取得）
+        logger.debug ("workspace_access get call: worksapce_id:{}".format(workspace_id))
+        request_response = requests.get( "{}/workspace/{}/access".format(api_info, workspace_id))
+        # logger.debug (request_response)
+
+        # 退避したProxyを戻す
+        os.environ['HTTP_PROXY'] = http_proxy
+        os.environ['HTTPS_PROXY'] = https_proxy
+
+        # 情報が存在する場合は、更新、存在しない場合は、登録
+        if request_response.status_code == 200:
+            ret = json.loads(request_response.text)
+        else:
+            raise Exception("workspace_access get error status:{}, responce:{}".format(request_response.status_code, request_response.text))
+
+        return ret
+
+    except Exception as e:
+        logger.debug ("get_access_info Exception:{}".format(e.args))
+        raise # 再スロー
 
 @csrf_exempt    
 def random_str(n):
