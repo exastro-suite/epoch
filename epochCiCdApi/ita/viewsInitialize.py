@@ -92,11 +92,12 @@ def post(request):
         user_init_pass = "password"
         user_pass = access_info["ITA_PASSWORD"]
 
-        # 変更後のパスワードでインポート済みを確認
+        # パスワード暗号化
+        init_auth = base64.b64encode((user_id + ':' + user_init_pass).encode())
         auth = base64.b64encode((user_id + ':' + user_pass).encode())
 
         # すでに1度でもインポート済みの場合は、処理しない
-        ret_is_import = is_already_imported(host, auth)
+        ret_is_import = is_already_imported(host, auth, init_auth)
         if ret_is_import == 200:
             logger.debug("ITA initialize Imported.(success)")
             response = {
@@ -105,10 +106,6 @@ def post(request):
                 "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
             }
             return JsonResponse(response, status=200)
-
-        # パスワード暗号化
-        init_auth = base64.b64encode((user_id + ':' + user_init_pass).encode())
-        auth = base64.b64encode((user_id + ':' + user_pass).encode())
 
         # 一度もインポートしていないときに処理する
         if ret_is_import == 0:
@@ -207,7 +204,10 @@ def post(request):
         return JsonResponse(response, status=500)
 
 
-def is_already_imported(host, auth):
+def is_already_imported(host, auth, init_auth):
+
+    # *-*-*-* 新しいパスワードでのimport確認 *-*-*-*
+
     # POST送信する
     # ヘッダ情報
     header = {
@@ -228,26 +228,52 @@ def is_already_imported(host, auth):
     if dialog_response.status_code != 200 and dialog_response.status_code != 401:
         raise Exception(dialog_response)
 
-    if dialog_response.status_code == 200: 
+    if dialog_response.status_code == 200:
         dialog_resp_data = json.loads(dialog_response.text)
         if dialog_resp_data["resultdata"]["CONTENTS"]["RECORD_LENGTH"] > 0:
-            ret = 200
+            return 200
         else:
-            ret = 0
-    else:
-        ret = 401
+            # パスワード変更済み、かつインポートデータが無い状態は異常である
+            raise Exception('')
 
-    return ret
+    # *-*-*-* 初期パスワードでのimport確認 *-*-*-*
+
+    # POST送信する
+    # ヘッダ情報
+    header = {
+        'host': host,
+        'Content-Type': 'application/json',
+        'Authorization': init_auth,
+        'X-Command': 'FILTER',
+    }
+
+    # フィルタ条件はなし
+    data = {}
+
+    # json文字列に変換（"utf-8"形式に自動エンコードされる）
+    json_data = json.dumps(data)
+
+    # インポート結果取得
+    dialog_response = requests.post('http://' + host + '/default/menu/07_rest_api_ver1.php?no=2100000213', headers=header, data=json_data)
+    if dialog_response.status_code != 200 and dialog_response.status_code != 401:
+        raise Exception(dialog_response)
+
+    if dialog_response.status_code == 200:
+        # 初期パスワードで認証通る場合は、インポート前状態として判定する
+        return 0
+
+    # *-*-*-* システムが認識している以外のパスワードになっている *-*-*-*
+    raise Exception('')
 
 
 def import_process(host, auth):
 
     # *-*-*-* ファイルアップロード *-*-*-*
-    upload_id, upload_filename = kym_file_upload(host, auth)
+    upload_id, upload_filename, menu_items = kym_file_upload(host, auth)
 
     # menu_list再構築
     menu_list = {}
-    for menu_group_id, menu_group_detail in up_resp_data["resultdata"]["IMPORT_LIST"].items():
+    for menu_group_id, menu_group_detail in menu_items:
         if menu_group_id in menu_list:
             menu_id_list = menu_list[menu_group_id]
         else:
@@ -312,7 +338,9 @@ def kym_file_upload(host, auth):
     upload_id = up_resp_data["resultdata"]["upload_id"]
     logger.debug('upload_id: ' + upload_id)
 
-    return upload_id, upload_filename
+    menu_items = up_resp_data["resultdata"]["IMPORT_LIST"].items()
+
+    return upload_id, upload_filename, menu_items
 
 
 def import_execute(host, auth, upload_id, menu_list, upload_filename):
