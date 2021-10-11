@@ -5,9 +5,9 @@ RUN	apt-get	update	\
 
 WORKDIR /app
 
-RUN	git clone -b main https://github.com/exastro-suite/epoch.git
+COPY ./ /app/
 
-RUN     chmod +x /app/epoch/epochReverseProxy/sonarqube/nginx-start.sh \
-&&      cp /app/epoch/epochReverseProxy/sonarqube/epochReverseProxySonarqube.conf /etc/nginx/conf.d/.
+RUN     chmod +x /app/nginx-start.sh \
+&&      cp /app/epochReverseProxySonarqube.conf /etc/nginx/conf.d/.
 
-CMD ["/bin/sh","/app/epoch/epochReverseProxy/sonarqube/nginx-start.sh"]
+CMD ["/bin/sh","/app/nginx-start.sh"]
