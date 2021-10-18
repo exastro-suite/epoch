@@ -73,6 +73,55 @@ def post(request):
         # パラメータ情報(JSON形式)
         payload = json.loads(request.body)
 
+        # exastro platform authentication infra Api の呼び先設定
+        apiInfo = "{}://{}:{}/".format(os.environ["EPOCH_EPAI_PROTOCOL"], os.environ["EPOCH_EPAI_HOST"], os.environ["EPOCH_EPAI_PORT"])
+
+        # ヘッダ情報
+        headers = {
+            'Content-Type': 'application/json',
+        }
+
+        # postする情報
+        data = [
+            {
+                'client-id': 'epoch-ws-{}-ita'.format(workspace_id),
+                'namespace': 'epoch-workspace',
+                'redirect-protocol': 'xxxx',
+                'redirect-host': 'xxxx',
+                'redirect-port': 'xxxx',
+                'template-file-path': 'epoch-ws-ita-template.conf',
+                'conf_file-name': 'epoch-ws-{}-ita.conf'.format(workspace_id),
+            },
+            {
+                'client-id': 'epoch-ws-{}-argocd'.format(workspace_id),
+                'namespace': 'epoch-workspace',
+                'redirect-protocol': 'xxxx',
+                'redirect-host': 'xxxx',
+                'redirect-port': 'xxxx',
+                'template-file-path': 'epoch-ws-argocd-template.conf',
+                'conf_file-name': 'epoch-ws-{}-argocd.conf'.format(workspace_id),
+            },
+            {
+                'client-id': 'epoch-ws-{}-sonarqube'.format(workspace_id),
+                'namespace': 'epoch-tekton-pipeline-{}'.format(workspace_id),
+                'redirect-protocol': 'xxxx',
+                'redirect-host': 'xxxx',
+                'redirect-port': 'xxxx',
+                'template-file-path': 'epoch-ws-sonarqube-template.conf',
+                'conf_file-name': 'epoch-ws-{}-sonarqube.conf'.format(workspace_id),
+            },
+        ]
+
+        # post送信（アクセス情報生成）
+        exec_stat = "認証基盤 初期情報設定"
+        response = requests.post(apiInfo + 'settings/clients')
+        # 正常時以外はExceptionを発行して終了する
+        if response.status_code != 200:
+            raise Exception("認証基盤 初期情報設定の生成に失敗しました。 {}".format(response.status_code), headers=headers, data=data)
+        
+        # パラメータ情報(JSON形式)
+        payload = json.loads(request.body)
+
         # post送信（argocd/pod作成）
         exec_stat = "ArgoCDデプロイ"
         response = requests.post(apiInfo + 'argocd/pod', headers=headers, data=data, params=payload)
