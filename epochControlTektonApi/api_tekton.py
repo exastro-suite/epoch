@@ -45,7 +45,6 @@ templates = {
         'pipeline-pvc.yaml',
         'reverse-proxy.yaml',
         'sonarqube.yaml',
-        'reverse-proxy-sonarqube.yaml',
     ],
     "pipeline" : [
         'pipeline-sa.yaml',

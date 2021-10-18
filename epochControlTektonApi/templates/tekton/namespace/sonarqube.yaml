@@ -42,12 +42,11 @@ metadata:
     app: sonarqube
   namespace: {{ param.ci_config.pipeline_namespace }}
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     app: sonarqube
   ports:
   - name: http
     port: 9000
     targetPort: 9000
-    nodePort: 30907
 

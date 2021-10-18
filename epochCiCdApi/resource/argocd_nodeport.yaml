@@ -20,12 +20,11 @@ metadata:
     app.kubernetes.io/part-of: argocd
   name: argocd-server-nodeport
 spec:
-  type: NodePort
+  type: ClusterIP
   ports:
   - name: http
     port: 80
     protocol: TCP
     targetPort: 8080
-    nodePort: 30906
   selector:
     app.kubernetes.io/name: argocd-server
