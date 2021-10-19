@@ -87,6 +87,8 @@ spec:
         envFrom:
           - configMapRef:
               name: epoch-service-api-config
+          - configMapRef:
+              name: epoch-service-api-epai-config
           # - prefix: EPOCH_
           #   secretRef:
           #     name: epoch-service-api-secret

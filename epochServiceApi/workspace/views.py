@@ -74,7 +74,7 @@ def post(request):
         payload = json.loads(request.body)
 
         # exastro platform authentication infra Api の呼び先設定
-        apiInfo = "{}://{}:{}/".format(os.environ["EPOCH_EPAI_PROTOCOL"], os.environ["EPOCH_EPAI_HOST"], os.environ["EPOCH_EPAI_PORT"])
+        apiInfo = "{}://{}:{}/".format(os.environ["EPOCH_EPAI_API_PROTOCOL"], os.environ["EPOCH_EPAI_API_HOST"], os.environ["EPOCH_EPAI_API_PORT"])
 
         # ヘッダ情報
         headers = {
@@ -82,43 +82,49 @@ def post(request):
         }
 
         # postする情報
-        data = [
+        clients = [
             {
-                'client-id': 'epoch-ws-{}-ita'.format(workspace_id),
-                'namespace': 'epoch-workspace',
-                'redirect-protocol': 'xxxx',
-                'redirect-host': 'xxxx',
-                'redirect-port': 'xxxx',
-                'template-file-path': 'epoch-ws-ita-template.conf',
-                'conf_file-name': 'epoch-ws-{}-ita.conf'.format(workspace_id),
+                "client_id" :   'epoch-ws-{}-ita'.format(workspace_id),
+                "client_host" : os.environ["EPOCH_EPAI_HOST"],
+                "client_protocol" : "https",
+                "client_port" : "31183",
+                "conf_template" : "epoch-ws-ita-template.conf",
+                "backend_url" : "http://it-automation.epoch-workspace.svc:8084/",
             },
             {
-                'client-id': 'epoch-ws-{}-argocd'.format(workspace_id),
-                'namespace': 'epoch-workspace',
-                'redirect-protocol': 'xxxx',
-                'redirect-host': 'xxxx',
-                'redirect-port': 'xxxx',
-                'template-file-path': 'epoch-ws-argocd-template.conf',
-                'conf_file-name': 'epoch-ws-{}-argocd.conf'.format(workspace_id),
+                "client_id" :   'epoch-ws-{}-ita'.format(workspace_id),
+                "client_host" : os.environ["EPOCH_EPAI_HOST"],
+                "client_protocol" : "https",
+                "client_port" : "31184",
+                "conf_template" : "epoch-ws-argocd-template.conf",
+                "backend_url" : "https://argocd-server.epoch-workspace.svc/",
             },
             {
-                'client-id': 'epoch-ws-{}-sonarqube'.format(workspace_id),
-                'namespace': 'epoch-tekton-pipeline-{}'.format(workspace_id),
-                'redirect-protocol': 'xxxx',
-                'redirect-host': 'xxxx',
-                'redirect-port': 'xxxx',
-                'template-file-path': 'epoch-ws-sonarqube-template.conf',
-                'conf_file-name': 'epoch-ws-{}-sonarqube.conf'.format(workspace_id),
+                "client_id" :   'epoch-ws-{}-sonarqube'.format(workspace_id),
+                "client_host" : os.environ["EPOCH_EPAI_HOST"],
+                "client_protocol" : "https",
+                "client_port" : "31185",
+                "conf_template" : "epoch-ws-sonarqube-template.conf",
+                "backend_url" : "http://sonarqube.epoch-tekton-pipeline-1.svc:9000/",
             },
         ]
 
         # post送信（アクセス情報生成）
         exec_stat = "認証基盤 初期情報設定"
-        response = requests.post(apiInfo + 'settings/clients')
+        for client in clients:
+            response = requests.post("{}{}/{}/{}".format(apiInfo, 'settings', os.environ["EPOCH_EPAI_REALM_NAME"], 'clients'), client)
+
+            # 正常時以外はExceptionを発行して終了する
+            if response.status_code != 200:
+                raise Exception("認証基盤 初期情報設定の生成に失敗しました。 {}".format(response.status_code), headers=headers, data=data)
+
+        exec_stat = "認証基盤 設定読み込み"
+        response = requests.put("{}{}".format(apiInfo, 'apply_settings'))
+
         # 正常時以外はExceptionを発行して終了する
         if response.status_code != 200:
-            raise Exception("認証基盤 初期情報設定の生成に失敗しました。 {}".format(response.status_code), headers=headers, data=data)
-        
+            raise Exception("認証基盤 設定読み込みに失敗しました。 {}".format(response.status_code), headers=headers, data=data)
+
         # パラメータ情報(JSON形式)
         payload = json.loads(request.body)
 
