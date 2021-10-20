@@ -3769,7 +3769,7 @@ spec:
     spec:
       containers:
       - name: epoch-cicd-api
-        image: exastro/epochcicdapi:0.1.5_20210930_1420
+        image: exastro/epochcicdapi:0.1.5_20211020_1540
         env:
           - name: HTTP_PROXY
             valueFrom:
@@ -3950,7 +3950,7 @@ spec:
           name: epoch-control-tekton-conf
       containers:
       - name: epoch-control-tekton-api
-        image: exastro/epochcontroltektonapi:0.1.5_20210930_1340
+        image: exastro/epochcontroltektonapi:0.1.5_20211020_1600
         env:
         - name: CONFIG_API_TEKTON_PATH
           value: "/etc/epoch/epochControlTektonApi/api_tekton.conf"
@@ -4337,13 +4337,15 @@ spec:
     spec:
       containers:
       - name: epoch-service-api
-        image: exastro/epochserviceapi:0.1.5_20210930_1405
+        image: exastro/epochserviceapi:0.1.5_20211020_1540
         env:
         - name: PYTHONIOENCODING
           value: utf-8
         envFrom:
           - configMapRef:
               name: epoch-service-api-config
+          - configMapRef:
+              name: epoch-service-api-epai-config
           # - prefix: EPOCH_
           #   secretRef:
           #     name: epoch-service-api-secret
