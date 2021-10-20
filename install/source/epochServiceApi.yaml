@@ -50,6 +50,21 @@ data:
   EPOCH_RS_ORGANIZATION_PORT: "8000"
   PYTHONIOENCODING: utf-8
 
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: epoch-service-api-epai-config
+  namespace: epoch-system
+data:
+  EPOCH_EPAI_PROTOCOL: "https"
+  EPOCH_EPAI_HOST: ""
+  EPOCH_EPAI_PORT: "31182"
+  EPOCH_EPAI_API_PROTOCOL: "http"
+  EPOCH_EPAI_API_HOST: "gateway-httpd.exastro-platform-authentication-infra.svc"
+  EPOCH_EPAI_API_PORT: "8000"
+  EPOCH_EPAI_REALM_NAME: "exastroplatform"
+
 # ---
 
 # apiVersion: v1
