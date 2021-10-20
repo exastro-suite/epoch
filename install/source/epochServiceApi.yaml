@@ -118,11 +118,10 @@ metadata:
     name: epoch-service-api
   namespace: epoch-system
 spec:
-  type: NodePort
+  type: ClusterIP
   ports:
   - name: http
     port: 8000
     targetPort: 8000
-    nodePort: 30081
   selector:
     name: epoch-service-api

@@ -143,15 +143,13 @@ metadata:
     name: epoch-ui
   namespace: epoch-system
 spec:
-  type: NodePort
+  type: ClusterIP
   ports:
   - name: http
     port: 8000
     targetPort: 8000
-    nodePort: 30080
   - name: https
     port: 4430
     targetPort: 4430
-    nodePort: 30443
   selector:
     name: epoch-ui
