@@ -74,7 +74,7 @@ def post(request):
         payload = json.loads(request.body)
 
         # exastro platform authentication infra Api の呼び先設定
-        apiInfo = "{}://{}:{}/".format(os.environ["EPOCH_EPAI_API_PROTOCOL"], os.environ["EPOCH_EPAI_API_HOST"], os.environ["EPOCH_EPAI_API_PORT"])
+        apiInfo_epai = "{}://{}:{}/".format(os.environ["EPOCH_EPAI_API_PROTOCOL"], os.environ["EPOCH_EPAI_API_HOST"], os.environ["EPOCH_EPAI_API_PORT"])
 
         # ヘッダ情報
         headers = {
@@ -92,7 +92,7 @@ def post(request):
                 "backend_url" : "http://it-automation.epoch-workspace.svc:8084/",
             },
             {
-                "client_id" :   'epoch-ws-{}-ita'.format(workspace_id),
+                "client_id" :   'epoch-ws-{}-argocd'.format(workspace_id),
                 "client_host" : os.environ["EPOCH_EPAI_HOST"],
                 "client_protocol" : "https",
                 "client_port" : "31184",
@@ -112,18 +112,18 @@ def post(request):
         # post送信（アクセス情報生成）
         exec_stat = "認証基盤 初期情報設定"
         for client in clients:
-            response = requests.post("{}{}/{}/{}".format(apiInfo, 'settings', os.environ["EPOCH_EPAI_REALM_NAME"], 'clients'), client)
+            response = requests.post("{}{}/{}/{}".format(apiInfo_epai, 'settings', os.environ["EPOCH_EPAI_REALM_NAME"], 'clients'), headers=headers, data=json.dumps(client))
 
             # 正常時以外はExceptionを発行して終了する
             if response.status_code != 200:
-                raise Exception("認証基盤 初期情報設定の生成に失敗しました。 {}".format(response.status_code), headers=headers, data=data)
+                raise Exception("認証基盤 初期情報設定の生成に失敗しました。 {}".format(response.status_code))
 
         exec_stat = "認証基盤 設定読み込み"
-        response = requests.put("{}{}".format(apiInfo, 'apply_settings'))
+        response = requests.put("{}{}".format(apiInfo_epai, 'apply_settings'))
 
         # 正常時以外はExceptionを発行して終了する
         if response.status_code != 200:
-            raise Exception("認証基盤 設定読み込みに失敗しました。 {}".format(response.status_code), headers=headers, data=data)
+            raise Exception("認証基盤 設定読み込みに失敗しました。 {}".format(response.status_code))
 
         # パラメータ情報(JSON形式)
         payload = json.loads(request.body)

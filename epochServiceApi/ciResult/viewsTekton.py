@@ -44,7 +44,7 @@ def pipelinerun(request, workspace_id):
         json: 戻り値(result:リターンコード、rows:取得情報)
     """
 
-    logger.debug("CALL pipelinerun [{}]: workspace_id:{}".format(request.method, workspace_id))
+    #logger.debug("CALL pipelinerun [{}]: workspace_id:{}".format(request.method, workspace_id))
 
     if request.method == 'GET':
         return get_pipelinerun(request, workspace_id)
