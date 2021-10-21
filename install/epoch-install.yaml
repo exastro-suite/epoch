@@ -4136,7 +4136,7 @@ spec:
           name: epoch-rs-workspace-conf
       containers:
       - name: epoch-rs-workspace-api
-        image: exastro/epochrsworkspaceapi:0.1.3_20210907_1000
+        image: exastro/epochrsworkspaceapi:0.1.5_20211021_0840
         env:
         - name: CONFIG_API_WORKSPACE_PATH
           value: "/etc/epoch/epochRsWorkspaceApi/api_workspace.conf"
@@ -4318,7 +4318,7 @@ data:
   EPOCH_EPAI_HOST: ""
   EPOCH_EPAI_PORT: "31182"
   EPOCH_EPAI_API_PROTOCOL: "http"
-  EPOCH_EPAI_API_HOST: "gateway-httpd.exastro-platform-authentication-infra.svc"
+  EPOCH_EPAI_API_HOST: "authentication-infra-api.exastro-platform-authentication-infra.svc"
   EPOCH_EPAI_API_PORT: "8000"
   EPOCH_EPAI_REALM_NAME: "exastroplatform"
 
@@ -4420,9 +4420,9 @@ data:
         "links" : {
             "tekton"    : location_prot + "//" + location_host + ":" + (location_prot == "https:"? "30801": "30901") + "/",
             "registry"  : "https://hub.docker.com/repositories",
-            "argo"      : location_prot + "//" + location_host + ":" + "30906" + "/",
-            "ita"       : location_prot + "//" + location_host + ":" + (location_prot == "https:"? "30805": "30905") + "/default/menu/01_browse.php?no=2100180006",
-            "sonarqube" : location_prot + "//" + location_host + ":" + (location_prot == "https:"? "30807": "30907") + "/",
+            "argo"      : location_prot + "//" + location_host + ":" + "31184" + "/",
+            "ita"       : location_prot + "//" + location_host + ":" + (location_prot == "https:"? "31183": "31183") + "/default/menu/01_browse.php?no=2100180006",
+            "sonarqube" : location_prot + "//" + location_host + ":" + (location_prot == "https:"? "31185": "31185") + "/",
         },
         "test": {
             "default_workspace_id": 1
