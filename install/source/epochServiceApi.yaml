@@ -61,7 +61,7 @@ data:
   EPOCH_EPAI_HOST: ""
   EPOCH_EPAI_PORT: "31182"
   EPOCH_EPAI_API_PROTOCOL: "http"
-  EPOCH_EPAI_API_HOST: "gateway-httpd.exastro-platform-authentication-infra.svc"
+  EPOCH_EPAI_API_HOST: "authentication-infra-api.exastro-platform-authentication-infra.svc"
   EPOCH_EPAI_API_PORT: "8000"
   EPOCH_EPAI_REALM_NAME: "exastroplatform"
 
