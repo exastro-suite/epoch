@@ -5468,6 +5468,62 @@ spec:
   selector:
     name: authentication-infra-api
 
+#---- gateway-httpd.yaml
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gateway-httpd-conf
+  namespace: exastro-platform-authentication-infra
+data:
+  gateway-httpd.conf: |
+    #
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway-httpd
+  namespace: exastro-platform-authentication-infra
+spec:
+  selector:
+    matchLabels:
+      name: gateway-httpd
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: gateway-httpd
+    spec:
+      volumes:
+      - name: gateway-httpd-conf
+        configMap:
+          name: gateway-httpd-conf
+      containers:
+      - name: gateway-httpd
+        image: exastro/exastro-gateway:0.0.1_20211004_1200
+        volumeMounts:
+        - name: gateway-httpd-conf
+          mountPath: /etc/httpd/conf.d/exastroSettings/
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway-httpd
+  labels:
+    app: gateway-httpd
+  namespace: exastro-platform-authentication-infra
+spec:
+  ports:
+  - name: http
+    port: 31181
+    targetPort: 31181
+    nodePort: 31181
+  selector:
+    name: gateway-httpd
+  type: NodePort
+
 #---- authentication-infra-setting.yaml
 ---
 apiVersion: v1

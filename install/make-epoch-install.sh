@@ -57,6 +57,7 @@ YAMLFILES+=("keycloak.yaml")
 YAMLFILES+=("gateway-conf-template.yaml")
 YAMLFILES+=("nodeport-template.yaml")
 YAMLFILES+=("authentication-infra-api.yaml")
+YAMLFILES+=("gateway-httpd.yaml")
 
 YAMLFILES+=("authentication-infra-setting.yaml")
 
