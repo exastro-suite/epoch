@@ -4,7 +4,7 @@ metadata:
   name: keycloak
   labels:
     app: keycloak
-  namespace: exastro-gateway
+  namespace: exastro-platform-authentication-infra
 spec:
   ports:
   - name: http
@@ -24,7 +24,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: keycloak
-  namespace: exastro-gateway
+  namespace: exastro-platform-authentication-infra
   labels:
     app: keycloak
 spec:
