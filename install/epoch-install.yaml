@@ -5587,7 +5587,7 @@ data:
     curl -X POST \
       -H  'content-type: application/json'    \
       -d  @- \
-      http://gateway-httpd.exastro-platform-authentication-infra.svc:8000/Settings \
+      http://authentication-infra-api.exastro-platform-authentication-infra.svc:8000/settings \
       << EOF
       {
           "realm_name": "exastroplatform",
