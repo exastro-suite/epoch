@@ -3798,7 +3798,7 @@ spec:
     spec:
       containers:
       - name: epoch-cicd-api
-        image: exastro/epochcicdapi:0.1.5_20211020_1540
+        image: exastro/epoch-cicd-api:0.1.5_20211026_1340
         env:
           - name: HTTP_PROXY
             valueFrom:
@@ -4381,7 +4381,7 @@ spec:
     spec:
       containers:
       - name: epoch-service-api
-        image: exastro/epochserviceapi:0.1.5_20211020_1540
+        image: exastro/epoch-service-api:0.1.5_20211026_1340
         env:
         - name: PYTHONIOENCODING
           value: utf-8
@@ -4545,7 +4545,7 @@ spec:
           name: epoch-ui-conf
       containers:
       - name: epoch-ui
-        image: exastro/epochui:0.1.5_20210930_1345
+        image: exastro/epoch-ui:0.1.5_20211026_1340
         volumeMounts:
         - name: epoch-ui-conf
           mountPath: /app/epoch/epochUi/common/js/config
@@ -5664,7 +5664,7 @@ metadata:
   name: authentication-infra-setting
   labels:
     name: authentication-infra-setting
-  namespace: exastro-platform-authentication-infra
+  namespace: epoch-system
 spec:
   type: ClusterIP
   ports:

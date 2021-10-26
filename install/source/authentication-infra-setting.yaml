@@ -136,7 +136,7 @@ metadata:
   name: authentication-infra-setting
   labels:
     name: authentication-infra-setting
-  namespace: exastro-platform-authentication-infra
+  namespace: epoch-system
 spec:
   type: ClusterIP
   ports:
