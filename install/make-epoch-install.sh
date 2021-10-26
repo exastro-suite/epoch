@@ -33,6 +33,7 @@ YAMLFILES=()
 YAMLFILES+=("tekton-pipeline-release.yaml")
 YAMLFILES+=("tekton-trigger-release.yaml")
 YAMLFILES+=("epoch-system.yaml")
+YAMLFILES+=("exastro-platform-authentication-infra.yaml")   # namespace
 YAMLFILES+=("proxy-setting.yaml")
 YAMLFILES+=("epoch-cicd-api-config.yaml")
 YAMLFILES+=("epoch-cicd-api.yaml")
@@ -49,7 +50,6 @@ YAMLFILES+=("tekton-pipeline-db.yaml")
 YAMLFILES+=("tekton-pipelinerun-db.yaml")
 
 # 認証基盤
-YAMLFILES+=("exastro-platform-authentication-infra.yaml")
 YAMLFILES+=("exastro-platform-authentication-infra-role.yaml")
 YAMLFILES+=("authentication-infra-env.yaml")
 YAMLFILES+=("authentication-infra-secret.yaml")
