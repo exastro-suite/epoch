@@ -28,14 +28,14 @@ data:
     kubectl patch configmap -n exastro-platform-authentication-infra exastro-platform-authentication-infra-env   -p "\
     {\
         \"data\" : {\
-            \"EXASTRO_KEYCLOAK_HOST\" : \"${MY_HOST}\",\
+            \"EXASTRO_KEYCLOAK_HOST\" : \"${MY_HOST}\"\
         }\
     }"
 
     kubectl patch configmap -n epoch-system epoch-service-api-epai-config   -p "\
     {\
         \"data\" : {\
-            \"EPOCH_EPAI_HOST\" : \"${MY_HOST}\",\
+            \"EPOCH_EPAI_HOST\" : \"${MY_HOST}\"\
         }\
     }"
 
@@ -45,7 +45,7 @@ data:
             \"GATEWAY_CRYPTO_PASSPHRASE\" : \"${PASSPHRASE_B64}\",\
             \"KEYCLOAK_PASSWORD\" : \"${PASSW_B64}\",\
             \"EXASTRO_PASSWORD\" : \"${PASSW_EXASTRO_B64}\",\
-            \"EPOCH_PASSWORD\" : \"${PASSW_EPOCH_B64}\",\
+            \"EPOCH_PASSWORD\" : \"${PASSW_EPOCH_B64}\"\
         }\
     }"
 
