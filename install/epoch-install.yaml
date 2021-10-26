@@ -5649,7 +5649,7 @@ spec:
       - name: authentication-infra-setting
         image: exastro/epochkubecommand:0.1.4_20211021_1300
         volumeMounts:
-        - mountPath: /authentication-infra-setting-script
+        - mountPath: /
           name: authentication-infra-setting-script
         # command: ["sh", "-c"]
         # args:
