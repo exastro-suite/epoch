@@ -5631,6 +5631,10 @@ metadata:
   namespace: epoch-system
 spec:
   # backoffLimit: 0
+  selector:
+    matchLabels:
+      name: authentication-infra-setting
+  replicas: 1
   template:
     metadata:
       labels:
@@ -5651,6 +5655,24 @@ spec:
         # args:
         #   - |
         #     bash /authentication-infra-setting-script/setting-script.sh
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: authentication-infra-setting
+  labels:
+    name: authentication-infra-setting
+  namespace: exastro-platform-authentication-infra
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+  selector:
+    name: authentication-infra-setting
 
 #---- tekton-dashbord-release.yaml
 ---
