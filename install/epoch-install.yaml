@@ -5647,7 +5647,7 @@ spec:
           name: authentication-infra-setting-script
       containers:
       - name: authentication-infra-setting
-        image: exastro/epochkubecommand:0.1.4_20211021_1300
+        image: exastro/epoch-kube-command:0.1.5_20211026_1530
         volumeMounts:
         - mountPath: /app
           name: authentication-infra-setting-script
