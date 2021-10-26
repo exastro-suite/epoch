@@ -5547,10 +5547,10 @@ data:
     PASSW=$(< /dev/urandom tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq)
     PASSW_EXASTRO=$(< /dev/urandom tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq)
     PASSW_EPOCH=$(< /dev/urandom tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq)
-    PASSPHRASE_B64=$(echo "${PASSPHRASE}" | base64)
-    PASSW_B64=$(echo "${PASSW}" | base64)
-    PASSW_EXASTRO_B64=$(echo "${PASSW_EXASTRO}" | base64)
-    PASSW_EPOCH_B64=$(echo "${PASSW_EPOCH}" | base64)
+    PASSPHRASE_B64=$(echo -n "${PASSPHRASE}" | base64)
+    PASSW_B64=$(echo -n "${PASSW}" | base64)
+    PASSW_EXASTRO_B64=$(echo -n "${PASSW_EXASTRO}" | base64)
+    PASSW_EPOCH_B64=$(echo -n "${PASSW_EPOCH}" | base64)
 
     echo "---- patch configmap"
     kubectl patch configmap -n exastro-platform-authentication-infra exastro-platform-authentication-infra-env -p "\
@@ -5590,7 +5590,7 @@ data:
     echo "==== Waitting restart"
     while true; do
       sleep 5;
-      if [ $(kubectl get pod -n exastro-platform-authentication-infra -o json | jq -r ".items[].status.phase" | sed -e "/Running/d" -e "/Succeeded/d" | wc -l) -ne 0 ]; then
+      if [ $(kubectl get pod -n exastro-platform-authentication-infra -o json | jq -r ".items[].status.containerStatuses[].ready" | sed -e "/true/d" | wc -l) -ne 0 ]; then
         continue;
       fi
       break;
