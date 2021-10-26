@@ -5624,19 +5624,19 @@ data:
     EOF
 
 ---
-apiVersion: batch/v1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: authentication-infra-setting
   namespace: epoch-system
 spec:
-  backoffLimit: 0
+  # backoffLimit: 0
   template:
     metadata:
       labels:
         app: authentication-infra-setting
     spec:
-      restartPolicy: Never
+      # restartPolicy: Never
       volumes:
       - name: authentication-infra-setting-script
         configMap:
