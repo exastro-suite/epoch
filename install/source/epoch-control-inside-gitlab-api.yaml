@@ -77,7 +77,7 @@ metadata:
     name: epoch-control-inside-gitlab-api
   namespace: epoch-system
 spec:
-  type: NodePort
+  type: ClusterIP
   ports:
   - name: http
     port: 8000

@@ -3644,7 +3644,7 @@ spec:
 
 ---
 
-#---- epochSystem.yaml
+#---- epoch-system.yaml
 ---
 #   Copyright 2019 NEC Corporation
 #
@@ -3664,7 +3664,7 @@ kind: Namespace
 metadata:
   name: epoch-system
 
-#---- proxySetting.yaml
+#---- proxy-setting.yaml
 ---
 #   Copyright 2019 NEC Corporation
 #
@@ -3687,8 +3687,17 @@ metadata:
 data:
   HTTP_PROXY: ""
   HTTPS_PROXY: ""
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: proxy-setting-config
+  namespace: exastro-platform-authentication-infra
+data:
+  HTTP_PROXY: ""
+  HTTPS_PROXY: ""
 
-#---- epochCiCdApiConfig.yaml
+#---- epoch-cicd-api-config.yaml
 ---
 #   Copyright 2019 NEC Corporation
 #
@@ -3722,7 +3731,7 @@ data:
   RS_WORKSPACE_HOST: "epoch-rs-workspace-api"
   RS_WORKSPACE_PORT: "8000"
 
-#---- epochCiCdApi.yaml
+#---- epoch-cicd-api.yaml
 ---
 #   Copyright 2019 NEC Corporation
 #
@@ -3808,7 +3817,7 @@ spec:
   selector:
     name: epoch-cicd-api
 
-#---- epochControlInsideGitLabApi.yaml
+#---- epoch-control-inside-gitlab-api.yaml
 ---
 #   Copyright 2021 NEC Corporation
 #
@@ -3889,7 +3898,7 @@ metadata:
     name: epoch-control-inside-gitlab-api
   namespace: epoch-system
 spec:
-  type: NodePort
+  type: ClusterIP
   ports:
   - name: http
     port: 8000
@@ -3897,7 +3906,7 @@ spec:
   selector:
     name: epoch-control-inside-gitlab-api
 
-#---- epochControlTektonApi.yaml
+#---- epoch-control-tekton-api.yaml
 ---
 #   Copyright 2019 NEC Corporation
 #
@@ -3992,7 +4001,7 @@ metadata:
     name: epoch-control-tekton-api
   namespace: epoch-system
 spec:
-  type: NodePort
+  type: ClusterIP
   ports:
   - name: http
     port: 8000
@@ -4000,7 +4009,7 @@ spec:
   selector:
     name: epoch-control-tekton-api
 
-#---- epochRsOrganizationApi.yaml
+#---- epoch-rs-organization-api.yaml
 ---
 #   Copyright 2019 NEC Corporation
 #
@@ -4076,7 +4085,7 @@ metadata:
     name: epoch-rs-organization-api
   namespace: epoch-system
 spec:
-  type: NodePort
+  type: ClusterIP
   ports:
   - name: http
     port: 8000
@@ -4084,7 +4093,7 @@ spec:
   selector:
     name: epoch-rs-organization-api
 
-#---- epochRsWorkspaceApi.yaml
+#---- epoch-rs-workspace-api.yaml
 ---
 #   Copyright 2019 NEC Corporation
 #
@@ -4160,7 +4169,7 @@ metadata:
     name: epoch-rs-workspace-api
   namespace: epoch-system
 spec:
-  type: NodePort
+  type: ClusterIP
   ports:
   - name: http
     port: 8000
@@ -4168,7 +4177,7 @@ spec:
   selector:
     name: epoch-rs-workspace-api
 
-#---- epochRsCiResultApi.yaml
+#---- epoch-rs-ci-result-api.yaml
 ---
 #   Copyright 2021 NEC Corporation
 #
@@ -4245,7 +4254,7 @@ metadata:
     name: epoch-rs-ci-result-api
   namespace: epoch-system
 spec:
-  type: NodePort
+  type: ClusterIP
   ports:
   - name: http
     port: 8000
@@ -4253,7 +4262,7 @@ spec:
   selector:
     name: epoch-rs-ci-result-api
 
-#---- epochServiceApi.yaml
+#---- epoch-service-api.yaml
 ---
 #   Copyright 2019 NEC Corporation
 #
@@ -4383,7 +4392,7 @@ spec:
   selector:
     name: epoch-service-api
 
-#---- epochUi.yaml
+#---- epoch-ui.yaml
 ---
 #   Copyright 2019 NEC Corporation
 #
@@ -4541,7 +4550,7 @@ spec:
   selector:
     name: epoch-ui
 
-#---- organization_db.yaml
+#---- organization-db.yaml
 ---
 #   Copyright 2019 NEC Corporation
 #
@@ -4659,7 +4668,7 @@ spec:
   selector:
     name: organization-db
 
-#---- workspace_db.yaml
+#---- workspace-db.yaml
 ---
 #   Copyright 2019 NEC Corporation
 #
@@ -4791,7 +4800,7 @@ spec:
   selector:
     name: workspace-db
 
-#---- tekton_pipeline_db.yaml
+#---- tekton-pipeline-db.yaml
 ---
 #   Copyright 2019 NEC Corporation
 #
@@ -4922,7 +4931,7 @@ spec:
   selector:
     name: tekton-pipeline-db
 
-#---- tekton_pipelinerun_db.yaml
+#---- tekton-pipelinerun-db.yaml
 ---
 #   Copyright 2021 NEC Corporation
 #
@@ -5044,6 +5053,548 @@ spec:
     targetPort: 3306
   selector:
     name: tekton-pipelinerun-db
+
+#---- exastro-platform-authentication-infra.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: exastro-platform-authentication-infra
+
+#---- exastro-platform-authentication-infra-role.yaml
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: exastro-platform-authentication-infra-role
+  namespace: exastro-platform-authentication-infra
+rules:
+ - apiGroups: ["apps"]
+   resources: ["deployments"]
+   verbs: ["get", "list", "watch", "create", "update", "patch"]
+ - apiGroups: [""]
+   resources: ["configmaps"]
+   verbs: ["get", "list", "watch", "create", "update", "patch"]
+ - apiGroups: [""]
+   resources: ["services"]
+   verbs: ["get", "list", "watch", "create", "update", "patch"]
+ - apiGroups: [""]
+   resources: ["pods"]
+   verbs: ["get", "list", "watch", "create", "update", "patch"]
+ - apiGroups: [""]
+   resources: ["pods/exec"]
+   verbs: ["get", "list", "watch", "create", "update", "patch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+ name: exastro-platform-authentication-infra-rolebinding
+ namespace: exastro-platform-authentication-infra
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: exastro-platform-authentication-infra
+roleRef:
+  kind: Role
+  name: exastro-platform-authentication-infra-role
+  apiGroup: rbac.authorization.k8s.io
+
+#---- authentication-infra-env.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: exastro-platform-authentication-infra-env
+  namespace: exastro-platform-authentication-infra
+data:
+  EXASTRO_KEYCLOAK_HOST: ""
+  EXASTRO_KEYCLOAK_PROTOCOL: "https"
+  EXASTRO_KEYCLOAK_PORT: "31182"
+
+#---- authentication-infra-secret.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: exastro-platform-authentication-infra-secret
+  namespace: exastro-platform-authentication-infra
+stringData:
+  GATEWAY_CRYPTO_PASSPHRASE: ""
+  KEYCLOAK_USER:  "admin"
+  KEYCLOAK_PASSWORD: "admin"
+  EXASTRO_PASSWORD: ""
+  EPOCH_PASSWORD: ""
+
+#---- keycloak.yaml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak
+  labels:
+    app: keycloak
+  namespace: exastro-gateway
+spec:
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+    nodePort: 31180
+  - name: https
+    port: 8443
+    targetPort: 8443
+    nodePort: 31182
+  selector:
+    app: keycloak
+  type: NodePort
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak
+  namespace: exastro-gateway
+  labels:
+    app: keycloak
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keycloak
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      containers:
+      - name: keycloak
+        image: jboss/keycloak
+        env:
+        - name: KEYCLOAK_USER
+          valueFrom:
+            secretKeyRef:
+              name: exastro-platform-authentication-infra-secret
+              key: KEYCLOAK_USER
+        - name: KEYCLOAK_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: exastro-platform-authentication-infra-secret
+              key: KEYCLOAK_PASSWORD
+        - name: PROXY_ADDRESS_FORWARDING
+          value: "true"
+        ports:
+        - name: http
+          containerPort: 8080
+        - name: https
+          containerPort: 8443
+        readinessProbe:
+          httpGet:
+            path: /auth/realms/master
+            port: 8080
+
+#---- gateway-conf-template.yaml
+---
+apiVersion: v1
+data:
+  epoch-system-template.conf: "Listen {{ epoch_port }}\n<VirtualHost *:{{ epoch_port
+    }}>\n  SSLEngine on\n  SSLCertificateFile /etc/pki/tls/certs/exastro-gateway.pem\n
+    \ SSLCertificateKeyFile /etc/pki/tls/private/exastro-gateway.key\n  KeepAlive
+    On\n  OIDCResponseType code\n  OIDCCryptoPassphrase {{ crypto_passphrase }}\n
+    \ OIDCSSLValidateServer Off\n  OIDCProviderMetadataURL https://{{ server }}:{{
+    auth_port }}/auth/realms/exastroplatform/.well-known/openid-configuration\n  OIDCPassClaimsAs
+    headers\n  \n  RewriteEngine On\n  RewriteOptions inherit\n  \n  OIDCRedirectURI
+    \ https://{{ server }}:{{ epoch_port }}/oidc-redirect/\n  OIDCClientID epoch-system\n
+    \ OIDCClientSecret {{ epoch_system_client_secret }}\n  <Location />\n    ProxyPass
+    \       http://epoch-ui.epoch-system.svc:8000/ retry=0\n    ProxyPassReverse http://epoch-ui.epoch-system.svc:8000/\n
+    \   AuthType openid-connect\n    Require claim \"epoch-role:epoch-user\"\n  </Location>\n
+    \ <Location /api/>\n    ProxyPass        http://epoch-service-api.epoch-system.svc:8000/
+    retry=0 timeout=600\n    ProxyPassReverse http://epoch-service-api.epoch-system.svc:8000/\n
+    \   AuthType openid-connect\n    Require claim \"epoch-role:epoch-user\"\n  </Location>\n
+    \ <Location /favicon.ico>\n    Require all granted\n  </Location>\n</VirtualHost>\n"
+  epoch-ws-argocd-template.conf: "Listen {{ client_port }}\n<VirtualHost *:{{ client_port
+    }}>\n  SSLProxyEngine On\n  SSLEngine on\n  SSLCertificateFile /etc/pki/tls/certs/exastro-gateway.pem\n
+    \ SSLCertificateKeyFile /etc/pki/tls/private/exastro-gateway.key\n  KeepAlive
+    On\n  OIDCResponseType code\n  OIDCCryptoPassphrase {{ crypto_passphrase }}\n
+    \ OIDCSSLValidateServer Off\n  OIDCProviderMetadataURL {{ auth_protocol }}://{{
+    auth_host }}:{{ auth_port }}/auth/realms/{{ realm_name }}/.well-known/openid-configuration\n
+    \ OIDCPassClaimsAs headers\n  \n  RewriteEngine On\n  RewriteOptions inherit\n
+    \ \n  OIDCRedirectURI  {{ client_protocol }}://{{ client_host }}:{{ client_port
+    }}/oidc-redirect/\n  OIDCClientID {{ client_id }}\n  OIDCClientSecret {{ client_secret
+    }}\n  <Location />\n    ProxyPass        {{ backend_url }} retry=0\n    ProxyPassReverse
+    {{ backend_url }}\n    AuthType openid-connect\n    Require claim \"epoch-role:epoch-user\"\n
+    \ </Location>\n  <Location /favicon.ico>\n    Require all granted\n  </Location>\n</VirtualHost>\n"
+  epoch-ws-ita-template.conf: "Listen {{ client_port }}\n<VirtualHost *:{{ client_port
+    }}>\n  SSLEngine on\n  SSLCertificateFile /etc/pki/tls/certs/exastro-gateway.pem\n
+    \ SSLCertificateKeyFile /etc/pki/tls/private/exastro-gateway.key\n  KeepAlive
+    On\n  OIDCResponseType code\n  OIDCCryptoPassphrase {{ crypto_passphrase }}\n
+    \ OIDCSSLValidateServer Off\n  OIDCProviderMetadataURL {{ auth_protocol }}://{{
+    auth_host }}:{{ auth_port }}/auth/realms/{{ realm_name }}/.well-known/openid-configuration\n
+    \ OIDCPassClaimsAs headers\n  \n  RewriteEngine On\n  RewriteOptions inherit\n
+    \ \n  OIDCRedirectURI  {{ client_protocol }}://{{ client_host }}:{{ client_port
+    }}/oidc-redirect/\n  OIDCClientID {{ client_id }}\n  OIDCClientSecret {{ client_secret
+    }}\n  <Location />\n    ProxyPass        {{ backend_url }} retry=0\n    ProxyPassReverse
+    {{ backend_url }}\n    AuthType openid-connect\n    Require claim \"epoch-role:epoch-user\"\n
+    \ </Location>\n  <Location /favicon.ico>\n    Require all granted\n  </Location>\n</VirtualHost>\n"
+  epoch-ws-sonarqube-template.conf: "Listen {{ client_port }}\n<VirtualHost *:{{ client_port
+    }}>\n  SSLEngine on\n  SSLCertificateFile /etc/pki/tls/certs/exastro-gateway.pem\n
+    \ SSLCertificateKeyFile /etc/pki/tls/private/exastro-gateway.key\n  KeepAlive
+    On\n  OIDCResponseType code\n  OIDCCryptoPassphrase {{ crypto_passphrase }}\n
+    \ OIDCSSLValidateServer Off\n  OIDCProviderMetadataURL {{ auth_protocol }}://{{
+    auth_host }}:{{ auth_port }}/auth/realms/{{ realm_name }}/.well-known/openid-configuration\n
+    \ OIDCPassClaimsAs headers\n  \n  RewriteEngine On\n  RewriteOptions inherit\n
+    \ \n  OIDCRedirectURI  {{ client_protocol }}://{{ client_host }}:{{ client_port
+    }}/oidc-redirect/\n  OIDCClientID {{ client_id }}\n  OIDCClientSecret {{ client_secret
+    }}\n  <Location />\n    ProxyPass        {{ backend_url }} retry=0\n    ProxyPassReverse
+    {{ backend_url }}\n    AuthType openid-connect\n    Require claim \"epoch-role:epoch-user\"\n
+    \ </Location>\n  <Location /favicon.ico>\n    Require all granted\n  </Location>\n</VirtualHost>\n"
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: gateway-conf-template
+  namespace: exastro-platform-authentication-infra
+
+#---- nodeport-template.yaml
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: nodeport-template
+  namespace: exastro-platform-authentication-infra
+data:
+  nodeport-template.yaml: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: {{ client_id }}
+      labels:
+        app: {{ client_id }}
+      namespace: {{ namespace }}
+    spec:
+      ports:
+      - name: connection
+        port: {{ port }}
+        targetPort: {{ targetPort }}
+        nodePort: {{ nodePort }}
+      selector:
+        name: {{ deploy_name }}
+      type: NodePort
+#---- authentication-infra-api.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: authentication-infra-conf
+  namespace: exastro-platform-authentication-infra
+data:
+  api_authc_infra.conf: |
+    TZ='Asia/Tokyo'
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: authentication-infra-api
+  namespace: exastro-platform-authentication-infra
+spec:
+  selector:
+    matchLabels:
+      name: authentication-infra-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: authentication-infra-api
+    spec:
+      volumes:
+      - name: authentication-infra-conf
+        configMap:
+          name: authentication-infra-conf
+      - name: gateway-conf-template
+        configMap:
+          name: gateway-conf-template
+      - name: nodeport-template
+        configMap:
+          name: nodeport-template
+      containers:
+      - name: authentication-infra-api
+        image: exastro/authentication-infra-api:0.0.1_20211020_1620
+        env:
+        - name: CONFIG_API_AUTHC_INFRA_PATH
+          value: "/etc/exastro-authentication-infra/authentication-infra-api/api_authc_infra.conf"
+        - name: FLASK_ENV
+          value: "development"
+        - name: API_AUTHC_INFRA_PORT
+          value: "8000"
+        - name: PYTHONIOENCODING
+          value: utf-8
+        - name: EXASTRO_HTTP_PROXY
+          valueFrom:
+            configMapKeyRef:
+              name: proxy-setting-config
+              key: HTTP_PROXY
+        - name: EXASTRO_HTTPS_PROXY
+          valueFrom:
+            configMapKeyRef:
+              name: proxy-setting-config
+              key: HTTPS_PROXY
+        - name: EXASTRO_NO_PROXY
+          value: ""
+        - name: CONF_TEMPLATE_PATH
+          value: "/app/exastro-authentication-infra/authentication-infra-conf-templates"
+        - name: NODEPORT_TEMPLATE_PATH
+          value: "/app/exastro-authentication-infra/authentication-infra-nodeport-templates"
+        - name: EXASTRO_KEYCLOAK_USER
+          valueFrom:
+            secretKeyRef:
+              name: exastro-platform-authentication-infra-secret
+              key: KEYCLOAK_USER
+        - name: EXASTRO_KEYCLOAK_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: exastro-platform-authentication-infra-secret
+              key: KEYCLOAK_PASSWORD
+        - name: EXASTRO_KEYCLOAK_MASTER_REALM
+          value: "master"
+        - name: GATEWAY_CRYPTO_PASSPHRASE
+          valueFrom:
+            secretKeyRef:
+              name: exastro-platform-authentication-infra-secret
+              key: GATEWAY_CRYPTO_PASSPHRASE
+        - name: EXASTRO_KEYCLOAK_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: exastro-platform-authentication-infra-env
+              key: EXASTRO_KEYCLOAK_HOST
+        - name: EXASTRO_KEYCLOAK_PROTOCOL
+          valueFrom:
+            configMapKeyRef:
+              name: exastro-platform-authentication-infra-env
+              key: EXASTRO_KEYCLOAK_PROTOCOL
+        - name: EXASTRO_KEYCLOAK_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: exastro-platform-authentication-infra-env
+              key: EXASTRO_KEYCLOAK_PORT
+        - name: API_KEYCLOAK_HOST
+          value: "keycloak.exastro-platform-authentication-infra.svc"
+        - name: API_KEYCLOAK_PROTOCOL
+          value: "http"
+        - name: API_KEYCLOAK_PORT
+          value: "8080"
+        - name: GATEWAY_HTTPD_CONF_CM_NAME
+          value: "gateway-httpd-conf"
+        - name: EXASTRO_AUTHC_NAMESPACE
+          value: "exastro-platform-authentication-infra"
+        - name: GATEWAY_HTTPD_DEPLOY_NAME
+          value: "gateway-httpd"
+        volumeMounts:
+        - name: authentication-infra-conf
+          mountPath: /etc/exastro-authentication-infra/authentication-infra-api
+        - name: gateway-conf-template
+          mountPath: /app/exastro-authentication-infra/authentication-infra-conf-templates
+        - name: nodeport-template
+          mountPath: /app/exastro-authentication-infra/authentication-infra-nodeport-templates
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: authentication-infra-api
+  labels:
+    name: authentication-infra-api
+  namespace: exastro-platform-authentication-infra
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+  selector:
+    name: authentication-infra-api
+
+#---- authentication-infra-setting.yaml
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: authentication-infra-setting-script
+  namespace: epoch-system
+data:
+  setting-script.sh: |
+    #!/bin/bash
+
+    MY_HOST="$0"
+
+    # patch configmap data
+    #echo "---- get configmap"
+    #EXASTRO_KEYCLOAK_HOST=$(kubectl get cm exastro-platform-authentication-infra-env -n exastro-platform-authentication-infra -o json | jq -r ".data.EXASTRO_KEYCLOAK_HOST")
+    #EXASTRO_KEYCLOAK_PROTOCOL=$(kubectl get cm exastro-platform-authentication-infra-env -n exastro-platform-authentication-infra -o json | jq -r ".data.EXASTRO_KEYCLOAK_PROTOCOL")
+    #EXASTRO_KEYCLOAK_PORT=$(kubectl get cm exastro-platform-authentication-infra-env -n exastro-platform-authentication-infra -o json | jq -r ".data.EXASTRO_KEYCLOAK_PORT")
+
+    PASSPHRASE=cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq
+    PASSW=cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq
+    PASSW_EXASTRO=cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq
+    PASSW_EPOCH=cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq
+    PASSPHRASE_B64=${PASSPHRASE} | base64
+    PASSW_B64=${PASSW} | base64
+    PASSW_EXASTRO_B64=${PASSW_EXASTRO} | base64
+    PASSW_EPOCH_B64=${PASSW_EPOCH} | base64
+
+    echo "---- patch configmap"
+    kubectl patch configmap -n exastro-platform-authentication-infra exastro-platform-authentication-infra-env   -p "\
+    {\
+        \"data\" : {\
+            \"EXASTRO_KEYCLOAK_HOST\" : \"${MY_HOST}\",\
+        }\
+    }"
+
+    kubectl patch configmap -n epoch-system epoch-service-api-epai-config   -p "\
+    {\
+        \"data\" : {\
+            \"EPOCH_EPAI_HOST\" : \"${MY_HOST}\",\
+        }\
+    }"
+
+    kubectl patch secret -n exastro-platform-authentication-infra exastro-platform-authentication-infra-secret   -p "\
+    {\
+        \"data\" : {\
+            \"GATEWAY_CRYPTO_PASSPHRASE\" : \"${PASSPHRASE_B64}\",\
+            \"KEYCLOAK_PASSWORD\" : \"${PASSW_B64}\",\
+            \"EXASTRO_PASSWORD\" : \"${PASSW_EXASTRO_B64}\",\
+            \"EPOCH_PASSWORD\" : \"${PASSW_EPOCH_B64}\",\
+        }\
+    }"
+
+
+    # Rollout Restart Service API   
+    echo "---- rollout restart"
+    kubectl rollout restart deploy -n epoch-system epoch-service-api
+
+    # init setting api call
+    echo "---- init setting api call"
+    curl -X POST \
+      -H  'content-type: application/json'    \
+      -d  @- \
+      http://gateway-httpd.exastro-platform-authentication-infra.svc:8000/Settings \
+      << EOF
+      {
+          "realm_name": "exastroplatform",
+          "realm_option": {
+              "displayName":"Exastro Platform",
+              "enabled":True
+          },
+          "realm_roles": ["epoch-user","epoch-ws-1-admin","epoch-ws-1-user","epoch-system"],
+          "groups":[
+              { "parent_group": "", "group_name": "epoch-user", },
+              { "parent_group": "epoch-user", "group_name": "epoch-og-1", },
+              { "parent_group": "epoch-og-1", "group_name": "epoch-ws-1", },
+              { "parent_group": "epoch-ws-1", "group_name": "epoch-ws-1-admin", },
+              { "parent_group": "epoch-ws-1", "group_name": "epoch-ws-1-user", },
+          ]
+          "group_mappings":[
+              { "role_name": "epoch-user", "group_name": "epoch-user", },
+              { "role_name": "epoch-ws-1-admin", "group_name": "epoch-ws-1-admin", },
+              { "role_name": "epoch-ws-1-user", "group_name": "epoch-ws-1-user", },
+          ]
+          "users":[
+              { "user_name": "exastro-system", "user_password": "${PASSW_EXASTRO}", "user_groups": [], "user_realm_roles": ["exastro-system"], "user_option": {"enabled": True} },
+              { "user_name": "epoch-admin", "user_password": "${PASSW_EPOCH}", "user_groups": ["epoch-user"], "user_realm_roles": [], "user_option": {"enabled": True} },
+          ]
+          "client_id": "epoch-system".
+          "client_protocol": "https",
+          "client_host": "${MY_HOST}",
+          "client_port": "30443",
+          "conf_template": "epoch-system-template.conf",
+          "token_user": "admin",
+          "token_password": "${PASSW}",
+          "token_realm_name": "master",
+      }
+    EOF
+
+---
+apiVersion: batch/v1
+kind: Deployment
+metadata:
+  name: authentication-infra-setting
+  namespace: epoch-system
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        app: authentication-infra-setting
+    spec:
+      restartPolicy: Never
+      volumes:
+      - name: authentication-infra-setting-script
+        configMap:
+          name: authentication-infra-setting-script
+      containers:
+      - name: authentication-infra-setting
+        image: exastro/epochkubecommand:0.1.4_20211021_1300
+        volumeMounts:
+        - mountPath: /authentication-infra-setting-script
+          name: authentication-infra-setting-script
+        # command: ["sh", "-c"]
+        # args:
+        #   - |
+        #     bash /authentication-infra-setting-script/setting-script.sh
 
 #---- tekton-dashbord-release.yaml
 ---

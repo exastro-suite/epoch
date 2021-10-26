@@ -1,0 +1,58 @@
+apiVersion: v1
+data:
+  epoch-system-template.conf: "Listen {{ epoch_port }}\n<VirtualHost *:{{ epoch_port
+    }}>\n  SSLEngine on\n  SSLCertificateFile /etc/pki/tls/certs/exastro-gateway.pem\n
+    \ SSLCertificateKeyFile /etc/pki/tls/private/exastro-gateway.key\n  KeepAlive
+    On\n  OIDCResponseType code\n  OIDCCryptoPassphrase {{ crypto_passphrase }}\n
+    \ OIDCSSLValidateServer Off\n  OIDCProviderMetadataURL https://{{ server }}:{{
+    auth_port }}/auth/realms/exastroplatform/.well-known/openid-configuration\n  OIDCPassClaimsAs
+    headers\n  \n  RewriteEngine On\n  RewriteOptions inherit\n  \n  OIDCRedirectURI
+    \ https://{{ server }}:{{ epoch_port }}/oidc-redirect/\n  OIDCClientID epoch-system\n
+    \ OIDCClientSecret {{ epoch_system_client_secret }}\n  <Location />\n    ProxyPass
+    \       http://epoch-ui.epoch-system.svc:8000/ retry=0\n    ProxyPassReverse http://epoch-ui.epoch-system.svc:8000/\n
+    \   AuthType openid-connect\n    Require claim \"epoch-role:epoch-user\"\n  </Location>\n
+    \ <Location /api/>\n    ProxyPass        http://epoch-service-api.epoch-system.svc:8000/
+    retry=0 timeout=600\n    ProxyPassReverse http://epoch-service-api.epoch-system.svc:8000/\n
+    \   AuthType openid-connect\n    Require claim \"epoch-role:epoch-user\"\n  </Location>\n
+    \ <Location /favicon.ico>\n    Require all granted\n  </Location>\n</VirtualHost>\n"
+  epoch-ws-argocd-template.conf: "Listen {{ client_port }}\n<VirtualHost *:{{ client_port
+    }}>\n  SSLProxyEngine On\n  SSLEngine on\n  SSLCertificateFile /etc/pki/tls/certs/exastro-gateway.pem\n
+    \ SSLCertificateKeyFile /etc/pki/tls/private/exastro-gateway.key\n  KeepAlive
+    On\n  OIDCResponseType code\n  OIDCCryptoPassphrase {{ crypto_passphrase }}\n
+    \ OIDCSSLValidateServer Off\n  OIDCProviderMetadataURL {{ auth_protocol }}://{{
+    auth_host }}:{{ auth_port }}/auth/realms/{{ realm_name }}/.well-known/openid-configuration\n
+    \ OIDCPassClaimsAs headers\n  \n  RewriteEngine On\n  RewriteOptions inherit\n
+    \ \n  OIDCRedirectURI  {{ client_protocol }}://{{ client_host }}:{{ client_port
+    }}/oidc-redirect/\n  OIDCClientID {{ client_id }}\n  OIDCClientSecret {{ client_secret
+    }}\n  <Location />\n    ProxyPass        {{ backend_url }} retry=0\n    ProxyPassReverse
+    {{ backend_url }}\n    AuthType openid-connect\n    Require claim \"epoch-role:epoch-user\"\n
+    \ </Location>\n  <Location /favicon.ico>\n    Require all granted\n  </Location>\n</VirtualHost>\n"
+  epoch-ws-ita-template.conf: "Listen {{ client_port }}\n<VirtualHost *:{{ client_port
+    }}>\n  SSLEngine on\n  SSLCertificateFile /etc/pki/tls/certs/exastro-gateway.pem\n
+    \ SSLCertificateKeyFile /etc/pki/tls/private/exastro-gateway.key\n  KeepAlive
+    On\n  OIDCResponseType code\n  OIDCCryptoPassphrase {{ crypto_passphrase }}\n
+    \ OIDCSSLValidateServer Off\n  OIDCProviderMetadataURL {{ auth_protocol }}://{{
+    auth_host }}:{{ auth_port }}/auth/realms/{{ realm_name }}/.well-known/openid-configuration\n
+    \ OIDCPassClaimsAs headers\n  \n  RewriteEngine On\n  RewriteOptions inherit\n
+    \ \n  OIDCRedirectURI  {{ client_protocol }}://{{ client_host }}:{{ client_port
+    }}/oidc-redirect/\n  OIDCClientID {{ client_id }}\n  OIDCClientSecret {{ client_secret
+    }}\n  <Location />\n    ProxyPass        {{ backend_url }} retry=0\n    ProxyPassReverse
+    {{ backend_url }}\n    AuthType openid-connect\n    Require claim \"epoch-role:epoch-user\"\n
+    \ </Location>\n  <Location /favicon.ico>\n    Require all granted\n  </Location>\n</VirtualHost>\n"
+  epoch-ws-sonarqube-template.conf: "Listen {{ client_port }}\n<VirtualHost *:{{ client_port
+    }}>\n  SSLEngine on\n  SSLCertificateFile /etc/pki/tls/certs/exastro-gateway.pem\n
+    \ SSLCertificateKeyFile /etc/pki/tls/private/exastro-gateway.key\n  KeepAlive
+    On\n  OIDCResponseType code\n  OIDCCryptoPassphrase {{ crypto_passphrase }}\n
+    \ OIDCSSLValidateServer Off\n  OIDCProviderMetadataURL {{ auth_protocol }}://{{
+    auth_host }}:{{ auth_port }}/auth/realms/{{ realm_name }}/.well-known/openid-configuration\n
+    \ OIDCPassClaimsAs headers\n  \n  RewriteEngine On\n  RewriteOptions inherit\n
+    \ \n  OIDCRedirectURI  {{ client_protocol }}://{{ client_host }}:{{ client_port
+    }}/oidc-redirect/\n  OIDCClientID {{ client_id }}\n  OIDCClientSecret {{ client_secret
+    }}\n  <Location />\n    ProxyPass        {{ backend_url }} retry=0\n    ProxyPassReverse
+    {{ backend_url }}\n    AuthType openid-connect\n    Require claim \"epoch-role:epoch-user\"\n
+    \ </Location>\n  <Location /favicon.ico>\n    Require all granted\n  </Location>\n</VirtualHost>\n"
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: gateway-conf-template
+  namespace: exastro-platform-authentication-infra
