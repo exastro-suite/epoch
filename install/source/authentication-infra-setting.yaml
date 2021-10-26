@@ -24,22 +24,25 @@ data:
     PASSW_EXASTRO_B64=${PASSW_EXASTRO} | base64
     PASSW_EPOCH_B64=${PASSW_EPOCH} | base64
 
+    echo PASSP:${PASSPHRASE_B64}
+    echo PASSW:${PASSW_B64}
+
     echo "---- patch configmap"
-    kubectl patch configmap -n exastro-platform-authentication-infra exastro-platform-authentication-infra-env   -p "\
+    kubectl patch configmap -n exastro-platform-authentication-infra exastro-platform-authentication-infra-env -p "\
     {\
         \"data\" : {\
             \"EXASTRO_KEYCLOAK_HOST\" : \"${MY_HOST}\"\
         }\
     }"
 
-    kubectl patch configmap -n epoch-system epoch-service-api-epai-config   -p "\
+    kubectl patch configmap -n epoch-system epoch-service-api-epai-config -p "\
     {\
         \"data\" : {\
             \"EPOCH_EPAI_HOST\" : \"${MY_HOST}\"\
         }\
     }"
 
-    kubectl patch secret -n exastro-platform-authentication-infra exastro-platform-authentication-infra-secret   -p "\
+    kubectl patch secret -n exastro-platform-authentication-infra exastro-platform-authentication-infra-secret -p "\
     {\
         \"data\" : {\
             \"GATEWAY_CRYPTO_PASSPHRASE\" : \"${PASSPHRASE_B64}\",\
