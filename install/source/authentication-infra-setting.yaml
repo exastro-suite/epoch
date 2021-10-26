@@ -110,7 +110,7 @@ spec:
   template:
     metadata:
       labels:
-        app: authentication-infra-setting
+        name: authentication-infra-setting
     spec:
       # restartPolicy: Never
       volumes:
