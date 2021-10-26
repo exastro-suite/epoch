@@ -64,34 +64,83 @@ data:
       {
           "realm_name": "exastroplatform",
           "realm_option": {
-              "displayName":"Exastro Platform",
-              "enabled":True
+              "displayName": "Exastro Platform",
+              "enabled": "True"
           },
-          "realm_roles": ["epoch-user","epoch-ws-1-admin","epoch-ws-1-user","epoch-system"],
-          "groups":[
-              { "parent_group": "", "group_name": "epoch-user", },
-              { "parent_group": "epoch-user", "group_name": "epoch-og-1", },
-              { "parent_group": "epoch-og-1", "group_name": "epoch-ws-1", },
-              { "parent_group": "epoch-ws-1", "group_name": "epoch-ws-1-admin", },
-              { "parent_group": "epoch-ws-1", "group_name": "epoch-ws-1-user", },
-          ]
-          "group_mappings":[
-              { "role_name": "epoch-user", "group_name": "epoch-user", },
-              { "role_name": "epoch-ws-1-admin", "group_name": "epoch-ws-1-admin", },
-              { "role_name": "epoch-ws-1-user", "group_name": "epoch-ws-1-user", },
-          ]
-          "users":[
-              { "user_name": "exastro-system", "user_password": "${PASSW_EXASTRO}", "user_groups": [], "user_realm_roles": ["exastro-system"], "user_option": {"enabled": True} },
-              { "user_name": "epoch-admin", "user_password": "${PASSW_EPOCH}", "user_groups": ["epoch-user"], "user_realm_roles": [], "user_option": {"enabled": True} },
-          ]
-          "client_id": "epoch-system".
+          "realm_roles": [
+              "epoch-user",
+              "epoch-ws-1-admin",
+              "epoch-ws-1-user",
+              "epoch-system"
+          ],
+          "groups": [
+              {
+                  "parent_group": "",
+                  "group_name": "epoch-user"
+              },
+              {
+                  "parent_group": "epoch-user",
+                  "group_name": "epoch-og-1"
+              },
+              {
+                  "parent_group": "epoch-og-1",
+                  "group_name": "epoch-ws-1"
+              },
+              {
+                  "parent_group": "epoch-ws-1",
+                  "group_name": "epoch-ws-1-admin"
+              },
+              {
+                  "parent_group": "epoch-ws-1",
+                  "group_name": "epoch-ws-1-user"
+              }
+          ],
+          "group_mappings": [
+              {
+                  "role_name": "epoch-user",
+                  "group_name": "epoch-user"
+              },
+              {
+                  "role_name": "epoch-ws-1-admin",
+                  "group_name": "epoch-ws-1-admin"
+              },
+              {
+                  "role_name": "epoch-ws-1-user",
+                  "group_name": "epoch-ws-1-user"
+              }
+          ],
+          "users": [
+              {
+                  "user_name": "exastro-system",
+                  "user_password": "test",
+                  "user_groups": [],
+                  "user_realm_roles": [
+                      "exastro-system"
+                  ],
+                  "user_option": {
+                      "enabled": "True"
+                  }
+              },
+              {
+                  "user_name": "epoch-admin",
+                  "user_password": "test",
+                  "user_groups": [
+                      "epoch-user"
+                  ],
+                  "user_realm_roles": [],
+                  "user_option": {
+                      "enabled": "True"
+                  }
+              }
+          ],
+          "client_id": "epoch-system",
           "client_protocol": "https",
           "client_host": "${MY_HOST}",
-          "client_port": "30443",
+          "client_port": "31181",
           "conf_template": "epoch-system-template.conf",
           "token_user": "admin",
           "token_password": "${PASSW}",
-          "token_realm_name": "master",
+          "token_realm_name": "master"
       }
     EOF
 
