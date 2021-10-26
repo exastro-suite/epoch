@@ -50,9 +50,23 @@ data:
     }"
 
 
-    # Rollout Restart Service API   
+    # Rollout Restart API   
     echo "---- rollout restart"
     kubectl rollout restart deploy -n epoch-system epoch-service-api
+    kubectl rollout restart deploy -n exastro-platform-authentication-infra authentication-infra-api
+    kubectl rollout restart deploy -n exastro-platform-authentication-infra keycloak
+
+    #
+    # Waitting restart
+    #
+    echo "==== Waitting restart"
+    while true; do
+      sleep 5;
+      if [ $(kubectl get pod -n exastro-platform-authentication-infra -o json | jq -r ".items[].status.phase" | sed -e "/Running/d" -e "/Succeeded/d" | wc -l) -ne 0 ]; then
+        continue;
+      fi
+      break;
+    done;
 
     # init setting api call
     echo "---- init setting api call"
