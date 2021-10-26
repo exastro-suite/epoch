@@ -15,6 +15,8 @@
 */
 // JavaScript Document
 
+var workspace_id = null;
+
 $(function(){
 
 backgroundAurora();
@@ -672,48 +674,6 @@ const wsModalJSON = {
           'comitList': {
             'type': 'loading',
             'id': 'commit-list'
-          }
-        }
-      }
-    }
-  },
-  /* -------------------------------------------------- *\
-     TEKTON確認
-  \* -------------------------------------------------- */
-  'pipelineTektonCheck': {
-    'id': 'pipeline-tekton-check',
-    'title': 'TEKTON',
-    'footer': {
-      'cancel': {
-        'text': '閉じる',
-        'type': 'negative'
-      }
-    },
-    'block': {
-      'pipelineTektonTask': {
-        'title': 'タスク実行状況',
-        'tab': {
-          'id': 'pipeline-tekton-task-status',
-          'type': 'common',
-          'tabs': {
-            'pipelineTektonTaskNew': {
-              'title': '最新のタスク実行状況',
-              'item': {
-                'pipelineTektonTaskNewBody': {
-                  'type': 'loading',
-                  'id': 'pipeline-tekton-task-new'
-                }
-              }
-            },
-            'pipelineTektonTaskAll': {
-              'title': '全てのタスク実行履歴',
-              'item': {
-                'pipelineTektonTaskAllBody': {
-                  'type': 'loading',
-                  'id': 'pipeline-tekton-task-all'
-                }
-              }
-            }
           }
         }
       }
@@ -2340,7 +2300,7 @@ const cdRunning = function(){
 //   モーダルオープン
 // 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-$content.find('.modal-open, .workspace-status-item').on('click', function(){
+$content.find('.modal-open, .workspace-status-item').not('[data-button="pipelineTektonCheck"]').on('click', function(){
   const $button = $( this ),
         target = $button.attr('data-button');
   
@@ -2465,13 +2425,6 @@ $content.find('.modal-open, .workspace-status-item').on('click', function(){
         // EPOCH_LINK
         $commitList.append('<a href="' + link + '" target="_blank">' + link + '</a><br />')
       };
-      break;
-    case 'pipelineTektonCheck':
-      data_pipelinerun = get_ci_result_tekton();
-
-      $('.modal-block-main').html('<a href="' + workspace_api_conf.links.tekton + '" target="_blank">パイプライン確認</a><br />'
-        + '<a href="' + workspace_api_conf.links.sonarqube + '" target="_blank">静的解析(SonarQube)確認</a><br />'
-        + JSON.stringify(data_pipelinerun));
       break;
     case 'registryServiceCheck':
       $('.modal-block-main').html('<a href="' + workspace_api_conf.links.registry + '" target="_blank">確認</a>');
@@ -2660,7 +2613,6 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
   //-----------------------------------------------------------------------
   // API呼び出し関連
   //-----------------------------------------------------------------------
-  var workspace_id = null;
 
   // window onloadイベント
   $(document).ready(function(){ getWorksapce(); });

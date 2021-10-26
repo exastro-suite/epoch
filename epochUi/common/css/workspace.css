@@ -288,6 +288,10 @@ line-height: 24px;
 text-shadow: 1px 1px #000,-1px 1px #000,1px -1px #000,-1px -1px #000;
 color: #EEE;
 }
+.simple .workspace-point-name {
+color: #3371e3;
+text-shadow: none;
+}
 #ws-ci-user .workspace-point-inner {
 background-color: var(--ci-color);
 }
@@ -295,11 +299,17 @@ background-color: var(--ci-color);
 top: -32px; bottom: auto;
 color: #EEE;
 }
+.simple #ws-ci-user .workspace-point-name {
+color: var(--ci-color);
+}
 #ws-cd-user .workspace-point-inner {
 background-color: var(--cd-color);
 }
 #ws-cd-user .workspace-point-name {
 color: #EEE;
+}
+.simple #ws-cd-user .workspace-point-name {
+color: var(--cd-color);
 }
 .workspace-point-setting {
 position: absolute;

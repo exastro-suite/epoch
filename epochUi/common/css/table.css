@@ -47,6 +47,7 @@ height: calc( 100% - 96px );
 
 
 .etp {
+overflow-x: hidden;
 display: flex;
 justify-content: flex-start;
 align-items: center;
@@ -69,6 +70,7 @@ display: flex;
 align-items: center;
 height: 28px;
 padding: 0 8px;
+white-space: nowrap;
 color: #111;
 }
 .etp-ib {
@@ -89,7 +91,42 @@ color: #666;
 .etp-z {
 color: #AAA;
 }
-
+.etp-pc {
+overflow: hidden;
+align-items: flex-start;
+}
+.etp-pc-t {
+display: table;
+}
+.etp-pc-c {
+display: table-cell;
+width: 8px;
+}
+.etp-pc-i::-webkit-outer-spin-button, 
+.etp-pc-i::-webkit-inner-spin-button {
+-webkit-appearance: none;
+-moz-appearance: textfield;
+}
+.etp-pc-i,
+.etp-pc-w {
+display: block;
+width: 100%; height: 28px;
+padding: 0 8px;
+background-color: #F2F2F2;
+border: 1px solid #DDD;
+outline: none;
+text-align: center;
+font-family: Consolas, "メイリオ", Meiryo, Osaka, "ＭＳ Ｐゴシック", "MS PGothic", "sans-serif";
+font-size: 14px;
+}
+.etp-pc-i:focus {
+background-color: #E5F1FF;
+border-color: #0070FF;
+}
+.etp-pc-w {
+max-width: 120px;
+overflow: hidden;
+}
 
 /*
 
@@ -235,14 +272,20 @@ text-align: center;
 font-size: 12px;
 }
 .etf-sad-t {
+overflow: hidden;
+max-width: 120px;   
 padding: 2px 8px 2px 10px;
 background-color: #4CA393;
 border-right: 1px solid #4CA393;
+text-overflow: ellipsis;
 color: #EEE;
 }
 .etf-sad-c{
+overflow: hidden;
+max-width: 240px;
 padding: 2px 8px;
 background-color: #FFF;
+text-overflow: ellipsis;
 color: #333;
 }
 .etf-sad-d {
@@ -495,6 +538,9 @@ padding: 8px;
 font-size: 12px;
 color: #333;
 }
+.et-c-hidden {
+display: none;
+}
 /* ソート */
 .et-cs {
 cursor: pointer;
@@ -599,6 +645,9 @@ border-color: #CCC;
 }
 
 /* ステータスアイコン */
+.et-c-status .et-ci {
+overflow: visible;
+}
 .et-si {
 position: relative;
 z-index: 0;
@@ -611,12 +660,18 @@ user-select: none;
 -ms-user-select: none;
 }
 /* 実行中 */
-.et-si[data-type="execution"] {
+.et-si[data-type="Running"] {
 background-color: #D2E8E4;
-border: 5px double #1F8C78;
+border: 2px solid #1F8C78;
 border-radius: 50%;
+animation: runningStatus 1s ease infinite;
 }
-.et-si[data-type="execution"]::after {
+@keyframes runningStatus {
+  0% { transform: scale(1.1); box-shadow: 0 0 8px #1F8C78; }
+ 50% { transform: scale(1);   box-shadow: 0 0 4px #1F8C78; }
+100% { transform: scale(1.1); box-shadow: 0 0 8px #1F8C78; }
+}
+.et-si[data-type="Running"]::after {
 content: '';
 display: block;
 position: absolute;
@@ -624,44 +679,44 @@ z-index: 1;
 left: 50%; top: 50%;
 transform: translate(-50%,-50%);
 width: 30%; height: 30%;
-background-color: #8FC6BC;
+border: 2px solid #57A99A;
 border-radius: 50%;
 }
-.et-si[data-type="execution"] .et-sii {
+.et-si[data-type="Running"] .et-sii {
 display: block;
 position: absolute;
-left: 10%;  top: 10%;
-width: 80%; height: 80%;
-animation: statusRotation 2s ease infinite;
+left: 15%;  top: 15%;
+width: 70%; height: 70%;
+animation: statusRotation 1s linear infinite;
 }
-.et-si[data-type="execution"] .et-sii::before,
-.et-si[data-type="execution"] .et-sii::after {
+.et-si[data-type="Running"] .et-sii::before,
+.et-si[data-type="Running"] .et-sii::after {
 content: '';
 display: block;
 position: absolute;
 left: -2px; top: -2px;
 width: calc( 100% + 4px ); height: calc( 100% + 4px );
 }
-.et-si[data-type="execution"] .et-sii::before {
+.et-si[data-type="Running"] .et-sii::before {
 transform: rotate(120deg);
 }
-.et-si[data-type="execution"] .et-sii::after {
+.et-si[data-type="Running"] .et-sii::after {
 transform: rotate(-120deg);
 }
-.et-si[data-type="execution"] .et-sii,
-.et-si[data-type="execution"] .et-sii::before,
-.et-si[data-type="execution"] .et-sii::after {
+.et-si[data-type="Running"] .et-sii,
+.et-si[data-type="Running"] .et-sii::before,
+.et-si[data-type="Running"] .et-sii::after {
 border: 2px solid transparent;
 border-top-color: #57A99A;
 border-radius: 50%;
 }
 /* 正常終了 */
-.et-si[data-type="success"] {
+.et-si[data-type="Succeeded"] {
 background-color: #DFF4CF;
 border: 5px double #60C60D;
 border-radius: 50%;
 }
-.et-si[data-type="success"]::before {
+.et-si[data-type="Succeeded"]::before {
 content: '';
 display: block;
 position: absolute;
@@ -672,7 +727,31 @@ width: 16px; height: 10px;
 border-left: 3px solid #60C60D;
 border-bottom: 3px solid #60C60D;
 }
-
+/* 保留 */
+.et-si[data-type="Pending"] {
+background-color: #EEE;
+border: 2px solid #AAA;
+border-radius: 50%;
+}
+.et-si[data-type="Pending"]::before,
+.et-si[data-type="Pending"]::after {
+content: '';
+}
+.et-si[data-type="Pending"]::before,
+.et-si[data-type="Pending"]::after,
+.et-si[data-type="Pending"] .et-sii {
+display: block;
+position: absolute;
+z-index: 1;
+top: 50%;
+width: 4px; height: 4px;
+transform: translate(-50%,-50%);
+background-color: #AAA;
+border-radius: 3px;
+}
+.et-si[data-type="Pending"]::before { left: 25%; }
+.et-si[data-type="Pending"]::after { left: 50%; }
+.et-si[data-type="Pending"] .et-sii { left: 75%; }
 /* 予約 */
 .et-si[data-type="reserve"] {
 background-color: #FFEDCC;
@@ -716,13 +795,13 @@ animation: statusRotation 120s linear infinite;
 to { transform: rotate(360deg); }
 }
 /* エラー */
-.et-si[data-type="error"] {
+.et-si[data-type="Failed"] {
 background-color: #F4CCCC;
 border: 5px double #C80000;
 border-radius: 50%;
 }
-.et-si[data-type="error"]::before,
-.et-si[data-type="error"]::after {
+.et-si[data-type="Failed"]::before,
+.et-si[data-type="Failed"]::after {
 content: '';
 display: block;
 position: absolute;
@@ -731,10 +810,10 @@ left: 50%; top: 50%;
 width: 2px; height: 60%;
 background-color: #C80000;
 }
-.et-si[data-type="error"]::before {
+.et-si[data-type="Failed"]::before {
 transform: translate(-50%,-50%) rotate(45deg);
 }
-.et-si[data-type="error"]::after {
+.et-si[data-type="Failed"]::after {
 transform: translate(-50%,-50%) rotate(-45deg);
 }
 
@@ -1040,5 +1119,447 @@ border-radius: 50%;
 transform: translate(-50%,-50%) rotate(-45deg);
 }
 
+.et-bu {
+margin: 0; padding: 0;
+background-color: transparent;
+border: none;
+}
 
+
+
+.et-bh .et-c {
+flex-direction: column;
+justify-content: start;
+align-items: flex-start;
+}
+.et-ct,
+.task-status-start-title {
+width: 100%;
+padding: 8px 8px 0 8px;
+letter-spacing: .05em;
+font-size: 11px;
+font-weight: bold;
+color: #62AFA1;
+}
+.task-status-start-title {
+color: #AAA;
+}
+.et-ct::before,
+.task-status-start-title::before {
+content: '';
+display: inline-block;
+width: 4px; height: 11px;
+margin-right: 6px;
+background-color: #BCDDD7;
+vertical-align: -2px;
+}
+.task-status-start-title::before {
+background-color: #CCC;
+}
+.et-bh .et-ci,
+.task-status-start-date {
+overflow: visible;
+padding: 2px 8px 8px;
+letter-spacing: .025em;
+white-space: normal;
+word-break: break-all;
+font-size: 13px;
+color: #555;
+}
+.et-bh .task-main-status-border {
+border-left: 4px solid #CCC;
+text-align: center;
+}
+.et-bh .task-main-status-icon {
+justify-content: flex-end;
+}
+.et-bh .task-id {
+justify-content: flex-start;
+}
+.task-status-running .task-main-status-border {
+border-color: #1F8C78;
+}
+.task-status-succeeded .task-main-status-border {
+border-color: #60C60D;
+}
+.task-status-failed .task-main-status-border {
+border-color: #C80000;
+}
+.task-status-pending .task-main-status-border {
+border-color: #CCC;
+}
+.et-bh .task-main-status-icon .et-ci {
+padding: 0;
+}
+.et-bh .task-main-status-border .et-ci {
+text-align: center;
+}
+.et-bh .task-main-status-border .et-ct {
+color: #AAA;
+font-size: 10px;
+}
+.et-bh .task-main-status-border .et-ct::before {
+display: none;
+}
+#pipeline-tekton-check .et-r {
+display: grid;
+grid-template-areas:
+    "cn0 cn2 cn4 cn4"
+    "cn1 cn3 cn5 cn6"
+    "cn7 cn7 cn7 cn7";
+grid-template-columns: 80px 1fr 144px 56px;
+padding: 8px 4px;
+}
+#pipeline-tekton-check .et-b .et-r:nth-child(even) {
+background-color: #FFF;
+}
+#pipeline-tekton-check .cn0 { grid-area: cn0; }
+#pipeline-tekton-check .cn1 { grid-area: cn1; }
+#pipeline-tekton-check .cn2 { grid-area: cn2; }
+#pipeline-tekton-check .cn3 { grid-area: cn3; }
+#pipeline-tekton-check .cn4 { grid-area: cn4; }
+#pipeline-tekton-check .cn5 { grid-area: cn5; }
+#pipeline-tekton-check .cn6 { grid-area: cn6; }
+#pipeline-tekton-check .cn7 { grid-area: cn7; }
+
+#pipeline-tekton-check .et-c-button {
+justify-content: flex-end;
+}
+#pipeline-tekton-check .et-c-button .et-ci {
+padding: 4px 0 0;
+border-left: 1px solid #8FC6BC;
+text-align: center;
+}
+.task-status-open,
+.task-status-log-open-button {
+position: relative;
+z-index: 0;
+width: 32px; height: 32px;
+background-color: #FFFBF2;
+border: 1px solid #FFA500;
+border-radius: 4px;
+cursor: pointer;
+}
+.task-status-log-open-button {
+
+}
+.task-status-open .et-bui,
+.task-status-log-open-button .et-bui {
+display: block;
+position: absolute;
+left: 50%; top: 35%;
+z-index: 1;
+transform: translate(-50%,-50%) scaleX(.75);
+transition-duration: .2s;
+}
+.task-status-open:hover .et-bui,
+.task-status-log-open-button:hover .et-bui {
+top: 42%;
+}
+.task-status-open .et-bui::after,
+.task-status-log-open-button .et-bui::after {
+content: '';
+display: block;
+transform: rotate(45deg);
+width: 16px; height: 16px;
+border-right: 2px solid #FFA500;
+border-bottom: 2px solid #FFA500;
+transition-duration: .3s;
+}
+.task-status-open::before,
+.task-status-open::after,
+.task-status-log-open-button::before,
+.task-status-log-open-button::after {
+content: '';
+display: block;
+position: absolute;
+left: 50%; top: 50%;
+z-index: 1;
+width: 65%; height: 2px;
+background-color: #FFA500;
+opacity: 0;
+transition-duration: .3s;
+}
+.task-status-open::before,
+.task-status-log-open-button::before {
+transform: translate(-50%,-50%) rotate(45deg);
+}
+.task-status-open::after,
+.task-status-log-open-button::after {
+transform: translate(-50%,-50%) rotate(-45deg);
+}
+.task-status-show .task-status-open::before,
+.task-status-show .task-status-open::after,
+.task-log-show .task-status-log-open-button::before,
+.task-log-show .task-status-log-open-button::after {
+opacity: 1;
+}
+.task-status-show .task-status-open:hover::before,
+.task-status-show .task-status-open:hover::after,
+.task-log-show .task-status-log-open-button:hover::before,
+.task-log-show .task-status-log-open-button:hover::after {
+width: 50%;
+}
+.task-status-show .task-status-open .et-bui::after,
+.task-log-show .task-status-log-open-button .et-bui::after {
+opacity: 0;
+}
+
+
+
+.task-status {
+position: relative;
+z-index: 0;
+padding-left: 76px;
+border-left: 4px solid #CCC;
+}
+.task-status::before,
+.task-status::after {
+content: '';
+display: block;
+position: absolute;
+}
+.task-status::before {
+left: 80px; top: 8px;
+width: calc( 100% - 135px ); height: 1px;
+border-top: 1px solid #8FC6BC;
+}
+.task-status::after {
+right: 55px; top: 0;
+width: 1px; height: 8px;
+border-left: 1px solid #8FC6BC;
+}
+.task-status-running .task-status {
+border-color: #8FC6BC;
+}
+.task-status-succeeded .task-status {
+border-color: #B0E386;
+}
+.task-status-failed .task-status {
+border-color: #E48080;
+}
+.task-status-pending .task-status {
+border-color: #E6E6E6;
+}
+.task-status .et-ct {
+padding-top: 24px;
+}
+.task-status-list {
+position: relative;
+z-index: 0;
+margin: 4px 0 16px;
+}
+.task-status-list::after {
+content: '';
+display: block;
+position: absolute;
+left: -24px; top: 0;
+width: 16px; height: 100%;
+border: 2px solid #DDD;
+border-right: none;
+border-radius: 8px 0 0 8px;
+}
+.task-status-list::before {
+content: '';
+display: block;
+position: absolute;
+left: -48px; bottom: 50%;
+width: 24px; height: calc( 50% + 41px );
+border: 2px solid #DDD;
+border-top: none;
+border-right: none;
+border-radius: 0 0 0 8px;
+}
+.task-status-item {
+position: relative;
+z-index: 0;
+margin-bottom: 16px; padding: 0 8px 0 12px;
+background-color: #FFF;
+border: 1px solid #CCC;
+border-left-width: 4px;
+border-radius: 0 4px 4px 0;
+}
+.task-status-item:last-child {
+margin-bottom: 0;
+}
+.task-status-item::after {
+content: '';
+display: block;
+position: absolute;
+z-index: -1;
+left: 23px; bottom: 100%;
+width: 3px; height: 18px;
+background-color: #DDD;
+}
+.task-status-item:first-child::after {
+display: none;
+}
+.task-status-item.status-running {
+background-color: #F4F9F8;
+border-color: #1F8C78;
+}
+.task-status-item.status-running::after {
+background-color: #1F8C78;
+}
+.task-status-item.status-succeeded {
+background-color: #F7FCF3;
+border-color: #60C60D;
+}
+.task-status-item.status-succeeded::after {
+background-color: #60C60D;
+}
+.task-status-item.status-failed {
+background-color: #FCF2F2;
+border-color: #C80000;
+}
+.task-status-item.status-failed::after {
+background-color: #C80000;
+}
+.task-status-item.status-pending {
+background-color: #F2F2F2;
+border-color: #CCC;
+opacity: .5;
+}
+.task-status-item.status-pending::after {
+background-color: #CCC;
+}
+
+
+
+.et-wait .et-nd {
+display: none;
+}
+.et-wt {
+position: absolute;
+left: 0; top: 0;
+z-index: 9999;
+width: 100%; height: 100%;
+background-color: rgba( 255,255,255,.8 );
+animation: taskLoadingBack .4s linear infinite;
+cursor: no-drop;
+}
+
+
+
+
+.task-status-task {
+display: grid;
+grid-template-areas:
+    "task-icon task-name task-start task-open"
+    "task-log task-log task-log task-log";
+grid-template-columns: 48px 1fr 200px 48px;
+}
+.task-status-icon,
+.task-status-name,
+.task-status-start,
+.task-status-log-open {
+display: flex;
+align-items: flex-start;
+justify-content: center;
+flex-direction: column;
+}
+.task-status-icon { grid-area: task-icon; }
+.task-status-name { grid-area: task-name; }
+.task-status-start { grid-area: task-start; }
+.task-status-log-open { grid-area: task-open; align-items: flex-end; }
+.task-status-log { grid-area: task-log; }
+
+.task-status-name {
+padding: 8px;
+font-size: 14px;
+letter-spacing: .025em;
+word-break: break-all;
+color: #555;
+}
+.task-status-log {
+position: relative;
+z-index: 0;
+display: none;
+margin-bottom: 8px;
+}
+.task-status-log-area {
+display: block;
+width: 100%; min-height: 120px;
+padding: 8px;
+background-color: #FFF;
+border: 1px solid #CCC;
+resize: vertical;
+outline: none;
+letter-spacing: 0.025em;
+line-height: 1.3;
+font-size: 12px;
+color: #555;
+}
+.log-now-loading::after {
+content: '';
+display: block;
+position: absolute;
+left: 0; top: 0;
+z-index: 10;
+width: 100%; height: 100%;
+background-image: repeating-linear-gradient( rgba(9,42,36,.05) 0, rgba(9,42,36,.05) 2px, rgba(9,42,36,.1) 2px, rgba(9,42,36,.1) 4px );
+animation: taskLoadingBack .4s linear infinite;
+}
+@keyframes taskLoadingBack {
+  0% { background-position: 0 0; }
+100% { background-position: 0 4px; }
+}
+
+.log-now-loading-icon {
+position: absolute;
+z-index: 1;
+left: 50%; top: 50%;
+transform: translate(-50%,-50%);
+width: 32px; height: 32px;
+}
+.log-now-loading-icon > span {
+display: block;
+width: 100%; height: 100%;
+}
+.log-now-loading-icon::before,
+.log-now-loading-icon::after,
+.log-now-loading-icon > span::before,
+.log-now-loading-icon > span::after {
+content: '';
+display: block;
+position: absolute;
+z-index: 1; left: 0;
+width: 40%; height: 14.28571%;
+background-color: #B5BFBD;
+animation: taskLoading .8s ease infinite;
+}
+.log-now-loading-icon::before {
+top: 0;
+}
+.log-now-loading-icon::after {
+top: 28.57142%;
+animation-delay: .1s;
+}
+.log-now-loading-icon > span::before {
+bottom: 28.57142%;
+animation-delay: .2s;
+}
+.log-now-loading-icon > span::after {
+bottom: 0;
+animation-delay: .3s;
+}
+@keyframes taskLoading {
+  0% { width:  40%; }
+ 50% { width: 100%; }
+100% { width:  40%; }
+}
+
+/* No data */
+.et-nodata .et,
+.et-nodata .et-b {
+height: 100%;
+}
+
+/* Font */
+#pipeline-tekton-check .et-ci,
+.task-status-name,
+.task-status-start-date,
+.task-status-log-area {
+font-family: Consolas, "メイリオ", Meiryo, Osaka, "ＭＳ Ｐゴシック", "MS PGothic", "sans-serif";
+}
 

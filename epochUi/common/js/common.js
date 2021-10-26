@@ -80,7 +80,8 @@ function initialScreen() {
           const $popup = $('<div/>', {
             'class': popupClass,
             'text': title
-          })
+          }).append('<div class="epoch-popup-arrow"><span></span></div>')
+          const $arrow = $popup.find('.epoch-popup-arrow');
           $body.append( $popup );
           
           let s = 1; // scale
@@ -106,7 +107,12 @@ function initialScreen() {
               t = tT - pH - m;
           
           // Windowサイズを超える場合は調整
-          if ( t <= 0 ) t = tT + tH + m;
+          if ( t <= 0 )  {
+            $popup.addClass('epoch-popup-bottom');
+            t = tT + tH + m;
+          } else {
+            $popup.addClass('epoch-popup-top');
+          }
           if ( wW < l + pW ) l = wW - pW - m;
           if ( l <= 0 ) l = m;
           
@@ -117,8 +123,12 @@ function initialScreen() {
             'top': t
           });
 
+              // 矢印の位置
+              const aL = ( tL + ( tW / 2 )) - l;
+              $arrow.css('left', aL );
+
           $target.on({
-            'mouseleave.popup': function(){
+            'mouseleave.popup ': function(){
               const $popup = $body.find('.epoch-popup-block, .epoch-popup-m-block'),
                     title = $popup.text();
               $popup.remove();
@@ -126,7 +136,19 @@ function initialScreen() {
               // titleを戻す
               $target.off('mouseleave.popup').attr('title', title );        
             }
-          });          
+          });
+          
+          // 対象が存在するか一定間隔でチェックし、消えていた場合ポップアップを削除する
+          const targetCheck = function(){
+            if ( $target.is(':visible') ) {
+              if ( $popup.is(':visible') ) {
+                setTimeout( targetCheck, 200 );
+              }
+            } else {
+              $popup.remove();
+            }              
+          };
+          targetCheck();
         }
       }
     }, '.epoch-popup, .epoch-popup-m');

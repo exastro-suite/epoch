@@ -4,295 +4,321 @@ function epochTable() {}
 epochTable.prototype = {
   'setup': function( target, thArray, tbArray, option ){
       
-      if ( tbArray.length ) { 
-        const et = this;
-        
-        et.fn = new epochCommon();
-        et.ws = new webStorage();
-        
-        // Option set
-        et.option = {};
-        if ( option === undefined ) option = {};
-        if ( option.filter !== undefined ) et.option.filter = option.filter;
-        
-        // Table main
-        et.$table = $('<div/>', {
-          'class': 'epoch-table-container'
-        });
-        
-        // Filter
-        if ( option.filter !== 'off') {
-          const etHeaderHTML = ''
-          + '<div class="eth">'
-            + '<div class="etf-s">'
-              + '<div class="etf-si">'
-                + '<button class="etf-b epoch-popup-m" data-button="filter-open" title="フィルタ">'
-                  + '<svg viewBox="0 0 64 64" class="etf-sis">'
-                    + '<polygon points="64,0 36.88,0 27.12,0 0,0 0,10.47 27.12,35.02 27.12,64 36.88,57.02 36.88,35.02 64,10.47 "/>'
-                  + '</svg>'
-                + '</button>'
-              + '</div>'
-              + '<div class="etf-sa">'
-                + '<ul class="etf-sal">'
-                + '</ul>'
-              + '</div>'
-              + '<div class="etf-sc">'
-                + '<button class="etf-b epoch-popup-m" title="フィルタをクリアします。" data-button="filter-clear" disabled>'
-                  + '<span class="etf-sci"></span>'
-                + '</button>'
-              + '</div>'
+      const et = this;
+
+      et.fn = new epochCommon();
+      et.ws = new webStorage();
+      
+      et.target = target;
+
+      // Option set
+      et.option = {};
+      if ( option === undefined ) option = {};
+      if ( option.filter !== undefined ) et.option.filter = option.filter;
+      if ( option.bodyHead !== undefined ) et.option.bodyHead = option.bodyHead;
+      if ( option.callback !== undefined ) et.option.callback = option.callback;
+
+      // Table main
+      et.$table = $('<div/>', {
+        'class': 'epoch-table-container'
+      });
+
+      if ( et.option.bodyHead === 'on') et.$table.addClass('et-bh');
+
+      // Filter
+      if ( option.filter !== 'off') {
+        const etHeaderHTML = ''
+        + '<div class="eth">'
+          + '<div class="etf-s">'
+            + '<div class="etf-si">'
+              + '<button class="etf-b epoch-popup-m" data-button="filter-open" title="フィルタ">'
+                + '<svg viewBox="0 0 64 64" class="etf-sis">'
+                  + '<polygon points="64,0 36.88,0 27.12,0 0,0 0,10.47 27.12,35.02 27.12,64 36.88,57.02 36.88,35.02 64,10.47 "/>'
+                + '</svg>'
+              + '</button>'
+            + '</div>'
+            + '<div class="etf-sa">'
+              + '<ul class="etf-sal">'
+              + '</ul>'
+            + '</div>'
+            + '<div class="etf-sc">'
+              + '<button class="etf-b epoch-popup-m" title="フィルタをクリアします。" data-button="filter-clear" disabled>'
+                + '<span class="etf-sci"></span>'
+              + '</button>'
             + '</div>'
           + '</div>'
-          + '<div class="etf-c">'
-            + '<div class="etf-a">'
-              + '<div class="etf-ah">'
-                + '<div class="etf-ah-t">フィルタ</div>'
-                + '<div class="etf-ah-c"><button class="etf-ah-cb" data-button="cancel"></butto></div>'
-              + '</div>'
-              + '<div class="etf-ab">'
-              + '</div>'
-              + '<div class="etf-af">'
-                + '<ul class="etf-af-ml">'
-                  + '<li class="etf-af-mi">'
-                    + '<button class="epoch-button etf-af-mb positive" data-button="ok">フィルタ</button>'
-                  + '</li>'
-                  + '<li class="modal-menu-item">'
-                    + '<button class="epoch-button etf-af-mb negative" data-button="cancel">閉じる</button>'
-                  + '</li>'
+        + '</div>'
+        + '<div class="etf-c">'
+          + '<div class="etf-a">'
+            + '<div class="etf-ah">'
+              + '<div class="etf-ah-t">フィルタ</div>'
+              + '<div class="etf-ah-c"><button class="etf-ah-cb" data-button="cancel"></butto></div>'
+            + '</div>'
+            + '<div class="etf-ab">'
+            + '</div>'
+            + '<div class="etf-af">'
+              + '<ul class="etf-af-ml">'
+                + '<li class="etf-af-mi">'
+                  + '<button class="epoch-button etf-af-mb positive" data-button="ok">フィルタ</button>'
+                + '</li>'
+                + '<li class="modal-menu-item">'
+                  + '<button class="epoch-button etf-af-mb negative" data-button="cancel">閉じる</button>'
+                + '</li>'
+              + '</ul>'
+            + '</div>'
+          + '</div>'
+        + '</div>';
+        et.$table.addClass('et-filter').append( etHeaderHTML );
+      }
+
+      // Body
+      const etBodyHTML= ''
+      + '<div class="etb">'
+        + '<table class="et">'
+          + '<thead class="et-h">'
+          + '</thead>'
+          + '<tbody class="et-b">'
+          + '</tbody>'
+        + '</table>'
+      + '</div>';
+      et.$table.append( etBodyHTML );
+
+      // Footer(paging)
+      const pagingID = 'etp-s-r-' + et.target,
+            pagingRowsPattern = [ 200, 100, 50, 25, 10 ],
+            pagingRowsPatternLength = pagingRowsPattern.length;
+      
+      let   pagingRowsHTML = '';
+      for ( let i = 0; i < pagingRowsPatternLength; i++ ) {
+        const n = String( pagingRowsPattern[i] );
+        pagingRowsHTML += ''
+        + '<li class="etp-si">'
+          + '<input type="radio" name="' + pagingID + '" id="' + pagingID + n + '" class="etp-sr" value="' + n + '">'
+          + '<label for="' + pagingID + n + '" class="etp-sb">' + n + '</label>'
+        + '</li>';
+      }
+      
+      const etFooterHTML = ''
+      + '<div class="ett">'
+        + '<div class="etp">'
+          + '<div class="etp-w">'
+            + '<div class="etp-ih">表示する行数</div>'
+            + '<div class="etp-ib">'
+              + '<div class="etp-s">'
+                + '<div class="etp-sn"></div>'
+                + '<ul class="etp-sl">'
+                  + pagingRowsHTML
                 + '</ul>'
               + '</div>'
             + '</div>'
-          + '</div>';
-          et.$table.addClass('et-filter').append( etHeaderHTML );
-        }
-        
-        // Body
-        const etBodyHTML= ''
-        + '<div class="etb">'
-          + '<table class="et">'
-            + '<thead class="et-h">'
-            + '</thead>'
-            + '<tbody class="et-b">'
-            + '</tbody>'
-          + '</table>'
-        + '</div>';
-        et.$table.append( etBodyHTML );
-        
-        // Footer
-        const etFooterHTML = ''
-        + '<div class="ett">'
-          + '<div class="etp">'
-            + '<div class="etp-w">'
-              + '<div class="etp-ih">表示する行数</div>'
-              + '<div class="etp-ib">'
-                + '<div class="etp-s">'
-                  + '<div class="etp-sn"></div>'
-                  + '<ul class="etp-sl">'
-                    + '<li class="etp-si"><input type="radio" name="etp-s-r" id="etp-s-r100" class="etp-sr" value="100"><label for="etp-s-r100" class="etp-sb">100</label></li>'
-                    + '<li class="etp-si"><input type="radio" name="etp-s-r" id="etp-s-r50" class="etp-sr" value="50"><label for="etp-s-r50" class="etp-sb">50</label></li>'
-                    + '<li class="etp-si"><input type="radio" name="etp-s-r" id="etp-s-r25" class="etp-sr" value="25"><label for="etp-s-r25" class="etp-sb">25</label></li>'
-                    + '<li class="etp-si"><input type="radio" name="etp-s-r" id="etp-s-r10" class="etp-sr" value="10"><label for="etp-s-r10" class="etp-sb">10</label></li>'
-                  + '</ul>'
+            + '<div class="etp-if">行</div>'
+          + '</div>'
+          + '<div class="etp-w">'
+            + '<div class="etp-ib etp-ns"></div>'
+            + '<div class="etp-ib">-</div>'
+            + '<div class="etp-ib etp-ne"></div>'
+            + '<div class="etp-ib">/</div>'
+            + '<div class="etp-ib etp-na"></div>'
+            + '<div class="etp-if">件</div>'
+          + '</div>'
+          + '<div class="etp-w">'
+            + '<div class="etp-ib etp-pc">'
+              + '<div class="etp-pc-t">'
+                + '<div class="etp-pc-c">'
+                  + '<input type="number" class="etp-pc-i">'
+                  + '<div class="etp-pc-w"></div>'
                 + '</div>'
               + '</div>'
-              + '<div class="etp-if">行</div>'
             + '</div>'
-            + '<div class="etp-w">'
-              + '<div class="etp-ib etp-ns"></div>'
-              + '<div class="etp-ib">-</div>'
-              + '<div class="etp-ib etp-ne"></div>'
-              + '<div class="etp-ib">/</div>'
-              + '<div class="etp-ib etp-na"></div>'
-              + '<div class="etp-if">件</div>'
-            + '</div>'
-            + '<div class="etp-w">'
-              + '<div class="etp-ib etp-pc"></div>'
-              + '<div class="etp-ib">/</div>'
-              + '<div class="etp-ib etp-pa"></div>'
-              + '<div class="etp-if">頁</div>'
-            + '</div>'
-            + '<div class="etp-w">'
-              + '<div class="etp-ib"><button class="etp-b" data-button="start"></button></div>'
-              + '<div class="etp-ib"><button class="etp-b" data-button="prev"></button></div>'
-              + '<div class="etp-ib"><button class="etp-b" data-button="next"></button></div>'
-              + '<div class="etp-ib"><button class="etp-b" data-button="end"></button></div>'
-            + '</div>'
+            + '<div class="etp-ib">/</div>'
+            + '<div class="etp-ib etp-pa"></div>'
+            + '<div class="etp-if">頁</div>'
           + '</div>'
-          + '<div class="etd"></div>'
-        + '</div>';
-        et.$table.append( etFooterHTML );
-          
-        // Style
-        const etStyleHTML = ''
-        + '<style class="ets"></style>';
-        et.$table.append( etStyleHTML );
+          + '<div class="etp-w">'
+            + '<div class="etp-ib"><button class="etp-b" data-button="start"></button></div>'
+            + '<div class="etp-ib"><button class="etp-b" data-button="prev"></button></div>'
+            + '<div class="etp-ib"><button class="etp-b" data-button="next"></button></div>'
+            + '<div class="etp-ib"><button class="etp-b" data-button="end"></button></div>'
+          + '</div>'
+        + '</div>'
+        + '<div class="etd"></div>'
+      + '</div>';
+      et.$table.append( etFooterHTML );
 
-        // ソート値
-        et.cSortCol = null;
-        et.cSortType = null;
+      // Style
+      const etStyleHTML = ''
+      + '<style class="ets"></style>';
+      et.$table.append( etStyleHTML );
 
-        // $キャッシュ
-        et.$header = et.$table.find('.eth');
-        et.$body = et.$table.find('.etb');
-        et.$footer = et.$table.find('.ett');
-        et.$filter = et.$table.find('.etf-c');
-        et.$style = et.$table.find('.ets');
+      // ソート値
+      et.cSortCol = null;
+      et.cSortType = null;
 
-        et.$thead = et.$table.find('.et-h');
-        et.$tbody = et.$table.find('.et-b');
+      // $キャッシュ
+      et.$header = et.$table.find('.eth');
+      et.$body = et.$table.find('.etb');
+      et.$footer = et.$table.find('.ett');
+      et.$filter = et.$table.find('.etf-c');
+      et.$style = et.$table.find('.ets');
 
-        et.$rowNumber = et.$table.find('.etp-sn');
-        et.$rowSelectList = et.$table.find('.etp-sl');
-        et.$rowSelectRadio = et.$table.find('.etp-sr');
+      et.$thead = et.$table.find('.et-h');
+      et.$tbody = et.$table.find('.et-b');
 
-        et.$allNum = et.$table.find('.etp-na');
-        et.$startNum = et.$table.find('.etp-ns');
-        et.$endNum = et.$table.find('.etp-ne');
+      et.$rowNumber = et.$table.find('.etp-sn');
+      et.$rowSelectList = et.$table.find('.etp-sl');
+      et.$rowSelectRadio = et.$table.find('.etp-sr');
 
-        et.$allPageNum = et.$table.find('.etp-pa');
-        et.$currentPageNum = et.$table.find('.etp-pc');
-        
-        et.$datalist = et.$table.find('.etd');
+      et.$allNum = et.$table.find('.etp-na');
+      et.$startNum = et.$table.find('.etp-ns');
+      et.$endNum = et.$table.find('.etp-ne');
 
-        et.$filterBlock = et.$table.find('.etf-ab');
+      et.$allPageNum = et.$table.find('.etp-pa');
+      et.$currentPageNum = et.$table.find('.etp-pc-i');
+      et.$currentPageWidth = et.$table.find('.etp-pc-w');
 
-        et.$target = $( target );
-        et.th = thArray.concat(); // thead
-        et.tb = tbArray.concat(); // tbody
-        et.tdCopy = tbArray.concat(); // 初期値として使う
-        
-        et.pagingTotalPage = 0;
-                
-        et.$target.html( et.$table );
+      et.$datalist = et.$table.find('.etd');
 
-        et.setHeaderHTML();
-        et.setFilterHTML();
+      et.$filterBlock = et.$table.find('.etf-ab');
 
-        et.setFilter();
-        et.setFilterStatus();
+      et.$target = $( target );
+      et.th = $.extend( true, [], thArray ); // thead
+      et.tb = tbArray.concat(); // tbody
+      et.tbCopy = tbArray.concat(); // 初期値として使う
 
-        et.setting( option );
-        
-        et.setBodyHTML();
-        // et.datalistHTML();
-        
-        // フィルタイベント
-        if ( option.filter !== 'off') {
-          // フィルタオープン
-          et.$header.find('.etf-b').on('click', function(){
-            const $button = $( this ),
-                  type = $button.attr('data-button');
-            switch( type ) {
-              case 'filter-open':
-                et.$filter.show();
-                et.setFilterValue();
-                break;
-              case 'filter-clear':
-                $button.mouseleave();
-                et.clearFilter();
-                et.setting({
-                  'page': 1,
-                  'sortCol': et.cSortCol,
-                  'sortType': et.cSortType
-                });
-                et.setBodyHTML();
-                break;
-            }
-          });
-          // フィルタダイアログ
-          et.$filter.find('.epoch-button, .etf-ah-cb').on('click', function(){
-            const $button = $( this ),
-                  type = $button.attr('data-button');
-            switch( type ) {
-              case 'ok':
-                et.getFilterValue();
-                et.setFilter();
-                et.setFilterStatus();
-                et.setting({
-                  'page': 1,
-                  'sortCol': et.cSortCol,
-                  'sortType': et.cSortType
-                });
-                et.setBodyHTML();
-                et.$filter.hide();
-                break;
-              case 'cancel':
-                et.$filter.hide();
-                break;
-            }
-          });
-          // フィルタ削除
-          et.$header.find('.etf-sa').on('click', '.etf-sad-di', function(){
-            const $button = $( this ),
-                  colNumber = $button.attr('data-col');
-            $button.mouseleave();
-            if ( et.$header.find(('.etf-sai')).length === 1 ) {
-              et.clearFilter();
-            } else {
-              $button.closest('.etf-sai').remove();
-              if ( et.th[colNumber] !== undefined && et.th[colNumber]['filterOption'] !== undefined ) {
-                delete et.th[colNumber]['filterOption'];
-              }
-              et.setFilter();
-            }
-            et.setting({
-              'page': 1,
-              'sortCol': et.cSortCol,
-              'sortType': et.cSortType
-            });
-            et.setBodyHTML();
-          });
-        }
+      et.pagingTotalPage = 0;
 
-        // ページング
-        et.$footer.find('.etp-b').on('click', function(){
+      et.$target.html( et.$table );
+
+      et.setHeaderHTML();
+      et.setFilterHTML();
+
+      et.setFilter();
+      et.setFilterStatus();
+
+      et.setting( option );
+
+      et.setBodyHTML();
+      // et.datalistHTML();
+
+      // フィルタイベント
+      if ( option.filter !== 'off') {
+        // フィルタオープン
+        et.$header.find('.etf-b').on('click', function(){
           const $button = $( this ),
                 type = $button.attr('data-button');
           switch( type ) {
-            case 'start':
-              et.pageChange( 1 );
+            case 'filter-open':
+              et.$filter.show();
+              et.setFilterValue();
               break;
-            case 'prev':
-              et.pageChange( et.pagingPage - 1 );
-              break;
-            case 'next':
-              et.pageChange( et.pagingPage + 1 );
-              break;
-            case 'end':
-              et.pageChange( et.pagingTotalPage );
+            case 'filter-clear':
+              $button.mouseleave();
+              et.clearFilter();
+              et.setting({
+                'page': 1,
+                'sortCol': et.cSortCol,
+                'sortType': et.cSortType
+              });
+              et.setBodyHTML();
               break;
           }
-          et.pagingCheck();
         });
-
-        // 行数変更
-        et.$rowNumber.text( et.pagingNumber ).on('click', function(){
-          et.$rowSelectList.show();
-          $( window ).on('click.pagingNumber', function(e){
-            if ( !$( e.target ).closest('.etp-s').length ) {
-              $( this ).off('click.pagingNumber');
-              et.$rowSelectList.hide();
+        // フィルタダイアログ
+        et.$filter.find('.epoch-button, .etf-ah-cb').on('click', function(){
+          const $button = $( this ),
+                type = $button.attr('data-button');
+          switch( type ) {
+            case 'ok':
+              et.getFilterValue();
+              et.setFilter();
+              et.setFilterStatus();
+              et.setting({
+                'page': 1,
+                'sortCol': et.cSortCol,
+                'sortType': et.cSortType
+              });
+              et.setBodyHTML();
+              et.$filter.hide();
+              break;
+            case 'cancel':
+              et.$filter.hide();
+              break;
+          }
+        });
+        // フィルタ削除
+        et.$header.find('.etf-sa').on('click', '.etf-sad-di', function(){
+          const $button = $( this ),
+                colNumber = $button.attr('data-col');
+          $button.mouseleave();
+          if ( et.$header.find(('.etf-sai')).length === 1 ) {
+            et.clearFilter();
+          } else {
+            $button.closest('.etf-sai').remove();
+            if ( et.th[colNumber] !== undefined && et.th[colNumber]['filterOption'] !== undefined ) {
+              delete et.th[colNumber]['filterOption'];
             }
+            et.setFilter();
+          }
+          et.setting({
+            'page': 1,
+            'sortCol': et.cSortCol,
+            'sortType': et.cSortType
           });
-        });
-        et.$rowSelectRadio.val([et.pagingNumber]).on('change', function(){
-          et.pagingNumber = Number( $( this ).val() );
-          et.pagingPage = 1;
-          et.$rowNumber.text( et.pagingNumber );
-          et.$rowSelectList.hide();
           et.setBodyHTML();
         });
-
-        return et.$table;
-
-      } else {
-        // データがない場合
-        const noDataHTML = ''
-        + '<div class="et-nd"><div class="et-ndi">データがありません。</div></div>';
-        $( target ).html( noDataHTML );
-        return false;
       }
+
+      // ページング
+      et.$footer.find('.etp-b').on('click', function(){
+        const $button = $( this ),
+              type = $button.attr('data-button');
+        switch( type ) {
+          case 'start':
+            et.pageChange( 1 );
+            break;
+          case 'prev':
+            et.pageChange( et.pagingPage - 1 );
+            break;
+          case 'next':
+            et.pageChange( et.pagingPage + 1 );
+            break;
+          case 'end':
+            et.pageChange( et.pagingTotalPage );
+            break;
+        }
+        et.pagingCheck();
+      });
+      et.$currentPageNum.on({
+        'input': function(){
+          et.$currentPageWidth.text( $( this ).val() );
+        },
+        'change': function(){
+          et.pageChange( $( this ).val() );
+        }
+      });
+      
+
+      // 行数変更
+      et.$rowNumber.text( et.pagingNumber ).on('click', function(){
+        et.$rowSelectList.show();
+        $( window ).on('click.pagingNumber', function(e){
+          if ( !$( e.target ).closest('.etp-s').length ) {
+            $( this ).off('click.pagingNumber');
+            et.$rowSelectList.hide();
+          }
+        });
+      });
+      et.$rowSelectRadio.val([et.pagingNumber]).on('change', function(){
+        et.pagingNumber = Number( $( this ).val() );
+        et.pagingPage = 1;
+        et.$rowNumber.text( et.pagingNumber );
+        et.$rowSelectList.hide();
+        et.setBodyHTML();
+      });
+
+      return et.$table;
   },
+
   // ページングボタンDisabled制御
   'pagingCheck': function(){
       const et = this,
@@ -311,21 +337,24 @@ epochTable.prototype = {
   // thead and style
   'setHeaderHTML': function(){
       const et = this,
+            op = et.option,
             th = et.th,
             thLength = th.length;
+      if ( op.bodyHead !== 'on') {
       let thHTML = '',
           tStyle = '';
       thHTML += '<tr class="et-r">';
       for( let i = 0; i < thLength; i++ ) {
           // HTML
-          if ( ['hoverMenu'].indexOf( th[i].type ) === -1 ) {
-          thHTML += ''
-          + '<th class="et-c cn' + i + '">'
-            + '<div class="et-ci';
-          if ( th[i].sort === 'on') thHTML += ' et-cs'; // Srot
-          thHTML += '" data-column-index="' + i + '">' + th[i].title + '</div>';
-          if ( th[i].resize === 'on') thHTML += '<div class="et-cr"></div>'; // Resize
-          thHTML += '</th>';
+          const exclusionType = ['hoveMenu', 'class', 'attr']; // 表示しないタイプ
+          if ( exclusionType.indexOf( th[i].type ) === -1 ) {
+              thHTML += ''
+              + '<th class="et-c cn' + i + '">'
+                + '<div class="et-ci';
+              if ( th[i].sort === 'on') thHTML += ' et-cs'; // Srot
+              thHTML += '" data-column-index="' + i + '">' + th[i].title + '</div>';
+              if ( th[i].resize === 'on') thHTML += '<div class="et-cr"></div>'; // Resize
+              thHTML += '</th>';
           }
           // Style
           const width = th[i].width,
@@ -371,83 +400,145 @@ epochTable.prototype = {
           et.sort( index, sort );
           et.setBodyHTML();
       });
-      
+      }
   },
   // tbody
   'setBodyHTML': function(){
       const et = this,
+            op = et.option,
             th = et.th,
             tb = et.tb,
-            na = tb.length,
-            nd = String( na ).length,
-            cp = et.pagingPage,
-            pn = et.pagingNumber,
-            ns = 1 + pn * ( cp - 1 ),
-            ne = ( na > ns + pn - 1 )? ns + pn - 1: na,
-            pa = Math.ceil( na / pn ),
-            pd = String( pa ).length;
+            na = tb.length; // 件数
       
-      et.pagingTotalPage = pa;
-      
-      et.$allNum.text( na.toLocaleString() );
-      et.$startNum.html( et.zeroPadding( ns, nd ) );
-      et.$endNum.html( et.zeroPadding( ne, nd ) );
-      
-      et.$allPageNum.text( pa.toLocaleString() );
-      et.$currentPageNum.html( et.zeroPadding( cp, pd ) );
-      
-      let tbHTML = '';
+      if ( na >= 1 ) {
+          et.$table.removeClass('et-nodata');
+          
+          const cp = et.pagingPage,
+                pn = et.pagingNumber,
+                ns = 1 + pn * ( cp - 1 ),
+                ne = ( na > ns + pn - 1 )? ns + pn - 1: na;
 
-      for( let i = ns - 1; i < ne; i++ ) {
-          tbHTML += '<tr id="et-r' + i + '" class="et-r">';
-          const cLength = tb[i].length;
-          for( let j = 0; j < cLength; j++ ) {
-              const thd = th[j],
-                    tbd = tb[i][j];
-              tbHTML += ''
-              + '<td class="et-c cn' + j + ' et-c-' + thd.type + '">'
-                + '<div class="et-ci">';
+          let tbHTML = '';
 
-              if ( tbd !== null ) {
-                  switch( thd.type ){
-                      case 'text':
-                          tbHTML += et.fn.textEntities( tbd );
-                          break;
-                      case 'list':
-                      case 'date':
-                      case 'number':
-                          tbHTML += et.fn.textEntities( tbd );
-                          break;
-                      case 'html':
-                          tbHTML += tbd;
-                          break;
-                      case 'hoverMenu':
-                          tbHTML += et.hoverMenuListHTML( thd.menu, tbd );
-                          break;
-                      case 'status':
-                          tbHTML += et.statusHTML( thd.list[tbd], tbd );
-                          break;
+          for( let i = ns - 1; i < ne; i++ ) {
+              let trHTML = '',
+                  idName = '',
+                  rowClassName = ['et-r'],
+                  attr = ['data-rows="' + i + '"'];
+
+              const cLength = tb[i].length;
+              for( let j = 0; j < cLength; j++ ) {
+                  const thd = th[j],
+                        tbd = tb[i][j];
+
+                  // id, class, attr
+                  if ( ['id','class','attr'].indexOf( thd.type ) !== -1 ) {
+                      if ( tbd !== null ) {
+                          switch( thd.type ){
+                              case 'id':
+                                  idName = tbd;
+                                  break;
+                              case 'class':
+                                  rowClassName.push( tbd );
+                                  break;
+                              case 'attr':
+                                  attr.push('data-' + thd.attr + '="' + tbd + '"' );
+                                  break;
+                              default:
+                          }
+                      }
+                  } else {
+                      let cellClassName = 'et-c cn' + j + ' et-c-' + thd.type;
+                      if ( thd.className !== undefined ) cellClassName += ' ' + thd.className;
+
+                      trHTML += '<td class="' + cellClassName + '">';
+
+                      if ( op.bodyHead === 'on' && ['status','button'].indexOf( thd.type ) === -1 ) {
+                        trHTML += '<div class="et-ct">' + thd.title + '</div>';
+                      }
+
+                      trHTML += '<div class="et-ci">';
+
+                      if ( tbd !== null ) {
+                          switch( thd.type ){
+                              case 'text':
+                              case 'list':
+                              case 'date':
+                              case 'number':
+                                  trHTML += et.fn.textEntities( tbd );
+                                  break;
+                              case 'url':
+                                  trHTML += '<a href="' + encodeURI(tbd) + '">' + et.fn.textEntities( tbd ) + '</a>';
+                                  break;
+                              case 'html':
+                                  trHTML += tbd;
+                                  break;
+                              case 'hoverMenu':
+                                  trHTML += et.hoverMenuListHTML( thd.menu, tbd );
+                                  break;
+                              case 'status':
+                                  trHTML += et.statusHTML( thd.list[tbd], tbd );
+                                  break;
+                              case 'button':
+                                  trHTML += et.buttonHTML( thd.title, thd.buttonClass );
+                                  break;
+                              default:
+                          }
+                      }
+                      trHTML += ''
+                        + '</div>'
+                      + '</td>';
                   }
               }
-              tbHTML += ''
-                + '</div>'
-              + '</td>';
+              tbHTML += '<tr id="' + idName + '" class="' + rowClassName.join(' ') + '" ' + attr.join(' ') + '>' + trHTML + '</tr>';
           }
-          tbHTML += '</tr>';
+          et.$tbody.html( tbHTML );
+          et.pagingStatus();
+      } else {
+          const noDataHTML = ''
+          + '<div class="et-nd"><div class="et-ndi">データがありません。</div></div>';
+          et.$table.addClass('et-nodata');
+          et.$tbody.html( noDataHTML );
+          et.pagingPage = 1;
       }
-      et.$tbody.html( tbHTML );
-      et.pagingCheck();      
       
+      et.pagingStatus();
+      if ( et.option.callback !== undefined ) et.option.callback();
+  },
+  /* ------------------------------ *\
+     Paging status
+  \* ------------------------------ */
+  'pagingStatus': function(){
+    const et = this,
+          targetPage = et.pagingPage, // 表示ページ
+          pageNumber = et.pagingNumber, // 1頁表示件数
+          rowLength = et.tb.length, // 件数
+          rowDigit = String( rowLength ).length, // 件数桁数
+          allPageNumber = Math.ceil( rowLength / pageNumber ), // ページ数
+          currentPage = ( rowLength === 0 )? 0: targetPage,
+          pageStart = ( rowLength === 0 )? 0: 1 + pageNumber * ( targetPage - 1 ),
+          pageEnd = ( rowLength > pageStart + pageNumber - 1 )? pageStart + pageNumber - 1: rowLength;
+    
+    et.pagingTotalPage = allPageNumber;
+    
+    et.$allNum.text( rowLength.toLocaleString() );
+    et.$startNum.html( et.zeroPadding( pageStart, rowDigit ) );
+    et.$endNum.html( et.zeroPadding( pageEnd, rowDigit ) );
+
+    et.$currentPageNum.val( currentPage ).trigger('input');
+    et.$allPageNum.text( allPageNumber.toLocaleString() );
+    
+    et.pagingCheck();
   },
   /* ------------------------------ *\
      Filter input datalist
   \* ------------------------------ */
   'datalistHTML': function(){
     const et = this,
-            th = et.th,
-            tb = et.tb,
-            tbL = tb.length,
-            datalist = {};
+          th = et.th,
+          tb = et.tb,
+          tbL = tb.length,
+          datalist = {};
     for ( let i = 0; i < tbL; i++ ) {
       const col = tb[i].length;
       for ( let j = 0; j < col; j++ ) {
@@ -488,6 +579,17 @@ epochTable.prototype = {
       + '</span>';
   },
   /* ------------------------------ *\
+     Button HTML
+  \* ------------------------------ */  
+  'buttonHTML': function( text, className, popup ) {
+    if ( popup === undefined ) popup = true;
+    const popupClass = ( popup === true )? ' epoch-popup-m': '';
+    return ''
+      + '<button class="et-bu ' + className + popupClass + '" title="' + text + '">'
+        + '<span class="et-bui"></span>'
+      + '</button>';
+  },
+  /* ------------------------------ *\  
      ソート
   \* ------------------------------ */
   'sort': function( index, order ){
@@ -497,8 +599,10 @@ epochTable.prototype = {
       et.cSortCol = index;
       et.cSortType = order;
       
-      et.$thead.find('.et-cs').removeAttr('data-sort');
-      et.$thead.find('.et-cs').eq( index ).attr('data-sort', order );
+      if ( et.$thead !== undefined ) {
+        et.$thead.find('.et-ci').removeAttr('data-sort');
+        et.$thead.find('.et-ci').eq( index ).attr('data-sort', order );
+    }
           
       tb.sort(function( a, b ){
           const aS = ( typeof a[index] === 'number' && isFinite( a[index] ) )?
@@ -520,8 +624,11 @@ epochTable.prototype = {
   },
   // 指定ページを表示
   'pageChange': function( page ){
-    this.pagingPage = page;
-    this.setBodyHTML( this.tb );
+    const et = this;
+    if ( page <= 1 ) page = 1;    
+    if ( page > et.pagingTotalPage ) page = et.pagingTotalPage;
+    et.pagingPage = Number ( page );
+    et.setBodyHTML();
   },
   // カンマ付きの0埋め
   'zeroPadding': function( num, digit ){
@@ -537,30 +644,37 @@ epochTable.prototype = {
     const et = this,
           th = et.th,
           thength = th.length;
-    let filterHTML = '';
+    let filterHTML = '',
+        tabID = '';
+    // タブの中の場合inputのnameにTab IDを追加する
+    if ( et.$table.closest('.modal-tab-body-block').length ) {
+        tabID = '-' + et.$table.closest('.modal-tab-body-block').attr('id') + '-';
+    } 
     for ( let i = 0; i < thength; i++ ) {
       if ( th[i].filter === 'on') {
+        const nameID = tabID + i
         filterHTML += ''
         + '<div class="etf-fc" type="' + th[i].type+ '" data-array="' + i + '">'
           + '<div class="etf-fh">' + th[i].title + '</div>'
           + '<div class="etf-fb">';
         switch( th[i].type ) {
+        case 'url':
         case 'text':
           filterHTML += ''
             + '<div class="etf-fb-iwf"><input type="text" class="etf-fb-i etf-fb-it" list="list' + i + '"></div>'
             + '<div class="etf-fb-iwf">'
               + '<ul class="etf-fb-fol">'
                 + '<li class="etf-fb-foi">'
-                  + '<div class="etf-fb-foc"><input type="checkbox" value="r" class="etf-fb-fob" id="etf-fb-r' + i + '"><label for="etf-fb-r' + i + '" class="etf-fb-fot">正規表現</label></div>'
+                + '<div class="etf-fb-foc"><input type="checkbox" value="r" class="etf-fb-fob" id="etf-fb-r' + nameID + '"><label for="etf-fb-r' + nameID + '" class="etf-fb-fot">正規表現</label></div>'
                 + '</li>'
                 + '<li class="etf-fb-foi">'
-                  + '<div class="etf-fb-foc"><input type="checkbox" value="l" class="etf-fb-fob" id="etf-fb-l' + i + '"><label for="etf-fb-l' + i + '" class="etf-fb-fot">大文字小文字を区別</label></div>'
+                  + '<div class="etf-fb-foc"><input type="checkbox" value="l" class="etf-fb-fob" id="etf-fb-l' + nameID + '"><label for="etf-fb-l' + nameID + '" class="etf-fb-fot">大文字小文字を区別</label></div>'
                 + '</li>'
                 + '<li class="etf-fb-foi">'
-                  + '<div class="etf-fb-foc"><input type="checkbox" value="m" class="etf-fb-fob" id="etf-fb-m' + i + '"><label for="etf-fb-m' + i + '" class="etf-fb-fot">完全一致</label></div>'
+                  + '<div class="etf-fb-foc"><input type="checkbox" value="m" class="etf-fb-fob" id="etf-fb-m' + nameID + '"><label for="etf-fb-m' + nameID + '" class="etf-fb-fot">完全一致</label></div>'
                 + '</li>'
                 + '<li class="etf-fb-foi">'
-                  + '<div class="etf-fb-foc"><input type="checkbox" value="n" class="etf-fb-fob" id="etf-fb-n' + i + '"><label for="etf-fb-n' + i + '" class="etf-fb-fot">否定</label></div>'
+                  + '<div class="etf-fb-foc"><input type="checkbox" value="n" class="etf-fb-fob" id="etf-fb-n' + nameID + '"><label for="etf-fb-n' + nameID + '" class="etf-fb-fot">否定</label></div>'
                 + '</li>'
               + '</ul>'
             + '</div>';
@@ -587,8 +701,8 @@ epochTable.prototype = {
             filterHTML += ''
             + '<li class="etf-fb-si">'
               + '<div class="etf-fb-sc">'
-                + '<input id="etf-fb-scb-' + i + '-' + j + '" type="checkbox" class="etf-fb-scb" value="' + tbList[j] + '">'
-                + '<label for="etf-fb-scb-' + i + '-' + j + '" class="etf-fb-scl">'
+                + '<input id="etf-fb-scb-' + nameID + '-' + j + '" type="checkbox" class="etf-fb-scb" value="' + tbList[j] + '">'
+                + '<label for="etf-fb-scb-' + nameID + '-' + j + '" class="etf-fb-scl">'
                   + '<span class="etf-fb-st">' + tbList[j] + '</span>'
                 + '</label>'
               + '</div>'
@@ -602,8 +716,8 @@ epochTable.prototype = {
             filterHTML += ''
             + '<li class="etf-fb-si">'
               + '<div class="etf-fb-sc">'
-                + '<input id="etf-fb-scb-' + i + '-' + key + '" type="checkbox" class="etf-fb-scb" value="' + key + '">'
-                + '<label for="etf-fb-scb-' + i + '-' + key + '" class="etf-fb-scl">'
+                + '<input id="etf-fb-scb-' + nameID + '-' + key + '" type="checkbox" class="etf-fb-scb" value="' + key + '">'
+                + '<label for="etf-fb-scb-' + nameID + '-' + key + '" class="etf-fb-scl">'
                   + et.statusHTML( th[i].list[key], key, false ) + '<span class="etf-fb-st">' + th[i].list[key] + '</span>'
                 + '</label>'
               + '</div>'
@@ -647,6 +761,7 @@ epochTable.prototype = {
               }
             });
             } break;
+          case 'url':
           case 'text': {
             let value = '',
                 option = [];
@@ -711,6 +826,7 @@ epochTable.prototype = {
               delete th[arrayNumber]['filterOption'];
             }
             } break;
+          case 'url':
           case 'text': {
             const option = [];
             $filterArea.find('.etf-fb-fob:checked').each(function(){
@@ -768,6 +884,7 @@ epochTable.prototype = {
               filterStatusHTML += et.statusBarHTML( title, statusText.join(','), i );
             }
             } break;
+          case 'url':
           case 'text':
             if ( filter.value !== undefined && filter.value !== '') {
               filterStatusHTML += et.statusBarHTML( title, filter.value, i );
@@ -793,10 +910,11 @@ epochTable.prototype = {
     et.$header.find('.etf-sal').html( filterStatusHTML );
   },
   'statusBarHTML': function( title, content, colNumber ){
+    const et = this;
     return '<li class="etf-sai">'
         + '<dl class="etf-sad">'
           + '<dt class="etf-sad-t">' + title + '</dt>'
-          + '<dd class="etf-sad-c">' + content + '</dd>'
+          + '<dd class="etf-sad-c">' + et.fn.textEntities( content ) + '</dd>'
           + '<dd class="etf-sad-d"><span  title="削除" class="epoch-popup-m etf-sad-di" data-col="' + colNumber + '"></span></dd>'
         + '</dl>'
       + '</li>';
@@ -806,7 +924,7 @@ epochTable.prototype = {
     const et = this,
           th = et.th,
           thLength = th.length;
-    et.tb = et.tdCopy.filter( function( row ){
+    et.tb = et.tbCopy.filter( function( row ){
       let matchFlag = new Array( thLength );
       for ( let i = 0; i < thLength; i++ ) {
         if ( th[i]['filterOption'] !== undefined ) {
@@ -822,6 +940,7 @@ epochTable.prototype = {
                 }
               }
               break;
+            case 'url': 
             case 'text': { 
               const option = thfl.option,
                     leterFlg = ( option.indexOf('l') !== -1 )? true: false,
@@ -878,7 +997,7 @@ epochTable.prototype = {
         delete th[i]['filterOption'];
       }
     }
-    et.tb = et.tdCopy.concat();
+    et.tb = et.tbCopy.concat();
     et.$header.find('.etf-sal').html('');
     et.$header.find('.etf-b[data-button="filter-clear"]').prop('disabled', true );
   },
@@ -908,11 +1027,33 @@ epochTable.prototype = {
       et.sort( et.cSortCol, et.cSortType );
     }
   },
-  // 更新して再表示する
+  /* ------------------------------ *\
+     値を更新する
+  \* ------------------------------ */  
   'update': function( tb, option ){
+    if ( option === undefined ) option = {};
     const et = this;
+    
     et.tb = tb.concat();
+    et.tbCopy = tb.concat();
+    
+    et.setFilter();
     et.setting( option );
+    
     et.setBodyHTML();
+  },
+  /* ------------------------------ *\
+     Loading start
+  \* ------------------------------ */
+  'loadingStart': function(){
+    this.$table.addClass('et-wait');
+    this.$table.append('<div class="et-wt"><div class="log-now-loading-icon"><span></span></div></div>');
+  },
+  /* ------------------------------ *\
+     Loading end
+  \* ------------------------------ */
+  'loadingEnd': function(){
+    this.$table.removeClass('et-wait');
+    this.$table.find('.et-wt').remove();
   }
 };
