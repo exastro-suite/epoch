@@ -27,8 +27,9 @@ RUN echo "RUN START"  \
 
 WORKDIR /app
 
-RUN echo "RUN START"  \
-&&  git clone -b main "https://github.com/exastro-suite/epoch.git"
+COPY ./ /app/
 
-CMD ["python3", "/app/epoch/epochControlInsideGitLabApi/api_inside_gitlab.py"]
+RUN echo "RUN START"
+
+CMD ["python3", "/app/api_inside_gitlab.py"]
 
