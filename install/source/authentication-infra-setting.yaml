@@ -7,7 +7,7 @@ data:
   setting-script.sh: |
     #!/bin/bash
 
-    MY_HOST="$0"
+    MY_HOST="$1"
 
     # patch configmap data
     #echo "---- get configmap"
