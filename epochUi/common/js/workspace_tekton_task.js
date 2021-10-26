@@ -3,95 +3,13 @@
 $(function(){
 
     const fn = new epochCommon();
-    
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
-    //
-    //   ダミーデータ
-    // 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
-    
-    const taskLog = {
-        "result": 200,
-        "log": "[clone] + CHECKOUT_DIR=/workspace/output/pipeline-run-dummy-8nftm\n[clone] + '[[' true '==' true ]]\n[clone] + cleandir\n[clone] + '[[' -d /workspace/output/pipeline-run-dummy-8nftm ]]"
-    };
-    
-    // ダミー作成の作成
-    function dummyTaskListData( number, result ) {
-        const taskList = {
-            "result": result,
-            "rows": []
-        };
-    
-        const resultData = ['Succeeded','Failed','Running','Pending'],
-              years = ['2021','2022','2023','2024','2025'];
-    
-        for ( let i = 1; i <= number; i++ ) {
-    
-            const result1 = resultData[ Math.floor( Math.random() * resultData.length ) ],
-                  result2 = resultData[ Math.floor( Math.random() * resultData.length ) ],
-                  result3 = resultData[ Math.floor( Math.random() * resultData.length ) ],
-                  result4 = resultData[ Math.floor( Math.random() * resultData.length ) ],
-                  year = years[ Math.floor( Math.random() * years.length ) ];
-    
-            const d = new Date();
-            d.setSeconds(d.getSeconds() - i);
-            d.setMinutes(d.getMinutes() - i);
-            d.setHours(d.getHours() - i);
-    
-            const date = fn.formatDate( d, 'yyyy/MM/dd HH:mm:ss'),
-                  taskrun_name_d = fn.formatDate( d, 'yyyyMMddHHmmss'),
-                  container_image = fn.formatDate( d, 'yyyyMMdd-HHmmss');
-            taskList.rows[i-1] = {
-                "task_id": number - i + 1,
-                "pipeline_id": number - i + 1,
-                "pipelinerun_name": "pipeline-run-dummy-8nftm",
-                "repository_url": "https://github.com/shiota-" + year + "/epoch-sample-app.git",
-                "build_branch": "master",
-                "start_time": date,
-                "finish_time": date,
-                "status": result1,
-                "container_image": "shiota" + year + "/epoch-sample-ui:master." + container_image ,
-                "tasks": [
-                    {
-                        "name": "task-start",
-                        "taskrun_name": "pipeline-run-dummy-8nftm-task-start-z8lnj" + taskrun_name_d,
-                        "start_time": date,
-                        "finish_time": "2021/09/13 04:54:43",
-                        "status": result2
-                    },
-                    {
-                        "name": "task-git-clone",
-                        "taskrun_name": "pipeline-run-dummy-8nftm-task-git-clone-h428z" + taskrun_name_d,
-                        "start_time": date,
-                        "finish_time": "2021/09/13 04:56:51",
-                        "status": result3
-                    },
-                    {
-                        "name": "task-build-and-push",
-                        "taskrun_name": "pipeline-run-dummy-8nftm-task-build-and-push-65vmk" + taskrun_name_d,
-                        "start_time": date,
-                        "finish_time": "2021/09/13 04:57:17",
-                        "status": result4
-                    },
-                    {
-                        "name": "task-complete",
-                        "taskrun_name": "pipeline-run-dummy-8nftm-task-complete-gdmhr" + taskrun_name_d,
-                        "start_time": date,
-                        "finish_time": "2021/09/13 04:57:25",
-                        "status": result1
-                    }
-                ]
-            };
-        }
-        return taskList;
-    }
-    
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     //
     //   CI/CD実行画面 Tektonタスクリスト・ログの読み込み
     // 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     // タスクリスト
     function getTektonTaskList( callback ){
         const getTektonTask = function( type ){
@@ -136,21 +54,24 @@ $(function(){
                 modal.close();
             });
     }
-    
+
     // タスクログ
     function getTektonTaskLog( taskRunName, callback ){
-        // タスクログ取得（仮）
-        // --------------------------------------------------
-        setTimeout( function(){
-            if ( taskLog.result === 200 ) {
-              callback( taskLog.log );
-            } else {
-              alert('Failed to read the task log.');
-            }
-        }, 500 );
-        // --------------------------------------------------
+      $.ajax({
+        "type": "GET",
+        "url": workspace_api_conf.api.ciResult.taskrunlogs.get.replace('{workspace_id}', workspace_id).replace('{taskrun_name}', taskRunName),
+      }).done(function(data) {
+        console.log("DONE : CI実行結果(TEKTON TASK LOG)取得");
+        // console.log(typeof(data));
+        // console.log(JSON.stringify(data));
+
+        callback( data.log );
+
+      }).fail(function() {
+        alert('Failed to read the task log.');
+      });
     }
-    
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     //
     //   CI/CD実行画面 Tektonタスクの表示
