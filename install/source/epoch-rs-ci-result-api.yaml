@@ -49,7 +49,7 @@ spec:
           name: epoch-rs-ci-result-conf
       containers:
       - name: epoch-rs-ci-result-api
-        image: exastro/epochrsciresultapi:0.1.4_20210916_1700
+        image: exastro/epoch-rs-ci-result-api:0.1.5_20211026_1340
         env:
         - name: CONFIG_API_CI_RESULT_PATH
           value: "/etc/epoch/epochRsCiResultApi/api_ci_result.conf"

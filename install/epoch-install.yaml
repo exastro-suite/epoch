@@ -3882,7 +3882,7 @@ spec:
           name: epoch-control-inside-gitlab-conf
       containers:
       - name: epoch-control-inside-gitlab-api
-        image: exastro/epoch-control-inside-gitlab-api:0.1.5_20210930_1420
+        image: exastro/epoch-control-inside-gitlab-api:0.1.5_20211026_1340
         env:
         - name: CONFIG_API_INSIDE_GITLAB_PATH
           value: "/etc/epoch/epochControlInsideGitLabApi/api_inside_gitlab.conf"
@@ -3979,7 +3979,7 @@ spec:
           name: epoch-control-tekton-conf
       containers:
       - name: epoch-control-tekton-api
-        image: exastro/epochcontroltektonapi:0.1.5_20211020_1600
+        image: exastro/epoch-control-inside-gitlab-api:0.1.5_20211026_1340
         env:
         - name: CONFIG_API_TEKTON_PATH
           value: "/etc/epoch/epochControlTektonApi/api_tekton.conf"
@@ -4081,7 +4081,7 @@ spec:
           name: epoch-rs-organization-conf
       containers:
       - name: epoch-rs-organization-api
-        image: exastro/epochrsorganizationapi:0.1.4_20210914_1700
+        image: exastro/epoch-rs-organization-api:0.1.5_20211026_1340
         env:
         - name: CONFIG_API_ORGANIZATION_PATH
           value: "/etc/epoch/epochRsOrganizationApi/api_organization.conf"
@@ -4165,7 +4165,7 @@ spec:
           name: epoch-rs-workspace-conf
       containers:
       - name: epoch-rs-workspace-api
-        image: exastro/epochrsworkspaceapi:0.1.5_20211021_0840
+        image: exastro/epoch-rs-workspace-api:0.1.5_20211026_1340
         env:
         - name: CONFIG_API_WORKSPACE_PATH
           value: "/etc/epoch/epochRsWorkspaceApi/api_workspace.conf"
@@ -4250,7 +4250,7 @@ spec:
           name: epoch-rs-ci-result-conf
       containers:
       - name: epoch-rs-ci-result-api
-        image: exastro/epochrsciresultapi:0.1.4_20210916_1700
+        image: exastro/epoch-rs-ci-result-api:0.1.5_20211026_1340
         env:
         - name: CONFIG_API_CI_RESULT_PATH
           value: "/etc/epoch/epochRsCiResultApi/api_ci_result.conf"
@@ -4548,7 +4548,7 @@ spec:
         image: exastro/epoch-ui:0.1.5_20211026_1340
         volumeMounts:
         - name: epoch-ui-conf
-          mountPath: /app/epoch/epochUi/common/js/config
+          mountPath: /app/common/js/config
 
 ---
 apiVersion: v1

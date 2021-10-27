@@ -132,7 +132,7 @@ spec:
         image: exastro/epoch-ui:0.1.5_20211026_1340
         volumeMounts:
         - name: epoch-ui-conf
-          mountPath: /app/epoch/epochUi/common/js/config
+          mountPath: /app/common/js/config
 
 ---
 apiVersion: v1
