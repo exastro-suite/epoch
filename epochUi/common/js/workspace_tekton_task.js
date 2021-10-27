@@ -18,9 +18,9 @@ $(function(){
               $.ajax({
                 "type": "GET",
                 "url": workspace_api_conf.api.ciResult.pipelinerun.get.replace('{workspace_id}', workspace_id),
-                "latest": type == "new" ? "True" : "False",
+                "data": {"latest": type == "new" ? "True" : "False"},
               }).done(function(data) {
-                console.log("DONE : CI実行結果(TEKTON)取得");
+                console.log("DONE : CI実行結果(TEKTON)取得 -> " + type);
                 // console.log(typeof(data));
                 console.log(JSON.stringify(data));
 
@@ -281,7 +281,7 @@ $(function(){
           
           for ( let i = 0; i < taskLength; i++ ) {
             const d = tasks[i],
-                  s = d.status,
+                  s = d.status ? d.status : "Pending",
                   statusHTML = tasksNew.statusHTML( status[s], s );
             detailHTML += ''
             + '<li class="task-status-item status-' + s.toLowerCase() + '" style="z-index:' + ( taskLength - i ) + ';">'
