@@ -62,8 +62,8 @@ YAMLFILES+=("gateway-httpd.yaml")
 YAMLFILES+=("authentication-infra-setting.yaml")
 
 # tekton deloy後に入れる必要があるので最後にする
-YAMLFILES+=("tekton-dashbord-release.yaml")
-YAMLFILES+=("tekton-dashbord-nodeport.yaml")
+# YAMLFILES+=("tekton-dashbord-release.yaml")
+# YAMLFILES+=("tekton-dashbord-nodeport.yaml")
 YAMLFILES+=("tekton-trigger-interceptors.yaml")
 # -----------------------------------
 
