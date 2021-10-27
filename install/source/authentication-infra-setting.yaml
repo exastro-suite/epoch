@@ -17,11 +17,9 @@ data:
 
     PASSPHRASE=$(< /dev/urandom tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq)
     PASSW=$(< /dev/urandom tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq)
-    PASSW_EXASTRO=$(< /dev/urandom tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq)
     PASSW_EPOCH=$(< /dev/urandom tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq)
     PASSPHRASE_B64=$(echo -n "${PASSPHRASE}" | base64)
     PASSW_B64=$(echo -n "${PASSW}" | base64)
-    PASSW_EXASTRO_B64=$(echo -n "${PASSW_EXASTRO}" | base64)
     PASSW_EPOCH_B64=$(echo -n "${PASSW_EPOCH}" | base64)
 
     echo "---- patch configmap"
@@ -44,7 +42,6 @@ data:
         \"data\" : {\
             \"GATEWAY_CRYPTO_PASSPHRASE\" : \"${PASSPHRASE_B64}\",\
             \"KEYCLOAK_PASSWORD\" : \"${PASSW_B64}\",\
-            \"EXASTRO_PASSWORD\" : \"${PASSW_EXASTRO_B64}\",\
             \"EPOCH_PASSWORD\" : \"${PASSW_EPOCH_B64}\"\
         }\
     }"
@@ -125,19 +122,8 @@ data:
           ],
           "users": [
               {
-                  "user_name": "exastro-system",
-                  "user_password": "test",
-                  "user_groups": [],
-                  "user_realm_roles": [
-                      "exastro-system"
-                  ],
-                  "user_option": {
-                      "enabled": "True"
-                  }
-              },
-              {
                   "user_name": "epoch-admin",
-                  "user_password": "test",
+                  "user_password": "${PASSW_EPOCH}",
                   "user_groups": [
                       "epoch-user"
                   ],
