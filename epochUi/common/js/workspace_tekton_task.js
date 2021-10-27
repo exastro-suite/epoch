@@ -296,10 +296,13 @@ $(function(){
                   + '<div class="task-status-start-title">開始日時</div>'
                   + '<div class="task-status-start-date">' + d.start_time + '</div>'
                 + '</div>'
-                + '<div class="task-status-log-open">'
-                  + '<button type="button" class="et-bu epoch-popup-m task-status-log-open-button" title="ログ" data-target-name="' + d.taskrun_name + '"><span class="et-bui"></span></button>'
+                + '<div class="task-status-log-open">';
+            if ( s !== 'Pending') {
+              detailHTML += '<button type="button" class="et-bu epoch-popup-m task-status-log-open-button" title="ログ" data-target-name="' + d.taskrun_name + '"><span class="et-bui"></span></button>';
+            }
+            detailHTML += ''
                 + '</div>'
-                + '<div class="task-status-log"><textarea id="' + d.taskrun_name + '" class="task-status-log-area" readonly="readonly"></textarea></div>'
+                + '<div class="task-status-log"><textarea data-taskrun-name="' + d.taskrun_name + '" class="task-status-log-area" readonly="readonly"></textarea></div>'
               + '</div>'
             + '</li>';
           }
@@ -346,8 +349,8 @@ $(function(){
         });
     
         // ログの読み込み準備
-        const tektonTaskLogStart = function( taskRunName ) {
-          const $log = $('#' + taskRunName ),
+        const tektonTaskLogStart = function( taskRunName, $item ) {
+          const $log = $item.find('[data-taskrun-name="' + taskRunName + '"]'),
                 $logWrap = $log.closest('.task-status-log');
     
           $logWrap.addClass('log-now-loading').append('<div class="log-now-loading-icon"><span></span></div>');
@@ -376,7 +379,7 @@ $(function(){
           // 初回のみログの読み込みをする
           if ( !$b.is('.log-open-check') ) {
             $b.addClass('log-open-check');
-            tektonTaskLogStart( taskRunName );       
+            tektonTaskLogStart( taskRunName, $i );       
           }
         });
         
