@@ -45,8 +45,8 @@ metadata:
 spec:
   ports:
   - name: http
-    port: 31181
-    targetPort: 31181
+    port: 30443
+    targetPort: 30443
     nodePort: 30443
   selector:
     name: gateway-httpd
