@@ -47,7 +47,7 @@ spec:
   - name: http
     port: 31181
     targetPort: 31181
-    nodePort: 31181
+    nodePort: 30443
   selector:
     name: gateway-httpd
   type: NodePort

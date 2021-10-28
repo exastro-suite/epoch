@@ -136,7 +136,7 @@ data:
           "client_id": "epoch-system",
           "client_protocol": "https",
           "client_host": "${MY_HOST}",
-          "client_port": "31181",
+          "client_port": "30443",
           "conf_template": "epoch-system-template.conf",
           "token_user": "admin",
           "token_password": "${PASSW}",
