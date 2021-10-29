@@ -1,0 +1,196 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: authentication-infra-setting-script
+  namespace: epoch-system
+data:
+  setting-script.sh: |
+    #!/bin/bash
+
+    MY_HOST="$1"
+
+    # patch configmap data
+    #echo "---- get configmap"
+    #EXASTRO_KEYCLOAK_HOST=$(kubectl get cm exastro-platform-authentication-infra-env -n exastro-platform-authentication-infra -o json | jq -r ".data.EXASTRO_KEYCLOAK_HOST")
+    #EXASTRO_KEYCLOAK_PROTOCOL=$(kubectl get cm exastro-platform-authentication-infra-env -n exastro-platform-authentication-infra -o json | jq -r ".data.EXASTRO_KEYCLOAK_PROTOCOL")
+    #EXASTRO_KEYCLOAK_PORT=$(kubectl get cm exastro-platform-authentication-infra-env -n exastro-platform-authentication-infra -o json | jq -r ".data.EXASTRO_KEYCLOAK_PORT")
+
+    PASSPHRASE=$(< /dev/urandom tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq)
+    PASSW=$(< /dev/urandom tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq)
+    PASSW_EPOCH=$(< /dev/urandom tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq)
+    PASSPHRASE_B64=$(echo -n "${PASSPHRASE}" | base64)
+    PASSW_B64=$(echo -n "${PASSW}" | base64)
+    PASSW_EPOCH_B64=$(echo -n "${PASSW_EPOCH}" | base64)
+
+    echo "---- patch configmap"
+    kubectl patch configmap -n exastro-platform-authentication-infra exastro-platform-authentication-infra-env -p "\
+    {\
+        \"data\" : {\
+            \"EXASTRO_KEYCLOAK_HOST\" : \"${MY_HOST}\"\
+        }\
+    }"
+
+    kubectl patch configmap -n epoch-system epoch-service-api-epai-config -p "\
+    {\
+        \"data\" : {\
+            \"EPOCH_EPAI_HOST\" : \"${MY_HOST}\"\
+        }\
+    }"
+
+    kubectl patch secret -n exastro-platform-authentication-infra exastro-platform-authentication-infra-secret -p "\
+    {\
+        \"data\" : {\
+            \"GATEWAY_CRYPTO_PASSPHRASE\" : \"${PASSPHRASE_B64}\",\
+            \"KEYCLOAK_PASSWORD\" : \"${PASSW_B64}\",\
+            \"EPOCH_PASSWORD\" : \"${PASSW_EPOCH_B64}\"\
+        }\
+    }"
+
+
+    # Rollout Restart API   
+    echo "---- rollout restart"
+    kubectl rollout restart deploy -n epoch-system epoch-service-api
+    kubectl rollout restart deploy -n exastro-platform-authentication-infra authentication-infra-api
+    kubectl rollout restart deploy -n exastro-platform-authentication-infra keycloak
+
+    #
+    # Waitting restart
+    #
+    echo "==== Waitting restart"
+    while true; do
+      sleep 5;
+      if [ $(kubectl get pod -n exastro-platform-authentication-infra -o json | jq -r ".items[].status.containerStatuses[].ready" | sed -e "/true/d" | wc -l) -ne 0 ]; then
+        continue;
+      fi
+      break;
+    done;
+
+    # init setting api call
+    echo "---- init setting api call"
+    curl -X POST \
+      -H  'content-type: application/json'    \
+      -d  @- \
+      http://authentication-infra-api.exastro-platform-authentication-infra.svc:8000/settings \
+      << EOF
+      {
+          "realm_name": "exastroplatform",
+          "realm_option": {
+              "displayName": "Exastro Platform",
+              "enabled": "True"
+          },
+          "realm_roles": [
+              "epoch-user",
+              "epoch-ws-1-admin",
+              "epoch-ws-1-user",
+              "epoch-system"
+          ],
+          "groups": [
+              {
+                  "parent_group": "",
+                  "group_name": "epoch-user"
+              },
+              {
+                  "parent_group": "epoch-user",
+                  "group_name": "epoch-og-1"
+              },
+              {
+                  "parent_group": "epoch-og-1",
+                  "group_name": "epoch-ws-1"
+              },
+              {
+                  "parent_group": "epoch-ws-1",
+                  "group_name": "epoch-ws-1-admin"
+              },
+              {
+                  "parent_group": "epoch-ws-1",
+                  "group_name": "epoch-ws-1-user"
+              }
+          ],
+          "group_mappings": [
+              {
+                  "role_name": "epoch-user",
+                  "group_name": "epoch-user"
+              },
+              {
+                  "role_name": "epoch-ws-1-admin",
+                  "group_name": "epoch-ws-1-admin"
+              },
+              {
+                  "role_name": "epoch-ws-1-user",
+                  "group_name": "epoch-ws-1-user"
+              }
+          ],
+          "users": [
+              {
+                  "user_name": "epoch-admin",
+                  "user_password": "${PASSW_EPOCH}",
+                  "user_groups": [
+                      "epoch-user"
+                  ],
+                  "user_realm_roles": [],
+                  "user_option": {
+                      "enabled": "True"
+                  }
+              }
+          ],
+          "client_id": "epoch-system",
+          "client_protocol": "https",
+          "client_host": "${MY_HOST}",
+          "client_port": "30443",
+          "conf_template": "epoch-system-template.conf",
+          "token_user": "admin",
+          "token_password": "${PASSW}",
+          "token_realm_name": "master"
+      }
+    EOF
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: authentication-infra-setting
+  namespace: epoch-system
+spec:
+  # backoffLimit: 0
+  selector:
+    matchLabels:
+      name: authentication-infra-setting
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: authentication-infra-setting
+    spec:
+      # restartPolicy: Never
+      volumes:
+      - name: authentication-infra-setting-script
+        configMap:
+          name: authentication-infra-setting-script
+      containers:
+      - name: authentication-infra-setting
+        image: exastro/epoch-kube-command:0.1.5_20211026_1600
+        volumeMounts:
+        - mountPath: /app
+          name: authentication-infra-setting-script
+        # command: ["sh", "-c"]
+        # args:
+        #   - |
+        #     bash /authentication-infra-setting-script/setting-script.sh
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: authentication-infra-setting
+  labels:
+    name: authentication-infra-setting
+  namespace: epoch-system
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+  selector:
+    name: authentication-infra-setting

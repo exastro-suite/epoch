@@ -5,9 +5,9 @@ RUN	apt-get	update	\
 
 WORKDIR /app
 
-RUN	git clone -b main https://github.com/exastro-suite/epoch.git
+COPY ./ /app/
 
-RUN     chmod +x /app/epoch/epochUi/nginx-start.sh \
-&&      cp /app/epoch/epochUi/epochui.conf /etc/nginx/conf.d/.
+RUN     chmod +x /app/nginx-start.sh \
+&&      cp /app/epochui.conf /etc/nginx/conf.d/.
 
-CMD ["/bin/sh","/app/epoch/epochUi/nginx-start.sh"]
+CMD ["/bin/sh","/app/nginx-start.sh"]

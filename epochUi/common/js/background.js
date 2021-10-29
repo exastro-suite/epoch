@@ -22,11 +22,12 @@ function backgroundAurora() {
   
   let modalData = {},
       backgroundP5, canvasWidth, canvasHeight,
-      frameRate, auroraNum, auroraWidth, segmentNum, speed, resolution, opacity;
+      backgroundType, frameRate, auroraNum, auroraWidth, segmentNum, speed, resolution, opacity;
   let ry; // Y座標アニメーション用
   
   // 背景設定初期値
   const initAuroraData = function(){
+    modalData['background-type'] = 'aurora'; // フレームレート
     modalData['background-frame-rate'] = 8; // フレームレート
     modalData['background-aurora-number'] = 4; // オーロラ数
     modalData['background-aurora-width'] = 2; // オーロラの幅
@@ -50,6 +51,7 @@ function backgroundAurora() {
   
   // オーロラ設定値更新
   const auroraParameter = function(){
+    backgroundType = modalData['background-type'];
     frameRate = Number( modalData['background-frame-rate'] );
     auroraNum = Number( modalData['background-aurora-number'] );
     auroraWidth = Number( modalData['background-aurora-width'] );
@@ -60,108 +62,110 @@ function backgroundAurora() {
   };
   auroraParameter();
   
-  // P5.js  
-  const epochBackground = function( p ){
-    
-    p.setup = function(){
-      p.createCanvas( canvasWidth, canvasHeight );
-      p.background( 0, 0, 0 );
-      p.frameRate( frameRate );
+    // P5.js  
+    const epochBackground = function( p ){
       
-      // 初期描画ループ
-      for ( let i = 0; i < initDrawNum; i++ ) {
-        drawAurora();
+      if ( backgroundType !== 'simple') {
+          p.setup = function(){
+            p.createCanvas( canvasWidth, canvasHeight );
+            p.background( 0, 0, 0 );
+            p.frameRate( frameRate );
+
+            // 初期描画ループ
+            for ( let i = 0; i < initDrawNum; i++ ) {
+              drawAurora();
+            }
+
+          };
+          p.draw = function(){
+
+            //p.filter( p.BLUR, 1 );
+
+            // モーダルが開いているときはアニメーションを停止する
+            if ( document.body.classList.contains('modal-open') ) {
+              p.noLoop();
+
+              // モーダルが閉じたらアニメーションを再開する
+              // bodyのclassを監視
+              const observer = new MutationObserver( function(){
+                if ( !document.body.classList.contains('modal-open') ) {
+                  p.loop();
+                  observer.disconnect();
+                }
+              });
+              observer.observe( document.body, { attributes: true });
+            }
+
+            drawAurora();
+
+          };
+
+          const drawAurora = function() {
+              ry += 1;
+
+              // 残像用半透明枠
+              p.blendMode(p.BLEND);
+              p.noStroke();
+              p.fill( 0, 0, 0, 3 )
+              p.rect( 0, 0, p.width, p.height );
+
+              // オーロラ描画
+              p.noFill();
+              for( let i = 1; i <= auroraNum; i++ ) {
+
+                p.beginShape();
+
+                const r = 255,
+                      g = 255,
+                      b = 200 / auroraNum * i,
+                      a = 100 / auroraNum * ( i + 1 ),
+                      c = Math.ceil( i / Math.ceil( auroraNum / 5 ));
+
+                p.blendMode(p.SCREEN);
+                p.stroke( r, g, b, a );
+                p.strokeWeight( auroraWidth );
+
+                for ( let j = 0; j <= segmentNum * 10; j++ ) {
+
+                  const x = p.width / ( segmentNum * 10 ) * j,
+                        px = j / ( 200 * c ),
+                        py = i + ( ry / ( speed * 10 )),
+                        r = p.noise( px, py ),
+                        y = ( r * p.height * 2 ) - ( p.height / 2 );
+
+                  p.vertex( x, y );
+                }
+
+                p.endShape();
+            }
+          };
+
+          // Windowリサイズで再描画
+          const resizeCanvas = function(){
+            canvasSize();
+            // キャンバスリサイズ
+            p.resizeCanvas( canvasWidth, canvasHeight );
+            // 初期描画ループ
+            for ( let i = 0; i < initDrawNum; i++ ) {
+              drawAurora();
+            }
+          };
+
+          let resizeTimer;
+          const windowResized = function(){
+            clearTimeout( resizeTimer );
+            resizeTimer = setTimeout( function(){
+              resizeCanvas();
+            }, 500 );
+          };
+          window.onresize = windowResized;
+
+          document.getElementById('side').addEventListener('transitionend', function(e){
+            if ( e.target.id === 'side' ) {
+              resizeCanvas();
+            }
+          });
       }
-      
-    };
-    p.draw = function(){
-    
-      //p.filter( p.BLUR, 1 );
-
-      // モーダルが開いているときはアニメーションを停止する
-      if ( document.body.classList.contains('modal-open') ) {
-        p.noLoop();
-
-        // モーダルが閉じたらアニメーションを再開する
-        // bodyのclassを監視
-        const observer = new MutationObserver( function(){
-          if ( !document.body.classList.contains('modal-open') ) {
-            p.loop();
-            observer.disconnect();
-          }
-        });
-        observer.observe( document.body, { attributes: true });
-      }
-
-      drawAurora();
-
-    };
-    
-    const drawAurora = function() {
-        ry += 1;
-        
-        // 残像用半透明枠
-        p.blendMode(p.BLEND);
-        p.noStroke();
-        p.fill( 0, 0, 0, 3 )
-        p.rect( 0, 0, p.width, p.height );
-        
-        // オーロラ描画
-        p.noFill();
-        for( let i = 1; i <= auroraNum; i++ ) {
-
-          p.beginShape();
-
-          const r = 255,
-                g = 255,
-                b = 200 / auroraNum * i,
-                a = 100 / auroraNum * ( i + 1 ),
-                c = Math.ceil( i / Math.ceil( auroraNum / 5 ));
-                      
-          p.blendMode(p.SCREEN);
-          p.stroke( r, g, b, a );
-          p.strokeWeight( auroraWidth );
-
-          for ( let j = 0; j <= segmentNum * 10; j++ ) {
-
-            const x = p.width / ( segmentNum * 10 ) * j,
-                  px = j / ( 200 * c ),
-                  py = i + ( ry / ( speed * 10 )),
-                  r = p.noise( px, py ),
-                  y = ( r * p.height * 2 ) - ( p.height / 2 );
-
-            p.vertex( x, y );
-          }
-
-          p.endShape();
-      }
-    };
-    
-    // Windowリサイズで再描画
-    const resizeCanvas = function(){
-      canvasSize();
-      // キャンバスリサイズ
-      p.resizeCanvas( canvasWidth, canvasHeight );
-      // 初期描画ループ
-      for ( let i = 0; i < initDrawNum; i++ ) {
-        drawAurora();
-      }
-    };
-    
-    let resizeTimer;
-    const windowResized = function(){
-      clearTimeout( resizeTimer );
-      resizeTimer = setTimeout( function(){
-        resizeCanvas();
-      }, 500 );
-    };
-    window.onresize = windowResized;
-    
-    document.getElementById('side').addEventListener('transitionend', function(e){
-      if ( e.target.id === 'side' ) {
-        resizeCanvas();
-      }
-    });
   
     const canvasReset = function(){
       window.removeEventListener('canvasReset', canvasReset );
@@ -195,17 +199,19 @@ function backgroundAurora() {
         'backgroundBody': {
           'title': 'ワークスペース背景設定',
           'item': {
-            /*'backgroundType': {
+            'backgroundType': {
               'type': 'radio',
               'title': '背景選択',
               'name': 'background-type',
+              'class': 'input-pickup-select',
               'item': {
                 'aurora': 'オーロラ',
-                'simnple': 'シンプル'
+                'simple': 'シンプル'
               },
               'note': '背景タイプを選択します。'
-            },*/
+            },
             'frameRate': {
+              'class': 'input-pickup input-pickup-aurora',
               'type': 'number',
               'min': '0',
               'max': '60',
@@ -215,6 +221,7 @@ function backgroundAurora() {
               'note': '１秒間に描画する回数を0から60の間で入力してください。0の場合アニメーションが停止します。実際のフレームレートはスマシンペックに依存します。'
             },
             'auroraNumber': {
+              'class': 'input-pickup input-pickup-aurora',
               'type': 'number',
               'title': 'オーロラ数',
               'min': '0',
@@ -224,6 +231,7 @@ function backgroundAurora() {
               'note': 'オーロラの数を0から50で入力してください。'
             },
             'auroraWidth': {
+              'class': 'input-pickup input-pickup-aurora',
               'type': 'number',
               'min': '1',
               'max': '20',
@@ -233,6 +241,7 @@ function backgroundAurora() {
               'note': 'オーロラの太さを1から20の間で入力してください。'
             },
             'segmentNumber': {
+              'class': 'input-pickup input-pickup-aurora',
               'type': 'number',
               'min': '1',
               'max': '200',
@@ -242,6 +251,7 @@ function backgroundAurora() {
               'note': 'オーロラの折り返し調整値を1から200の間で入力してください。数値が大きいほど折り返し数が大きくなります。'
             },
             'moveSpeed': {
+              'class': 'input-pickup input-pickup-aurora',
               'type': 'number',
               'min': '1',
               'max': '100',
@@ -251,6 +261,7 @@ function backgroundAurora() {
               'note': 'オーロラの移動距離調整値を設定します。数値が小さいほどオーロラの移動距離が大きくなります。'
             },
             'opacity': {
+              'class': 'input-pickup input-pickup-aurora',
               'type': 'number',
               'title': '不透明度',
               'min': '0',
@@ -313,10 +324,20 @@ function backgroundAurora() {
   });
   
   const setCanvas = function(){
-    canvasSize();
-    ry = Date.now();
-    canvasWrap.style.opacity = opacity / 100;
-    backgroundP5 = new p5( epochBackground, targetID );
+      const aurora = document.getElementsByClassName('content-background'),
+            workspace = document.getElementsByClassName('workspace-body');
+        if ( backgroundType === 'simple') {
+          aurora[0].style.display = 'none';
+          workspace[0].classList.add('simple');
+          backgroundP5 = new p5( epochBackground, targetID );
+        } else {
+          aurora[0].style.display = 'block';
+          workspace[0].classList.remove('simple');
+          canvasSize();
+          ry = Date.now();
+          canvasWrap.style.opacity = opacity / 100;
+          backgroundP5 = new p5( epochBackground, targetID );
+        }
   };
   setCanvas();
   

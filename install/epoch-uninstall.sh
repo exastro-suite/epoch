@@ -41,13 +41,13 @@ POD_NAME_CICD=`kubectl get pod -n ${NS_NAME_EPOCH} | sed -n -e '/^[e]poch-cicd-a
 if [ ! -z "${POD_NAME_CICD}" ]; then
 	# delete tekton resource
 	echo "-- DELETE TEKTON PIPELINE --"
-	kubectl exec -it ${POD_NAME_CICD} -n ${NS_NAME_EPOCH} -- kubectl delete -f /app/epoch/epochCiCdApi/resource/conv/tekton-pipeline --ignore-not-found
+	kubectl exec -it ${POD_NAME_CICD} -n ${NS_NAME_EPOCH} -- kubectl delete -f /app/resource/conv/tekton-pipeline --ignore-not-found
 
 	echo "-- DELETE TEKTON TRIGGER --"
-	kubectl exec -it ${POD_NAME_CICD} -n ${NS_NAME_EPOCH} -- kubectl delete -f /app/epoch/epochCiCdApi/resource/conv/tekton-trigger --ignore-not-found
+	kubectl exec -it ${POD_NAME_CICD} -n ${NS_NAME_EPOCH} -- kubectl delete -f /app/resource/conv/tekton-trigger --ignore-not-found
 
 	echo "-- DELETE TEKTON COMMON --"
-	kubectl exec -it ${POD_NAME_CICD} -n ${NS_NAME_EPOCH} -- kubectl delete -f /app/epoch/epochCiCdApi/resource/conv/tekton-common --ignore-not-found
+	kubectl exec -it ${POD_NAME_CICD} -n ${NS_NAME_EPOCH} -- kubectl delete -f /app/resource/conv/tekton-common --ignore-not-found
 fi
 
 #
@@ -102,8 +102,8 @@ fi
 
 if [ ! -z "${POD_NAME_CICD}" ]; then
 	echo "-- DELETE WORKSPACE PODS --"
-	kubectl exec -it ${POD_NAME_CICD} -n ${NS_NAME_EPOCH} -- kubectl delete -f /app/epoch/epochCiCdApi/resource/ita_install.yaml -n ${NS_NAME_WORKSPACE} --ignore-not-found
-	kubectl exec -it ${POD_NAME_CICD} -n ${NS_NAME_EPOCH} -- kubectl delete -f /app/epoch/epochCiCdApi/resource --ignore-not-found
+	kubectl exec -it ${POD_NAME_CICD} -n ${NS_NAME_EPOCH} -- kubectl delete -f /app/resource/ita_install.yaml -n ${NS_NAME_WORKSPACE} --ignore-not-found
+	kubectl exec -it ${POD_NAME_CICD} -n ${NS_NAME_EPOCH} -- kubectl delete -f /app/resource --ignore-not-found
 fi
 
 echo "-- DELETE NAMESPACE epoch-tekton-pipelines --"

@@ -13,10 +13,12 @@ function modalFunction( modalJSON, valueJSON ){
     /* -------------------------------------------------- *\
        モーダル用div
     \* -------------------------------------------------- */
-    $('body').append(
-      $('<div/>', {'id': 'modal-container'}),
-      $('<div/>', {'id': 'sub-modal-container'})
-    );
+    if ( !$('#modal-container').length ) {
+      $('body').append(
+          $('<div/>', {'id': 'modal-container'}),
+          $('<div/>', {'id': 'sub-modal-container'})
+      );
+  }
 }
 modalFunction.prototype = {
     /* -------------------------------------------------- *\
@@ -272,6 +274,7 @@ modalFunction.prototype = {
       if ( main.class === undefined ) main.class = '';
       const $modal = $('<div/>', {
         'id': main.id,
+        'data-modal': 'modal-' + this.getUniqueID,
         'class': 'modal ' + main.class,
         'style': 'max-width:' + width + 'px'
       });

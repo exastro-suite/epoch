@@ -37,6 +37,9 @@
 <script src="common/js/workspace.js"></script>
 <script src="common/js/config/workspace_api_conf.js"></script>
 
+<!-- CI/CD実行 -->
+<script src="common/js/workspace_tekton_task.js"></script>
+
 <!-- オーロラ背景 -->
 <script src="common/library/p5/p5.min.js"></script>
 <script src="common/js/background.js"></script>
@@ -572,7 +575,7 @@
                     </button>
                   </div>
                   <div class="workspace-block-setting workspace-mode-running">
-                    <button class="modal-open workspace-button" data-button="pipelineTektonCheck">
+                    <button class="modal-tekton-check workspace-button" data-button="pipelineTektonCheck">
                       <svg viewBox="0 0 64 64" class="workspace-button-svg">
                         <use href="#icon-status" />
                       </svg>

@@ -645,13 +645,14 @@ z-index: 99999;
 max-width: 320px;
 padding: 12px 16px;
 background-color: #FFF;
-border: 1px solid #CCC;
+border: 1px solid rgba( 0,0,0,.2 );
 box-shadow: 0 2px 4px rgba( 0,0,0,.3 );
 border-radius: 4px;
 line-height: 1.5;
 word-break: break-all;
 font-size: 12px;
 color: #555;
+pointer-events: none;
 }
 .epoch-popup-m-block {
 max-width: none;
@@ -662,7 +663,47 @@ border-radius: 28px;
 white-space: nowrap;
 color: #F8F8F8;
 }
-
+.epoch-popup-arrow {
+position: absolute;
+transform: translateX(-50%);
+width: 16px; height:  16px;
+border: 8px solid transparent;
+}
+.epoch-popup-arrow > span {
+display: block;
+position: absolute;
+left: -7px;
+width: 14px; height: 14px;
+border: 7px solid transparent;
+}
+.epoch-popup-top .epoch-popup-arrow {
+bottom: -16px;
+border-top-color: rgba( 0,0,0,.2 );
+}
+.epoch-popup-bottom .epoch-popup-arrow {
+top: -16px;
+border-bottom-color: rgba( 0,0,0,.2 );
+}
+.epoch-popup-top .epoch-popup-arrow > span {
+top: -8px;
+border-top-color: #FFF;
+}
+.epoch-popup-bottom .epoch-popup-arrow > span {
+bottom: -8px;
+border-bottom-color: #FFF;
+}
+.epoch-popup-m-block.epoch-popup-top .epoch-popup-arrow {
+border-top-color: #333;
+}
+.epoch-popup-m-block.epoch-popup-bottom .epoch-popup-arrow {
+border-bottom-color: #333;
+}
+.epoch-popup-m-block.epoch-popup-top .epoch-popup-arrow > span {
+border-top-color: #333;
+}
+.epoch-popup-m-block.epoch-popup-bottom .epoch-popup-arrow > span {
+border-bottom-color: #333;
+}
 /* -------------------------------------------------- *
 
    各種ボタン

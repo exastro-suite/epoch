@@ -906,7 +906,7 @@ align-items: center;
 justify-content: center;
 position: relative;
 z-index: 1;
-width: 100%; height: 80px;
+width: 100%; height: 100%;
 }
 .modal-loading-inner::after {
 content: '';
