@@ -5565,7 +5565,7 @@ data:
     {\
         \"data\" : {\
             \"GATEWAY_CRYPTO_PASSPHRASE\" : \"${PASSPHRASE_B64}\",\
-            \"KEYCLOAK_PASSWORD\" : \"${PASSW_B64}\",\
+            \"KEYCLOAK_PASSWORD\" : \"${PASSW_B64}\"\
         }\
     }"
 
