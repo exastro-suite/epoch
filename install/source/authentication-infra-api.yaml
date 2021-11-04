@@ -49,7 +49,7 @@ spec:
           name: nodeport-template
       containers:
       - name: authentication-infra-api
-        image: exastro/authentication-infra-api:0.1.5_20211029_1645
+        image: exastro/authentication-infra-api:0.1.5_20211104_1455
         env:
         - name: CONFIG_API_AUTHC_INFRA_PATH
           value: "/etc/exastro-authentication-infra/authentication-infra-api/api_authc_infra.conf"
