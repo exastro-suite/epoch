@@ -76,7 +76,9 @@ data:
           "realm_name": "exastroplatform",
           "realm_option": {
               "displayName": "Exastro Platform",
-              "enabled": "True"
+              "enabled": "True",
+              "registrationAllowed": "True",
+              "resetPasswordAllowed": "True"
           },
           "realm_roles": [
               "epoch-user",
@@ -120,18 +122,8 @@ data:
                   "group_name": "epoch-ws-1-user"
               }
           ],
+          "default_group_name": "epoch-user",
           "users": [
-              {
-                  "user_name": "epoch-admin",
-                  "user_password": "${PASSW_EPOCH}",
-                  "user_groups": [
-                      "epoch-user"
-                  ],
-                  "user_realm_roles": [],
-                  "user_option": {
-                      "enabled": "True"
-                  }
-              }
           ],
           "client_id": "epoch-system",
           "client_protocol": "https",
