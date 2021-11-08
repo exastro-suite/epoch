@@ -17,8 +17,10 @@ data:
 
     PASSPHRASE=$(< /dev/urandom tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq)
     PASSW=$(< /dev/urandom tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq)
+    PASSW_EPOCH=$(< /dev/urandom tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq)
     PASSPHRASE_B64=$(echo -n "${PASSPHRASE}" | base64)
     PASSW_B64=$(echo -n "${PASSW}" | base64)
+    PASSW_EPOCH_B64=$(echo -n "${PASSW_EPOCH}" | base64)
 
     echo "---- patch configmap"
     kubectl patch configmap -n exastro-platform-authentication-infra exastro-platform-authentication-infra-env -p "\
@@ -39,7 +41,8 @@ data:
     {\
         \"data\" : {\
             \"GATEWAY_CRYPTO_PASSPHRASE\" : \"${PASSPHRASE_B64}\",\
-            \"KEYCLOAK_PASSWORD\" : \"${PASSW_B64}\"\
+            \"KEYCLOAK_PASSWORD\" : \"${PASSW_B64}\",\
+            \"EPOCH_PASSWORD\" : \"${PASSW_EPOCH_B64}\"\
         }\
     }"
 
@@ -74,8 +77,7 @@ data:
           "realm_option": {
               "displayName": "Exastro Platform",
               "enabled": "True",
-              "registrationAllowed": "True",
-              "resetPasswordAllowed": "True"
+              "registrationAllowed": "True"
           },
           "realm_roles": [
               "epoch-user",
@@ -121,6 +123,17 @@ data:
           ],
           "default_group_name": "epoch-user",
           "users": [
+          ],
+          "admin_users": [
+              {
+                  "user_name": "epoch-admin",
+                  "user_password": "${PASSW_EPOCH}",
+                  "user_groups": [],
+                  "user_realm_roles": [],
+                  "user_option": {
+                      "enabled": "True"
+                  }
+              }
           ],
           "client_id": "epoch-system",
           "client_protocol": "https",
