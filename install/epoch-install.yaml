@@ -5162,9 +5162,7 @@ stringData:
   GATEWAY_CRYPTO_PASSPHRASE: ""
   KEYCLOAK_USER:  "admin"
   KEYCLOAK_PASSWORD: "admin"
-  EXASTRO_PASSWORD: ""
   EPOCH_PASSWORD: ""
-
 #---- keycloak.yaml
 ---
 apiVersion: v1
@@ -5208,7 +5206,7 @@ spec:
     spec:
       containers:
       - name: keycloak
-        image: jboss/keycloak
+        image: jboss/keycloak:15.0.2
         env:
         - name: KEYCLOAK_USER
           valueFrom:
@@ -5372,7 +5370,7 @@ spec:
           name: nodeport-template
       containers:
       - name: authentication-infra-api
-        image: exastro/authentication-infra-api:0.1.5_20211029_1645
+        image: exastro/authentication-infra-api:0.1.5_20211108_1030
         env:
         - name: CONFIG_API_AUTHC_INFRA_PATH
           value: "/etc/exastro-authentication-infra/authentication-infra-api/api_authc_infra.conf"
@@ -5604,7 +5602,8 @@ data:
           "realm_name": "exastroplatform",
           "realm_option": {
               "displayName": "Exastro Platform",
-              "enabled": "True"
+              "enabled": "True",
+              "registrationAllowed": "True"
           },
           "realm_roles": [
               "epoch-user",
@@ -5648,13 +5647,14 @@ data:
                   "group_name": "epoch-ws-1-user"
               }
           ],
+          "default_group_name": "epoch-user",
           "users": [
+          ],
+          "admin_users": [
               {
                   "user_name": "epoch-admin",
                   "user_password": "${PASSW_EPOCH}",
-                  "user_groups": [
-                      "epoch-user"
-                  ],
+                  "user_groups": [],
                   "user_realm_roles": [],
                   "user_option": {
                       "enabled": "True"
