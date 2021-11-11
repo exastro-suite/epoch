@@ -24,6 +24,7 @@
 <link rel="stylesheet" href="common/css/common.css">
 <link rel="stylesheet" href="common/css/table.css">
 <link rel="stylesheet" href="common/css/modal.css">
+<link rel="stylesheet" href="common/css/accountmenu.css">
 <link rel="stylesheet" href="common/css/workspace.css">
 <link rel="stylesheet" href="common/css/workspace_opt.css">
 <link rel="stylesheet" href="common/css/conductor.css">
@@ -34,6 +35,7 @@
 <script src="common/js/table.js"></script>
 <script src="common/js/modal.js"></script>
 <script src="common/js/datepicker.js"></script>
+<script src="common/js/accountmenu.js"></script>
 <script src="common/js/workspace.js"></script>
 <script src="common/js/config/workspace_api_conf.js"></script>
 
@@ -207,7 +209,7 @@
   <div class="header-menu">
     <ul class="header-menu-list">
       <li class="header-menu-item">
-        <span class="login-user-name">システム管理者</span>
+        <span class="login-user-name"></span>
         <a href="#" class="header-menu-account" title="アカウント"><span class="login-user-icon"></span></a>
       </li>
       <li class="header-menu-item"><a href="#" class="header-menu-link epoch-popup-m" title="ヘルプ"><svg viewBox="0 0 64 64" class="icon-header-svg"><use href="#icon-header-question" /></svg></a></li>
@@ -875,6 +877,54 @@
 </div>
 <!-- モーダル画面の終了 -->
 
+
+<!-- アカウントメニュー暫定版 -->
+<div id="modal-account-container" class="progress-modal-container" style="display:none;">
+  <div id="modal-progress" class="modal" style="margin:0 auto;">
+    <div class="modal-header">
+      <div class="modal-title">アカウントメニュー</div>
+    </div>
+    <div class="modal-main">
+      <div class="modal-side">
+      </div>
+      <div class="modal-body">
+        <div class="input-group">
+          <div class="input-group-header">
+            <div class="input-group-title" style="font-weight : bold" id="username"></div>
+          </div>
+          <dl class="input-text-container">
+            <dd class="input-area" id="account_email" style="font-style: italic"></dd>
+            <br/>
+            <hr/>
+            <dd class="input-area" style="font-weight : bold">パスワード変更</dd>
+            <dd class="input-area">現パスワード:</dd>
+            <dd class="input-area"><input type="text" id="password-now" name="password-now" data-name="password-now" class="item-text password-now" placeholder="現在のパスワードを入力してください" value=""></dd>
+            <br/>
+            <dd class="input-area">新パスワード:</dd>
+            <dd class="input-area"><input type="text" id="password-new" name="password-new" data-name="password-new" class="item-text password-new" placeholder="新しいパスワードを入力してください" value=""></dd>
+            <br/>
+            <dd class="input-area">
+              <button id="password-update" class="modal-menu-button message-ok">パスワード変更</button>
+            </dd>
+            <br/>
+            <hr/>
+            <dd class="input-area">
+              <a href="#" id="logout-link" style="font-weight : bold">ログアウト</a>
+            </dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <ul class="modal-menu-list">
+        <li class="modal-menu-item">
+          <button id="modal-account-close" class="modal-menu-button message-ok">CLOSE</button>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+<!-- アカウントメニュー暫定版 -->
 
 <script>initialScreen();</script>
 </body>

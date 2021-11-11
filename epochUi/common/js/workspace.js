@@ -3201,22 +3201,4 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
   // window onloadイベント
   $(document).ready(function(){ ci_result_polling(); });
 
-  //-----------------------------------------------------------------------
-  // ログイン情報取得
-  //-----------------------------------------------------------------------
-  function getCurrentUser() {
-    console.log("[START] function getCurrentUser");
-
-    $.ajax({
-      "type": "GET",
-      "url": api_url_base + "/user/current",
-    }).done(function(data) {
-      console.log("[TRACE] function getCurrentUser $.ajax.done");
-    }).fail((jqXHR, textStatus, errorThrown) => {
-      console.log("[TRACE] function getCurrentUser $.ajax.fail");
-    });
-
-  }
-  $(document).ready(function(){ getCurrentUser(); });
-
 });
