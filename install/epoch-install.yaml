@@ -4545,7 +4545,7 @@ spec:
           name: epoch-ui-conf
       containers:
       - name: epoch-ui
-        image: exastro/epoch-ui:0.2.0_20211111_1530
+        image: exastro/epoch-ui:0.2.0_20211111_1600
         volumeMounts:
         - name: epoch-ui-conf
           mountPath: /app/common/js/config
@@ -5374,7 +5374,7 @@ spec:
           name: nodeport-template
       containers:
       - name: authentication-infra-api
-        image: exastro/authentication-infra-api:0.2.0_20211111_1530
+        image: exastro/authentication-infra-api:0.2.0_20211111_1600
         env:
         - name: CONFIG_API_AUTHC_INFRA_PATH
           value: "/etc/exastro-authentication-infra/authentication-infra-api/api_authc_infra.conf"
