@@ -53,6 +53,23 @@ $(function(){
   $('#password-update').on('click',() => {
     console.log("[START] password-update");
 
+    if ( $('#password-now').val() == "" ) {
+      alert("現パスワードを入力してください");
+      return;
+    }
+    if ( $('#password-new').val() == "" ) {
+      alert("新パスワードを入力してください");
+      return;
+    }
+    if ( $('#password-new-confirm').val() == "" ) {
+      alert("新パスワード（確認）を入力してください");
+      return;
+    }
+    if ( $('#password-new').val() != $('#password-new-confirm').val() ) {
+      alert("新パスワードと新パスワード（確認）が一致していません\n入力内容を確認してください");
+      return;
+    }
+
     $.ajax({
       type: "PUT",
       url: api_url_base + "/user/current/password",
@@ -64,6 +81,10 @@ $(function(){
       dataType: "json"
     }).done(function(data) {
       alert("パスワードを更新しました");
+      $('#password-now').val("");
+      $('#password-new').val("");
+      $('#password-new-confirm').val("");
+
     }).fail((jqXHR, textStatus, errorThrown) => {
       if(jqXHR.status == "401") {
         alert("現パスワードが違います。パスワードを修正して再度実施してください");
