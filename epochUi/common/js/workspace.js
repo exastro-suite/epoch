@@ -3064,6 +3064,15 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         }
         prmenv['manifests'][prmenv['manifests'].length] = prmmani;
       }
+      // file_id順に並び変える
+      prmenv['manifests'].sort( function( a, b ){
+        var r = 0;
+        if( a.file_id < b.file_id ){ r = -1; }
+        else if( a.file_id > b.file_id ){ r = 1; }
+    
+        return r;
+      } );
+
       reqbody['ci_config']['environments'][reqbody['ci_config']['environments'].length] = prmenv;
       envidx++;
     }

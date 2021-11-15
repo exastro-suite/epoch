@@ -1,4 +1,5 @@
-#   Copyright 2021 NEC Corporation
+/*
+#   Copyright 2019 NEC Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -11,23 +12,20 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-server {
-  listen    8000;
-  location  / {
-    root    /app;
-    index   workspace.html;
+*/
+/* CSS Document */
+
+#modal-account-container {
+    overflow: hidden;
+    position: fixed;
+    display: none;
+    justify-content: center;
+    align-items: center; 
+    flex-direction: column;
+    left: 0; top: 0;
+    z-index: 99999;
+    width: 100%; height: 100%;
+    padding: 16px;
+    background-color: rgba(0,0,0,.5);
   }
-}
-server {
-  listen    4430 ssl;
-  server_name _;
-  ssl_certificate     /etc/nginx/ssl/epoch/ca.pem;
-  ssl_certificate_key /etc/nginx/ssl/epoch/ca.key;
-  location  / {
-    root    /app;
-    index   workspace.html;
-  }
-  location /api/ {
-      proxy_pass  http://epoch-service-api.epoch-system.svc:8000/;
-  }
-}
+  
