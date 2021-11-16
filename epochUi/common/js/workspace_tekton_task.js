@@ -24,7 +24,16 @@ $(function(){
                 // console.log(typeof(data));
                 console.log(JSON.stringify(data));
 
+                // Pipelinerun null skip
+                /*
                 data_pipelinerun = data['rows'];
+                */
+                data_pipelinerun = [];
+                for(var i in data['rows']) {
+                  if( data['rows'][i] == null ) continue;
+                  data_pipelinerun[data_pipelinerun.length] = data['rows'][i];
+                }
+
                 // 成功
                 resolve(data_pipelinerun);
 
