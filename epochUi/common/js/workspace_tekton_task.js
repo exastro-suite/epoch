@@ -290,7 +290,7 @@ $(function(){
                   + statusHTML
                 + '</div>'
                 + '<div class="task-status-name">'
-                  + d.name
+                  + (d.name == 'task-sonarqube-scanner'? (d.name + '<a href="' + workspace_api_conf.links.sonarqube + '" target="_blank">解析結果</a>') : (d.name))
                 + '</div>'
                 + '<div class="task-status-start">'
                   + '<div class="task-status-start-title">開始日時</div>'
