@@ -4545,7 +4545,7 @@ spec:
           name: epoch-ui-conf
       containers:
       - name: epoch-ui
-        image: exastro/epoch-ui:0.2.0_20211116_1030
+        image: exastro/epoch-ui:0.2.1_20211116_1030
         volumeMounts:
         - name: epoch-ui-conf
           mountPath: /app/common/js/config
