@@ -274,7 +274,7 @@ modalFunction.prototype = {
       if ( main.class === undefined ) main.class = '';
       const $modal = $('<div/>', {
         'id': main.id,
-        'data-modal': 'modal-' + this.getUniqueID,
+        'data-modal': 'modal-' + this.getUniqueID(),
         'class': 'modal ' + main.class,
         'style': 'max-width:' + width + 'px'
       });
@@ -745,56 +745,139 @@ modalFunction.prototype = {
       }
       
       // Event
-      if ( ['text', 'textarea', 'password'].indexOf( type) !== -1 ) {
-        modal.commonItemEbvent( $dl );
-      }
       if ( type === 'number') {
         modal.faderEvent( $dl );
       }
       
       // 入力チェック
-      if ( ['text', 'password'].indexOf( type) !== -1 ) {
-        if ( data.validation !== undefined ) {
-          const $error = $('<div/>', {'class': 'item-error item-' + type + '-error', 'text': data.inputError }),
-                $input = $dl.find('input'),
-                value = $input.val();
-          $dl.find('.item-' + type + '-area').append( $error );
-
-          const errorCheck = function( $target, val ){
-            const reg = new RegExp( data.validation );
+      if ( ['text', 'textarea', 'password'].indexOf( type) !== -1 ) {
+        
+        const $input = $dl.find('input, textarea'),
+              $count = $dl.find('.item-word-number'),
+              min = $input.attr('data-min'),
+              max = $input.attr('data-max'),
+              value = $input.val(),
+              length = value.length;
+        
+        // 必須チェック
+        modal.requiredCheck( $input );
+        
+        // 入力範囲内かチェック
+        const numCheck = function(){
+          const num = $input.val().length;
+          if ( num > 0 ) {
+            if ( min !== undefined && max !== undefined ) {
+              if ( num >= min && num <= max ) {
+                $input.add( $count ).removeClass('count-error');
+              } else {
+                $input.add( $count ).addClass('count-error count-input-event');
+              }
+            }
+          } else {
+            $input.add( $count ).removeClass('count-error');
+          }
+        };
+        numCheck();
+        $count.text( length );
+        
+        // 正規表現チェック
+        const errorCheck = function(){
+          if ( data.validation !== undefined ) {
+            const reg = new RegExp( data.validation ),
+                  $target = $input.add( $dl.find('.item-error') ),
+                  val = $input.val();
             if ( val !== undefined ) {
               if ( !reg.test( val ) && val !== '') {
-                $target.addClass('input-error');
+                $target.addClass('input-error regex-input-event');
               } else {
                 $target.removeClass('input-error');
               }
             } else {
               $target.removeClass('input-error');
             }
-          };
-          // 初回チェック
-          errorCheck( $input.add( $error ), value );
-          
-          // フォーカス時にエラーの場合、入力ごとにチェックを入れる
-          $input.on('focus', function(){
-            const $this = $( this );
-            if ( $this.is('.input-error') ) {
-              $input.on('input.errorInputCheck', function(){
-                const val = $this.val();
-                errorCheck( $input, val );
-              });
-            }
+          }
+        };
+        errorCheck();
+        if ( data.validation !== undefined ) {
+          const $inputError = $('<div/>', {
+            'class': 'item-error item-' + type + '-error',
+            'text': ( data.inputError !== undefined )? data.inputError: 'Error'
           });
+          $dl.find('.item-' + type + '-area').append( $inputError );
+        }
+        
+        // 再入力一致チェック
+        const misatchErrorCheck = function(){
+          if ( data.matchTargetName !== undefined ) {
+            const $matchTaget = modal.$modal.find('[name="' + data.matchTargetName + '"]'),
+                  matchTargetVal = $matchTaget.val(),
+                  $target = $input.add( $dl.find('.item-mismatch-error') ),
+                  val = $input.val();
+            if ( val !== matchTargetVal && val !== '' && matchTargetVal !== '') {
+              $target.addClass('input-mismatch-error mismatch-input-event');
+            } else {
+              $target.removeClass('input-mismatch-error');
+            }
+          }
+        };
+        if ( data.matchTargetName !== undefined ) {
+          const $mismatchError = $('<div/>', {
+            'class': 'item-mismatch-error item-' + type + '-mismatch-error',
+            'text': ( data.mismatchErrorMessage !== undefined )? data.mismatchErrorMessage: 'Error'
+          });
+          $dl.find('.item-' + type + '-area').append( $mismatchError );
           
-          // フォーカスが外れた時にチェック
-          $input.on('blur', function(){
-            const $this = $( this ),
-                  val = $this.val();
-            $input.off('input.errorInputCheck');
-            errorCheck( $input.add( $error ), val );
-            if ( modal.$modal !== undefined ) modal.inputErrorCheck();
+          // フォーカスした時に対象にイベントを付ける
+          $input.one('focus', function(){
+            const $matchTaget = modal.$modal.find('[name="' + data.matchTargetName + '"]');
+            $matchTaget.on({
+              'input': function(){
+                if ( $input.is('.mismatch-input-event') ) misatchErrorCheck();
+              },
+              'blur': function(){
+                misatchErrorCheck();
+              }
+            });
           });
         }
+        
+        // イベント
+        $input.on({
+          'input': function(){
+            modal.requiredCheck( $input );
+            $count.text( $input.val().length );
+            if ( $input.is('.count-input-event') ) numCheck();
+            if ( $input.is('.regex-input-event') ) errorCheck();
+            if ( $input.is('.mismatch-input-event') ) misatchErrorCheck();            
+          },
+          'blur': function(){
+            $input.removeClass('count-input-event regex-input-event mismatch-input-event');
+            numCheck();
+            errorCheck();
+            misatchErrorCheck();
+          }
+        });
+        
+        // イベントを実行順で登録する
+        $input.one({
+          'focus': function(){
+            if ( data.matchTargetName !== undefined ) {
+              const $matchTaget = modal.$modal.find('[name="' + data.matchTargetName + '"]');
+              $matchTaget.on({
+                'input': function(){
+                  if ( $input.is('.mismatch-input-event') ) misatchErrorCheck();
+                },
+                'blur': function(){
+                  $input.removeClass('mismatch-input-event');
+                  misatchErrorCheck();
+                }
+              });
+            }
+            $input.on({
+              'input blur': function(){ modal.inputErrorCheck(); }
+            });
+          }
+        });
       }
       
       return $dl;
@@ -850,55 +933,6 @@ modalFunction.prototype = {
           $input.removeClass('required-error');
         }
       }
-    },
-    /* -------------------------------------------------- *\
-       Item event ( textarea, text, password )
-    \* -------------------------------------------------- */
-    'commonItemEbvent': function( $item ){
-      const modal = this,
-            $input = $item.find('input, textarea'),
-            $count = $item.find('.item-word-number'),
-            min = $input.attr('data-min'),
-            max = $input.attr('data-max'),
-            value = $input.val(),
-            length = value.length;
-      
-      modal.requiredCheck( $input );
-      
-      const numCheck = function( num ){
-        
-        // 入力範囲内かチェック
-        if ( num > 0 ) {
-          if ( min !== undefined && max !== undefined ) {
-            if ( num >= min && num <= max ) {
-              $input.add( $count ).removeClass('count-error');
-            } else {
-              $input.add( $count ).addClass('count-error');
-            }
-          }
-        } else {
-          $input.add( $count ).removeClass('count-error');
-        }
-      };
-      
-      let inputTimerID;
-      $input.on('input', function(){
-        const $i = $( this ),
-              v = $i.val();
-       $count.text( v.length );
-        
-        // 入力チェック
-        clearTimeout( inputTimerID );
-        inputTimerID = setTimeout( function(){
-          numCheck( v.length );
-          modal.requiredCheck( $input );
-          modal.inputErrorCheck();
-        }, 50 );
-      });
-      
-       $count.text( length );
-       numCheck( length );
-       
     },
     /* -------------------------------------------------- *\
        フェーダーイベント
@@ -1282,18 +1316,22 @@ modalFunction.prototype = {
        メッセージ
     \* -------------------------------------------------- */
     'createMessage': function( message ){
-      const $free = $('<dl/>', {'class': 'item-message-block item-block'}),
+      const $message = $('<dl/>', {'class': 'item-message-block item-block'}),
             className = ( message.class !== undefined )? ' ' + message.class: '';
-      $free.append(
-        $('<dt/>', {'class': 'item-message-title item-title', 'text': message.title }),
-        $('<dd/>', {'class': 'item-message-area'}).append(
-          $('<div/>', {
-            'class': 'item-message ' + className,
-            'text': message.text
-          })
-        )
-      );
-      return $free;
+      if ( message.title !== undefined ) {
+        $message.append( $('<dt/>', {'class': 'item-message-title item-title', 'text': message.title }) );
+      }
+      if ( message.text !== undefined ) {
+        $message.append(
+          $('<dd/>', {'class': 'item-message-area'}).append(
+            $('<div/>', {
+              'class': 'item-message ' + className,
+              'text': message.text
+            })
+          )
+        );
+      }
+      return $message;
     },
     /* -------------------------------------------------- *\
        未入力・エラーの表示
@@ -1326,7 +1364,7 @@ modalFunction.prototype = {
       if ( modal.$modal !== undefined ) {
         const $target = modal.$modal.find('input, textarea').not(':disabled'),
               $okButton = modal.$modal.find('.modal-menu-button[data-button="ok"]'),
-              inputError = $target.filter('.input-error').length,
+              inputError = $target.filter('.input-error, .input-mismatch-error').length,
               countError = $target.filter('.count-error').length,
               requiredError = $target.filter('.required-error').length,
               errorCount = inputError + countError + requiredError;
