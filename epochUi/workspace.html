@@ -37,6 +37,7 @@
 <script src="common/js/datepicker.js"></script>
 <script src="common/js/accountmenu.js"></script>
 <script src="common/js/workspace.js"></script>
+<script src="common/js/version.js"></script>
 <script src="common/js/config/workspace_api_conf.js"></script>
 
 <!-- CI/CD実行 -->
@@ -194,6 +195,19 @@
         c0.59-0.3,0.83-1.02,0.53-1.61l-0.59-1.16c-0.1-0.2-2.56-5.03-7.2-9.85C46.99,10.7,39.63,7.24,32,7.24S17.01,10.7,10.71,17.24
         c-4.64,4.82-7.1,9.65-7.2,9.85l-0.59,1.16C2.63,28.85,2.87,29.57,3.46,29.87z"/>
     </symbol>
+    <symbol id="icon-lock">
+      <path d="M53.52,27.76h-3.68v-6.24c0-10.15-7.93-18.4-17.68-18.4s-17.68,8.25-17.68,18.4v6.24h-4c-1.1,0-1.98,0.89-1.98,1.98v25.19
+        c0,3.29,2.66,5.95,5.95,5.95h35.1c3.29,0,5.95-2.66,5.95-5.95V29.74C55.5,28.65,54.61,27.76,53.52,27.76z M19.28,21.52
+        c0-7.5,5.78-13.6,12.88-13.6s12.88,6.1,12.88,13.6v6.24H19.28V21.52z M34.4,50.48c0,1.32-1.08,2.4-2.4,2.4l0,0
+        c-1.32,0-2.4-1.08-2.4-2.4v-11.2c0-1.32,1.08-2.4,2.4-2.4l0,0c1.32,0,2.4,1.08,2.4,2.4V50.48z"/>
+    </symbol>
+    <symbol id="icon-logout">
+      <polygon points="2.72,32 21.6,50.88 21.6,40.56 32,40.56 32,23.44 21.6,23.44 21.6,13.12 		"/>
+      <rect x="33.92" y="23.36" width="5.6" height="17.12"/>
+      <rect x="41.6" y="23.36" width="5.6" height="17.12"/>
+      <polygon points="15.52,0.64 15.52,10.08 22.56,10.08 22.56,7.68 56.32,7.68 56.32,56.32 22.56,56.32 22.56,53.92 15.52,53.92 
+        15.52,63.36 63.36,63.36 63.36,0.64 	"/>
+    </symbol>
   </defs>
 </svg>
 
@@ -209,8 +223,28 @@
   <div class="header-menu">
     <ul class="header-menu-list">
       <li class="header-menu-item">
-        <span class="login-user-name"></span>
-        <a href="#" class="header-menu-account" title="アカウント"><span class="login-user-icon"></span></a>
+        <div id="user-info">
+          <span class="login-user-name"></span>
+          <button class="login-user-info-button epoch-popup-m" data-type="open" title="ユーザ情報"></button>
+          <div class="user-info-detail">
+            <div class="user-info-close"><button class="user-info-button user-info-close-button" data-type="close"></button></div>
+            <div class="user-info-status"></div>
+            <!-- ユーザ情報モーダル Role一覧（Roleの取得処理を実装の時に有効化する） -->
+            <!--div class="user-info-role">
+              <div class="user-info-role-title"><svg viewBox="0 0 64 64" class="user-info-role-icon"><use href="#icon-menu-role"></use></svg> Role<span class="user-info-role-number">0</span></div>
+              <div class="user-info-role-body">
+                <div class="user-info-role-wrap"></div>
+                <div class="user-info-role-all"><button class="user-info-button user-info-role-button" data-type="role">全てのRoleを表示</button></div>
+              </div>
+            </div-->
+            <div class="user-info-menu">
+              <ul class="user-info-menu-list">
+                <li class="user-info-menu-item"><button class="user-info-button user-info-menu-button" data-type="password"><svg viewBox="0 0 64 64" class="user-info-menu-icon"><use href="#icon-lock"></use></svg>パスワード変更</button></li>
+                <li class="user-info-menu-item"><button class="user-info-button user-info-menu-button" data-type="logout"><svg viewBox="0 0 64 64" class="user-info-menu-icon"><use href="#icon-logout"></use></svg>ログアウト</button></li>
+              </ul>
+            </div>
+          </div>
+        </div>
       </li>
       <li class="header-menu-item"><a href="#" class="header-menu-link epoch-popup-m" title="ヘルプ"><svg viewBox="0 0 64 64" class="icon-header-svg"><use href="#icon-header-question" /></svg></a></li>
       <li class="header-menu-item"><a href="#" class="header-menu-link epoch-popup-m" title="通知"><svg viewBox="0 0 64 64" class="icon-header-svg"><use href="#icon-header-notice" /></svg></a></li>
@@ -832,14 +866,13 @@
     </div>    
   </div>
   
-
   </div><!-- // #content -->
 
 </main><!-- // main -->
 
 <footer id="footer">
   <small class="copyright"></small>
-  <div class="version">Exastro EPOCH Version 0.1</div>
+  <div class="version">Exastro EPOCH Version <script>document.write(epoch_version);</script></div>
 </footer>
 
 </div><!-- // #container -->
@@ -876,57 +909,6 @@
   </div>
 </div>
 <!-- モーダル画面の終了 -->
-
-
-<!-- アカウントメニュー暫定版 -->
-<div id="modal-account-container" class="progress-modal-container" style="display:none;">
-  <div id="modal-progress" class="modal" style="margin:0 auto;">
-    <div class="modal-header">
-      <div class="modal-title">アカウントメニュー</div>
-    </div>
-    <div class="modal-main">
-      <div class="modal-side">
-      </div>
-      <div class="modal-body">
-        <div class="input-group">
-          <div class="input-group-header">
-            <div class="input-group-title" style="font-weight : bold" id="username"></div>
-          </div>
-          <dl class="input-text-container">
-            <dd class="input-area" id="account_email" style="font-style: italic"></dd>
-            <br/>
-            <hr/>
-            <dd class="input-area" style="font-weight : bold">パスワード変更</dd>
-            <dd class="input-area">現パスワード:</dd>
-            <dd class="input-area"><input type="password" id="password-now" name="password-now" data-name="password-now" class="item-text password-now" placeholder="現在のパスワードを入力してください" value=""></dd>
-            <br/>
-            <dd class="input-area">新パスワード:</dd>
-            <dd class="input-area"><input type="password" id="password-new" name="password-new" data-name="password-new" class="item-text password-new" placeholder="新しいパスワードを入力してください" value=""></dd>
-            <dd class="input-area">新パスワード（確認）:</dd>
-            <dd class="input-area"><input type="password" id="password-new-confirm" name="password-new-confirm" data-name="password-new-confirm" class="item-text password-new-confirm" placeholder="新しいパスワードをもう一度入力してください" value=""></dd>
-            <br/>
-            <dd class="input-area">
-              <button id="password-update" class="modal-menu-button message-ok">パスワード変更</button>
-            </dd>
-            <br/>
-            <hr/>
-            <dd class="input-area">
-              <a href="#" id="logout-link" style="font-weight : bold">ログアウト</a>
-            </dd>
-          </dl>
-        </div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <ul class="modal-menu-list">
-        <li class="modal-menu-item">
-          <button id="modal-account-close" class="modal-menu-button message-ok">CLOSE</button>
-        </li>
-      </ul>
-    </div>
-  </div>
-</div>
-<!-- アカウントメニュー暫定版 -->
 
 <script>initialScreen();</script>
 </body>

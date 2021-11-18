@@ -18,6 +18,8 @@ BASE_DIR=`dirname $0`
 ALL_MANIFESTS="${BASE_DIR}/epoch-install.yaml"
 SOURCE_MANIFEST="${BASE_DIR}/source"
 TEMPLATES_DIR="${BASE_DIR}/source/templates"
+TEKTON_MANIFEST="${BASE_DIR}/source/tekton"
+
 
 # ---- templatesフォルダ内のtemplateファイルをもとに定義用のyaml生成 ----
 kubectl create cm gateway-conf-template -n exastro-platform-authentication-infra --dry-run=client -o yaml \
@@ -27,11 +29,31 @@ kubectl create cm gateway-conf-template -n exastro-platform-authentication-infra
     --from-file=${TEMPLATES_DIR}/epoch-ws-sonarqube-template.conf \
     >   ${SOURCE_MANIFEST}/gateway-conf-template.yaml
 
+# ---- source/tektonフォルダ内のファイルをもとにinstaller scriptのyaml生成 ----
+cat <<EOF > ${SOURCE_MANIFEST}/tekton-installer-script.yaml
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+EOF
+kubectl create cm tekton-installer-script -n epoch-system --dry-run=client -o yaml \
+    --from-file=${TEKTON_MANIFEST}/tekton-installer-script.sh \
+    --from-file=${TEKTON_MANIFEST}/tekton-pipeline-release.yaml \
+    --from-file=${TEKTON_MANIFEST}/tekton-trigger-release.yaml \
+    --from-file=${TEKTON_MANIFEST}/tekton-trigger-interceptors.yaml \
+    >>   ${SOURCE_MANIFEST}/tekton-installer-script.yaml
 
 # ---- source内のyamlファイル定義 ----
 YAMLFILES=()
-YAMLFILES+=("tekton-pipeline-release.yaml")
-YAMLFILES+=("tekton-trigger-release.yaml")
 YAMLFILES+=("epoch-system.yaml")
 YAMLFILES+=("exastro-platform-authentication-infra.yaml")   # namespace
 YAMLFILES+=("proxy-setting.yaml")
@@ -62,9 +84,12 @@ YAMLFILES+=("gateway-httpd.yaml")
 
 YAMLFILES+=("authentication-infra-setting.yaml")
 
-# tekton deloy後に入れる必要があるので最後にする
-YAMLFILES+=("tekton-trigger-interceptors.yaml")
+# TEKTON instasller
+YAMLFILES+=("tekton-installer-script.yaml")
+YAMLFILES+=("tekton-installer.yaml")
 # -----------------------------------
+
+
 
 cat <<EOF > ${ALL_MANIFESTS}
 #   Copyright 2019 NEC Corporation
@@ -102,5 +127,6 @@ for YAMLFILEPATH in $(ls ${SOURCE_MANIFEST}/*.yaml); do
         echo "WARNING: not listed file : ${YAMLNAME}"
     fi
 done
+
 
 echo "SUCCEED !!"
