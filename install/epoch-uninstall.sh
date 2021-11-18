@@ -14,7 +14,7 @@
 #   limitations under the License.
 
 #
-# epoch version 0.1.1 uninstaller
+# epoch version 0.2.1 uninstaller
 #
 
 NS_NAME_EPOCH=epoch-system
@@ -80,6 +80,38 @@ if [ ! -z "${POD_NAME_TEKTON}" ]; then
 	kubectl exec -it ${POD_NAME_TEKTON} -n ${NS_NAME_EPOCH} -- kubectl delete -f /var/epoch/tekton --ignore-not-found
 fi
 
+# ALL TEKTON Resource DELETE
+kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c "tkn pipelinerun list -A -C | sed -e '1d' -e 's/[ \t\r].*$//' | uniq" | \
+while read pline_namespace; do \
+	kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c "tkn pipelinerun delete -n ${pline_namespace} --all -f"; \
+done
+kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c "tkn taskrun list -A -C | sed -e '1d' -e 's/[ \t\r].*$//' | uniq" | \
+while read pline_namespace; do \
+	kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c "tkn taskrun delete -n ${pline_namespace} --all -f"; \
+done
+kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c "tkn eventlistener list -A -C | sed -e '1d' -e 's/[ \t\r].*$//' | uniq" | \
+while read pline_namespace; do \
+	kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c "tkn eventlistener delete -n ${pline_namespace} --all -f"; \
+done
+kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c "tkn triggerbinding list -A -C | sed -e '1d' -e 's/[ \t\r].*$//' | uniq" | \
+while read pline_namespace; do \
+	kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c "tkn triggerbinding delete -n ${pline_namespace} --all -f"; \
+done
+kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c "tkn triggertemplate list -A -C | sed -e '1d' -e 's/[ \t\r].*$//' | uniq" | \
+while read pline_namespace; do \
+	kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c "tkn triggertemplate delete -n ${pline_namespace} --all -f"; \
+done
+kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c "tkn pipeline list -A -C | sed -e '1d' -e 's/[ \t\r].*$//' | uniq" | \
+while read pline_namespace; do \
+	kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c "tkn pipeline delete -n ${pline_namespace} --all -f"; \
+done
+kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c "tkn task list -A -C | sed -e '1d' -e 's/[ \t\r].*$//' | uniq" | \
+while read pline_namespace; do \
+	kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c "tkn task delete -n ${pline_namespace} --all -f"; \
+done
+
+
+
 #
 # version 0.1.1 tekton pipeline uninstall
 #
@@ -114,6 +146,11 @@ kubectl delete namespace ${NS_NAME_PIPELINE_V011} --ignore-not-found
 
 echo "-- DELETE NAMESPACE epoch-workspace --"
 kubectl delete namespace ${NS_NAME_WORKSPACE} --ignore-not-found
+
+echo "-- DELETE TEKTON"
+kubectl delete -f "${BASEDIR}/source/tekton/tekton-trigger-interceptors.yaml" --ignore-not-found
+kubectl delete -f "${BASEDIR}/source/tekton/tekton-trigger-release.yaml" --ignore-not-found
+kubectl delete -f "${BASEDIR}/source/tekton/tekton-pipeline-release.yaml" --ignore-not-found
 
 echo "-- DELETE EPOCH POD --"
 kubectl delete -f "${BASEDIR}/epoch-install.yaml" --ignore-not-found
