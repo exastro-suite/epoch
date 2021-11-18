@@ -14,8 +14,6 @@
 #   limitations under the License.
 */
 // JavaScript Document
-var URL_BASE=window.location.protocol + "//" + window.location.hostname + ":" + window.location.port
-
 function workspaceList( list ) {
     
     // テーブルヘッダー
