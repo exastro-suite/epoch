@@ -14,6 +14,7 @@
 #   limitations under the License.
 */
 // JavaScript Document
+var URL_BASE=window.location.protocol + "//" + window.location.hostname + ":" + window.location.port
 
 function workspaceList( list ) {
     
@@ -108,7 +109,7 @@ function workspaceList( list ) {
           switch( type ) {
             // 編集
             case 'edit':
-              location.href = 'workspace.html';
+              location.href = 'workspace.html?workspace_id=' + idKey;
               break;
             // 削除
             case 'delete':
@@ -130,51 +131,23 @@ function workspaceList( list ) {
 
 
 $(function(){
-    // // （ダミーデータ）
-    // const workspaceListDummy = [];
-
-    // /* ランダムデータ作成 */
-    // const fn = new epochCommon();
-    // const number = 1000;
-    // const workspaceName = ['workspace','ワークスペース','EPOCH'],
-    //       organizations = ['〇〇社の開発A','〇〇社の開発B','〇〇社の開発C'];
-
-    // for ( let i = 0; i < number; i++ ) {
-    //     let date = new Date();
-    //     date.setSeconds(date.getSeconds() - i);
-    //     date.setMinutes(date.getMinutes() - i);
-    //     date.setHours(date.getHours() - i);
-
-    //     const workspaceNum =  Math.floor( Math.random() * workspaceName.length ),
-    //           organizationsNum = Math.floor( Math.random() * organizations.length );
-
-
-    //     workspaceListDummy[i] = {
-    //       'name': workspaceName[workspaceNum] + i,
-    //       'note': 'あああああああああああああああああああああああああああああああああああああああああああああああ',
-    //       'organization': organizations[organizationsNum],
-    //       'lastModified': fn.formatDate(date, 'yyyy/MM/dd HH:mm:ss')
-    //     };
-    // }
-
-    // workspaceList( workspaceListDummy );
-
     console.log("GET /api2/workspace");
+
     $.ajax({
       "type": "GET",
-      "url": window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/api2/workspace"
+      "url": URL_BASE + "/api2/workspace"
     }).done(function(data) {
       console.log("RESPONSE GET /api2/workspace:");
       console.log(JSON.stringify(data));
 
       workspaceListData = [];
       for(var i=0; i<data.rows.length; ++i) {
-        workspaceListData.push({
-          id: data.rows[i].id,
-          name: data.rows[i].name,
-          note: data.rows[i].remarks,
+        workspaceListData[data.rows[i].workspace_id] = {
+          id: data.rows[i].workspace_id,
+          name: data.rows[i].workspace_name,
+          note: data.rows[i].workspace_remarks,
           lastModified: data.rows[i].update_at
-        });
+        };
       }
       workspaceList(workspaceListData);
     });
