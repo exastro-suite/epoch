@@ -22,12 +22,6 @@
     kubectl apply -f https://github.com/exastro-suite/epoch/releases/latest/download/epoch-install.yaml
     ```
 
-    **注:** 以下のようなエラーが表示されたときは、もう一度コマンドを実行してください
-    ```
-    Error from server (InternalError): error when creating "epoch-install.yaml": Internal error occurred: failed calling webhook "webhook.triggers.tekton.dev": Post "https://tekton-triggers-webhook.tekton-pipelines.svc:443/defaulting?timeout=10s": dial tcp ***.***.***.***:443: connect: connection refused
-    ```
-   
-
 1. すべてのコンポーネントがRunningステータスを表示するまで、次のコマンドを使用してインストールを監視します:
 
     - epoch-systemの監視
