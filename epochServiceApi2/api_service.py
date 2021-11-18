@@ -122,31 +122,35 @@ def get_workspace_list():
         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
         globals.logger.debug('#' * 50)
 
-        ret = {
-            "result": "200",
-            "rows": [
-                {
-                    "id": 1,
-                    "name": "EPOCHワークスペース１",
-                    "remarks": "EPOCHワークスペース１の備考",
-                    "update_at": datetime.now(globals.TZ),
-                },
-                {
-                    "id": 2,
-                    "name": "EPOCHワークスペース２",
-                    "remarks": "EPOCHワークスペース２の備考",
-                    "update_at": datetime.now(globals.TZ),
-                },
-                {
-                    "id": 3,
-                    "name": "EPOCHワークスペース３",
-                    "remarks": "EPOCHワークスペース３の備考",
-                    "update_at": datetime.now(globals.TZ),
-                },
-            ]
+        # ヘッダ情報
+        headers = {
+            'Content-Type': 'application/json',
         }
 
-        return jsonify(ret), 200
+        # ワークスペース情報取得
+        api_url = "{}://{}:{}/workspace".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+                                                os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                os.environ['EPOCH_RS_WORKSPACE_PORT'])
+        response = requests.get(api_url + '', headers=headers)
+
+        rows = []
+        if response.status_code == 200 and common.is_json_format(response.text):
+            # 取得した情報で必要な部分のみを編集して返却する
+            ret = json.loads(response.text)
+            for data_row in ret["rows"]:
+                row = {
+                    "workspace_id": data_row["workspace_id"],
+                    "workspace_name": data_row["common"]["name"],
+                    "workspace_remarks": data_row["common"]["note"],
+                    "update_at": data_row["update_at"],
+                }
+                rows.append(row)
+
+        elif not response.status_code == 404:
+            # 404以外の場合は、エラー、404はレコードなしで返却（エラーにはならない）
+            raise Exception('{} Error:{}'.format(inspect.currentframe().f_code.co_name, response.status_code))
+
+        return jsonify({"result": "200", "rows": rows}), 200
 
     except Exception as e:
         return common.serverError(e)
