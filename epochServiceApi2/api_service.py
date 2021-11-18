@@ -122,7 +122,31 @@ def get_workspace_list():
         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
         globals.logger.debug('#' * 50)
 
-        return jsonify({"result": "200"}), 200
+        ret = {
+            "result": "200",
+            "rows": [
+                {
+                    "id": 1,
+                    "name": "EPOCHワークスペース１",
+                    "remarks": "EPOCHワークスペース１の備考",
+                    "update_at": datetime.now(globals.TZ),
+                },
+                {
+                    "id": 2,
+                    "name": "EPOCHワークスペース２",
+                    "remarks": "EPOCHワークスペース２の備考",
+                    "update_at": datetime.now(globals.TZ),
+                },
+                {
+                    "id": 3,
+                    "name": "EPOCHワークスペース３",
+                    "remarks": "EPOCHワークスペース３の備考",
+                    "update_at": datetime.now(globals.TZ),
+                },
+            ]
+        }
+
+        return jsonify(ret), 200
 
     except Exception as e:
         return common.serverError(e)
