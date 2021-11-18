@@ -11,6 +11,15 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: epoch-service-api2-conf
+  namespace: epoch-system
+data:
+  api_service.conf: |
+    TZ='Asia/Tokyo'
+---
 
 apiVersion: apps/v1
 kind: Deployment
@@ -27,10 +36,20 @@ spec:
       labels:
         name: epoch-service-api2
     spec:
+      volumes:
+      - name: epoch-service-api2-conf
+        configMap:
+          name: epoch-service-api2-conf
       containers:
       - name: epoch-service-api2
         image: exastro/epoch-service-api2:0.3.0_20211118_1200
         env:
+        - name: CONFIG_API_SERVICE_PATH
+          value: "/etc/epoch/epochServiceApi/api_service.conf"
+        - name: FLASK_ENV
+          value: "development"
+        - name: API_SERVICE_PORT
+          value: "8000"
         - name: PYTHONIOENCODING
           value: utf-8
         envFrom:
@@ -41,6 +60,9 @@ spec:
           # - prefix: EPOCH_
           #   secretRef:
           #     name: epoch-service-api-secret
+        volumeMounts:
+        - name: epoch-service-api2-conf
+          mountPath: /etc/epoch/epochServiceApi
 
 ---
 
