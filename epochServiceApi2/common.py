@@ -14,6 +14,7 @@
 
 from flask import jsonify
 import random, string
+import json
 
 import globals
 
@@ -59,3 +60,23 @@ def serverError(e):
         }
     ), 500
 
+
+def is_json_format(str):
+    """json値判断
+
+    Args:
+        str (str): json文字列
+
+    Returns:
+        bool: True:json, False:not json
+    """
+    try:
+        # Exceptionで引っかかるときはすべてJson意外と判断
+        json.loads(str)
+    except json.JSONDecodeError:
+        return False
+    except ValueError:
+        return False
+    except Exception:
+        return False
+    return True
