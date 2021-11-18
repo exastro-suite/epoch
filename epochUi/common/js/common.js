@@ -181,7 +181,7 @@ userInfo.prototype = {
 
       $.ajax({
         "type": "GET",
-        "url": URL_BASE + "/user/current",
+        "url": URL_BASE + "/api/user/current",
       }).done(function(data) {
         console.log("[TRACE] get user info response:" + JSON.stringify(data));
 
@@ -233,7 +233,7 @@ userInfo.prototype = {
 
           $.ajax({
             type: "PUT",
-            url: URL_BASE + "/user/current/password",
+            url: URL_BASE + "/api/user/current/password",
             data: JSON.stringify({
               "current_password" : password['oldPassword'],
               "password" : password['newPassword']
