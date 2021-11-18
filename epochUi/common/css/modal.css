@@ -118,9 +118,9 @@ letter-spacing: -0.4em;
 .modal-error-item > div {
 display: inline-block;
 margin-left: 8px; padding:  0 8px;
-border-width: 2px;
+border-width: 1px;
 border-style: solid;
-border-radius: 4px;
+border-radius: 2px;
 line-height: 24px;
 letter-spacing: normal;
 vertical-align: top;
@@ -214,7 +214,7 @@ margin-bottom: 16px;
 .modal-block-title {
 display: inline-block;
 padding-bottom: 2px;
-border-bottom: 4px solid var(--main-color);
+border-bottom: 4px solid #1F8C78;
 letter-spacing: 0.05em;
 font-size: 16px;
 color: #333;
@@ -243,6 +243,9 @@ margin-bottom: 4px; padding: 8px 12px;
 background-color: #FFF;
 border: 1px solid #DDD;
 border-radius: 4px;
+}
+.item-block:last-child {
+margin-bottom: 0;
 }
 .item-block.select-emphasis {
 animation: emphasis .8s linear forwards;
@@ -449,7 +452,8 @@ color: #333;
 font-size: 80%;
 color: #999;
 }
-.item-error {
+.item-error,
+.item-mismatch-error {
 display: none;
 margin-top: 4px; padding: 0 12px;
 background-color: #FAE6E6;
@@ -457,7 +461,8 @@ border-radius: 4px;
 line-height: 30px;
 color: #C80000;
 }
-.item-error.input-error {
+.item-error.input-error,
+.item-mismatch-error.input-mismatch-error {
 display: block;
 }
 .item-password {
@@ -680,7 +685,8 @@ font-size: 12px;
 color: #888;
 }
 .item-message-block {
-background-color: #F2F2F2;
+background-color: transparent;
+border: none;
 }
 
 .item-number-area {
@@ -813,7 +819,7 @@ display: block;
 position: absolute;
 bottom: 0; left: 8px;
 width: calc( 100% - 16px ); height: 2px;
-background-color: var(--main-color);
+background-color: #1F8C78;
 opacity: .5;
 }
 .modal-tab-text {

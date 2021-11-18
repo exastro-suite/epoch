@@ -152,8 +152,373 @@ function initialScreen() {
         }
       }
     }, '.epoch-popup, .epoch-popup-m');
-
+        
+    const user = new userInfo();
+    user.init('user-info');
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//   ユーザ情報
+// 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+function userInfo(){}
+userInfo.prototype = {
+  // ユーザ情報読み込み
+  'init': function( id ){
+    const u = this;
+    
+    u.$info = $('#' + id );
+    u.infoData = {'password':{}};
+    u.modal = new modalFunction( u.modalData, u.infoData );
+    u.common = new epochCommon();
+    
+    setTimeout(function(){
+      // ユーザ情報を読み込み
+      console.log("[START] get user info");
+
+      $.ajax({
+        "type": "GET",
+        "url": api_url_base + "/user/current",
+      }).done(function(data) {
+        console.log("[TRACE] get user info response:" + JSON.stringify(data));
+
+        u.data = {
+          "id": data["info"]["id"],
+          "username": data["info"]["username"],
+          "enabled": data["info"]["enabled"],
+          "firstName": data["info"]["firstName"],
+          "lastName": data["info"]["lastName"],
+          "email": data["info"]["email"]
+        };
+
+        // ロールリスト（仮）
+        try {
+          u.role = JSON.parse('{"ECサイトA":["オーナー"],"ECサイトB":["更新","CD実行"],"カタログ運営サイト開発":["オーナー"],"販売管理サイト開発A":["CI結果参照"],"販売管理サイト開発B":["CD実行","CD結果"],"販売管理サイト開発C":["CD実行","CD結果"],"販売管理サイト開発D":["CD実行","CD結果"]}');
+        } catch(e) {
+          alert(e);
+        }
+      
+        u.set();
+
+      }).fail((jqXHR, textStatus, errorThrown) => {
+        console.log("[TRACE] get user info $.ajax.fail");
+      });      
+    }, 100 );
+  },
+  // ユーザメニューをセット
+  'set': function(){
+    const u = this;
+    
+    u.userInfoHTML();
+    
+    // パスワード変更
+    const changePassword = function(){
+      u.modal.setParameter('password');
+      
+      if ( u.infoData.password['new-password-enter'] === u.infoData.password['new-password-re-enter'] ) {        
+        const password = {
+          'oldPassword': u.infoData.password['password-enter'],
+          'newPassword': u.infoData.password['new-password-enter']
+        };
+        
+        // クリア
+        u.infoData.password = {};
+        
+        // パスワード更新処理
+        setTimeout( function(){
+          console.log("[START] password-update");
+
+          $.ajax({
+            type: "PUT",
+            url: api_url_base + "/user/current/password",
+            data: JSON.stringify({
+              "current_password" : password['oldPassword'],
+              "password" : password['newPassword']
+            }),
+            contentType: "application/json",
+            dataType: "json"
+          }).done(function(data) {
+            alert("パスワードを更新しました");
+          }).fail((jqXHR, textStatus, errorThrown) => {
+            if(jqXHR.status == "401") {
+              alert("現パスワードが違います。パスワードを修正して再度実施してください");
+            } else {
+              alert("パスワードの更新に失敗しました。しばらくたってからもう一度実施してください");
+            }
+          });
+          u.modal.close();
+        }, 100 );
+      }     
+    };
+    
+    // ログアウト
+    const logout = function(){
+      // ログアウト処理
+      const logoutUrl = '/oidc-redirect/?logout=' + encodeURIComponent(window.location.protocol + '//' + window.location.hostname + ':' + window.location.port + '/');
+      window.location.href = logoutUrl;
+    };
+    
+    // 閉じる
+    const $userIcon = u.$info.find('.login-user-info-button');
+    let userInfoButtonTitle = $userIcon.attr('title');
+    const userInfoClose = function(){
+      u.$info.find('.user-info-detail').removeClass('open');
+      $( window ).off('mousedown.useInfoClose');
+      $userIcon.addClass('epoch-popup-m').removeClass('open').attr('title', userInfoButtonTitle );
+    };
+    
+    // ボタン
+    u.$info.find('.login-user-info-button, .user-info-button').on('click', function(){
+      const $button = $( this ),
+            type = $button.attr('data-type');
+      switch( type ) {
+        case 'open':
+          if ( !$button.is('.open') ) {
+            $button.addClass('open').mouseleave().removeClass('epoch-popup-m');
+            $button.removeAttr('title');
+            u.$info.find('.user-info-detail').addClass('open');
+            $( window ).on('mousedown.useInfoClose', function( e ){
+              if ( !$( e.target ).closest('#modal-container, .user-info-detail, .login-user-info-button').length ) {
+                userInfoClose();
+              }
+            });
+          } else {
+            userInfoClose();
+            $button.mouseenter();
+          }
+          break;
+        case 'close':
+          userInfoClose();
+          break;
+        case 'role':
+          u.modal.open('roleList',{
+            'ok': logout,
+            'callback': function(){
+              u.modal.$modal.find('#role-list-body').html( u.roleList(0) );
+            }
+          });
+          break;
+        case 'password':
+          u.modal.open('changePassword',{
+            'ok': changePassword
+          });
+          break;
+        case 'logout':
+          u.modal.open('logout',{
+            'ok': logout,
+          },'400');
+          break;
+      }
+    });
+    
+  },
+  'userInfoHTML': function(){
+    const u = this,
+          firstName = ( u.data['firstName'] !== undefined )? u.data['firstName']: 'EPOCH',
+          lastName = ( u.data['lastName'] !== undefined )? u.data['lastName']: 'USER',
+          name = firstName + ' ' + lastName,
+          // 全角文字が含まれている場合は苗字1文字にする
+          iconName = ( name.match(/[^\x20-\x7e]/) )?
+            lastName.slice(0,1):
+            ( firstName.slice(0,1) + lastName.slice(0,1) ).toUpperCase();
+    
+    console.log("[TRACE] get user info response: u.data : " + JSON.stringify(u.data));
+    
+    u.$info.find('.login-user-name').text( name );
+    
+    const $userIcon = $('<span/>', {
+      'class': 'login-user-icon',
+      'text': iconName
+    });
+    u.$info.find('.login-user-info-button').append( $userIcon );
+    
+    const $userInfoIcon = $('<div/>', {
+      'class': 'user-info-icon'
+    }).append( $('<div/>', {
+        'class': 'user-info-icon-image',
+        'text': iconName
+      })
+    );
+    u.$info.find('.user-info-status').append( $userInfoIcon );
+    
+    const $userInfoStatusText = $('<div/>', {
+      'class': 'user-info-status-text'
+    }).append( $('<div/>', {
+        'class': 'user-info-id',
+        'text': u.data['username']
+      })
+    ).append( $('<div/>', {
+        'class': 'user-info-name',
+        'text': name
+      })
+    );
+    if ( u.data['email'] !== undefined ) {
+      $userInfoStatusText.append( $('<div/>', {
+          'class': 'user-info-mail',
+          'text': u.data['email']
+        })
+      );
+    }
+    u.$info.find('.user-info-status').append( $userInfoStatusText );
+    
+    u.$info.find('.user-info-role-number').text( Object.keys( u.role ).length );
+    u.$info.find('.user-info-role-wrap').append( u.roleList(5) );
+  },
+  'roleList': function( num ) {
+    if ( num === undefined || num < 0 ) num = 0;
+    const u = this;
+    let html = '<ul class="user-info-role-list">',
+        count = 0;
+    for ( const key in u.role ) {
+      if ( num !== 0 && num <= count ) break;
+      html += ''
+      + '<li class="user-info-role-item">'
+        + '<dl class="user-info-role-card">'
+          + '<dt class="user-info-role-name">'
+            + '<svg viewBox="0 0 64 64" class="user-info-role-icon">'
+              + '<use href="#icon-menu-workspace"></use>'
+            + '</svg>'
+            + u.common.textEntities( key )
+          + '</dt>'
+          + '<dd class="user-info-role-operation">'
+            + '<ul class="user-info-role-operation-list">';
+      const operationLength = u.role[key].length;
+      for ( let i = 0; i < operationLength; i++ ) {
+        html += '<li class="user-info-role-operation-item">' + u.role[key][i] + '</li>';
+      }              
+      html += ''
+            + '</ul>'
+          + '</dd>'
+        + '</dl>'
+      + '</li>';
+      count++;
+    }
+    html += '</ul>';
+    
+    return html;
+  },
+  // モーダルデータ
+  'modalData': {
+    'changePassword': {
+      'id': 'change-password',
+      'title': 'パスワード変更',
+      'footer': {
+        'ok': {
+          'text': '決定',
+          'type': 'positive'
+        },
+        'cancel': {
+          'text': 'キャンセル',
+          'type': 'negative'
+        }
+      },
+      'block': {
+        'password': {
+          'title': '現在のパスワード',
+          'item': {
+            'passwordEnterBlock': {
+              'title': '現在のパスワード',
+              'type': 'password',
+              'required': 'on',
+              'name': 'password-enter'            
+            }
+          }
+        },
+        'newPassword': {
+          'title': '新しいパスワード',
+          'item': {
+            'newPasswordEnterBlock': {
+              'title': '新しいパスワード',
+              'type': 'password',
+              'required': 'on',
+              // 入力規則は一旦非表示
+              // 'min': 8,
+              // 'max': 32,
+              // 'validation': '^(?=.*[0-9])^(?=.*[A-Z])(?=.*[a-z])(?=.*[.?/-])[a-zA-Z0-9.?/-]+$',
+              // 'inputError': 'パスワードの形式が正しくありません。',
+              // 'note': '数字、アルファベット大文字、アルファベット小文字、記号（. ? / -）のそれぞれ1文字以上を含めてください。',
+              'name': 'new-password-enter'            
+            },
+            'newPasswordReEnterBlock': {
+              'title': '新しいパスワード再入力',
+              'type': 'password',
+              'required': 'on',
+              'matchTargetName': 'new-password-enter',
+              'mismatchErrorMessage': 'パスワードが一致しません。',
+              'name': 'new-password-re-enter'            
+            }
+          }
+        }
+      }
+    },
+    'roleList': {
+      'id': 'role-list',
+      'title': 'Role一覧',
+      'footer': {
+        'cancel': {
+          'text': '閉じる',
+          'type': 'negative'
+        }
+      },
+      'block': {
+        'role-list': {
+          'item': {
+            'roleListBlock': {
+              'id': 'role-list-body',
+              'type': 'loading',
+            }
+          }
+        }
+      }
+    },
+    'logout': {
+      'id': 'logout',
+      'title': 'ログアウト確認',
+      'footer': {
+        'ok': {
+          'text': 'ログアウト',
+          'type': 'positive'
+        },
+        'cancel': {
+          'text': 'キャンセル',
+          'type': 'negative'
+        }
+      },
+      'block': {
+        'password': {
+          'item': {
+            'newPasswordEnterBlock': {
+              'type': 'message',
+              'text': 'ログアウトしますか？'            
+            }
+          }
+        }
+      }
+    }
+  }
+};
+
+//-----------------------------------------------------------------------
+// ログイン情報取得
+//-----------------------------------------------------------------------
+// function getCurrentUser() {
+//   console.log("[START] function getCurrentUser");
+
+//   $.ajax({
+//     "type": "GET",
+//     "url": api_url_base + "/user/current",
+//   }).done(function(data) {
+//     console.log("[TRACE] function getCurrentUser response:" + JSON.stringify(data));
+
+//       $('.login-user-name').text(data["info"]["firstName"] + " " + data["info"]["lastName"]);
+//       $('#username').text(data["info"]["username"]);
+//       $('#account_email').text(data["info"]["email"]);
+
+//   }).fail((jqXHR, textStatus, errorThrown) => {
+//     console.log("[TRACE] function getCurrentUser $.ajax.fail");
+//   });
+// }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
