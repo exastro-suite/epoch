@@ -13,9 +13,10 @@ var workspace_api_conf = {
     },
     "api" : {
         "resource": {
-            "get" :     URL_BASE + "/api/workspace/info/{workspace_id}/",
-            "post" :    URL_BASE + "/api/workspace/info/",
-            "put" :     URL_BASE + "/api/workspace/info/{workspace_id}/",
+            "get" :     URL_BASE + "/api2/workspace/{workspace_id}",
+            //"get" :     URL_BASE + "/api/workspace/info/{workspace_id}/",
+            "post" :    URL_BASE + "/api2/workspace",
+            "put" :     URL_BASE + "/api2/workspace/{workspace_id}",
         },
         "client": {
             "get" :     URL_BASE + "/api/client/{client_id}",
