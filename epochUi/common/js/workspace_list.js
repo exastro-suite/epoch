@@ -23,15 +23,7 @@ function workspaceList( list ) {
       {
         'title': 'ワークスペース名',
         'type': 'text',
-        'width': '20%',
-        'align': 'left',
-        'sort': 'on',
-        'filter': 'on',
-      },
-      {
-        'title': 'オーガナイゼーション名',
-        'type': 'list',
-        'width': '20%',
+        'width': '25%',
         'align': 'left',
         'sort': 'on',
         'filter': 'on',
@@ -54,6 +46,7 @@ function workspaceList( list ) {
       },
       {
         'type': 'hoverMenu',
+        'title': '',
         'menu': {
           'edit': {
             'icon': 'icon-edit',
@@ -80,7 +73,6 @@ function workspaceList( list ) {
       for ( const key in list ) {
         tableBody[i++] = [
           list[key].name,
-          list[key].organization,
           list[key].lastModified,
           list[key].note,
           key
@@ -133,6 +125,8 @@ function workspaceList( list ) {
 $(function(){
     console.log("GET /api2/workspace");
 
+    const fn = new epochCommon();
+
     $.ajax({
       "type": "GET",
       "url": URL_BASE + "/api2/workspace"
@@ -146,7 +140,7 @@ $(function(){
           id: data.rows[i].workspace_id,
           name: data.rows[i].workspace_name,
           note: data.rows[i].workspace_remarks,
-          lastModified: data.rows[i].update_at
+          lastModified: fn.formatDate(new Date(data.rows[i].update_at), 'yyyy/MM/dd HH:mm:ss')
         };
       }
       workspaceList(workspaceListData);
