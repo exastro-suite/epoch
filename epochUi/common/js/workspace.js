@@ -16,6 +16,11 @@
 // JavaScript Document
 
 var workspace_id = null;
+var workspace_client_urls = {
+  "ita" : null,
+  "argo" : null,
+  "sonarqube": null
+}
 
 $(function(){
 
@@ -2751,6 +2756,41 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         reject();
       });        
 
+    })}).then(() => {return new Promise((resolve, reject) => {
+      $.ajax({
+        "type": "GET",
+        "url": workspace_api_conf.api.client.get.replace('{client_id}', workspace_api_conf.api.client.client_id.ita.replace("{workspace_id}",workspace_id))
+      }).done(function(data) {
+        workspace_client_urls.ita = workspace_api_conf.links.ita.replace("{baseurl}", data["baseUrl"]);
+        resolve();
+      }).fail(function() {
+        reject();
+      });
+
+    })}).then(() => {return new Promise((resolve, reject) => {
+      console.log("get client argo");
+      $.ajax({
+        "type": "GET",
+        "url": workspace_api_conf.api.client.get.replace('{client_id}', workspace_api_conf.api.client.client_id.argo.replace("{workspace_id}",workspace_id))
+      }).done(function(data) {
+        workspace_client_urls.argo = workspace_api_conf.links.argo.replace("{baseurl}", data["baseUrl"]);
+        resolve();
+      }).fail(function() {
+        reject();
+      });
+
+    })}).then(() => {return new Promise((resolve, reject) => {
+      console.log("get client sonarqube");
+      $.ajax({
+        "type": "GET",
+        "url": workspace_api_conf.api.client.get.replace('{client_id}', workspace_api_conf.api.client.client_id.sonarqube.replace("{workspace_id}",workspace_id))
+      }).done(function(data) {
+        workspace_client_urls.argo = workspace_api_conf.links.sonarqube.replace("{baseurl}", data["baseUrl"]);
+        resolve();
+      }).fail(function() {
+        reject();
+      });
+
     })}).then(() => {
       // ボタン名変更
       $('#apply-workspace-button').html('ワークスペース更新');
@@ -3178,6 +3218,10 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
   const ci_result_polling = function() {
     // console.log("CALL : ci_result_polling");
 
+    if(workspace_id == null) {
+      setTimeout(ci_result_polling, ci_result_polling_span);
+      return;
+    }
     $.ajax({
       "type": "GET",
       "url": workspace_api_conf.api.ciResult.pipelinerun.get.replace('{workspace_id}', workspace_id),
