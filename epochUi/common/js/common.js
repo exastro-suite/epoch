@@ -242,6 +242,7 @@ userInfo.prototype = {
             dataType: "json"
           }).done(function(data) {
             alert("パスワードを更新しました");
+            u.modal.close();
           }).fail((jqXHR, textStatus, errorThrown) => {
             if(jqXHR.status == "401") {
               alert("現パスワードが違います。パスワードを修正して再度実施してください");
@@ -249,7 +250,6 @@ userInfo.prototype = {
               alert("パスワードの更新に失敗しました。しばらくたってからもう一度実施してください");
             }
           });
-          u.modal.close();
         }, 100 );
       }     
     };
