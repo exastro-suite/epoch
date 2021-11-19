@@ -325,8 +325,6 @@ userInfo.prototype = {
             lastName.slice(0,1):
             ( firstName.slice(0,1) + lastName.slice(0,1) ).toUpperCase();
     
-    console.log("[TRACE] get user info response: u.data : " + JSON.stringify(u.data));
-    
     u.$info.find('.login-user-name').text( name );
     
     const $userIcon = $('<span/>', {
