@@ -533,7 +533,7 @@ spec:
           name: epoch-rs-workspace-conf
       containers:
       - name: epoch-rs-workspace-api
-        image: exastro/epoch-rs-workspace-api:0.1.5_20211027_1530
+        image: exastro/epoch-rs-workspace-api:0.3.0_20211119_1150
         env:
         - name: CONFIG_API_WORKSPACE_PATH
           value: "/etc/epoch/epochRsWorkspaceApi/api_workspace.conf"
@@ -780,6 +780,92 @@ spec:
   selector:
     name: epoch-service-api
 
+#---- epoch-service-api2.yaml
+---
+#   Copyright 2021 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: epoch-service-api2-conf
+  namespace: epoch-system
+data:
+  api_service.conf: |
+    TZ='Asia/Tokyo'
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: epoch-service-api2
+  namespace: epoch-system
+spec:
+  selector:
+    matchLabels:
+      name: epoch-service-api2
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: epoch-service-api2
+    spec:
+      volumes:
+      - name: epoch-service-api2-conf
+        configMap:
+          name: epoch-service-api2-conf
+      containers:
+      - name: epoch-service-api2
+        image: exastro/epoch-service-api2:0.3.0_20211119_1155
+        env:
+        - name: CONFIG_API_SERVICE_PATH
+          value: "/etc/epoch/epochServiceApi/api_service.conf"
+        - name: FLASK_ENV
+          value: "development"
+        - name: API_SERVICE_PORT
+          value: "8000"
+        - name: PYTHONIOENCODING
+          value: utf-8
+        envFrom:
+          - configMapRef:
+              name: epoch-service-api-config
+          - configMapRef:
+              name: epoch-service-api-epai-config
+          # - prefix: EPOCH_
+          #   secretRef:
+          #     name: epoch-service-api-secret
+        volumeMounts:
+        - name: epoch-service-api2-conf
+          mountPath: /etc/epoch/epochServiceApi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: epoch-service-api2
+  labels:
+    name: epoch-service-api2
+  namespace: epoch-system
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+  selector:
+    name: epoch-service-api2
+
 #---- epoch-ui.yaml
 ---
 #   Copyright 2019 NEC Corporation
@@ -913,7 +999,7 @@ spec:
           name: epoch-ui-conf
       containers:
       - name: epoch-ui
-        image: exastro/epoch-ui:0.2.1_20211118_1455
+        image: exastro/epoch-ui:0.3.0_20211119_1140
         volumeMounts:
         - name: epoch-ui-conf
           mountPath: /app/common/js/config
