@@ -2659,9 +2659,9 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         console.log(typeof(data));
         console.log(JSON.stringify(data));
   
-        workspace_id = data['result']['output'][0]['workspace_id'];
+        workspace_id = data['rows'][0]['workspace_id'];
   
-        data_workspace = data['result']['output'][0];
+        data_workspace = data['rows'][0];
 
         if(data_workspace['parameter-info']) {
           wsDataJSON['parameter-info'] = data_workspace['parameter-info']
