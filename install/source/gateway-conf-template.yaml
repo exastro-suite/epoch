@@ -15,10 +15,16 @@ data:
     \ <Location /api/>\n    ProxyPass        http://epoch-service-api.epoch-system.svc:8000/
     retry=0 timeout=600\n    ProxyPassReverse http://epoch-service-api.epoch-system.svc:8000/\n
     \   AuthType openid-connect\n    Require claim \"epoch-role:epoch-user\"\n  </Location>\n
+    \ <Location /api2/>\n    ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/
+    retry=0 timeout=600\n    ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/\n
+    \   AuthType openid-connect\n    Require claim \"epoch-role:epoch-user\"\n  </Location>\n
     \ <Location /api/user/>\n    ProxyPass        http://authentication-infra-api:8000/user/
     retry=0\n    ProxyPassReverse http://authentication-infra-api:8000/user/\n    AuthType
-    openid-connect\n    Require valid-user\n  </Location>\n  <Location /favicon.ico>\n
-    \   Require all granted\n  </Location>\n</VirtualHost>\n"
+    openid-connect\n    Require valid-user\n  </Location>\n  <Location /api/client/>\n
+    \   ProxyPass        http://authentication-infra-api:8000/client/ retry=0\n    ProxyPassReverse
+    http://authentication-infra-api:8000/client/\n    AuthType openid-connect\n    Require
+    claim \"epoch-role:epoch-user\"\n  </Location>\n  <Location /favicon.ico>\n    Require
+    all granted\n  </Location>\n</VirtualHost>\n"
   epoch-ws-argocd-template.conf: "Listen {{ client_port }}\n<VirtualHost *:{{ client_port
     }}>\n  SSLProxyEngine On\n  SSLEngine on\n  SSLCertificateFile /etc/pki/tls/certs/exastro-platform-authentication-infra.pem\n
     \ SSLCertificateKeyFile /etc/pki/tls/private/exastro-platform-authentication-infra.key\n
