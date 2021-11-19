@@ -3220,6 +3220,10 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
   //
   $('#progress-message-ok').on('click',() => {
     $('#modal-progress-container').css('display','none');
+    if((new URLSearchParams(window.location.search)).get('workspace_id') == null && workspace_id != null) {
+      // 新規で登録後は、locationにworkspace_idを付与するため、workspace_idを付けて再描画
+      window.location = window.location + "?workspace_id=" + workspace_id;
+    }
   });
 
   /* ---------------- *\
@@ -3228,10 +3232,10 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
   const ci_result_polling = function() {
     // console.log("CALL : ci_result_polling");
 
-    if(workspace_id == null) {
-      setTimeout(ci_result_polling, ci_result_polling_span);
-      return;
-    }
+    // if(workspace_id == null) {
+    //   setTimeout(ci_result_polling, ci_result_polling_span);
+    //   return;
+    // }
     $.ajax({
       "type": "GET",
       "url": workspace_api_conf.api.ciResult.pipelinerun.get.replace('{workspace_id}', workspace_id),
