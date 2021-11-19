@@ -3232,37 +3232,41 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
   const ci_result_polling = function() {
     // console.log("CALL : ci_result_polling");
 
-    // if(workspace_id == null) {
-    //   setTimeout(ci_result_polling, ci_result_polling_span);
-    //   return;
-    // }
-    $.ajax({
-      "type": "GET",
-      "url": workspace_api_conf.api.ciResult.pipelinerun.get.replace('{workspace_id}', workspace_id),
-      "data": {'latest': "True"}
-    }).done(function(response) {
-      // console.log("DONE : pipelinerun latest");
-      // console.log("--- data ----");
-      // console.log(JSON.stringify(response));
+    if(workspace_id == null) {
+      $.ajax({
+        "type": "GET",
+        "url": workspace_api_conf.api.ciResult.nop.get
+      }).always(function(result) {
+        setTimeout(ci_result_polling, ci_result_polling_span);
+      });
+    } else {
+      $.ajax({
+        "type": "GET",
+        "url": workspace_api_conf.api.ciResult.pipelinerun.get.replace('{workspace_id}', workspace_id),
+        "data": {'latest': "True"}
+      }).done(function(response) {
+        // console.log("DONE : pipelinerun latest");
+        // console.log("--- data ----");
+        // console.log(JSON.stringify(response));
 
-      var run_status = "";
-      var current_pipelineruns = response.rows;
-      for(let i = 0; i < current_pipelineruns.length; i++) {
-        if(['Pending', 'Running'].includes(current_pipelineruns[i].status)) {
-          run_status = "running";
-          break;
+        var run_status = "";
+        var current_pipelineruns = response.rows;
+        for(let i = 0; i < current_pipelineruns.length; i++) {
+          if(['Pending', 'Running'].includes(current_pipelineruns[i].status)) {
+            run_status = "running";
+            break;
+          }
         }
-      }
-      $('#ws-pipeline-tekton .workspace-block-status').attr('data-status', run_status);
+        $('#ws-pipeline-tekton .workspace-block-status').attr('data-status', run_status);
 
-    }).fail(function(error) {
-      console.log("FAIL : get pipelinerun");
+      }).fail(function(error) {
+        console.log("FAIL : get pipelinerun");
 
-    }).always(function(result) {
+      }).always(function(result) {
 
-      setTimeout(ci_result_polling, ci_result_polling_span);
-    });
-
+        setTimeout(ci_result_polling, ci_result_polling_span);
+      });
+    }
   }
   
   // window onloadイベント
