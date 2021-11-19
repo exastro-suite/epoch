@@ -51,10 +51,10 @@ function workspaceList( list ) {
             'text': 'ワークスペース編集',
             'separate': 'on'
           },
-          'delete': {
-            'icon': 'icon-trash',
-            'text': 'ワークスペース削除'
-          }
+          // 'delete': {
+          //   'icon': 'icon-trash',
+          //   'text': 'ワークスペース削除'
+          // }
         }
       }
     ];
