@@ -48,6 +48,9 @@ var workspace_api_conf = {
             "post" :    URL_BASE + "/api/cdExecDesignation/",
         },
         "ciResult": {
+            "nop" : {
+                "get" : URL_BASE + "/api2/alive"
+            },
             "pipelinerun": {
                 "get" :    URL_BASE + "/api/ciResult/workspace/{workspace_id}/tekton/pipelinerun",
             },
