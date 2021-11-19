@@ -2835,9 +2835,12 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         console.log("DONE : ワークスペース情報登録");
         console.log("--- data ----");
         console.log(JSON.stringify(data));
-        created_workspace_id = data['rows'][0]['workspace_id'];
-        workspace_id = created_workspace_id;
-
+        if(workspace_id == null) {
+          created_workspace_id = data['rows'][0]['workspace_id'];
+          workspace_id = created_workspace_id;
+        } else {
+          created_workspace_id = workspace_id;
+        }
         // 成功
         resolve();
       }).fail((jqXHR, textStatus, errorThrown) => {
