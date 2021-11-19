@@ -66,7 +66,7 @@ def call_workspace():
             return get_workspace_list()
 
     except Exception as e:
-        return common.serverError(e)
+        return common.server_error(e)
 
 
 @app.route('/workspace/<int:workspace_id>', methods=['GET','PUT'])
@@ -92,7 +92,7 @@ def call_workspace_by_id(workspace_id):
             return put_workspace(workspace_id)
 
     except Exception as e:
-        return common.serverError(e)
+        return common.server_error(e)
 
 def create_workspace():
     """ワークスペース作成
@@ -100,15 +100,53 @@ def create_workspace():
     Returns:
         Response: HTTP Respose
     """
+
+    app_name = "ワークスペース情報:"
+    exec_stat = "作成"
+    error_detail = ""
+
     try:
         globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL create_workspace')
+        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
         globals.logger.debug('#' * 50)
 
-        return jsonify({"result": "200"}), 200
+        # ヘッダ情報
+        post_headers = {
+            'Content-Type': 'application/json',
+        }
 
+        # 引数をJSON形式で受け取りそのまま引数に設定
+        post_data = request.json.copy()
+
+        # workspace put送信
+        api_url = "{}://{}:{}/workspace".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+                                                os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                os.environ['EPOCH_RS_WORKSPACE_PORT'])
+
+        response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
+
+        if response.status_code == 200:
+            # 正常時は戻り値がレコードの値なのでそのまま返却する
+            ret = json.loads(response.text)
+            rows = ret['rows']
+        else:
+            if common.is_json_format(response.text):
+                ret = json.loads(response.text)
+                # 詳細エラーがある場合は詳細を設定
+                if ret["errorDetail"] is not None:
+                    error_detail = ret["errorDetail"]
+
+            raise common.UserException("{} Error post workspace db status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
+
+        ret_status = response.status_code
+
+        # 戻り値をそのまま返却        
+        return jsonify({"result": ret_status, "rows": rows}), ret_status
+
+    except common.UserException as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
     except Exception as e:
-        return common.serverError(e)
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
 
 
 def get_workspace_list():
@@ -117,13 +155,14 @@ def get_workspace_list():
     Returns:
         Response: HTTP Respose
     """
+
     try:
         globals.logger.debug('#' * 50)
         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
         globals.logger.debug('#' * 50)
 
         # ヘッダ情報
-        headers = {
+        post_headers = {
             'Content-Type': 'application/json',
         }
 
@@ -131,7 +170,7 @@ def get_workspace_list():
         api_url = "{}://{}:{}/workspace".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
                                                 os.environ['EPOCH_RS_WORKSPACE_HOST'],
                                                 os.environ['EPOCH_RS_WORKSPACE_PORT'])
-        response = requests.get(api_url + '', headers=headers)
+        response = requests.get(api_url + '', headers=post_headers)
 
         rows = []
         if response.status_code == 200 and common.is_json_format(response.text):
@@ -152,8 +191,10 @@ def get_workspace_list():
 
         return jsonify({"result": "200", "rows": rows}), 200
 
+    except common.UserException as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
     except Exception as e:
-        return common.serverError(e)
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
 
 
 def get_workspace(workspace_id):
@@ -165,16 +206,53 @@ def get_workspace(workspace_id):
     Returns:
         Response: HTTP Respose
     """
+
+    app_name = "ワークスペース情報:"
+    exec_stat = "取得"
+    error_detail = ""
+
     try:
         globals.logger.debug('#' * 50)
         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
         globals.logger.debug('#' * 50)
 
-        return jsonify({"result": "200"}), 200
+        # ヘッダ情報
+        post_headers = {
+            'Content-Type': 'application/json',
+        }
 
+        # workspace GET送信
+        api_url = "{}://{}:{}/workspace/{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+                                                    os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                    os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                    workspace_id)
+        response = requests.get(api_url, headers=post_headers)
+
+        if response.status_code == 200 and common.is_json_format(response.text):
+            # 取得したJSON結果が正常でない場合、例外を返す
+            ret = json.loads(response.text)
+            rows = ret["rows"]
+            ret_status = response.status_code
+        elif response.status_code == 404:
+            # 情報が取得できない場合は、0件で返す
+            rows = []
+            ret_status = response.status_code
+        else:
+            if response.status_code == 500 and common.is_json_format(response.text):
+                # 戻り値がJsonの場合は、値を取得
+                ret = json.loads(response.text)
+                # 詳細エラーがある場合は詳細を設定
+                if ret["errorDetail"] is not None:
+                    error_detail = ret["errorDetail"]
+
+            raise common.UserException("{} Error get workspace db status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
+
+        return jsonify({"result": ret_status, "rows": rows}), ret_status
+
+    except common.UserException as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
     except Exception as e:
-        return common.serverError(e)
-
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
 
 def put_workspace(workspace_id):
     """ワークスペース情報更新
@@ -185,15 +263,49 @@ def put_workspace(workspace_id):
     Returns:
         Response: HTTP Respose
     """
+
+    app_name = "ワークスペース情報:"
+    exec_stat = "更新"
+    error_detail = ""
+
     try:
         globals.logger.debug('#' * 50)
         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
         globals.logger.debug('#' * 50)
 
-        return jsonify({"result": "200"}), 200
+        # ヘッダ情報
+        post_headers = {
+            'Content-Type': 'application/json',
+        }
 
+        # 引数をJSON形式で受け取りそのまま引数に設定
+        post_data = request.json.copy()
+
+        # workspace put送信
+        api_url = "{}://{}:{}/workspace/{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+                                                    os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                    os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                    workspace_id)
+        response = requests.put(api_url, headers=post_headers, data=json.dumps(post_data))
+
+        if not response.status_code == 200:
+            if common.is_json_format(response.text):
+                ret = json.loads(response.text)
+                # 詳細エラーがある場合は詳細を設定
+                if ret["errorDetail"] is not None:
+                    error_detail = ret["errorDetail"]
+
+            raise common.UserException("{} Error put workspace db status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
+
+        ret_status = response.status_code
+
+        # 戻り値をそのまま返却        
+        return jsonify({"result": ret_status}), ret_status
+
+    except common.UserException as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
     except Exception as e:
-        return common.serverError(e)
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
 
 
 if __name__ == "__main__":

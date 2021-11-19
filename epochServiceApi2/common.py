@@ -18,7 +18,10 @@ import json
 
 import globals
 
-def deleteDictKey(dictobj, key):
+class UserException(Exception):
+    pass
+
+def delete_dict_key(dictobj, key):
     """Dictionary Key削除
 
     Args:
@@ -28,7 +31,7 @@ def deleteDictKey(dictobj, key):
     if key in dictobj:
         del dictobj[key]
 
-def randomString(n):
+def random_string(n):
     """ランダム文字列生成
 
     Args:
@@ -40,8 +43,8 @@ def randomString(n):
     return ''.join(random.choices(string.ascii_letters + string.digits, k=n))
 
 
-def serverError(e):
-    """レーバーエラーレスポンス
+def server_error(e):
+    """サーバーエラーレスポンス
 
     Args:
         e (Exception): 例外
@@ -56,6 +59,30 @@ def serverError(e):
     return jsonify(
         {
             'result':       '500',
+            'exception':    ''.join(list(traceback.TracebackException.from_exception(e).format())),
+        }
+    ), 500
+
+def server_error_to_message(e, error_statement, error_detail):
+    """サーバーエラーレスポンス(メッセージ付き)
+
+    Args:
+        e (Exception): 例外
+        error_statement (str): エラー情報（処理内容）
+        error_detail (str): エラー情報詳細
+
+    Returns:
+        response: HTTP Response (HTTP-500)
+    """
+    import traceback
+
+    globals.logger.error(''.join(list(traceback.TracebackException.from_exception(e).format())))
+
+    return jsonify(
+        {
+            'result':       '500',
+            'errorStatement': error_statement,
+            'errorDetail':  error_detail,
             'exception':    ''.join(list(traceback.TracebackException.from_exception(e).format())),
         }
     ), 500

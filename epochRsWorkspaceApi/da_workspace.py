@@ -30,7 +30,7 @@ def insert_workspace(cursor, specification):
         
     """
     # insert実行
-    cursor.execute('INSERT INTO workspace ( specification ) VALUES ( %(specification)s )',
+    cursor.execute('INSERT INTO workspace ( organization_id, specification ) VALUES ( 1, %(specification)s )',
         {
             'specification' : json.dumps(specification)
         }
@@ -100,8 +100,8 @@ def insert_history(cursor, workspace_id):
         workspace_id (int): ワークスペースID
     """
     cursor.execute(
-        '''INSERT INTO workspace_history (workspace_id, update_at, specification)
-            SELECT workspace_id, update_at, specification FROM workspace WHERE workspace_id = %(workspace_id)s''',
+        '''INSERT INTO workspace_history (workspace_id, organization_id, update_at, specification)
+            SELECT workspace_id, organization_id, update_at, specification FROM workspace WHERE workspace_id = %(workspace_id)s''',
         {
             'workspace_id' : workspace_id
         }
