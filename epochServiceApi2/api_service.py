@@ -288,7 +288,11 @@ def put_workspace(workspace_id):
                                                     workspace_id)
         response = requests.put(api_url, headers=post_headers, data=json.dumps(post_data))
 
-        if not response.status_code == 200:
+        if response.status_code == 200:
+            # 正常時は戻り値がレコードの値なのでそのまま返却する
+            ret = json.loads(response.text)
+            rows = ret['rows']
+        else:
             if common.is_json_format(response.text):
                 ret = json.loads(response.text)
                 # 詳細エラーがある場合は詳細を設定
