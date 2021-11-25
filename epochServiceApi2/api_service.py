@@ -418,7 +418,7 @@ def post_pod(workspace_id):
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
 
 
-def post_ci_pipeline():
+def post_ci_pipeline(workspace_id):
     """CIパイプライン情報設定
 
     Returns:
@@ -445,7 +445,7 @@ def post_ci_pipeline():
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
 
 
-def post_cd_pipeline():
+def post_cd_pipeline(workspace_id):
     """CDパイプライン情報設定
 
     Returns:
