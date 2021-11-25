@@ -20,6 +20,8 @@
 //   画面共通
 // 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+var URL_BASE=window.location.protocol + "//" + window.location.hostname + ":" + window.location.port
+
 function initialScreen() {
 
     const $window = $( window ),
@@ -179,7 +181,7 @@ userInfo.prototype = {
 
       $.ajax({
         "type": "GET",
-        "url": api_url_base + "/user/current",
+        "url": URL_BASE + "/api/user/current",
       }).done(function(data) {
         console.log("[TRACE] get user info response:" + JSON.stringify(data));
 
@@ -231,7 +233,7 @@ userInfo.prototype = {
 
           $.ajax({
             type: "PUT",
-            url: api_url_base + "/user/current/password",
+            url: URL_BASE + "/api/user/current/password",
             data: JSON.stringify({
               "current_password" : password['oldPassword'],
               "password" : password['newPassword']
@@ -240,6 +242,7 @@ userInfo.prototype = {
             dataType: "json"
           }).done(function(data) {
             alert("パスワードを更新しました");
+            u.modal.close();
           }).fail((jqXHR, textStatus, errorThrown) => {
             if(jqXHR.status == "401") {
               alert("現パスワードが違います。パスワードを修正して再度実施してください");
@@ -247,7 +250,6 @@ userInfo.prototype = {
               alert("パスワードの更新に失敗しました。しばらくたってからもう一度実施してください");
             }
           });
-          u.modal.close();
         }, 100 );
       }     
     };
@@ -322,8 +324,6 @@ userInfo.prototype = {
           iconName = ( name.match(/[^\x20-\x7e]/) )?
             lastName.slice(0,1):
             ( firstName.slice(0,1) + lastName.slice(0,1) ).toUpperCase();
-    
-    console.log("[TRACE] get user info response: u.data : " + JSON.stringify(u.data));
     
     u.$info.find('.login-user-name').text( name );
     

@@ -1,4 +1,3 @@
-/*
 #   Copyright 2019 NEC Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,5 +11,19 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-*/
-var epoch_version="0.3.0";
+
+from pytz import timezone
+
+config = None
+TZ = None
+logger = None
+
+def init(app):
+    global config
+    global TZ
+    global logger
+
+    config = app.config
+    TZ = timezone(config['TZ'])
+    logger = app.logger
+

@@ -13,11 +13,4 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-if [ ! -d "/etc/nginx/ssl/epoch" ]; then
-    mkdir -p "/etc/nginx/ssl/epoch"
-fi
-if [ ! -f "/etc/nginx/ssl/epoch/ca.key" ]; then
-    openssl req -new -x509 -sha256 -newkey rsa:2048 -days 3650 -nodes -out /etc/nginx/ssl/epoch/ca.pem -keyout /etc/nginx/ssl/epoch/ca.key -subj="/C=JP/ST=Tokyo/CN=epoch-ui.epoch-system.svc"
-fi
-
 nginx -g "daemon off;"

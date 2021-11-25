@@ -18,12 +18,11 @@ import json
 import globals
 from dbconnector import dbcursor
 
-def insert_workspace(cursor, organization_id, specification):
+def insert_workspace(cursor, specification):
     """workspace情報登録
 
     Args:
         cursor (mysql.connector.cursor): カーソル
-        organization_id (int): オーガナイゼーションID
         specification (Dict)): ワークスペース情報のJson形式
 
     Returns:
@@ -31,9 +30,8 @@ def insert_workspace(cursor, organization_id, specification):
         
     """
     # insert実行
-    cursor.execute('INSERT INTO workspace ( organization_id, specification ) VALUES ( %(organization_id)s, %(specification)s )',
+    cursor.execute('INSERT INTO workspace ( organization_id, specification ) VALUES ( 1, %(specification)s )',
         {
-            'organization_id' : organization_id,
             'specification' : json.dumps(specification)
         }
     )
@@ -80,22 +78,17 @@ def select_workspace_id(cursor, workspace_id):
     rows = cursor.fetchall()
     return rows
 
-def select_workspace(cursor, organization_id):
+def select_workspace(cursor):
     """workspace情報取得(全取得)
 
     Args:
         cursor (mysql.connector.cursor): カーソル
-        organization_id (int): オーガナイゼーションID
 
     Returns:
         dict: select結果
     """
     # select実行
-    cursor.execute('SELECT * FROM workspace WHERE organization_id = %(organization_id)s ORDER BY workspace_id',
-        {
-            'organization_id' : organization_id
-        }
-    )
+    cursor.execute('SELECT * FROM workspace ORDER BY workspace_id')
     rows = cursor.fetchall()
     return rows
 

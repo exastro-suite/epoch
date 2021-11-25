@@ -16,6 +16,11 @@
 // JavaScript Document
 
 var workspace_id = null;
+var workspace_client_urls = {
+  "ita" : null,
+  "argo" : null,
+  "sonarqube": null
+}
 
 $(function(){
 
@@ -2268,6 +2273,7 @@ const cdRunning = function(){
       "type": "POST",
       "url": workspace_api_conf.api.cdExecDesignation.post,
       "data": JSON.stringify(reqbody),
+      contentType: "application/json",
       dataType: "json",
     }
 
@@ -2430,10 +2436,10 @@ $content.find('.modal-open, .workspace-status-item').not('[data-button="pipeline
       $('.modal-block-main').html('<a href="' + workspace_api_conf.links.registry + '" target="_blank">確認</a>');
       break;
     case 'arogCdResultCheck':
-      $('.modal-block-main').html('<a href="' + workspace_api_conf.links.argo + '" target="_blank">確認</a>');
+      $('.modal-block-main').html('<a href="' + workspace_client_urls.argo + '" target="_blank">確認</a>');
       break;
     case 'exastroItAutomationResultCheck':
-      $('.modal-block-main').html('<a href="' + workspace_api_conf.links.ita + '" target="_blank">確認</a>');
+      $('.modal-block-main').html('<a href="' + workspace_client_urls.ita + '" target="_blank">確認</a>');
       break;
   }
 });
@@ -2634,8 +2640,15 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
   // ワークスペース情報の読み込み
   function getWorksapce(){
 
-    workspace_id = 1;
-  
+    workspace_id = (new URLSearchParams(window.location.search)).get('workspace_id');
+    if(workspace_id == null) {
+      $(".topic-path-current").text("新規");
+      $('#cicd-tab-item').css('visibility','hidden');
+      return;
+    } else {
+      $(".topic-path-current").text("詳細");
+    }
+
     new Promise((resolve, reject) => {
   
       $.ajax({
@@ -2646,9 +2659,9 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         console.log(typeof(data));
         console.log(JSON.stringify(data));
   
-        workspace_id = data['result']['output'][0]['workspace_id'];
+        workspace_id = data['rows'][0]['workspace_id'];
   
-        data_workspace = data['result']['output'][0];
+        data_workspace = data['rows'][0];
 
         if(data_workspace['parameter-info']) {
           wsDataJSON['parameter-info'] = data_workspace['parameter-info']
@@ -2722,7 +2735,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         resolve();
       }).fail(function() {
         console.log("FAIL : ワークスペース情報取得");
-        workspace_id = null;
+        //workspace_id = null;
         // 失敗
         reject();
       });        
@@ -2750,12 +2763,12 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         // 失敗
         reject();
       });        
-
     })}).then(() => {
       // ボタン名変更
       $('#apply-workspace-button').html('ワークスペース更新');
 
       workspaceImageUpdate();
+      getClient();
 
       // CI/CD実行タブを表示
       $('#cicd-tab-item').css('visibility','visible');
@@ -2803,6 +2816,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
           "type": "POST",
           "url": workspace_api_conf.api.resource.post,
           "data": JSON.stringify(reqbody),
+          contentType: "application/json",
           dataType: "json",
         }
         update_mode = "作成"; 
@@ -2811,6 +2825,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
           "type": "PUT",
           "url": workspace_api_conf.api.resource.put.replace('{workspace_id}', workspace_id),
           "data": JSON.stringify(reqbody),
+          contentType: "application/json",
           dataType: "json",
         }
         update_mode = "更新"; 
@@ -2820,9 +2835,12 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         console.log("DONE : ワークスペース情報登録");
         console.log("--- data ----");
         console.log(JSON.stringify(data));
-        created_workspace_id = data['rows'][0]['workspace_id'];
-        workspace_id = created_workspace_id;
-
+        if(workspace_id == null) {
+          created_workspace_id = data['rows'][0]['workspace_id'];
+          workspace_id = created_workspace_id;
+        } else {
+          created_workspace_id = workspace_id;
+        }
         // 成功
         resolve();
       }).fail((jqXHR, textStatus, errorThrown) => {
@@ -2842,8 +2860,8 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         type:"POST",
         url: workspace_api_conf.api.workspace.post,
         data:JSON.stringify(reqbody),
+        contentType: "application/json",
         dataType: "json",
-  
       }).done((data) => {
         console.log("DONE : ワークスペース作成");
         console.log("--- data ----");
@@ -2875,6 +2893,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         type:"POST",
         url: workspace_api_conf.api.pipeline.post,
         data:JSON.stringify(reqbody),
+        contentType: "application/json",
         dataType: "json",
       }).done(function(data) {
         console.log("DONE : パイプライン作成");
@@ -2906,6 +2925,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         type:"POST",
         url: workspace_api_conf.api.pipelineParameter.post,
         data:JSON.stringify(reqbody),
+        contentType: "application/json",
         dataType: "json",
       }).done(function(data) {
         console.log("DONE : パイプラインパラメータ設定");
@@ -2931,7 +2951,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       // CI/CD実行タブを表示
       $('#cicd-tab-item').css('visibility','visible');
       $('#apply-workspace-button').html('ワークスペース更新');
-
+      getClient();
       console.log('Complete !!');
     }).catch((errorinfo) => {
       // 実行中ダイアログ表示
@@ -2963,6 +2983,38 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       $('#progress-message-ok').prop("disabled", false);
       console.log('Fail !!');
     });
+  }
+
+  function getClient() {
+      $.ajax({
+        "type": "GET",
+        "url": workspace_api_conf.api.client.get.replace('{client_id}', workspace_api_conf.api.client.client_id.ita.replace("{workspace_id}",workspace_id))
+      }).done(function(data) {
+        workspace_client_urls.ita = workspace_api_conf.links.ita.replace("{baseurl}", data["baseUrl"]);
+        console.log("Done:getClient ita");
+      }).fail(function() {
+        console.log("FAIL:getClient ita");
+      });
+
+      $.ajax({
+        "type": "GET",
+        "url": workspace_api_conf.api.client.get.replace('{client_id}', workspace_api_conf.api.client.client_id.argo.replace("{workspace_id}",workspace_id))
+      }).done(function(data) {
+        workspace_client_urls.argo = workspace_api_conf.links.argo.replace("{baseurl}", data["baseUrl"]);
+        console.log("Done:getClient argo");
+      }).fail(function() {
+        console.log("FAIL:getClient argo");
+      });
+
+      $.ajax({
+        "type": "GET",
+        "url": workspace_api_conf.api.client.get.replace('{client_id}', workspace_api_conf.api.client.client_id.sonarqube.replace("{workspace_id}",workspace_id))
+      }).done(function(data) {
+        workspace_client_urls.sonarqube = workspace_api_conf.links.sonarqube.replace("{baseurl}", data["baseUrl"]);
+        console.log("Done:getClient sonarqube");
+      }).fail(function() {
+        console.log("FAIL:getClient sonarqube");
+      });
   }
 
   function create_api_body() {
@@ -3133,6 +3185,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         type:"POST",
         url: workspace_api_conf.api.manifestParameter.post.replace('{workspace_id}', workspace_id),
         data:JSON.stringify(reqbody),
+        contentType: "application/json",
         dataType: "json",
       }).done(function(data) {
         console.log("DONE : マニフェストパラメータ設定");
@@ -3170,6 +3223,10 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
   //
   $('#progress-message-ok').on('click',() => {
     $('#modal-progress-container').css('display','none');
+    if((new URLSearchParams(window.location.search)).get('workspace_id') == null && workspace_id != null) {
+      // 新規で登録後は、locationにworkspace_idを付与するため、workspace_idを付けて再描画
+      window.location = window.location + "?workspace_id=" + workspace_id;
+    }
   });
 
   /* ---------------- *\
@@ -3178,33 +3235,41 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
   const ci_result_polling = function() {
     // console.log("CALL : ci_result_polling");
 
-    $.ajax({
-      "type": "GET",
-      "url": workspace_api_conf.api.ciResult.pipelinerun.get.replace('{workspace_id}', workspace_id),
-      "data": {'latest': "True"}
-    }).done(function(response) {
-      // console.log("DONE : pipelinerun latest");
-      // console.log("--- data ----");
-      // console.log(JSON.stringify(response));
+    if(workspace_id == null) {
+      $.ajax({
+        "type": "GET",
+        "url": workspace_api_conf.api.ciResult.nop.get
+      }).always(function(result) {
+        setTimeout(ci_result_polling, ci_result_polling_span);
+      });
+    } else {
+      $.ajax({
+        "type": "GET",
+        "url": workspace_api_conf.api.ciResult.pipelinerun.get.replace('{workspace_id}', workspace_id),
+        "data": {'latest': "True"}
+      }).done(function(response) {
+        // console.log("DONE : pipelinerun latest");
+        // console.log("--- data ----");
+        // console.log(JSON.stringify(response));
 
-      var run_status = "";
-      var current_pipelineruns = response.rows;
-      for(let i = 0; i < current_pipelineruns.length; i++) {
-        if(['Pending', 'Running'].includes(current_pipelineruns[i].status)) {
-          run_status = "running";
-          break;
+        var run_status = "";
+        var current_pipelineruns = response.rows;
+        for(let i = 0; i < current_pipelineruns.length; i++) {
+          if(['Pending', 'Running'].includes(current_pipelineruns[i].status)) {
+            run_status = "running";
+            break;
+          }
         }
-      }
-      $('#ws-pipeline-tekton .workspace-block-status').attr('data-status', run_status);
+        $('#ws-pipeline-tekton .workspace-block-status').attr('data-status', run_status);
 
-    }).fail(function(error) {
-      console.log("FAIL : get pipelinerun");
+      }).fail(function(error) {
+        console.log("FAIL : get pipelinerun");
 
-    }).always(function(result) {
+      }).always(function(result) {
 
-      setTimeout(ci_result_polling, ci_result_polling_span);
-    });
-
+        setTimeout(ci_result_polling, ci_result_polling_span);
+      });
+    }
   }
   
   // window onloadイベント

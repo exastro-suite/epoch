@@ -11,103 +11,6 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: epoch-ui-conf
-  namespace: epoch-system
-data:
-  workspace_api_conf.js: |
-    var location_host = window.location.hostname;
-    var location_prot = window.location.protocol;
-
-    var api_port = "30081";
-    var api_url_base = location_prot + "//" + location_host + ":" + api_port
-
-    if ( location_prot == "https:" ) {
-      api_port = window.location.port;
-      api_url_base = location_prot + "//" + location_host + ":" + api_port + "/api"
-    }
-
-    var workspace_api_conf = {
-        "links" : {
-            "tekton"    : location_prot + "//" + location_host + ":" + (location_prot == "https:"? "30801": "30901") + "/",
-            "registry"  : "https://hub.docker.com/repositories",
-            "argo"      : location_prot + "//" + location_host + ":" + "31184" + "/",
-            "ita"       : location_prot + "//" + location_host + ":" + (location_prot == "https:"? "31183": "31183") + "/default/menu/01_browse.php?no=2100180006",
-            "sonarqube" : location_prot + "//" + location_host + ":" + (location_prot == "https:"? "31185": "31185") + "/",
-        },
-        "test": {
-            "default_workspace_id": 1
-        },
-        "api" : {
-            "resource": {
-                "get" :     api_url_base + "/workspace/info/{workspace_id}/",
-                "post" :    api_url_base + "/workspace/info/",
-                "put" :     api_url_base + "/workspace/info/{workspace_id}/",
-            },
-            "workspace": {
-                "post":     api_url_base + "/workspace/pod/",
-                "wait": 30000,
-            },
-            "pipeline": {
-                "post":     api_url_base + "/pipeline/",
-            },
-            "pipelineParameter": {
-                "post":     api_url_base + "/pipelineParameter/",
-            },
-            "manifestParameter": {
-                "post":     api_url_base + "/workspace/{workspace_id}/manifestParameter",
-            },
-            "manifestTemplate": {
-                "post" :    api_url_base + "/workspace/{workspace_id}/manifests/",
-                "get" :     api_url_base + "/workspace/{workspace_id}/manifests/",
-                "delete" :  api_url_base + "/workspace/{workspace_id}/manifests/{file_id}",
-            },
-            "cdExecDesignation": {
-                "post" :    api_url_base + "/cdExecDesignation/",
-            },
-            "ciResult": {
-                "pipelinerun": {
-                    "get" :    api_url_base + "/ciResult/workspace/{workspace_id}/tekton/pipelinerun",
-                },
-                "taskrunlogs": {
-                    "get" :    api_url_base + "/ciResult/workspace/{workspace_id}/tekton/taskrun/{taskrun_name}/logs",
-                }
-            }
-        }
-    }
-    const ci_result_polling_span = 10000; // 10s
-  organization_api_conf.js: |
-    var location_host = window.location.hostname;
-    var location_prot = window.location.protocol;
-
-    var api_port = "30081";
-    var api_url_base = location_prot + "//" + location_host + ":" + api_port
-
-    if ( location_prot == "https:" ) {
-      api_port = window.location.port;
-      api_url_base = location_prot + "//" + location_host + ":" + api_port + "/api"
-    }
-
-    console.log('api_url_base:' + api_url_base);
-
-    var organization_api_conf = {
-        "api" : {
-            "resource": {
-                "get_all"  : api_url_base + "/organization/",
-                "get"  : api_url_base + "/organization/{organization_id}/",
-                "post" : api_url_base + "/organization/",
-                "put"  : api_url_base + "/organization/{organization_id}/",
-            }
-        },
-        "parameter" : {
-
-        }
-    }
-
-
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -123,16 +26,9 @@ spec:
       labels:
         name: epoch-ui
     spec:
-      volumes:
-      - name: epoch-ui-conf
-        configMap:
-          name: epoch-ui-conf
       containers:
       - name: epoch-ui
-        image: exastro/epoch-ui:0.2.1_20211118_1455
-        volumeMounts:
-        - name: epoch-ui-conf
-          mountPath: /app/common/js/config
+        image: exastro/epoch-ui:0.3.0_20211122_1555
 
 ---
 apiVersion: v1
@@ -148,8 +44,8 @@ spec:
   - name: http
     port: 8000
     targetPort: 8000
-  - name: https
-    port: 4430
-    targetPort: 4430
+  #- name: https
+  #  port: 4430
+  #  targetPort: 4430
   selector:
     name: epoch-ui

@@ -397,90 +397,6 @@ spec:
   selector:
     name: epoch-control-tekton-api
 
-#---- epoch-rs-organization-api.yaml
----
-#   Copyright 2019 NEC Corporation
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: epoch-rs-organization-conf
-  namespace: epoch-system
-data:
-  api_organization.conf: |
-    TZ='Asia/Tokyo'
-    MYSQL_HOST='organization-db'
-    MYSQL_PORT='3306'
-    MYSQL_DATABASE='organization_db'
-    MYSQL_USER='app_user'
-    MYSQL_PASSWORD='password'
-
----
-
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: epoch-rs-organization-api
-  namespace: epoch-system
-spec:
-  selector:
-    matchLabels:
-      name: epoch-rs-organization-api
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        name: epoch-rs-organization-api
-    spec:
-      volumes:
-      - name: epoch-rs-organization-conf
-        configMap:
-          name: epoch-rs-organization-conf
-      containers:
-      - name: epoch-rs-organization-api
-        image: exastro/epoch-rs-organization-api:0.1.5_20211027_1530
-        env:
-        - name: CONFIG_API_ORGANIZATION_PATH
-          value: "/etc/epoch/epochRsOrganizationApi/api_organization.conf"
-        - name: FLASK_ENV
-          value: "development"
-        - name: API_ORGANIZATION_PORT
-          value: "8000"
-        - name: PYTHONIOENCODING
-          value: utf-8
-        volumeMounts:
-        - name: epoch-rs-organization-conf
-          mountPath: /etc/epoch/epochRsOrganizationApi
-
----
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: epoch-rs-organization-api
-  labels:
-    name: epoch-rs-organization-api
-  namespace: epoch-system
-spec:
-  type: ClusterIP
-  ports:
-  - name: http
-    port: 8000
-    targetPort: 8000
-  selector:
-    name: epoch-rs-organization-api
-
 #---- epoch-rs-workspace-api.yaml
 ---
 #   Copyright 2019 NEC Corporation
@@ -533,7 +449,7 @@ spec:
           name: epoch-rs-workspace-conf
       containers:
       - name: epoch-rs-workspace-api
-        image: exastro/epoch-rs-workspace-api:0.1.5_20211027_1530
+        image: exastro/epoch-rs-workspace-api:0.3.0_20211119_1610
         env:
         - name: CONFIG_API_WORKSPACE_PATH
           value: "/etc/epoch/epochRsWorkspaceApi/api_workspace.conf"
@@ -780,6 +696,92 @@ spec:
   selector:
     name: epoch-service-api
 
+#---- epoch-service-api2.yaml
+---
+#   Copyright 2021 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: epoch-service-api2-conf
+  namespace: epoch-system
+data:
+  api_service.conf: |
+    TZ='Asia/Tokyo'
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: epoch-service-api2
+  namespace: epoch-system
+spec:
+  selector:
+    matchLabels:
+      name: epoch-service-api2
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: epoch-service-api2
+    spec:
+      volumes:
+      - name: epoch-service-api2-conf
+        configMap:
+          name: epoch-service-api2-conf
+      containers:
+      - name: epoch-service-api2
+        image: exastro/epoch-service-api2:0.3.0_20211119_1605
+        env:
+        - name: CONFIG_API_SERVICE_PATH
+          value: "/etc/epoch/epochServiceApi/api_service.conf"
+        - name: FLASK_ENV
+          value: "development"
+        - name: API_SERVICE_PORT
+          value: "8000"
+        - name: PYTHONIOENCODING
+          value: utf-8
+        envFrom:
+          - configMapRef:
+              name: epoch-service-api-config
+          - configMapRef:
+              name: epoch-service-api-epai-config
+          # - prefix: EPOCH_
+          #   secretRef:
+          #     name: epoch-service-api-secret
+        volumeMounts:
+        - name: epoch-service-api2-conf
+          mountPath: /etc/epoch/epochServiceApi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: epoch-service-api2
+  labels:
+    name: epoch-service-api2
+  namespace: epoch-system
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+  selector:
+    name: epoch-service-api2
+
 #---- epoch-ui.yaml
 ---
 #   Copyright 2019 NEC Corporation
@@ -795,103 +797,6 @@ spec:
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: epoch-ui-conf
-  namespace: epoch-system
-data:
-  workspace_api_conf.js: |
-    var location_host = window.location.hostname;
-    var location_prot = window.location.protocol;
-
-    var api_port = "30081";
-    var api_url_base = location_prot + "//" + location_host + ":" + api_port
-
-    if ( location_prot == "https:" ) {
-      api_port = window.location.port;
-      api_url_base = location_prot + "//" + location_host + ":" + api_port + "/api"
-    }
-
-    var workspace_api_conf = {
-        "links" : {
-            "tekton"    : location_prot + "//" + location_host + ":" + (location_prot == "https:"? "30801": "30901") + "/",
-            "registry"  : "https://hub.docker.com/repositories",
-            "argo"      : location_prot + "//" + location_host + ":" + "31184" + "/",
-            "ita"       : location_prot + "//" + location_host + ":" + (location_prot == "https:"? "31183": "31183") + "/default/menu/01_browse.php?no=2100180006",
-            "sonarqube" : location_prot + "//" + location_host + ":" + (location_prot == "https:"? "31185": "31185") + "/",
-        },
-        "test": {
-            "default_workspace_id": 1
-        },
-        "api" : {
-            "resource": {
-                "get" :     api_url_base + "/workspace/info/{workspace_id}/",
-                "post" :    api_url_base + "/workspace/info/",
-                "put" :     api_url_base + "/workspace/info/{workspace_id}/",
-            },
-            "workspace": {
-                "post":     api_url_base + "/workspace/pod/",
-                "wait": 30000,
-            },
-            "pipeline": {
-                "post":     api_url_base + "/pipeline/",
-            },
-            "pipelineParameter": {
-                "post":     api_url_base + "/pipelineParameter/",
-            },
-            "manifestParameter": {
-                "post":     api_url_base + "/workspace/{workspace_id}/manifestParameter",
-            },
-            "manifestTemplate": {
-                "post" :    api_url_base + "/workspace/{workspace_id}/manifests/",
-                "get" :     api_url_base + "/workspace/{workspace_id}/manifests/",
-                "delete" :  api_url_base + "/workspace/{workspace_id}/manifests/{file_id}",
-            },
-            "cdExecDesignation": {
-                "post" :    api_url_base + "/cdExecDesignation/",
-            },
-            "ciResult": {
-                "pipelinerun": {
-                    "get" :    api_url_base + "/ciResult/workspace/{workspace_id}/tekton/pipelinerun",
-                },
-                "taskrunlogs": {
-                    "get" :    api_url_base + "/ciResult/workspace/{workspace_id}/tekton/taskrun/{taskrun_name}/logs",
-                }
-            }
-        }
-    }
-    const ci_result_polling_span = 10000; // 10s
-  organization_api_conf.js: |
-    var location_host = window.location.hostname;
-    var location_prot = window.location.protocol;
-
-    var api_port = "30081";
-    var api_url_base = location_prot + "//" + location_host + ":" + api_port
-
-    if ( location_prot == "https:" ) {
-      api_port = window.location.port;
-      api_url_base = location_prot + "//" + location_host + ":" + api_port + "/api"
-    }
-
-    console.log('api_url_base:' + api_url_base);
-
-    var organization_api_conf = {
-        "api" : {
-            "resource": {
-                "get_all"  : api_url_base + "/organization/",
-                "get"  : api_url_base + "/organization/{organization_id}/",
-                "post" : api_url_base + "/organization/",
-                "put"  : api_url_base + "/organization/{organization_id}/",
-            }
-        },
-        "parameter" : {
-
-        }
-    }
-
-
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -907,16 +812,9 @@ spec:
       labels:
         name: epoch-ui
     spec:
-      volumes:
-      - name: epoch-ui-conf
-        configMap:
-          name: epoch-ui-conf
       containers:
       - name: epoch-ui
-        image: exastro/epoch-ui:0.2.1_20211118_1455
-        volumeMounts:
-        - name: epoch-ui-conf
-          mountPath: /app/common/js/config
+        image: exastro/epoch-ui:0.3.0_20211122_1555
 
 ---
 apiVersion: v1
@@ -932,129 +830,11 @@ spec:
   - name: http
     port: 8000
     targetPort: 8000
-  - name: https
-    port: 4430
-    targetPort: 4430
+  #- name: https
+  #  port: 4430
+  #  targetPort: 4430
   selector:
     name: epoch-ui
-
-#---- organization-db.yaml
----
-#   Copyright 2019 NEC Corporation
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: organization-db-myconf
-  namespace: epoch-system
-data:
-  my.cnf: |
-    [mysqld]
-    character-set-server=utf8mb4
-    collation-server=utf8mb4_bin
-    secure_file_priv=/tmp
-    [client]
-    default-character-set=utf8mb4
-
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: organization-db-initdb
-  namespace: epoch-system
-data:
-  organization.sql: |
-    create database organization_db
-      CHARACTER SET utf8mb4
-      COLLATE utf8mb4_unicode_ci;
-    create user app_user IDENTIFIED WITH mysql_native_password BY 'password';
-    GRANT ALL ON organization_db.* TO app_user;
-    use organization_db;
-    create table organization (
-      organization_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
-      organization_name varchar(256) not null,
-      additional_information json,
-      create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
-      update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    );
-    create table organization_history (
-      history_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
-      organization_id int unsigned not null,
-      organization_name varchar(256) not null,
-      additional_information json,
-      update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    );
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: organization-db
-  namespace: epoch-system
-spec:
-  selector:
-    matchLabels:
-      name: organization-db
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        name: organization-db
-    spec:
-      volumes:
-      - name: mysqlconf-volume
-        configMap:
-          name: organization-db-myconf
-      # COMMENT OUT:Persistent data retention
-      #- name: mysqldata
-      #  hostPath:
-      #    path: /var/data/epoch/organization_db/mysql
-      #    type: DirectoryOrCreate
-      - name: mysqlinitdb-volume
-        configMap:
-          name: organization-db-initdb
-      containers:
-      - name: mysql
-        image: mysql
-        volumeMounts:
-        # COMMENT OUT:Persistent data retention
-        #- name: mysqldata
-        #  mountPath: /var/lib/mysql
-        - name: mysqlconf-volume
-          mountPath: /etc/mysql
-        - name: mysqlinitdb-volume
-          mountPath: /docker-entrypoint-initdb.d
-        env:
-        - name: MYSQL_ROOT_PASSWORD
-          value: password
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: organization-db
-  labels:
-    name: organization-db
-  namespace: epoch-system
-spec:
-  type: ClusterIP
-  ports:
-  - name: mysql
-    port: 3306
-    targetPort: 3306
-  selector:
-    name: organization-db
 
 #---- workspace-db.yaml
 ---
@@ -1617,10 +1397,16 @@ data:
     \ <Location /api/>\n    ProxyPass        http://epoch-service-api.epoch-system.svc:8000/
     retry=0 timeout=600\n    ProxyPassReverse http://epoch-service-api.epoch-system.svc:8000/\n
     \   AuthType openid-connect\n    Require claim \"epoch-role:epoch-user\"\n  </Location>\n
+    \ <Location /api2/>\n    ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/
+    retry=0 timeout=600\n    ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/\n
+    \   AuthType openid-connect\n    Require claim \"epoch-role:epoch-user\"\n  </Location>\n
     \ <Location /api/user/>\n    ProxyPass        http://authentication-infra-api:8000/user/
     retry=0\n    ProxyPassReverse http://authentication-infra-api:8000/user/\n    AuthType
-    openid-connect\n    Require valid-user\n  </Location>\n  <Location /favicon.ico>\n
-    \   Require all granted\n  </Location>\n</VirtualHost>\n"
+    openid-connect\n    Require valid-user\n  </Location>\n  <Location /api/client/>\n
+    \   ProxyPass        http://authentication-infra-api:8000/client/ retry=0\n    ProxyPassReverse
+    http://authentication-infra-api:8000/client/\n    AuthType openid-connect\n    Require
+    claim \"epoch-role:epoch-user\"\n  </Location>\n  <Location /favicon.ico>\n    Require
+    all granted\n  </Location>\n</VirtualHost>\n"
   epoch-ws-argocd-template.conf: "Listen {{ client_port }}\n<VirtualHost *:{{ client_port
     }}>\n  SSLProxyEngine On\n  SSLEngine on\n  SSLCertificateFile /etc/pki/tls/certs/exastro-platform-authentication-infra.pem\n
     \ SSLCertificateKeyFile /etc/pki/tls/private/exastro-platform-authentication-infra.key\n
@@ -1745,7 +1531,7 @@ spec:
           name: nodeport-template
       containers:
       - name: authentication-infra-api
-        image: exastro/authentication-infra-api:0.2.0_20211112_1300
+        image: exastro/authentication-infra-api:0.3.0_20211122_1450
         env:
         - name: CONFIG_API_AUTHC_INFRA_PATH
           value: "/etc/exastro-authentication-infra/authentication-infra-api/api_authc_infra.conf"
