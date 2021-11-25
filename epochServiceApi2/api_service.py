@@ -391,7 +391,7 @@ def put_workspace(workspace_id):
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
 
 
-def post_pod():
+def post_pod(workspace_id):
     """ワークスペース作成
 
     Returns:
