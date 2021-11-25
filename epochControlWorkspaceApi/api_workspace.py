@@ -70,8 +70,11 @@ def call_workspace(workspace_id):
     except Exception as e:
         return common.server_error(e)
 
-def create_workspace():
+def create_workspace(workspace_id):
     """workspace 作成
+
+    Args:
+        workspace_id (int): ワークスペースID
 
     Returns:
         Response: HTTP Respose

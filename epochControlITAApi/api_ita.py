@@ -71,8 +71,11 @@ def call_ita(workspace_id):
     except Exception as e:
         return common.server_error(e)
 
-def create_ita():
+def create_ita(workspace_id):
     """IT-Automation Pod 作成
+
+    Args:
+        workspace_id (int): ワークスペースID
 
     Returns:
         Response: HTTP Respose
