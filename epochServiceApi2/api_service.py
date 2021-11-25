@@ -95,6 +95,32 @@ def call_workspace_by_id(workspace_id):
         return common.server_error(e)
 
 
+@app.route('/workspace/<int:workspace_id>/pod', methods=['POST'])
+def call_pod(workspace_id):
+    """workspace/workspace_id/pod 呼び出し
+
+    Args:
+        workspace_id (int): ワークスペースID
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'POST':
+            # CIパイプライン情報設定
+            return post_pod(workspace_id)
+        else:
+            # エラー
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+
 @app.route('/workspace/<int:workspace_id>/ci/pipeline', methods=['POST'])
 def call_ci_pipeline(workspace_id):
     """workspace/workspace_id/ci/pipeline 呼び出し
@@ -119,6 +145,7 @@ def call_ci_pipeline(workspace_id):
 
     except Exception as e:
         return common.server_error(e)
+
 
 @app.route('/workspace/<int:workspace_id>/cd/pipeline', methods=['POST'])
 def call_cd_pipeline(workspace_id):
@@ -354,6 +381,33 @@ def put_workspace(workspace_id):
             raise common.UserException("{} Error put workspace db status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
 
         ret_status = response.status_code
+
+        # 戻り値をそのまま返却        
+        return jsonify({"result": ret_status}), ret_status
+
+    except common.UserException as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+    except Exception as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+
+
+def post_pod():
+    """ワークスペース作成
+
+    Returns:
+        Response: HTTP Respose
+    """
+
+    app_name = "ワークスペース情報:"
+    exec_stat = "作成"
+    error_detail = ""
+
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
+        globals.logger.debug('#' * 50)
+
+        ret_status = 200
 
         # 戻り値をそのまま返却        
         return jsonify({"result": ret_status}), ret_status
