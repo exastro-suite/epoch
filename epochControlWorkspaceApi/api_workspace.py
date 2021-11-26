@@ -30,6 +30,7 @@ from datetime import timedelta, timezone
 
 import globals
 import common
+import api_kubernetes_call
 
 # 設定ファイル読み込み・globals初期化
 app = Flask(__name__)
@@ -70,8 +71,11 @@ def call_workspace(workspace_id):
     except Exception as e:
         return common.server_error(e)
 
-def create_workspace():
+def create_workspace(workspace_id):
     """workspace 作成
+
+    Args:
+        workspace_id (int): ワークスペースID
 
     Returns:
         Response: HTTP Respose
@@ -86,7 +90,12 @@ def create_workspace():
         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
         globals.logger.debug('#' * 50)
 
+        error_detail = "namespace生成失敗"
+        # namespace名の設定
+        name = common.get_namespace_name(workspace_id)
+
         # namespace生成
+        api_kubernetes_call.create_namespace(name)
 
         ret_status = 200
 

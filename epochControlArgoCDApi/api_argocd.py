@@ -70,8 +70,11 @@ def call_argocd(workspace_id):
     except Exception as e:
         return common.server_error(e)
 
-def create_argocd():
+def create_argocd(workspace_id):
     """argoCD Pod 作成
+
+    Args:
+        workspace_id (int): ワークスペースID
 
     Returns:
         Response: HTTP Respose
