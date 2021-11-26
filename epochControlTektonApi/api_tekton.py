@@ -12,7 +12,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-from flask import Flask, request, abort, jsonify, render_template
+from flask import Flask, request, abort, jsonify, render_template, Response
 from datetime import datetime
 import os
 import json
@@ -713,21 +713,11 @@ def get_access_info(workspace_id):
         # url設定
         api_info = "{}://{}:{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'], os.environ['EPOCH_RS_WORKSPACE_HOST'], os.environ['EPOCH_RS_WORKSPACE_PORT'])
 
-        # 内部のアクセスなのでProxyを退避して解除
-        http_proxy = os.environ['EPOCH_HTTP_PROXY']
-        https_proxy = os.environ['EPOCH_HTTPS_PROXY']
-        os.environ['EPOCH_HTTP_PROXY'] = ""
-        os.environ['EPOCH_HTTPS_PROXY'] = ""
-
         # アクセス情報取得
         # Select送信（workspace_access取得）
         globals.logger.debug ("workspace_access get call: worksapce_id:{}".format(workspace_id))
         request_response = requests.get( "{}/workspace/{}/access".format(api_info, workspace_id))
         # logger.debug (request_response)
-
-        # 退避したProxyを戻す
-        os.environ['EPOCH_HTTP_PROXY'] = http_proxy
-        os.environ['EPOCH_HTTPS_PROXY'] = https_proxy
 
         # 情報が存在する場合は、更新、存在しない場合は、登録
         if request_response.status_code == 200:
@@ -740,6 +730,36 @@ def get_access_info(workspace_id):
     except Exception as e:
         globals.logger.debug ("get_access_info Exception:{}".format(e.args))
         raise # 再スロー
+
+
+@app.route('/listener/<int:workspace_id>', methods=['POST'])
+def post_listener(workspace_id):
+    """TEKTON Listener 転送処理
+
+    Args:
+        workspace_id (int): ワークスペースID
+
+    Returns:
+        response: 応答結果
+    """
+    try:
+        globals.logger.debug ("post_listener call: worksapce_id:{}".format(workspace_id))
+
+        # TEKTONのイベントリスナーの転送先
+        listener_url = "http://el-event-listener.{}.svc:8080/".format(tekton_pipeline_namespace(workspace_id))
+
+        # TEKTONのイベントリスナーへ転送
+        response = requests.post(listener_url, headers=request.headers, data=request.data)
+
+        # TEKTONのリスナーの応答をそのまま返す
+        return Response(response.text, headers=dict(response.raw.headers), status=response.status_code)
+
+    except requests.exceptions.RequestException as e:
+        return Response("", status=404)
+
+    except Exception as e:
+        return common.serverError(e)
+
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('API_TEKTON_PORT', '8000')), threaded=True)
