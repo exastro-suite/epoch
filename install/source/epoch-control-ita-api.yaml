@@ -51,6 +51,51 @@ spec:
           value: "8000"
         - name: PYTHONIOENCODING
           value: utf-8
+        - name: EPOCH_HTTP_PROXY
+          valueFrom:
+            configMapKeyRef:
+              name: proxy-setting-config
+              key: HTTP_PROXY
+        - name: EPOCH_HTTPS_PROXY
+          valueFrom:
+            configMapKeyRef:
+              name: proxy-setting-config
+              key: HTTPS_PROXY
+        - name: EPOCH_NO_PROXY
+          valueFrom:
+            configMapKeyRef:
+              name: epoch-cicd-api-config
+              key: NO_PROXY
+        - name: EPOCH_ITA_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: epoch-cicd-api-config
+              key: ITA_HOST
+        - name: EPOCH_ITA_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: epoch-cicd-api-config
+              key: ITA_PORT
+        - name: EPOCH_ITA_WORKER_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: epoch-cicd-api-config
+              key: ITA_WORKER_HOST
+        - name: EPOCH_RS_WORKSPACE_PROTOCOL
+          valueFrom:
+            configMapKeyRef:
+              name: epoch-cicd-api-config
+              key: RS_WORKSPACE_PROTOCOL
+        - name: EPOCH_RS_WORKSPACE_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: epoch-cicd-api-config
+              key: RS_WORKSPACE_HOST
+        - name: EPOCH_RS_WORKSPACE_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: epoch-cicd-api-config
+              key: RS_WORKSPACE_PORT
         volumeMounts:
         - name: epoch-control-ita-conf
           mountPath: /etc/epoch/epochControlITAApi
