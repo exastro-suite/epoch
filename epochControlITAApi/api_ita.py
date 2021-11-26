@@ -116,9 +116,6 @@ def create_ita(workspace_id):
         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
         globals.logger.debug('#' * 50)
 
-        # 実行時のパスからリソースフォルダを取得
-        resource_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource"
-
         # namespace定義
         name = common.get_namespace_name(workspace_id)
 
@@ -513,7 +510,11 @@ def kym_file_upload(host, auth):
 
     globals.logger.debug('---- upload kym file ----')
 
-    kym_file_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource/ita_kym/epoch_initialize.kym"
+    # インポートファイルのパス設定
+    upload_filename = 'epoch_initialize.kym'
+    kym_file_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource/{}".format(upload_filename)
+
+    # インポートファイルの内容をすべて取得
     with open(kym_file_path, 'rb') as f:
         kym_binary = f.read()
     encoded_data = base64.b64encode(kym_binary).decode(encoding='utf-8')
