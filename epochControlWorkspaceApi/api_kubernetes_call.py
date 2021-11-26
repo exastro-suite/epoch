@@ -54,6 +54,13 @@ def get_namespace(name):
 
         return ret 
 
+    except client.exceptions.ApiException as e:
+        globals.logger.error('e:{}'.format(str(e.reason)))
+        if e.reason == "Not Found":
+            return None
+        else:
+            globals.logger.error(''.join(list(traceback.TracebackException.from_exception(e).format())))
+            raise
     except Exception as e:
         globals.logger.error(''.join(list(traceback.TracebackException.from_exception(e).format())))
         raise
