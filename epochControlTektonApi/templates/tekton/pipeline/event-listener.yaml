@@ -47,23 +47,3 @@ spec:
             - key: git_webhook_body
               expression: "body.marshalJSON()"
     #{% endfor %}
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: {{ param.ci_config.event_listener_name }}-nodeport
-  labels:
-    name: {{ param.ci_config.event_listener_name }}-nodeport
-  namespace: {{ param.ci_config.pipeline_namespace }}
-spec:
-  type: NodePort
-  ports:
-  - name: http
-    port: 8080
-    targetPort: 8080
-    nodePort: 30904
-  selector:
-    app.kubernetes.io/managed-by: EventListener
-    app.kubernetes.io/part-of: Triggers
-    eventlistener: {{ param.ci_config.event_listener_name }}
