@@ -36,6 +36,10 @@ app = Flask(__name__)
 app.config.from_envvar('CONFIG_API_GITHUB_PATH')
 globals.init(app)
 
+# github webhook base url
+github_webhook_base_url = 'https://api.github.com/repos/'
+github_webhook_base_hooks = '/hooks'
+
 @app.route('/alive', methods=["GET"])
 def alive():
     """死活監視
@@ -48,7 +52,7 @@ def alive():
 
 @app.route('/workspace/<int:workspace_id>/github/webhooks', methods=['GET','POST'])
 def call_github_webhooks(workspace_id):
-    """argocd/workspace_id/github/wehbooks 呼び出し
+    """workspace/workspace_id/github/wehbooks 呼び出し
 
     Args:
         workspace_id (int): ワークスペースID
@@ -71,8 +75,11 @@ def call_github_webhooks(workspace_id):
     except Exception as e:
         return common.server_error(e)
 
-def create_github_webhooks():
+def create_github_webhooks(workspace_id):
     """webhooks 設定
+
+    Args:
+        workspace_id (int): ワークスペースID
 
     Returns:
         Response: HTTP Respose
@@ -81,13 +88,55 @@ def create_github_webhooks():
     app_name = "ワークスペース情報:"
     exec_stat = "GitHub WebHooks設定"
     error_detail = ""
+    apache_path = '/api/listener/{}'.format(workspace_id)
 
     try:
         globals.logger.debug('#' * 50)
         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
         globals.logger.debug('#' * 50)
 
-        ret_status = 201
+        # 引数で指定されたCD環境を取得
+        request_json = json.loads(request.data)
+        request_ci_confg = request_json["ci_config"]
+
+        # パイプライン数分繰り返し
+        for pipeline in request_ci_confg["pipelines"]:
+            git_repos = re.sub('\\.git$','',re.sub('^https?://[^/][^/]*/','',pipeline["git_repositry"]["url"]))
+            web_hooks_url = pipeline["webhooks_url"] + ':' + os.environ['EPOCH_WEBHOOK_PORT'] + apache_path
+            token = request_ci_confg["pipelines_common"]["git_repositry"]["token"]
+
+            # GitHubへPOST送信
+            # ヘッダ情報
+            post_headers = {
+                'Authorization': 'token ' + token,
+                'Accept': 'application/vnd.github.v3+json',
+            }
+
+            # 引数をJSON形式で構築
+            post_data = json.dumps({
+                "config":{
+                    "url": web_hooks_url,
+                    "content_type":"json",
+                    "secret":"",
+                    "insecure_ssl":"1",
+                    "token":"token",
+                    "digest":"digest",
+                }
+            })
+
+            # hooksのPOST送信
+            globals.logger.debug('- github.webhooks setting to git')
+            globals.logger.debug('- https_proxy:{}, http_proxy:{}'.format(os.environ['HTTPS_PROXY'], os.environ['HTTP_PROXY']))
+            globals.logger.debug('- request URL:' + github_webhook_base_url + git_repos + github_webhook_base_hooks)
+            globals.logger.debug('- webhook URL :' + web_hooks_url)
+            request_response = requests.post( github_webhook_base_url + git_repos + github_webhook_base_hooks, headers=post_headers, data=post_data)
+
+            globals.logger.debug('- response headers')
+            globals.logger.debug(request_response.headers)
+            globals.logger.debug('- response body')
+            globals.logger.debug(request_response.text)
+
+        ret_status = request_response.status_code
 
         # 戻り値をそのまま返却        
         return jsonify({"result": ret_status}), ret_status
@@ -98,8 +147,11 @@ def create_github_webhooks():
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
 
 
-def get_github_webhooks():
+def get_github_webhooks(workspace_id):
     """webhooks 取得
+
+    Args:
+        workspace_id (int): ワークスペースID
 
     Returns:
         Response: HTTP Respose
@@ -114,39 +166,35 @@ def get_github_webhooks():
         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
         globals.logger.debug('#' * 50)
 
-        rows = [
-            {
-                "type": "Repository",
-                "id": 1,
-                "name": "web",
-                "active": true,
-                "events": [
-                    "push"
-                ],
-                "config": {
-                    "content_type": "json",
-                    "digest": "digest",
-                    "insecure_ssl": "1",
-                    "token": "token",
-                    "url": "[listner_url]"
-                },
-                "updated_at": "2021-08-26T01:56:58Z",
-                "created_at": "2021-08-26T01:56:58Z",
-                "url": "https://api.github.com/repos/[アカウント名]/[repo名]/hooks/xx",
-                "test_url": "https://api.github.com/repos/[アカウント名]/[repo名]/hooks/xx/test",
-                "ping_url": "https://api.github.com/repos/[アカウント名]/[repo名]/hooks/xx/pings",
-                "deliveries_url": "https://api.github.com/repos/[アカウント名]/[repo名]/hooks/xx/deliveries",
-                "last_response": {
-                    "code": null,
-                    "status": "unused",
-                    "message": null
-                }
-            },
-        ]
 
-        ret_status = 200
+        # 引数で指定されたCD環境を取得
+        request_json = json.loads(request.data)
+        request_ci_confg = request_json["ci_config"]
 
-        # 戻り値をそのまま返却        
+        # パイプライン数分繰り返し
+        for pipeline in request_ci_confg["pipelines"]:
+            git_repos = re.sub('\\.git$','',re.sub('^https?://[^/][^/]*/','',pipeline["git_repositry"]["url"]))
+            token = request_ci_confg["pipelines_common"]["git_repositry"]["token"]
+
+            # GitHubへGET送信
+            # ヘッダ情報
+            request_headers = {
+                'Authorization': 'token ' + token,
+                'Accept': 'application/vnd.github.v3+json',
+            }
+
+            globals.logger.debug(git_repos)
+            # GETリクエスト送信
+            request_response = requests.get( github_webhook_base_url + git_repos + github_webhook_base_hooks, headers=request_headers)
+
+        ret_status = request_response.status_code
+
+        if ret_status == '200':
+            rows = request_response.text
+        else:
+            rows = []
+
+        # 戻り値をそのまま返却
         return jsonify({"result": ret_status, "rows": rows}), ret_status
 
     except common.UserException as e:
