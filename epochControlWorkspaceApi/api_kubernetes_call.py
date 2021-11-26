@@ -50,7 +50,7 @@ def get_namespace(name):
 
         # namespaceの情報取得
         ret = v1.read_namespace(name=name)
-        globals.logger.debug("read_namespace: {}".format(ret))
+        # globals.logger.debug("read_namespace: {}".format(ret))
 
         return ret 
 
@@ -85,7 +85,7 @@ def create_namespace(name):
         #ret = v1.create_namespace(body=body, pretty=pretty, dry_run=dry_run, field_manager=field_manager)
         ret = v1.create_namespace(body=body)
 
-        globals.logger.debug("create_namespace: {}".format(ret))
+        # globals.logger.debug("create_namespace: {}".format(ret))
 
         return ret 
 
