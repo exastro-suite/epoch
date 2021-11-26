@@ -18,6 +18,7 @@ RUN echo "RUN START"  \
 &&  pip install -U pip \
 &&  pip install requests \
 &&  pip install kubernetes \
+&&  pip install bcrypt \
 &&  python3 -m pip install Flask \
 &&  python3 -m pip install pytz \
 &&  python3 -m pip install mysql-connector-python \
