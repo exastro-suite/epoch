@@ -409,6 +409,12 @@ def post_pod(workspace_id):
 
         ret_status = 200
 
+        post_headers = {
+            'Content-Type': 'application/json',
+        }
+        api_url = "http://epoch-control-argocd-api:8000/workspace/{}/agrocd".format(workspace_id)
+        response = requests.post(api_url, headers=post_headers)
+
         # 戻り値をそのまま返却        
         return jsonify({"result": ret_status}), ret_status
 
