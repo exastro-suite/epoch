@@ -430,9 +430,9 @@ def post_pod(workspace_id):
         response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
         globals.logger.debug("post workspace response:{}".format(response.text))
         
-        if response.status_code != '200':
+        if response.status_code != 200:
             error_detail = 'workspace post処理に失敗しました'
-            raise Exception
+            raise common.UserException(error_detail)
 
         # argocd post送信
         api_url = "{}://{}:{}/workspace/{}/argocd".format(os.environ['EPOCH_CONTROL_ARGOCD_PROTOCOL'],
@@ -442,9 +442,9 @@ def post_pod(workspace_id):
         response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
         globals.logger.debug("post argocd response:{}".format(response.text))
 
-        if response.status_code != '200':
+        if response.status_code != 200:
             error_detail = 'argocd post処理に失敗しました'
-            raise Exception
+            raise common.UserException(error_detail)
 
         # ita post送信
         api_url = "{}://{}:{}/workspace/{}/it-automation".format(os.environ['EPOCH_CONTROL_ITA_PROTOCOL'],
@@ -454,9 +454,9 @@ def post_pod(workspace_id):
         response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
         globals.logger.debug("post it-automation response:{}".format(response.text))
 
-        if response.status_code != '200':
+        if response.status_code != 200:
             error_detail = 'it-automation post処理に失敗しました'
-            raise Exception
+            raise common.UserException(error_detail)
 
         ret_status = response.status_code
 
@@ -466,9 +466,9 @@ def post_pod(workspace_id):
         api_url = "http://epoch-control-argocd-api:8000/workspace/{}/agrocd".format(workspace_id)
         response = requests.post(api_url, headers=post_headers)
 
-        if response.status_code != '200':
+        if response.status_code != 200:
             error_detail = 'agrocd post処理に失敗しました'
-            raise Exception
+            raise common.UserException(error_detail)
 
         # epoch-control-ita-api の呼び先設定
         api_url = "{}://{}:{}/workspace/{}/it-automation/settings".format(os.environ['EPOCH_CONTROL_ITA_PROTOCOL'],
@@ -480,9 +480,9 @@ def post_pod(workspace_id):
         response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
         globals.logger.debug("post it-automation/settings response:{}".format(response.text))
 
-        if response.status_code != '200':
+        if response.status_code != 200:
             error_detail = 'it-automation/settings post処理に失敗しました'
-            raise Exception
+            raise common.UserException(error_detail)
 
         # 戻り値をそのまま返却        
         return jsonify({"result": ret_status}), ret_status
@@ -570,18 +570,18 @@ def post_ci_pipeline(workspace_id):
             response = requests.post('{}/repos'.format(api_url_gitlab), headers=post_headers, data=json.dumps(proj_data))
             globals.logger.debug("post gitlab/repos response:{}".format(response.text))
 
-            if response.status_code != '200':
+            if response.status_code != 200:
                 error_detail = 'gitlab/repos post処理に失敗しました'
-                raise Exception
+                raise common.UserException(error_detail)
 
         if request_body['ci_config']['pipelines_common']['git_repositry']['housing'] == 'outer':
             # github/webhooks post送信
             response = requests.post( api_url_github, headers=post_headers, data=post_data)
             globals.logger.debug("post github/webhooks response:{}".format(response.text))
 
-            if response.status_code != '200':
+            if response.status_code != 200:
                 error_detail = 'github/webhooks post処理に失敗しました'
-                raise Exception
+                raise common.UserException(error_detail)
         else:
             # パイプライン設定(GitLab webhooks)
             for pipeline_ap in request_body['ci_config']['pipelines']:
@@ -597,17 +597,17 @@ def post_ci_pipeline(workspace_id):
                 response = requests.post('{}/webhooks'.format(api_url_gitlab) + "workspace/1/gitlab/webhooks", headers=post_headers, data=json.dumps(ap_data))
                 globals.logger.debug("post gitlab/webhooks response:{}".format(response.text))
 
-                if response.status_code != '200':
+                if response.status_code != 200:
                     error_detail = 'gitlab/webhooks post処理に失敗しました'
-                    raise Exception
+                    raise common.UserException(error_detail)
 
         # listener post送信
         response = requests.post(api_url_tekton, headers=post_headers, data=json.dumps(post_data))
         globals.logger.debug("post listener response:{}".format(response.text))
 
-        if response.status_code != '200':
+        if response.status_code != 200:
             error_detail = 'listener post処理に失敗しました'
-            raise Exception
+            raise common.UserException(error_detail)
 
         ret_status = response.status_code
 
@@ -656,9 +656,9 @@ def post_cd_pipeline(workspace_id):
         response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
         globals.logger.debug("post argocd/settings response:{}".format(response.text))
 
-        if response.status_code != '200':
+        if response.status_code != 200:
             error_detail = 'argocd/settings post処理に失敗しました'
-            raise Exception
+            raise common.UserException(error_detail)
 
         # authentication-infra-api の呼び先設定
         api_url_epai = "{}://{}:{}/".format(os.environ["EPOCH_EPAI_API_PROTOCOL"], 
