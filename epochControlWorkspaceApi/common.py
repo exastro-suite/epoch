@@ -119,3 +119,24 @@ def get_namespace_name(workspace_id):
         str: namespace name
     """
     return  'epoch-ws-{}'.format(workspace_id)
+
+
+def random_str(n):
+    """ランダム文字列の作成
+
+    Args:
+        n (int): ランダム文字列の長さ
+
+    Returns:
+        str: ランダムで生成された文字列
+    """
+
+    # string.ascii_letters
+    # 後述の ascii_lowercase と ascii_uppercase を合わせたもの。この値はロケールに依存しません。
+    # string.ascii_lowercase
+    # 小文字 "abcdefghijklmnopqrstuvwxyz" 。この値はロケールに依存せず、固定です。
+    # string.ascii_uppercase
+    # 大文字 "ABCDEFGHIJKLMNOPQRSTUVWXYZ" 。この値はロケールに依存せず、固定です。
+    # string.digits
+
+    return "".join(random.choices(string.ascii_letters + string.digits, k=n))

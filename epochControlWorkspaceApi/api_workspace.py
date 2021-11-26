@@ -90,12 +90,72 @@ def create_workspace(workspace_id):
         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
         globals.logger.debug('#' * 50)
 
+        error_detail = "workspace初期化失敗"
+
+        # ユーザー・パスワードの初期値設定
+        info = {
+            "ARGOCD_USER" : "admin",
+            "ARGOCD_PASSWORD" : common.random_str(20),
+            "ARGOCD_EPOCH_USER" : "epoch-user",
+            "ARGOCD_EPOCH_PASSWORD" : common.random_str(20),
+            "ITA_USER" : "administrator",
+            "ITA_PASSWORD" : common.random_str(20),
+            "ITA_EPOCH_USER" : "epoch-user",
+            "ITA_EPOCH_PASSWORD" : common.random_str(20),
+            "SONARQUBE_USER" : "admin",
+            "SONARQUBE_PASSWORD" : common.random_str(20),
+            "SONARQUBE_EPOCH_USER" : "epoch-user",
+            "SONARQUBE_EPOCH_PASSWORD" : common.random_str(20),
+        }
+
+        # ヘッダ情報
+        post_headers = {
+            'Content-Type': 'application/json',
+        }
+
+        apiInfo = "{}://{}:{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'], os.environ['EPOCH_RS_WORKSPACE_HOST'], os.environ['EPOCH_RS_WORKSPACE_PORT'])
+        globals.logger.debug("workspace_access {}/workspace/{}/access".format(apiInfo, workspace_id))
+
+        # 引数をJSON形式で受け取りそのまま引数に設定
+        post_data = json.dumps(info)
+
+        # アクセス情報取得
+        # Select送信（workspace_access取得）
+        globals.logger.debug("workspace_access get call: worksapce_id:{}".format(workspace_id))
+        request_response = requests.get("{}/workspace/{}/access".format(apiInfo, workspace_id))
+        # globals.logger.debug(request_response)
+
+        # 情報が存在する場合は、作成しない、存在しない場合は、登録
+        if request_response.status_code == 200:
+            globals.logger.debug("data found")
+            # 存在する場合は、作成しない
+            # # PUT送信（workspace_access更新）
+            # globals.logger.debug("workspace_access put call: worksapce_id:{}".format(workspace_id))
+            # request_response = requests.put("{}/workspace/{}/access".format(apiInfo, workspace_id), headers=post_headers, data=post_data)
+            # # エラーの際は処理しない
+            # if request_response.status_code != 200:
+            #     raise Exception(request_response.text)
+
+        elif request_response.status_code == 404:
+            # POST送信（workspace_access登録）
+            globals.logger.debug("workspace_access post call: worksapce_id:{}".format(workspace_id))
+            request_response = requests.post("{}/workspace/{}/access".format(apiInfo, workspace_id), headers=post_headers, data=post_data)
+            # エラーの際は処理しない
+            if request_response.status_code != 200:
+                raise common.UserException(request_response.text)
+
+        else:
+            raise Exception("workspace_access post error status:{}, responce:{}".format(request_response.status_code, request_response.text))
+
         error_detail = "namespace生成失敗"
         # namespace名の設定
         name = common.get_namespace_name(workspace_id)
 
-        # namespace生成
-        api_kubernetes_call.create_namespace(name)
+        # namespaceの存在チェック
+        ret = api_kubernetes_call.get_namespace(name)
+        if ret is None:
+            # 存在しない場合は、namespace生成
+            api_kubernetes_call.create_namespace(name)
 
         ret_status = 200
 
