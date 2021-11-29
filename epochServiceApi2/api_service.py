@@ -472,6 +472,8 @@ def post_pod(workspace_id):
             error_detail = 'it-automation/settings post処理に失敗しました'
             raise common.UserException(error_detail)
 
+        ret_status = 200
+
         # 戻り値をそのまま返却        
         return jsonify({"result": ret_status}), ret_status
 
@@ -597,7 +599,7 @@ def post_ci_pipeline(workspace_id):
             error_detail = 'listener post処理に失敗しました'
             raise common.UserException(error_detail)
 
-        ret_status = response.status_code
+        ret_status = 200
 
         # 戻り値をそのまま返却        
         return jsonify({"result": ret_status}), ret_status
@@ -700,7 +702,7 @@ def post_cd_pipeline(workspace_id):
         #     error_detail = "認証基盤 設定読み込みに失敗しました。 {}".format(response.status_code)
         #     raise Exception
 
-        ret_status = response.status_code
+        ret_status = 200
 
         # 戻り値をそのまま返却        
         return jsonify({"result": ret_status}), ret_status
