@@ -27,9 +27,15 @@ import requests
 from requests.auth import HTTPBasicAuth
 import traceback
 from datetime import timedelta, timezone
+import hashlib
 
 import globals
 import common
+
+WAIT_SEC_ITA_POD_UP = 120 # ITA Pod起動待ち時間(秒)
+WAIT_SEC_ITA_IMPORT = 60 # ITA Import最大待ち時間(秒)
+EPOCH_ITA_HOST = "it-automation"
+EPOCH_ITA_PORT = "8084"
 
 # 設定ファイル読み込み・globals初期化
 app = Flask(__name__)
@@ -200,19 +206,18 @@ def settings_ita(workspace_id):
         globals.logger.debug('#' * 50)
 
         # パラメータ情報(JSON形式)
-        payload = json.loads(request.body)
+        payload = request.json.copy()
 
         # ワークスペースアクセス情報取得
         access_info = get_access_info(workspace_id)
 
         # namespaceの取得
-        name = common.get_namespace_name(workspace_id)
+        namespace = common.get_namespace_name(workspace_id)
 
         # *-*-*-* podが立ち上がるのを待つ *-*-*-*
         start_time = time.time()
         while True:
             globals.logger.debug("waiting for ita pod up...")
-            globals.logger.debug(datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'))
             time.sleep(3)
 
             # PodがRunningになったら終了
@@ -221,7 +226,7 @@ def settings_ita(workspace_id):
 
             # timeout
             current_time = time.time()
-            if (current_time - start_time) > WAIT_ITA_POD_UP:
+            if (current_time - start_time) > WAIT_SEC_ITA_POD_UP:
                 globals.logger.debug("ITA pod start Time out")
                 error_detail = "IT-Automation 初期設定でタイムアウトしました。再度、実行してください。"
                 raise common.UserException(error_detail)
@@ -235,7 +240,7 @@ def settings_ita(workspace_id):
         stdout_ita = subprocess.check_output(["kubectl", "exec", "-i", "-n", namespace, "deployment/it-automation", "--", "bash", "-c", command], stderr=subprocess.STDOUT)
 
         # *-*-*-* 認証情報準備 *-*-*-*
-        host = "{}:{}".format(os.environ["EPOCH_ITA_HOST"], os.environ["EPOCH_ITA_PORT"])
+        host = "{}.{}.svc:{}".format(EPOCH_ITA_HOST, namespace, EPOCH_ITA_PORT)
         user_id = access_info["ITA_USER"]
         user_init_pass = "password"
         user_pass = access_info["ITA_PASSWORD"]
@@ -283,7 +288,6 @@ def settings_ita(workspace_id):
             start_time = time.time()
             while True:
                 globals.logger.debug("monitoring...")
-                globals.logger.debug(datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'))
                 time.sleep(3)
 
                 # リクエスト送信
@@ -314,7 +318,7 @@ def settings_ita(workspace_id):
 
                 # timeout
                 current_time = time.time()
-                if (current_time - start_time) > WAIT_ITA_IMPORT:
+                if (current_time - start_time) > WAIT_SEC_ITA_IMPORT:
                     globals.logger.debug("ITA menu import Time out")
                     error_detail = "IT-Automation 初期設定でタイムアウトしました。再度、実行してください。"
                     raise common.UserException(error_detail)
@@ -512,7 +516,7 @@ def kym_file_upload(host, auth):
 
     # インポートファイルのパス設定
     upload_filename = 'epoch_initialize.kym'
-    kym_file_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/resource/{}".format(upload_filename)
+    kym_file_path = os.path.dirname(__file__) + "/resource/{}".format(upload_filename)
 
     # インポートファイルの内容をすべて取得
     with open(kym_file_path, 'rb') as f:
@@ -624,10 +628,10 @@ def is_ita_pod_running(namespace):
     """podの状態チェック
 
     Args:
-        namespace ([type]): [description]
+        namespace (str): namespace名
 
     Returns:
-        [type]: [description]
+        True: ready ok!
     """
 
     stdout_pod_describe = subprocess.check_output(["kubectl", "get", "pods", "-n", namespace, "-l", "app=it-automation", "-o", "json"], stderr=subprocess.STDOUT)
@@ -637,7 +641,7 @@ def is_ita_pod_running(namespace):
     # globals.logger.debug('--- stdout_pod_describe ---')
     # globals.logger.debug(stdout_pod_describe)
 
-    return (pod_describe['items'][0]['status']['containerStatuses'][0]['ready'] == "true")
+    return (pod_describe['items'][0]['status']['containerStatuses'][0]['ready'] == True)
     # return (pod_describe['items'][0]['status']['phase'] == "Running")
 
 
