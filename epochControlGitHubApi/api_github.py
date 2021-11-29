@@ -136,9 +136,11 @@ def create_github_webhooks(workspace_id):
             globals.logger.debug('- response body')
             globals.logger.debug(request_response.text)
 
-        ret_status = request_response.status_code
+        # 成功(201) または、Webhook URLの重複(422)のステータスコードが返ってきた場合、コード200を返し後続の処理を実行する
+        if request_response.status_code == 201 or request_response.status_code == 422:
+            ret_status = 200
 
-        # 戻り値をそのまま返却        
+        # 戻り値をそのまま返却
         return jsonify({"result": ret_status}), ret_status
 
     except common.UserException as e:
