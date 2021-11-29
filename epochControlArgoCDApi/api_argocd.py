@@ -47,7 +47,7 @@ def alive():
     """
     return jsonify({"result": "200", "time": str(datetime.now(globals.TZ))}), 200
 
-@app.route('/workspace/<int:workspace_id>/agrocd', methods=['POST'])
+@app.route('/workspace/<int:workspace_id>/argocd', methods=['POST'])
 def call_argocd(workspace_id):
     """workspace/workspace_id/argocd 呼び出し
 
