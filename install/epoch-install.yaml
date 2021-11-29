@@ -260,6 +260,21 @@ spec:
           value: "8000"
         - name: PYTHONIOENCODING
           value: utf-8
+        - name: EPOCH_RS_WORKSPACE_PROTOCOL
+          valueFrom:
+            configMapKeyRef:
+              name: epoch-cicd-api-config
+              key: RS_WORKSPACE_PROTOCOL
+        - name: EPOCH_RS_WORKSPACE_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: epoch-cicd-api-config
+              key: RS_WORKSPACE_HOST
+        - name: EPOCH_RS_WORKSPACE_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: epoch-cicd-api-config
+              key: RS_WORKSPACE_PORT
         volumeMounts:
         - name: epoch-control-workspace-conf
           mountPath: /etc/epoch/epochControlWorkspaceApi
@@ -698,6 +713,51 @@ spec:
           value: "8000"
         - name: PYTHONIOENCODING
           value: utf-8
+        - name: EPOCH_HTTP_PROXY
+          valueFrom:
+            configMapKeyRef:
+              name: proxy-setting-config
+              key: HTTP_PROXY
+        - name: EPOCH_HTTPS_PROXY
+          valueFrom:
+            configMapKeyRef:
+              name: proxy-setting-config
+              key: HTTPS_PROXY
+        - name: EPOCH_NO_PROXY
+          valueFrom:
+            configMapKeyRef:
+              name: epoch-cicd-api-config
+              key: NO_PROXY
+        - name: EPOCH_ITA_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: epoch-cicd-api-config
+              key: ITA_HOST
+        - name: EPOCH_ITA_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: epoch-cicd-api-config
+              key: ITA_PORT
+        - name: EPOCH_ITA_WORKER_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: epoch-cicd-api-config
+              key: ITA_WORKER_HOST
+        - name: EPOCH_RS_WORKSPACE_PROTOCOL
+          valueFrom:
+            configMapKeyRef:
+              name: epoch-cicd-api-config
+              key: RS_WORKSPACE_PROTOCOL
+        - name: EPOCH_RS_WORKSPACE_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: epoch-cicd-api-config
+              key: RS_WORKSPACE_HOST
+        - name: EPOCH_RS_WORKSPACE_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: epoch-cicd-api-config
+              key: RS_WORKSPACE_PORT
         volumeMounts:
         - name: epoch-control-ita-conf
           mountPath: /etc/epoch/epochControlITAApi
@@ -927,6 +987,15 @@ data:
   EPOCH_CICD_PROTOCOL: "http"
   EPOCH_CICD_HOST: "epoch-cicd-api"
   EPOCH_CICD_PORT: "8000"
+  EPOCH_CONTROL_WORKSPACE_PROTOCOL: "http"
+  EPOCH_CONTROL_WORKSPACE_HOST: "epoch-control-workspace-api"
+  EPOCH_CONTROL_WORKSPACE_PORT: "8000"
+  EPOCH_CONTROL_ARGOCD_PROTOCOL: "http"
+  EPOCH_CONTROL_ARGOCD_HOST: "epoch-control-argocd-api"
+  EPOCH_CONTROL_ARGOCD_PORT: "8000"
+  EPOCH_CONTROL_ITA_PROTOCOL: "http"
+  EPOCH_CONTROL_ITA_HOST: "epoch-control-ita-api"
+  EPOCH_CONTROL_ITA_PORT: "8000"
   EPOCH_CONTROL_TEKTON_PROTOCOL: "http"
   EPOCH_CONTROL_TEKTON_HOST: "epoch-control-tekton-api"
   EPOCH_CONTROL_TEKTON_PORT: "8000"
@@ -939,6 +1008,13 @@ data:
   EPOCH_RS_ORGANIZATION_PROTOCOL: "http"
   EPOCH_RS_ORGANIZATION_HOST: "epoch-rs-organization-api"
   EPOCH_RS_ORGANIZATION_PORT: "8000"
+  EPOCH_EPAI_PROTOCOL: "https"
+  EPOCH_EPAI_HOST: ""
+  EPOCH_EPAI_PORT: "31182"
+  EPOCH_EPAI_API_PROTOCOL: "http"
+  EPOCH_EPAI_API_HOST: "authentication-infra-api.exastro-platform-authentication-infra.svc"
+  EPOCH_EPAI_API_PORT: "8000"
+  EPOCH_EPAI_REALM_NAME: "exastroplatform"
   PYTHONIOENCODING: utf-8
 
 ---
@@ -1798,7 +1874,9 @@ data:
       - name: connection
         port: {{ port }}
         targetPort: {{ targetPort }}
+        #{% if nodePort != 0 %}
         nodePort: {{ nodePort }}
+        #{% endif %}
       selector:
         name: {{ deploy_name }}
       type: NodePort
