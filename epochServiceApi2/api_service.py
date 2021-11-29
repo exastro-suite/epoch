@@ -684,23 +684,23 @@ def post_cd_pipeline(workspace_id):
         ]
 
         # post送信（アクセス情報生成）
-        # exec_stat = "認証基盤 初期情報設定"
-        # for client in clients:
-        #     response = requests.post("{}{}/{}/{}".format(api_url_epai, 'settings', os.environ["EPOCH_EPAI_REALM_NAME"], 'clients'), headers=post_headers, data=json.dumps(client))
+        exec_stat = "認証基盤 初期情報設定"
+        for client in clients:
+            response = requests.post("{}{}/{}/{}".format(api_url_epai, 'settings', os.environ["EPOCH_EPAI_REALM_NAME"], 'clients'), headers=post_headers, data=json.dumps(client))
 
-        #     # 正常時以外はExceptionを発行して終了する
-        #     if response.status_code != 200:
-        #         globals.logger.debug(response.text)
-        #         error_detail = "認証基盤 初期情報設定の生成に失敗しました。 {}".format(response.status_code)
-        #         raise Exception
+            # 正常時以外はExceptionを発行して終了する
+            if response.status_code != 200:
+                globals.logger.debug(response.text)
+                error_detail = "認証基盤 初期情報設定の生成に失敗しました。 {}".format(response.status_code)
+                raise Exception
 
-        # exec_stat = "認証基盤 設定読み込み"
-        # response = requests.put("{}{}".format(api_url_epai, 'apply_settings'))
+        exec_stat = "認証基盤 設定読み込み"
+        response = requests.put("{}{}".format(api_url_epai, 'apply_settings'))
 
-        # # 正常時以外はExceptionを発行して終了する
-        # if response.status_code != 200:
-        #     error_detail = "認証基盤 設定読み込みに失敗しました。 {}".format(response.status_code)
-        #     raise Exception
+        # 正常時以外はExceptionを発行して終了する
+        if response.status_code != 200:
+            error_detail = "認証基盤 設定読み込みに失敗しました。 {}".format(response.status_code)
+            raise Exception
 
         ret_status = 200
 
