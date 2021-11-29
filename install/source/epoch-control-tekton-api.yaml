@@ -49,7 +49,7 @@ spec:
           name: epoch-control-tekton-conf
       containers:
       - name: epoch-control-tekton-api
-        image: exastro/epoch-control-tekton-api:0.3.0_20211129_1450
+        image: exastro/epoch-control-tekton-api:0.3.0_20211129_1630
         env:
         - name: CONFIG_API_TEKTON_PATH
           value: "/etc/epoch/epochControlTektonApi/api_tekton.conf"
