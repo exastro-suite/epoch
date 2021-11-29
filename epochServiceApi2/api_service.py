@@ -523,10 +523,10 @@ def post_ci_pipeline(workspace_id):
                                                                           workspace_id)
 
         # epoch-control-tekton-api の呼び先設定
-        api_url_tekton = "{}://{}:{}/listener/{}".format(os.environ["EPOCH_CONTROL_TEKTON_PROTOCOL"], 
-                                                         os.environ["EPOCH_CONTROL_TEKTON_HOST"], 
-                                                         os.environ["EPOCH_CONTROL_TEKTON_PORT"],
-                                                         workspace_id)
+        api_url_tekton = "{}://{}:{}/workspace/{}/tekton/pipeline".format(os.environ["EPOCH_CONTROL_TEKTON_PROTOCOL"], 
+                                                                          os.environ["EPOCH_CONTROL_TEKTON_HOST"], 
+                                                                          os.environ["EPOCH_CONTROL_TEKTON_PORT"],
+                                                                          workspace_id)
 
         # パイプライン設定(GitLab Create Project)
         request_body = json.loads(request.data)
@@ -593,10 +593,10 @@ def post_ci_pipeline(workspace_id):
 
         # listener post送信
         response = requests.post(api_url_tekton, headers=post_headers, data=json.dumps(post_data))
-        globals.logger.debug("post listener response:{}".format(response.text))
+        globals.logger.debug("post tekton/pipeline response:{}".format(response.text))
 
         if response.status_code != 200:
-            error_detail = 'listener post処理に失敗しました'
+            error_detail = 'tekton/pipeline post処理に失敗しました'
             raise common.UserException(error_detail)
 
         ret_status = 200
@@ -643,12 +643,12 @@ def post_cd_pipeline(workspace_id):
                                                                    os.environ['EPOCH_CONTROL_ARGOCD_PORT'],
                                                                    workspace_id)
         # argocd/settings post送信
-        response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
-        globals.logger.debug("post argocd/settings response:{}".format(response.text))
+        # response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
+        # globals.logger.debug("post argocd/settings response:{}".format(response.text))
 
-        if response.status_code != 200:
-            error_detail = 'argocd/settings post処理に失敗しました'
-            raise common.UserException(error_detail)
+        # if response.status_code != 200:
+        #     error_detail = 'argocd/settings post処理に失敗しました'
+        #     raise common.UserException(error_detail)
 
         # authentication-infra-api の呼び先設定
         api_url_epai = "{}://{}:{}/".format(os.environ["EPOCH_EPAI_API_PROTOCOL"], 
@@ -661,7 +661,7 @@ def post_cd_pipeline(workspace_id):
                 "client_id" :   'epoch-ws-{}-ita'.format(workspace_id),
                 "client_host" : os.environ["EPOCH_EPAI_HOST"],
                 "client_protocol" : "https",
-                "client_port" : "31183",
+                # "client_port" : "31183",
                 "conf_template" : "epoch-ws-ita-template.conf",
                 "backend_url" : "http://it-automation.epoch-workspace.svc:8084/",
             },
@@ -669,7 +669,7 @@ def post_cd_pipeline(workspace_id):
                 "client_id" :   'epoch-ws-{}-argocd'.format(workspace_id),
                 "client_host" : os.environ["EPOCH_EPAI_HOST"],
                 "client_protocol" : "https",
-                "client_port" : "31184",
+                # "client_port" : "31184",
                 "conf_template" : "epoch-ws-argocd-template.conf",
                 "backend_url" : "https://argocd-server.epoch-workspace.svc/",
             },
@@ -677,7 +677,7 @@ def post_cd_pipeline(workspace_id):
                 "client_id" :   'epoch-ws-{}-sonarqube'.format(workspace_id),
                 "client_host" : os.environ["EPOCH_EPAI_HOST"],
                 "client_protocol" : "https",
-                "client_port" : "31185",
+                # "client_port" : "31185",
                 "conf_template" : "epoch-ws-sonarqube-template.conf",
                 "backend_url" : "http://sonarqube.epoch-tekton-pipeline-1.svc:9000/",
             },

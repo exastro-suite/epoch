@@ -43,7 +43,6 @@ templates = {
     "namespace": [
         'namespace.yaml',
         'pipeline-pvc.yaml',
-        'reverse-proxy.yaml',
         'sonarqube.yaml',
     ],
     "pipeline" : [
