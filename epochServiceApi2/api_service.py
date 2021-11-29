@@ -458,18 +458,6 @@ def post_pod(workspace_id):
             error_detail = 'it-automation post処理に失敗しました'
             raise common.UserException(error_detail)
 
-        ret_status = response.status_code
-
-        post_headers = {
-            'Content-Type': 'application/json',
-        }
-        api_url = "http://epoch-control-argocd-api:8000/workspace/{}/agrocd".format(workspace_id)
-        response = requests.post(api_url, headers=post_headers)
-
-        if response.status_code != 200:
-            error_detail = 'agrocd post処理に失敗しました'
-            raise common.UserException(error_detail)
-
         # epoch-control-ita-api の呼び先設定
         api_url = "{}://{}:{}/workspace/{}/it-automation/settings".format(os.environ['EPOCH_CONTROL_ITA_PROTOCOL'],
                                                                             os.environ['EPOCH_CONTROL_ITA_HOST'],

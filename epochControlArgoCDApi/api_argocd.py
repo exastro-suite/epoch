@@ -237,7 +237,7 @@ def workspace_namespace(workspace_id):
     Returns:
         str: workspace用namespace
     """
-    return  'epoch-workspace-{}'.format(workspace_id)
+    return  'epoch-ws-{}'.format(workspace_id)
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('API_ARGOCD_PORT', '8000')), threaded=True)
