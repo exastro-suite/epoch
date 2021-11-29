@@ -2127,6 +2127,7 @@ data:
     # Rollout Restart API   
     echo "---- rollout restart"
     kubectl rollout restart deploy -n epoch-system epoch-service-api
+    kubectl rollout restart deploy -n epoch-system epoch-service-api2
     kubectl rollout restart deploy -n exastro-platform-authentication-infra authentication-infra-api
     kubectl rollout restart deploy -n exastro-platform-authentication-infra keycloak
 
