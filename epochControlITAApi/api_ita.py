@@ -641,7 +641,11 @@ def is_ita_pod_running(namespace):
     # globals.logger.debug('--- stdout_pod_describe ---')
     # globals.logger.debug(stdout_pod_describe)
 
-    return (pod_describe['items'][0]['status']['containerStatuses'][0]['ready'] == True)
+    # Keyが存在する場合のみチェック
+    if 'containerStatuses' in pod_describe['items'][0]['status']:
+        return (pod_describe['items'][0]['status']['containerStatuses'][0]['ready'] == True)
+    else:
+        return False
     # return (pod_describe['items'][0]['status']['phase'] == "Running")
 
 
