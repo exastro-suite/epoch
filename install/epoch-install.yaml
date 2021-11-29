@@ -728,21 +728,6 @@ spec:
             configMapKeyRef:
               name: epoch-cicd-api-config
               key: NO_PROXY
-        - name: EPOCH_ITA_HOST
-          valueFrom:
-            configMapKeyRef:
-              name: epoch-cicd-api-config
-              key: ITA_HOST
-        - name: EPOCH_ITA_PORT
-          valueFrom:
-            configMapKeyRef:
-              name: epoch-cicd-api-config
-              key: ITA_PORT
-        - name: EPOCH_ITA_WORKER_HOST
-          valueFrom:
-            configMapKeyRef:
-              name: epoch-cicd-api-config
-              key: ITA_WORKER_HOST
         - name: EPOCH_RS_WORKSPACE_PROTOCOL
           valueFrom:
             configMapKeyRef:
