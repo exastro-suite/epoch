@@ -105,6 +105,11 @@ def post_tekton_pipeline(workspace_id):
         access_data = get_access_info(workspace_id)
 
         #
+        # node取得
+        #
+        node = get_pv_node()
+
+        #
         # パラメータ項目設定(テンプレート展開用変数設定)
         #
         param = request.json.copy()
@@ -119,6 +124,8 @@ def post_tekton_pipeline(workspace_id):
             'https': os.environ['EPOCH_HTTPS_PROXY'],
             'no_proxy': os.environ['EPOCH_NO_PROXY'],
         }
+        # node設定
+        param['node'] = node
 
         # pipeline毎の設定（pipelinesで設定数分処理する）
         for pipeline in param['ci_config']['pipelines']:
@@ -759,6 +766,28 @@ def post_listener(workspace_id):
     except Exception as e:
         return common.serverError(e)
 
+def get_pv_node():
+    """PV格納node取得
+
+    Returns:
+        string: Node名
+    """
+    node = ""
+
+    try:
+        # TEKTON CLIにてpipelinerunのListを取得
+        result = subprocess.check_output(
+            ['kubectl', 'get', 'pod', '-n', 'epoch-system', '-o', 'json', "--selector", "name=epoch-control-tekton-api"], stderr=subprocess.STDOUT)
+
+        dict_result = json.loads(result.decode('utf-8'))
+        node = dict_result["items"][0]["spec"]["nodeName"]
+
+    except subprocess.CalledProcessError as e:
+        # コマンド実行エラー
+        globals.logger.debug('COMMAND ERROR RETURN:{}\n{}'.format(e.returncode, e.output.decode('utf-8')))
+        raise # 再スロー
+
+    return node
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('API_TEKTON_PORT', '8000')), threaded=True)
