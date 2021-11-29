@@ -72,35 +72,6 @@ def call_argocd(workspace_id):
     except Exception as e:
         return common.server_error(e)
 
-# def create_argocd(workspace_id):
-#     """argoCD Pod 作成
-
-#     Args:
-#         workspace_id (int): ワークスペースID
-
-#     Returns:
-#         Response: HTTP Respose
-#     """
-
-#     app_name = "ワークスペース情報:"
-#     exec_stat = "ArgoCD環境構築"
-#     error_detail = ""
-
-#     try:
-#         globals.logger.debug('#' * 50)
-#         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-#         globals.logger.debug('#' * 50)
-
-#         ret_status = 200
-
-#         # 戻り値をそのまま返却        
-#         return jsonify({"result": ret_status}), ret_status
-
-#     except common.UserException as e:
-#         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
-#     except Exception as e:
-#         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
-
 
 def create_argocd(workspace_id):
     """argoCD Pod 作成
