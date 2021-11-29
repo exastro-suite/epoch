@@ -566,7 +566,7 @@ def post_ci_pipeline(workspace_id):
 
         if request_body['ci_config']['pipelines_common']['git_repositry']['housing'] == 'outer':
             # github/webhooks post送信
-            response = requests.post( api_url_github, headers=post_headers, data=post_data)
+            response = requests.post( api_url_github, headers=post_headers, data=json.dumps(post_data))
             globals.logger.debug("post github/webhooks response:{}".format(response.text))
 
             if response.status_code != 200:
