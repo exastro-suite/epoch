@@ -250,7 +250,7 @@ spec:
           name: epoch-control-workspace-conf
       containers:
       - name: epoch-control-workspace-api
-        image: exastro/epoch-control-workspace-api:0.3.0_20211125_1700
+        image: exastro/epoch-control-workspace-api:0.3.0_20211129_1500
         env:
         - name: CONFIG_API_WORKSPACE_PATH
           value: "/etc/epoch/epochControlWorkspaceApi/api_workspace.conf"
@@ -340,7 +340,7 @@ spec:
           name: epoch-control-github-conf
       containers:
       - name: epoch-control-github-api
-        image: exastro/epoch-control-github-api:0.3.0_20211125_1700
+        image: exastro/epoch-control-github-api:0.3.0_20211129_1455
         env:
         - name: HTTP_PROXY
           valueFrom:
@@ -529,7 +529,7 @@ spec:
           name: epoch-control-tekton-conf
       containers:
       - name: epoch-control-tekton-api
-        image: exastro/epoch-control-tekton-api:0.1.5_20211027_1530
+        image: exastro/epoch-control-tekton-api:0.3.0_20211129_1450
         env:
         - name: CONFIG_API_TEKTON_PATH
           value: "/etc/epoch/epochControlTektonApi/api_tekton.conf"
@@ -624,7 +624,7 @@ spec:
           name: epoch-control-argocd-conf
       containers:
       - name: epoch-control-argocd-api
-        image: exastro/epoch-control-argocd-api:0.3.0_20211126_1500
+        image: exastro/epoch-control-argocd-api:0.3.0_20211129_1455
         env:
         - name: CONFIG_API_ARGOCD_PATH
           value: "/etc/epoch/epochControlArgoCDApi/api_argocd.conf"
@@ -703,7 +703,7 @@ spec:
           name: epoch-control-ita-conf
       containers:
       - name: epoch-control-ita-api
-        image: exastro/epoch-control-ita-api:0.3.0_20211125_1700
+        image: exastro/epoch-control-ita-api:0.3.0_20211129_1500
         env:
         - name: CONFIG_API_ITA_PATH
           value: "/etc/epoch/epochControlITAApi/api_ita.conf"
@@ -1127,7 +1127,7 @@ spec:
           name: epoch-service-api2-conf
       containers:
       - name: epoch-service-api2
-        image: exastro/epoch-service-api2:0.3.0_20211119_1605
+        image: exastro/epoch-service-api2:0.3.0_20211129_1500
         env:
         - name: CONFIG_API_SERVICE_PATH
           value: "/etc/epoch/epochServiceApi/api_service.conf"
@@ -1199,7 +1199,7 @@ spec:
     spec:
       containers:
       - name: epoch-ui
-        image: exastro/epoch-ui:0.3.0_20211122_1555
+        image: exastro/epoch-ui:0.3.0_20211129_1500
 
 ---
 apiVersion: v1
@@ -1921,7 +1921,7 @@ spec:
           name: nodeport-template
       containers:
       - name: authentication-infra-api
-        image: exastro/authentication-infra-api:0.3.0_20211122_1450
+        image: exastro/authentication-infra-api:0.3.0_20211129_1500
         env:
         - name: CONFIG_API_AUTHC_INFRA_PATH
           value: "/etc/exastro-authentication-infra/authentication-infra-api/api_authc_infra.conf"
