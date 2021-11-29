@@ -222,21 +222,6 @@ def get_access_info(workspace_id):
         else:
             raise Exception("workspace_access get error status:{}, responce:{}".format(request_response.status_code, request_response.text))
 
-        ret = {
-            "ARGOCD_USER" : "admin",
-            "ARGOCD_PASSWORD" : "password",
-            "ARGOCD_EPOCH_USER" : "epoch-user",
-            "ARGOCD_EPOCH_PASSWORD" : "password",
-            "ITA_USER" : "administrator",
-            "ITA_PASSWORD" : "password",
-            "ITA_EPOCH_USER" : "epoch-user",
-            "ITA_EPOCH_PASSWORD" : "password",
-            "SONARQUBE_USER" : "admin",
-            "SONARQUBE_PASSWORD" : "password",
-            "SONARQUBE_EPOCH_USER" : "epoch-user",
-            "SONARQUBE_EPOCH_PASSWORD" : "password",
-        }
-
         return ret
 
     except Exception as e:
