@@ -114,7 +114,7 @@ data:
   ITA_HOST: "it-automation.epoch-workspace.svc"
   ITA_PORT: "8084"
   ITA_WORKER_HOST: "ita-worker.epoch-workspace.svc"
-  WEBHOOK_PORT: "30804"
+  WEBHOOK_PORT: "30443"
   RS_WORKSPACE_PROTOCOL: "http"
   RS_WORKSPACE_HOST: "epoch-rs-workspace-api"
   RS_WORKSPACE_PORT: "8000"
@@ -204,6 +204,188 @@ spec:
     targetPort: 8000
   selector:
     name: epoch-cicd-api
+
+#---- epoch-control-workspace-api.yaml
+---
+#   Copyright 2021 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: epoch-control-workspace-conf
+  namespace: epoch-system
+data:
+  api_workspace.conf: |
+    TZ='Asia/Tokyo'
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: epoch-control-workspace-api
+  namespace: epoch-system
+spec:
+  selector:
+    matchLabels:
+      name: epoch-control-workspace-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: epoch-control-workspace-api
+    spec:
+      volumes:
+      - name: epoch-control-workspace-conf
+        configMap:
+          name: epoch-control-workspace-conf
+      containers:
+      - name: epoch-control-workspace-api
+        image: exastro/epoch-control-workspace-api:0.3.0_20211129_1500
+        env:
+        - name: CONFIG_API_WORKSPACE_PATH
+          value: "/etc/epoch/epochControlWorkspaceApi/api_workspace.conf"
+        - name: FLASK_ENV
+          value: "development"
+        - name: API_WORKSPACE_PORT
+          value: "8000"
+        - name: PYTHONIOENCODING
+          value: utf-8
+        - name: EPOCH_RS_WORKSPACE_PROTOCOL
+          valueFrom:
+            configMapKeyRef:
+              name: epoch-cicd-api-config
+              key: RS_WORKSPACE_PROTOCOL
+        - name: EPOCH_RS_WORKSPACE_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: epoch-cicd-api-config
+              key: RS_WORKSPACE_HOST
+        - name: EPOCH_RS_WORKSPACE_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: epoch-cicd-api-config
+              key: RS_WORKSPACE_PORT
+        volumeMounts:
+        - name: epoch-control-workspace-conf
+          mountPath: /etc/epoch/epochControlWorkspaceApi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: epoch-control-workspace-api
+  labels:
+    name: epoch-control-workspace-api
+  namespace: epoch-system
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+  selector:
+    name: epoch-control-workspace-api
+
+#---- epoch-control-github-api.yaml
+---
+#   Copyright 2021 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: epoch-control-github-conf
+  namespace: epoch-system
+data:
+  api_github.conf: |
+    TZ='Asia/Tokyo'
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: epoch-control-github-api
+  namespace: epoch-system
+spec:
+  selector:
+    matchLabels:
+      name: epoch-control-github-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: epoch-control-github-api
+    spec:
+      volumes:
+      - name: epoch-control-github-conf
+        configMap:
+          name: epoch-control-github-conf
+      containers:
+      - name: epoch-control-github-api
+        image: exastro/epoch-control-github-api:0.3.0_20211129_1455
+        env:
+        - name: HTTP_PROXY
+          valueFrom:
+            configMapKeyRef:
+              name: proxy-setting-config
+              key: HTTP_PROXY
+        - name: HTTPS_PROXY
+          valueFrom:
+            configMapKeyRef:
+              name: proxy-setting-config
+              key: HTTPS_PROXY
+        - name: NO_PROXY
+          value: localhost,127.0.0.1,10.96.0.1,kurbernetes.default.svc,kurbernetes.default.svc.cluster.local
+        - name: CONFIG_API_GITHUB_PATH
+          value: "/etc/epoch/epochControlGitHubApi/api_github.conf"
+        - name: FLASK_ENV
+          value: "development"
+        - name: API_GITHUB_PORT
+          value: "8000"
+        - name: PYTHONIOENCODING
+          value: utf-8
+        - name: EPOCH_WEBHOOK_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: epoch-cicd-api-config
+              key: WEBHOOK_PORT
+        volumeMounts:
+        - name: epoch-control-github-conf
+          mountPath: /etc/epoch/epochControlGitHubApi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: epoch-control-github-api
+  labels:
+    name: epoch-control-github-api
+  namespace: epoch-system
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+  selector:
+    name: epoch-control-github-api
 
 #---- epoch-control-inside-gitlab-api.yaml
 ---
@@ -347,7 +529,7 @@ spec:
           name: epoch-control-tekton-conf
       containers:
       - name: epoch-control-tekton-api
-        image: exastro/epoch-control-tekton-api:0.1.5_20211027_1530
+        image: exastro/epoch-control-tekton-api:0.3.0_20211129_1630
         env:
         - name: CONFIG_API_TEKTON_PATH
           value: "/etc/epoch/epochControlTektonApi/api_tekton.conf"
@@ -396,6 +578,190 @@ spec:
     targetPort: 8000
   selector:
     name: epoch-control-tekton-api
+
+#---- epoch-control-argocd-api.yaml
+---
+#   Copyright 2021 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: epoch-control-argocd-conf
+  namespace: epoch-system
+data:
+  api_argocd.conf: |
+    TZ='Asia/Tokyo'
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: epoch-control-argocd-api
+  namespace: epoch-system
+spec:
+  selector:
+    matchLabels:
+      name: epoch-control-argocd-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: epoch-control-argocd-api
+    spec:
+      volumes:
+      - name: epoch-control-argocd-conf
+        configMap:
+          name: epoch-control-argocd-conf
+      containers:
+      - name: epoch-control-argocd-api
+        image: exastro/epoch-control-argocd-api:0.3.0_20211129_1455
+        env:
+        - name: CONFIG_API_ARGOCD_PATH
+          value: "/etc/epoch/epochControlArgoCDApi/api_argocd.conf"
+        - name: FLASK_ENV
+          value: "development"
+        - name: API_ARGOCD_PORT
+          value: "8000"
+        - name: PYTHONIOENCODING
+          value: utf-8
+        envFrom:
+          - prefix: EPOCH_
+            configMapRef:
+              name: epoch-cicd-api-config
+        volumeMounts:
+        - name: epoch-control-argocd-conf
+          mountPath: /etc/epoch/epochControlArgoCDApi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: epoch-control-argocd-api
+  labels:
+    name: epoch-control-argocd-api
+  namespace: epoch-system
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+  selector:
+    name: epoch-control-argocd-api
+
+#---- epoch-control-ita-api.yaml
+---
+#   Copyright 2021 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: epoch-control-ita-conf
+  namespace: epoch-system
+data:
+  api_ita.conf: |
+    TZ='Asia/Tokyo'
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: epoch-control-ita-api
+  namespace: epoch-system
+spec:
+  selector:
+    matchLabels:
+      name: epoch-control-ita-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: epoch-control-ita-api
+    spec:
+      volumes:
+      - name: epoch-control-ita-conf
+        configMap:
+          name: epoch-control-ita-conf
+      containers:
+      - name: epoch-control-ita-api
+        image: exastro/epoch-control-ita-api:0.3.0_20211129_1500
+        env:
+        - name: CONFIG_API_ITA_PATH
+          value: "/etc/epoch/epochControlITAApi/api_ita.conf"
+        - name: FLASK_ENV
+          value: "development"
+        - name: API_ITA_PORT
+          value: "8000"
+        - name: PYTHONIOENCODING
+          value: utf-8
+        - name: EPOCH_HTTP_PROXY
+          valueFrom:
+            configMapKeyRef:
+              name: proxy-setting-config
+              key: HTTP_PROXY
+        - name: EPOCH_HTTPS_PROXY
+          valueFrom:
+            configMapKeyRef:
+              name: proxy-setting-config
+              key: HTTPS_PROXY
+        - name: EPOCH_NO_PROXY
+          valueFrom:
+            configMapKeyRef:
+              name: epoch-cicd-api-config
+              key: NO_PROXY
+        - name: EPOCH_RS_WORKSPACE_PROTOCOL
+          valueFrom:
+            configMapKeyRef:
+              name: epoch-cicd-api-config
+              key: RS_WORKSPACE_PROTOCOL
+        - name: EPOCH_RS_WORKSPACE_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: epoch-cicd-api-config
+              key: RS_WORKSPACE_HOST
+        - name: EPOCH_RS_WORKSPACE_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: epoch-cicd-api-config
+              key: RS_WORKSPACE_PORT
+        volumeMounts:
+        - name: epoch-control-ita-conf
+          mountPath: /etc/epoch/epochControlITAApi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: epoch-control-ita-api
+  labels:
+    name: epoch-control-ita-api
+  namespace: epoch-system
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+  selector:
+    name: epoch-control-ita-api
 
 #---- epoch-rs-workspace-api.yaml
 ---
@@ -606,9 +972,21 @@ data:
   EPOCH_CICD_PROTOCOL: "http"
   EPOCH_CICD_HOST: "epoch-cicd-api"
   EPOCH_CICD_PORT: "8000"
+  EPOCH_CONTROL_WORKSPACE_PROTOCOL: "http"
+  EPOCH_CONTROL_WORKSPACE_HOST: "epoch-control-workspace-api"
+  EPOCH_CONTROL_WORKSPACE_PORT: "8000"
+  EPOCH_CONTROL_ARGOCD_PROTOCOL: "http"
+  EPOCH_CONTROL_ARGOCD_HOST: "epoch-control-argocd-api"
+  EPOCH_CONTROL_ARGOCD_PORT: "8000"
+  EPOCH_CONTROL_ITA_PROTOCOL: "http"
+  EPOCH_CONTROL_ITA_HOST: "epoch-control-ita-api"
+  EPOCH_CONTROL_ITA_PORT: "8000"
   EPOCH_CONTROL_TEKTON_PROTOCOL: "http"
   EPOCH_CONTROL_TEKTON_HOST: "epoch-control-tekton-api"
   EPOCH_CONTROL_TEKTON_PORT: "8000"
+  EPOCH_CONTROL_GITHUB_PROTOCOL: "http"
+  EPOCH_CONTROL_GITHUB_HOST: "epoch-control-github-api"
+  EPOCH_CONTROL_GITHUB_PORT: "8000"
   EPOCH_CONTROL_INSIDE_GITLAB_PROTOCOL: "http"
   EPOCH_CONTROL_INSIDE_GITLAB_HOST: "epoch-control-inside-gitlab-api"
   EPOCH_CONTROL_INSIDE_GITLAB_PORT: "8000"
@@ -618,6 +996,13 @@ data:
   EPOCH_RS_ORGANIZATION_PROTOCOL: "http"
   EPOCH_RS_ORGANIZATION_HOST: "epoch-rs-organization-api"
   EPOCH_RS_ORGANIZATION_PORT: "8000"
+  EPOCH_EPAI_PROTOCOL: "https"
+  EPOCH_EPAI_HOST: ""
+  EPOCH_EPAI_PORT: "31182"
+  EPOCH_EPAI_API_PROTOCOL: "http"
+  EPOCH_EPAI_API_HOST: "authentication-infra-api.exastro-platform-authentication-infra.svc"
+  EPOCH_EPAI_API_PORT: "8000"
+  EPOCH_EPAI_REALM_NAME: "exastroplatform"
   PYTHONIOENCODING: utf-8
 
 ---
@@ -742,7 +1127,7 @@ spec:
           name: epoch-service-api2-conf
       containers:
       - name: epoch-service-api2
-        image: exastro/epoch-service-api2:0.3.0_20211119_1605
+        image: exastro/epoch-service-api2:0.3.0_20211129_1630
         env:
         - name: CONFIG_API_SERVICE_PATH
           value: "/etc/epoch/epochServiceApi/api_service.conf"
@@ -814,7 +1199,7 @@ spec:
     spec:
       containers:
       - name: epoch-ui
-        image: exastro/epoch-ui:0.3.0_20211122_1555
+        image: exastro/epoch-ui:0.3.0_20211129_1500
 
 ---
 apiVersion: v1
@@ -1405,7 +1790,10 @@ data:
     openid-connect\n    Require valid-user\n  </Location>\n  <Location /api/client/>\n
     \   ProxyPass        http://authentication-infra-api:8000/client/ retry=0\n    ProxyPassReverse
     http://authentication-infra-api:8000/client/\n    AuthType openid-connect\n    Require
-    claim \"epoch-role:epoch-user\"\n  </Location>\n  <Location /favicon.ico>\n    Require
+    claim \"epoch-role:epoch-user\"\n  </Location>\n  <Location /api/listener/>\n
+    \   ProxyPass        http://epoch-control-tekton-api.epoch-system.svc:8000/listener/
+    retry=0\n    ProxyPassReverse http://epoch-control-tekton-api.epoch-system.svc:8000/listener/\n
+    \   Require all granted\n  </Location>\n  <Location /favicon.ico>\n    Require
     all granted\n  </Location>\n</VirtualHost>\n"
   epoch-ws-argocd-template.conf: "Listen {{ client_port }}\n<VirtualHost *:{{ client_port
     }}>\n  SSLProxyEngine On\n  SSLEngine on\n  SSLCertificateFile /etc/pki/tls/certs/exastro-platform-authentication-infra.pem\n
@@ -1474,7 +1862,9 @@ data:
       - name: connection
         port: {{ port }}
         targetPort: {{ targetPort }}
+        #{% if nodePort != 0 %}
         nodePort: {{ nodePort }}
+        #{% endif %}
       selector:
         name: {{ deploy_name }}
       type: NodePort
@@ -1531,7 +1921,7 @@ spec:
           name: nodeport-template
       containers:
       - name: authentication-infra-api
-        image: exastro/authentication-infra-api:0.3.0_20211122_1450
+        image: exastro/authentication-infra-api:0.3.0_20211129_1500
         env:
         - name: CONFIG_API_AUTHC_INFRA_PATH
           value: "/etc/exastro-authentication-infra/authentication-infra-api/api_authc_infra.conf"
@@ -1737,6 +2127,7 @@ data:
     # Rollout Restart API   
     echo "---- rollout restart"
     kubectl rollout restart deploy -n epoch-system epoch-service-api
+    kubectl rollout restart deploy -n epoch-system epoch-service-api2
     kubectl rollout restart deploy -n exastro-platform-authentication-infra authentication-infra-api
     kubectl rollout restart deploy -n exastro-platform-authentication-infra keycloak
 

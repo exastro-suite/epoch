@@ -2858,7 +2858,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
   
       $.ajax({
         type:"POST",
-        url: workspace_api_conf.api.workspace.post,
+        url: workspace_api_conf.api.workspace.post.replace('{workspace_id}', workspace_id),
         data:JSON.stringify(reqbody),
         contentType: "application/json",
         dataType: "json",
@@ -2867,7 +2867,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         console.log("--- data ----");
         console.log(JSON.stringify(data));
   
-        if(data.result.code == '200') {
+        if(data.result == '200') {
           // 成功
           // TEKTON起動まで待つため、WAIT
           setTimeout(function() { resolve(); }, workspace_api_conf.api.workspace.wait);
@@ -2886,12 +2886,12 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       //
       // パイプライン作成API
       //
-      $('#progress_message').html('STEP 3/4 :   パイプラインを' + update_mode + 'しています');
-      console.log("CALL : パイプライン作成");
+      $('#progress_message').html('STEP 3/4 :   ＣＩパイプラインを' + update_mode + 'しています');
+      console.log("CALL : CIパイプライン作成");
   
       $.ajax({
         type:"POST",
-        url: workspace_api_conf.api.pipeline.post,
+        url: workspace_api_conf.api.ci_pipeline.post.replace('{workspace_id}', workspace_id),
         data:JSON.stringify(reqbody),
         contentType: "application/json",
         dataType: "json",
@@ -2918,17 +2918,17 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       //
       // パイプラインパラメータ設定API
       //
-      $('#progress_message').html('STEP 4/4 :   パイプラインを設定しています');
-      console.log("CALL : パイプラインパラメータ設定");
+      $('#progress_message').html('STEP 4/4 :   ＣＤパイプラインを' + update_mode + 'しています');
+      console.log("CALL : CDパイプライン設定");
   
       $.ajax({
         type:"POST",
-        url: workspace_api_conf.api.pipelineParameter.post,
+        url: workspace_api_conf.api.cd_pipeline.post.replace('{workspace_id}', workspace_id),
         data:JSON.stringify(reqbody),
         contentType: "application/json",
         dataType: "json",
       }).done(function(data) {
-        console.log("DONE : パイプラインパラメータ設定");
+        console.log("DONE : CDパイプライン設定");
         console.log("--- data ----");
         console.log(JSON.stringify(data));
         if(data.result == '200') {

@@ -18,7 +18,9 @@ data:
       - name: connection
         port: {{ port }}
         targetPort: {{ targetPort }}
+        #{% if nodePort != 0 %}
         nodePort: {{ nodePort }}
+        #{% endif %}
       selector:
         name: {{ deploy_name }}
       type: NodePort

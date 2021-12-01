@@ -12,7 +12,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-from flask import Flask, request, abort, jsonify, render_template
+from flask import Flask, request, abort, jsonify, render_template, Response
 from datetime import datetime
 import os
 import json
@@ -43,7 +43,6 @@ templates = {
     "namespace": [
         'namespace.yaml',
         'pipeline-pvc.yaml',
-        'reverse-proxy.yaml',
         'sonarqube.yaml',
     ],
     "pipeline" : [
@@ -106,6 +105,11 @@ def post_tekton_pipeline(workspace_id):
         access_data = get_access_info(workspace_id)
 
         #
+        # node取得
+        #
+        node = get_pv_node()
+
+        #
         # パラメータ項目設定(テンプレート展開用変数設定)
         #
         param = request.json.copy()
@@ -120,6 +124,8 @@ def post_tekton_pipeline(workspace_id):
             'https': os.environ['EPOCH_HTTPS_PROXY'],
             'no_proxy': os.environ['EPOCH_NO_PROXY'],
         }
+        # node設定
+        param['node'] = node
 
         # pipeline毎の設定（pipelinesで設定数分処理する）
         for pipeline in param['ci_config']['pipelines']:
@@ -713,21 +719,11 @@ def get_access_info(workspace_id):
         # url設定
         api_info = "{}://{}:{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'], os.environ['EPOCH_RS_WORKSPACE_HOST'], os.environ['EPOCH_RS_WORKSPACE_PORT'])
 
-        # 内部のアクセスなのでProxyを退避して解除
-        http_proxy = os.environ['EPOCH_HTTP_PROXY']
-        https_proxy = os.environ['EPOCH_HTTPS_PROXY']
-        os.environ['EPOCH_HTTP_PROXY'] = ""
-        os.environ['EPOCH_HTTPS_PROXY'] = ""
-
         # アクセス情報取得
         # Select送信（workspace_access取得）
         globals.logger.debug ("workspace_access get call: worksapce_id:{}".format(workspace_id))
         request_response = requests.get( "{}/workspace/{}/access".format(api_info, workspace_id))
         # logger.debug (request_response)
-
-        # 退避したProxyを戻す
-        os.environ['EPOCH_HTTP_PROXY'] = http_proxy
-        os.environ['EPOCH_HTTPS_PROXY'] = https_proxy
 
         # 情報が存在する場合は、更新、存在しない場合は、登録
         if request_response.status_code == 200:
@@ -740,6 +736,58 @@ def get_access_info(workspace_id):
     except Exception as e:
         globals.logger.debug ("get_access_info Exception:{}".format(e.args))
         raise # 再スロー
+
+
+@app.route('/listener/<int:workspace_id>', methods=['POST'])
+def post_listener(workspace_id):
+    """TEKTON Listener 転送処理
+
+    Args:
+        workspace_id (int): ワークスペースID
+
+    Returns:
+        response: 応答結果
+    """
+    try:
+        globals.logger.debug ("post_listener call: worksapce_id:{}".format(workspace_id))
+
+        # TEKTONのイベントリスナーの転送先
+        listener_url = "http://el-event-listener.{}.svc:8080/".format(tekton_pipeline_namespace(workspace_id))
+
+        # TEKTONのイベントリスナーへ転送
+        response = requests.post(listener_url, headers=request.headers, data=request.data)
+
+        # TEKTONのリスナーの応答をそのまま返す
+        return Response(response.text, headers=dict(response.raw.headers), status=response.status_code)
+
+    except requests.exceptions.RequestException as e:
+        return Response("", status=404)
+
+    except Exception as e:
+        return common.serverError(e)
+
+def get_pv_node():
+    """PV格納node取得
+
+    Returns:
+        string: Node名
+    """
+    node = ""
+
+    try:
+        # TEKTON CLIにてpipelinerunのListを取得
+        result = subprocess.check_output(
+            ['kubectl', 'get', 'pod', '-n', 'epoch-system', '-o', 'json', "--selector", "name=epoch-control-tekton-api"], stderr=subprocess.STDOUT)
+
+        dict_result = json.loads(result.decode('utf-8'))
+        node = dict_result["items"][0]["spec"]["nodeName"]
+
+    except subprocess.CalledProcessError as e:
+        # コマンド実行エラー
+        globals.logger.debug('COMMAND ERROR RETURN:{}\n{}'.format(e.returncode, e.output.decode('utf-8')))
+        raise # 再スロー
+
+    return node
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('API_TEKTON_PORT', '8000')), threaded=True)

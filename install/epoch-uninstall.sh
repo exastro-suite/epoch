@@ -13,15 +13,6 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-#
-# epoch version 0.2.1 uninstaller
-#
-
-NS_NAME_EPOCH=epoch-system
-NS_NAME_WORKSPACE=epoch-workspace
-NS_NAME_PIPELINE=epoch-tekton-pipelines
-NS_NAME_PIPELINE_V011=epoch-tekton-pipeline-1
-
 BASEDIR=`dirname "$0"`
 
 if [ ! -f "${BASEDIR}/epoch-install.yaml" ]; then
@@ -34,118 +25,106 @@ if [ ! -f "${BASEDIR}/epoch-pv.yaml" ]; then
 fi
 
 #
-# version 0.1.0 tekton pipeline uninstall
+# TEKTON resource delete
 #
-POD_NAME_CICD=`kubectl get pod -n ${NS_NAME_EPOCH} | sed -n -e '/^[e]poch-cicd-api-/s/ .*$//p'`
-
-if [ ! -z "${POD_NAME_CICD}" ]; then
-	# delete tekton resource
-	echo "-- DELETE TEKTON PIPELINE --"
-	kubectl exec -it ${POD_NAME_CICD} -n ${NS_NAME_EPOCH} -- kubectl delete -f /app/resource/conv/tekton-pipeline --ignore-not-found
-
-	echo "-- DELETE TEKTON TRIGGER --"
-	kubectl exec -it ${POD_NAME_CICD} -n ${NS_NAME_EPOCH} -- kubectl delete -f /app/resource/conv/tekton-trigger --ignore-not-found
-
-	echo "-- DELETE TEKTON COMMON --"
-	kubectl exec -it ${POD_NAME_CICD} -n ${NS_NAME_EPOCH} -- kubectl delete -f /app/resource/conv/tekton-common --ignore-not-found
-fi
-
-#
-# version 0.1.0 tekton pipeline uninstall
-#
-if [ ! -z "${POD_NAME_CICD}" ]; then
-	echo "-- DELETE TEKTON pipelinerun --"
-	kubectl exec -it ${POD_NAME_CICD} -n ${NS_NAME_EPOCH} -- tkn pipelinerun delete --all -f -n ${NS_NAME_PIPELINE}
-	echo "-- DELETE TEKTON taskrun --"
-	kubectl exec -it ${POD_NAME_CICD} -n ${NS_NAME_EPOCH} -- tkn taskrun delete --all -f -n ${NS_NAME_PIPELINE}
-	echo "-- DELETE TEKTON eventlistener --"
-	kubectl exec -it ${POD_NAME_CICD} -n ${NS_NAME_EPOCH} -- tkn eventlistener delete --all -f -n ${NS_NAME_PIPELINE}
-	echo "-- DELETE TEKTON triggerbinding --"
-	kubectl exec -it ${POD_NAME_CICD} -n ${NS_NAME_EPOCH} -- tkn triggerbinding delete --all -f -n ${NS_NAME_PIPELINE}
-	echo "-- DELETE TEKTON triggertemplate --"
-	kubectl exec -it ${POD_NAME_CICD} -n ${NS_NAME_EPOCH} -- tkn triggertemplate delete --all -f -n ${NS_NAME_PIPELINE}
-	echo "-- DELETE TEKTON pipeline --"
-	kubectl exec -it ${POD_NAME_CICD} -n ${NS_NAME_EPOCH} -- tkn pipeline delete --all -f -n ${NS_NAME_PIPELINE}
-	echo "-- DELETE TEKTON task --"
-	kubectl exec -it ${POD_NAME_CICD} -n ${NS_NAME_EPOCH} -- tkn task delete --all -f -n ${NS_NAME_PIPELINE}
-fi
-
-#
-# version 0.1.1 tekton pipeline uninstall
-#
-POD_NAME_TEKTON=`kubectl get pod -n ${NS_NAME_EPOCH} | sed -n -e '/^[e]poch-control-tekton-api-/s/ .*$//p'`
-
-if [ ! -z "${POD_NAME_TEKTON}" ]; then
-	echo "-- DELETE TEKTON PIPELINE --"
-	kubectl exec -it ${POD_NAME_TEKTON} -n ${NS_NAME_EPOCH} -- kubectl delete -f /var/epoch/tekton --ignore-not-found
-fi
-
-# ALL TEKTON Resource DELETE
-kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c "tkn pipelinerun list -A -C | sed -e '1d' -e 's/[ \t\r].*$//' | uniq" | \
-while read pline_namespace; do \
-	kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c "tkn pipelinerun delete -n ${pline_namespace} --all -f"; \
-done
-kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c "tkn taskrun list -A -C | sed -e '1d' -e 's/[ \t\r].*$//' | uniq" | \
-while read pline_namespace; do \
-	kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c "tkn taskrun delete -n ${pline_namespace} --all -f"; \
-done
-kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c "tkn eventlistener list -A -C | sed -e '1d' -e 's/[ \t\r].*$//' | uniq" | \
-while read pline_namespace; do \
-	kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c "tkn eventlistener delete -n ${pline_namespace} --all -f"; \
-done
-kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c "tkn triggerbinding list -A -C | sed -e '1d' -e 's/[ \t\r].*$//' | uniq" | \
-while read pline_namespace; do \
-	kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c "tkn triggerbinding delete -n ${pline_namespace} --all -f"; \
-done
-kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c "tkn triggertemplate list -A -C | sed -e '1d' -e 's/[ \t\r].*$//' | uniq" | \
-while read pline_namespace; do \
-	kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c "tkn triggertemplate delete -n ${pline_namespace} --all -f"; \
-done
-kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c "tkn pipeline list -A -C | sed -e '1d' -e 's/[ \t\r].*$//' | uniq" | \
-while read pline_namespace; do \
-	kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c "tkn pipeline delete -n ${pline_namespace} --all -f"; \
-done
-kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c "tkn task list -A -C | sed -e '1d' -e 's/[ \t\r].*$//' | uniq" | \
-while read pline_namespace; do \
-	kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c "tkn task delete -n ${pline_namespace} --all -f"; \
+echo "---- delete TEKTON : pipelinerun"
+for namespace in \
+	$( kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c 'kubectl tkn pipelinerun list -A -o jsonpath="{range .items[*]}{@.metadata.namespace}{\"\n\"}{end}" | uniq' );
+do
+	echo "namespace : ${namespace}";
+	kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c "tkn pipelinerun delete --all -f -n ${namespace}";
 done
 
+echo "---- delete TEKTON : taskrun"
+for namespace in \
+	$( kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c 'kubectl tkn taskrun list -A -o jsonpath="{range .items[*]}{@.metadata.namespace}{\"\n\"}{end}" | uniq' );
+do
+	echo "namespace : ${namespace}";
+	kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c "tkn taskrun delete --all -f -n ${namespace}";
+done
 
+echo "---- delete TEKTON : eventlistener"
+for namespace in \
+	$( kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c 'kubectl tkn eventlistener list -A -o jsonpath="{range .items[*]}{@.metadata.namespace}{\"\n\"}{end}" | uniq' );
+do
+	echo "namespace : ${namespace}";
+	kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c "tkn eventlistener delete --all -f -n ${namespace}";
+done
 
-#
-# version 0.1.1 tekton pipeline uninstall
-#
-if [ ! -z "${POD_NAME_TEKTON}" ]; then
-	echo "-- DELETE TEKTON pipelinerun --"
-	kubectl exec -it ${POD_NAME_TEKTON} -n ${NS_NAME_EPOCH} -- tkn pipelinerun delete --all -f -n ${NS_NAME_PIPELINE_V011}
-	echo "-- DELETE TEKTON taskrun --"
-	kubectl exec -it ${POD_NAME_TEKTON} -n ${NS_NAME_EPOCH} -- tkn taskrun delete --all -f -n ${NS_NAME_PIPELINE_V011}
-	echo "-- DELETE TEKTON eventlistener --"
-	kubectl exec -it ${POD_NAME_TEKTON} -n ${NS_NAME_EPOCH} -- tkn eventlistener delete --all -f -n ${NS_NAME_PIPELINE_V011}
-	echo "-- DELETE TEKTON triggerbinding --"
-	kubectl exec -it ${POD_NAME_TEKTON} -n ${NS_NAME_EPOCH} -- tkn triggerbinding delete --all -f -n ${NS_NAME_PIPELINE_V011}
-	echo "-- DELETE TEKTON triggertemplate --"
-	kubectl exec -it ${POD_NAME_TEKTON} -n ${NS_NAME_EPOCH} -- tkn triggertemplate delete --all -f -n ${NS_NAME_PIPELINE_V011}
-	echo "-- DELETE TEKTON pipeline --"
-	kubectl exec -it ${POD_NAME_TEKTON} -n ${NS_NAME_EPOCH} -- tkn pipeline delete --all -f -n ${NS_NAME_PIPELINE_V011}
-	echo "-- DELETE TEKTON task --"
-	kubectl exec -it ${POD_NAME_TEKTON} -n ${NS_NAME_EPOCH} -- tkn task delete --all -f -n ${NS_NAME_PIPELINE_V011}
-fi
+echo "---- delete TEKTON : triggerbinding"
+for namespace in \
+	$( kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c 'kubectl tkn triggerbinding list -A -o jsonpath="{range .items[*]}{@.metadata.namespace}{\"\n\"}{end}" | uniq' );
+do
+	echo "namespace : ${namespace}";
+	kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c "tkn triggerbinding delete --all -f -n ${namespace}";
+done
 
-if [ ! -z "${POD_NAME_CICD}" ]; then
-	echo "-- DELETE WORKSPACE PODS --"
-	kubectl exec -it ${POD_NAME_CICD} -n ${NS_NAME_EPOCH} -- kubectl delete -f /app/resource/ita_install.yaml -n ${NS_NAME_WORKSPACE} --ignore-not-found
-	kubectl exec -it ${POD_NAME_CICD} -n ${NS_NAME_EPOCH} -- kubectl delete -f /app/resource --ignore-not-found
-fi
+echo "---- delete TEKTON : triggertemplate"
+for namespace in \
+	$( kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c 'kubectl tkn triggertemplate list -A -o jsonpath="{range .items[*]}{@.metadata.namespace}{\"\n\"}{end}" | uniq' );
+do
+	echo "namespace : ${namespace}";
+	kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c "tkn triggertemplate delete --all -f -n ${namespace}";
+done
 
-echo "-- DELETE NAMESPACE epoch-tekton-pipelines --"
-# version 0.1.0 tekton pipeline uninstall
-kubectl delete namespace ${NS_NAME_PIPELINE} --ignore-not-found
-# version 0.1.1 tekton pipeline uninstall
-kubectl delete namespace ${NS_NAME_PIPELINE_V011} --ignore-not-found
+echo "---- delete TEKTON : pipeline"
+for namespace in \
+	$( kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c 'kubectl tkn pipeline list -A -o jsonpath="{range .items[*]}{@.metadata.namespace}{\"\n\"}{end}" | uniq' );
+do
+	echo "namespace : ${namespace}";
+	kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c "tkn pipeline delete --all -f -n ${namespace}";
+done
 
-echo "-- DELETE NAMESPACE epoch-workspace --"
-kubectl delete namespace ${NS_NAME_WORKSPACE} --ignore-not-found
+echo "---- delete TEKTON : task"
+for namespace in \
+	$( kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c 'kubectl tkn task list -A -o jsonpath="{range .items[*]}{@.metadata.namespace}{\"\n\"}{end}" | uniq' );
+do
+	echo "namespace : ${namespace}";
+	kubectl exec -i deploy/epoch-control-tekton-api -n epoch-system -- bash -c "tkn task delete --all -f -n ${namespace}";
+done
+
+echo "---- delete EPOCH workspace : namespace"
+for namespace in \
+	$( kubectl get ns -o jsonpath="{range .items[*]}{@.metadata.name}{\"\n\"}{end}" | grep '^epoch-ws-' )
+do
+	echo "namespace : ${namespace}";
+	kubectl delete ns ${namespace};
+done
+
+echo "---- delete EPOCH workspace : namespace"
+for namespace in \
+	$( kubectl get ns -o jsonpath="{range .items[*]}{@.metadata.name}{\"\n\"}{end}" | grep '^epoch-tekton-pipeline-' )
+do
+	echo "namespace : ${namespace}";
+	kubectl delete ns ${namespace};
+done
+
+# ～0.2.0 Version Workspace
+kubectl delete ns epoch-workspace --ignore-not-found;
+
+echo "---- delete EPOCH pipeline PV"
+for pvname in \
+	$( kubectl get pv -o jsonpath="{range .items[*]}{@.metadata.name}{\"\n\"}{end}" | grep '^epoch-tekton-pipeline-.*-pv' )
+do
+	echo "pipeline PV : ${pvname}";
+	kubectl delete pv ${pvname};
+done
+
+echo "---- delete ClusterRoleBinding"
+for crbname in \
+	$( kubectl get ClusterRoleBinding -o jsonpath="{range .items[*]}{@.metadata.name}{\"\n\"}{end}" | grep '^trigger-sa-cluster-rolebinding-' )
+do
+	echo "ClusterRoleBinding : ${crbname}";
+	kubectl delete ClusterRoleBinding ${crbname};
+done
+
+echo "---- delete ClusterRole"
+for crname in \
+	$( kubectl get ClusterRole -o jsonpath="{range .items[*]}{@.metadata.name}{\"\n\"}{end}" | grep '^trigger-sa-cluster-role-' )
+do
+	echo "ClusterRole : ${crname}";
+	kubectl delete ClusterRole ${crname};
+done
 
 echo "-- DELETE TEKTON"
 kubectl delete -f "${BASEDIR}/source/tekton/tekton-trigger-interceptors.yaml" --ignore-not-found

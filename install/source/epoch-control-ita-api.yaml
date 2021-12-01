@@ -1,4 +1,4 @@
-#   Copyright 2019 NEC Corporation
+#   Copyright 2021 NEC Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -14,48 +14,40 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: epoch-control-tekton-conf
+  name: epoch-control-ita-conf
   namespace: epoch-system
 data:
-  api_tekton.conf: |
+  api_ita.conf: |
     TZ='Asia/Tokyo'
-    MYSQL_HOST='tekton-pipeline-db'
-    MYSQL_PORT='3306'
-    MYSQL_DATABASE='tekton_pipeline_db'
-    MYSQL_USER='app_user'
-    MYSQL_PASSWORD='password'
-    RESOURCE_CREATION_WAIT=60
-
 ---
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: epoch-control-tekton-api
+  name: epoch-control-ita-api
   namespace: epoch-system
 spec:
   selector:
     matchLabels:
-      name: epoch-control-tekton-api
+      name: epoch-control-ita-api
   replicas: 1
   template:
     metadata:
       labels:
-        name: epoch-control-tekton-api
+        name: epoch-control-ita-api
     spec:
       volumes:
-      - name: epoch-control-tekton-conf
+      - name: epoch-control-ita-conf
         configMap:
-          name: epoch-control-tekton-conf
+          name: epoch-control-ita-conf
       containers:
-      - name: epoch-control-tekton-api
-        image: exastro/epoch-control-tekton-api:0.3.0_20211129_1630
+      - name: epoch-control-ita-api
+        image: exastro/epoch-control-ita-api:0.3.0_20211129_1500
         env:
-        - name: CONFIG_API_TEKTON_PATH
-          value: "/etc/epoch/epochControlTektonApi/api_tekton.conf"
+        - name: CONFIG_API_ITA_PATH
+          value: "/etc/epoch/epochControlITAApi/api_ita.conf"
         - name: FLASK_ENV
           value: "development"
-        - name: API_TEKTON_PORT
+        - name: API_ITA_PORT
           value: "8000"
         - name: PYTHONIOENCODING
           value: utf-8
@@ -70,25 +62,35 @@ spec:
               name: proxy-setting-config
               key: HTTPS_PROXY
         - name: EPOCH_NO_PROXY
-          value: ""
+          valueFrom:
+            configMapKeyRef:
+              name: epoch-cicd-api-config
+              key: NO_PROXY
         - name: EPOCH_RS_WORKSPACE_PROTOCOL
-          value: "http"
+          valueFrom:
+            configMapKeyRef:
+              name: epoch-cicd-api-config
+              key: RS_WORKSPACE_PROTOCOL
         - name: EPOCH_RS_WORKSPACE_HOST
-          value: "epoch-rs-workspace-api"
+          valueFrom:
+            configMapKeyRef:
+              name: epoch-cicd-api-config
+              key: RS_WORKSPACE_HOST
         - name: EPOCH_RS_WORKSPACE_PORT
-          value: "8000"
+          valueFrom:
+            configMapKeyRef:
+              name: epoch-cicd-api-config
+              key: RS_WORKSPACE_PORT
         volumeMounts:
-        - name: epoch-control-tekton-conf
-          mountPath: /etc/epoch/epochControlTektonApi
-
+        - name: epoch-control-ita-conf
+          mountPath: /etc/epoch/epochControlITAApi
 ---
-
 apiVersion: v1
 kind: Service
 metadata:
-  name: epoch-control-tekton-api
+  name: epoch-control-ita-api
   labels:
-    name: epoch-control-tekton-api
+    name: epoch-control-ita-api
   namespace: epoch-system
 spec:
   type: ClusterIP
@@ -97,4 +99,4 @@ spec:
     port: 8000
     targetPort: 8000
   selector:
-    name: epoch-control-tekton-api
+    name: epoch-control-ita-api

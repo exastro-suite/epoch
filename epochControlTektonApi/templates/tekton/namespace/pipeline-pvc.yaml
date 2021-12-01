@@ -12,6 +12,33 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ param.ci_config.pipeline_namespace }}-pv
+  labels:
+    type: local
+  annotations:
+    pv.kubernetes.io/bound-by-controller: "yes"
+spec:
+  storageClassName: epoch-tekton-pipeline-storage
+  capacity:
+    storage: 500Mi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /var/data/epoch/{{ param.ci_config.pipeline_namespace }}-pv
+    type: DirectoryOrCreate
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - {{ param.node }}
+
+---
+apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: pipeline-pvc
@@ -24,4 +51,4 @@ spec:
       storage: 500Mi
   storageClassName: epoch-tekton-pipeline-storage
   volumeMode: Filesystem
-  volumeName: epoch-pv
+  volumeName: {{ param.ci_config.pipeline_namespace }}-pv

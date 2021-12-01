@@ -23,7 +23,10 @@ data:
     openid-connect\n    Require valid-user\n  </Location>\n  <Location /api/client/>\n
     \   ProxyPass        http://authentication-infra-api:8000/client/ retry=0\n    ProxyPassReverse
     http://authentication-infra-api:8000/client/\n    AuthType openid-connect\n    Require
-    claim \"epoch-role:epoch-user\"\n  </Location>\n  <Location /favicon.ico>\n    Require
+    claim \"epoch-role:epoch-user\"\n  </Location>\n  <Location /api/listener/>\n
+    \   ProxyPass        http://epoch-control-tekton-api.epoch-system.svc:8000/listener/
+    retry=0\n    ProxyPassReverse http://epoch-control-tekton-api.epoch-system.svc:8000/listener/\n
+    \   Require all granted\n  </Location>\n  <Location /favicon.ico>\n    Require
     all granted\n  </Location>\n</VirtualHost>\n"
   epoch-ws-argocd-template.conf: "Listen {{ client_port }}\n<VirtualHost *:{{ client_port
     }}>\n  SSLProxyEngine On\n  SSLEngine on\n  SSLCertificateFile /etc/pki/tls/certs/exastro-platform-authentication-infra.pem\n

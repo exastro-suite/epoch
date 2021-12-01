@@ -29,7 +29,6 @@ var workspace_api_conf = {
     "api" : {
         "resource": {
             "get" :     URL_BASE + "/api2/workspace/{workspace_id}",
-            //"get" :     URL_BASE + "/api/workspace/info/{workspace_id}/",
             "post" :    URL_BASE + "/api2/workspace",
             "put" :     URL_BASE + "/api2/workspace/{workspace_id}",
         },
@@ -42,14 +41,14 @@ var workspace_api_conf = {
             }
         },
         "workspace": {
-            "post":     URL_BASE + "/api/workspace/pod/",
+            "post":     URL_BASE + "/api2/workspace/{workspace_id}/pod",
             "wait": 30000,
         },
-        "pipeline": {
-            "post":     URL_BASE + "/api/pipeline/",
+        "ci_pipeline": {
+            "post":     URL_BASE + "/api2/workspace/{workspace_id}/ci/pipeline",
         },
-        "pipelineParameter": {
-            "post":     URL_BASE + "/api/pipelineParameter/",
+        "cd_pipeline": {
+            "post":     URL_BASE + "/api2/workspace/{workspace_id}/cd/pipeline",
         },
         "manifestParameter": {
             "post":     URL_BASE + "/api/workspace/{workspace_id}/manifestParameter",
