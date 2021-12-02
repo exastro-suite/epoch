@@ -30,6 +30,7 @@ from datetime import timedelta, timezone
 
 import globals
 import common
+import api_service_ci
 import api_service_manifest
 import api_service_cd
 
@@ -140,7 +141,58 @@ def call_ci_pipeline(workspace_id):
 
         if request.method == 'POST':
             # CIパイプライン情報設定
-            return post_ci_pipeline(workspace_id)
+            return api_service_ci.post_ci_pipeline(workspace_id)
+        else:
+            # Error
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+
+@app.route('/workspace/<int:workspace_id>/ci/pipeline/result', methods=['GET'])
+def call_ci_result(workspace_id):
+    """workspace/workspace_id/ci/pipeline/result Call
+
+    Args:
+        workspace_id (int): workspace ID
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'GET':
+            # CIパイプライン結果取得
+            return api_service_ci.get_ci_pipeline_result(workspace_id)
+        else:
+            # Error
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+@app.route('/workspace/<int:workspace_id>/ci/pipeline/result/<taskrun_name>/logs', methods=['GET'])
+def call_ci_result_logs(workspace_id, taskrun_name):
+    """workspace/workspace_id/ci/pipeline/result/taskrun_name/logs Call
+
+    Args:
+        workspace_id (int): workspace ID
+        taskrun_name (str): tekton taskrun_name
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}] taskrun_name[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id, taskrun_name))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'GET':
+            # CIパイプライン結果取得
+            return api_service_ci.get_ci_pipeline_result_logs(workspace_id, taskrun_name)
         else:
             # Error
             raise Exception("method not support!")
@@ -594,132 +646,6 @@ def post_pod(workspace_id):
     except Exception as e:
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
 
-
-def post_ci_pipeline(workspace_id):
-    """CIパイプライン情報設定
-
-    Args:
-        workspace_id (int): workspace ID
-
-    Returns:
-        Response: HTTP Respose
-    """
-
-    app_name = "ワークスペース情報:"
-    exec_stat = "CIパイプライン情報設定"
-    error_detail = ""
-
-    try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
-
-        # ヘッダ情報
-        post_headers = {
-            'Content-Type': 'application/json',
-        }
-
-        # 引数をJSON形式で受け取りそのまま引数に設定
-        post_data = request.json.copy()
-
-        # epoch-control-inside-gitlab-api の呼び先設定
-        api_url_gitlab = "{}://{}:{}/workspace/{}/gitlab".format(os.environ["EPOCH_CONTROL_INSIDE_GITLAB_PROTOCOL"], 
-                                                                 os.environ["EPOCH_CONTROL_INSIDE_GITLAB_HOST"], 
-                                                                 os.environ["EPOCH_CONTROL_INSIDE_GITLAB_PORT"],
-                                                                 workspace_id)
-
-        # epoch-control-github-api の呼び先設定
-        api_url_github = "{}://{}:{}/workspace/{}/github/webhooks".format(os.environ["EPOCH_CONTROL_GITHUB_PROTOCOL"], 
-                                                                          os.environ["EPOCH_CONTROL_GITHUB_HOST"], 
-                                                                          os.environ["EPOCH_CONTROL_GITHUB_PORT"],
-                                                                          workspace_id)
-
-        # epoch-control-tekton-api の呼び先設定
-        api_url_tekton = "{}://{}:{}/workspace/{}/tekton/pipeline".format(os.environ["EPOCH_CONTROL_TEKTON_PROTOCOL"], 
-                                                                          os.environ["EPOCH_CONTROL_TEKTON_HOST"], 
-                                                                          os.environ["EPOCH_CONTROL_TEKTON_PORT"],
-                                                                          workspace_id)
-
-        # パイプライン設定(GitLab Create Project)
-        request_body = json.loads(request.data)
-        git_projects = []
-
-        # アプリケーションコード
-        if request_body['ci_config']['pipelines_common']['git_repositry']['housing'] == 'inner':
-            for pipeline_ap in request_body['ci_config']['pipelines']:
-                ap_data = {
-                    'git_repositry': {
-                        'user': request_body['ci_config']['pipelines_common']['git_repositry']['user'],
-                        'token': request_body['ci_config']['pipelines_common']['git_repositry']['token'],
-                        'url': pipeline_ap['git_repositry']['url'],
-                    }
-                }
-                git_projects.append(ap_data)
-        # IaC
-        for pipeline_iac in request_body['ci_config']['environments']:
-            if pipeline_iac['git_housing'] == 'inner':
-                iac_data = {
-                    'git_repositry': {
-                        'user': pipeline_iac['git_user'],
-                        'token': pipeline_iac['git_token'],
-                        'url': pipeline_iac['git_url'],
-                    }
-                }
-                git_projects.append(iac_data)
-
-        for proj_data in git_projects:
-            # gitlab/repos post送信
-            response = requests.post('{}/repos'.format(api_url_gitlab), headers=post_headers, data=json.dumps(proj_data))
-            globals.logger.debug("post gitlab/repos response:{}".format(response.text))
-
-            if response.status_code != 200:
-                error_detail = 'gitlab/repos post処理に失敗しました'
-                raise common.UserException(error_detail)
-
-        if request_body['ci_config']['pipelines_common']['git_repositry']['housing'] == 'outer':
-            # github/webhooks post送信
-            response = requests.post( api_url_github, headers=post_headers, data=json.dumps(post_data))
-            globals.logger.debug("post github/webhooks response:{}".format(response.text))
-
-            if response.status_code != 200:
-                error_detail = 'github/webhooks post処理に失敗しました'
-                raise common.UserException(error_detail)
-        else:
-            # パイプライン設定(GitLab webhooks)
-            for pipeline_ap in request_body['ci_config']['pipelines']:
-                ap_data = {
-                    'git_repositry': {
-                        'user': request_body['ci_config']['pipelines_common']['git_repositry']['user'],
-                        'token': request_body['ci_config']['pipelines_common']['git_repositry']['token'],
-                        'url': pipeline_ap['git_repositry']['url'],
-                    },
-                    'webhooks_url': pipeline_ap['webhooks_url'],
-                }
-
-                response = requests.post('{}/webhooks'.format(api_url_gitlab) + "workspace/1/gitlab/webhooks", headers=post_headers, data=json.dumps(ap_data))
-                globals.logger.debug("post gitlab/webhooks response:{}".format(response.text))
-
-                if response.status_code != 200:
-                    error_detail = 'gitlab/webhooks post処理に失敗しました'
-                    raise common.UserException(error_detail)
-
-        # listener post送信
-        response = requests.post(api_url_tekton, headers=post_headers, data=json.dumps(post_data))
-        globals.logger.debug("post tekton/pipeline response:{}".format(response.text))
-
-        if response.status_code != 200:
-            error_detail = 'tekton/pipeline post処理に失敗しました'
-            raise common.UserException(error_detail)
-
-        ret_status = 200
-
-        # 戻り値をそのまま返却        
-        return jsonify({"result": ret_status}), ret_status
-
-    except common.UserException as e:
-        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
-    except Exception as e:
-        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('API_SERVICE_PORT', '8000')), threaded=True)
