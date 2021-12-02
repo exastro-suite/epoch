@@ -41,7 +41,7 @@ spec:
           name: epoch-control-argocd-conf
       containers:
       - name: epoch-control-argocd-api
-        image: exastro/epoch-control-argocd-api:0.3.0_20211129_1455
+        image: exastro/epoch-control-argocd-api:0.3.0_20211202_1620
         env:
         - name: CONFIG_API_ARGOCD_PATH
           value: "/etc/epoch/epochControlArgoCDApi/api_argocd.conf"

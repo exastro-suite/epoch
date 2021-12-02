@@ -17,6 +17,7 @@ import random, string
 import json
 
 import globals
+from kubernetes import client, config
 
 class UserException(Exception):
     pass
@@ -119,3 +120,63 @@ def get_namespace_name(workspace_id):
         str: namespace name
     """
     return  'epoch-ws-{}'.format(workspace_id)
+
+def get_namespace(name):
+    """namespace情報取得
+
+    Args:
+        name (str): namespace名
+
+    Returns:
+        namespace is exist：
+            namespace info (str)
+        namespace is not exist：
+            None
+    """
+    try:
+        config.load_incluster_config()
+        # 使用するAPIの宣言
+        v1 = client.CoreV1Api()
+        
+        # namespaceの情報取得
+        globals.logger.debug('get namespace :')
+        ret = v1.read_namespace(name=name)
+
+        globals.logger.debug("ret: %s" % (ret))
+        return ret 
+
+    except Exception as e:
+        globals.logger.debug("Except: %s" % (e))
+        return None 
+      
+def create_namespace(name):
+    """namespace作成
+
+    Args:
+        name (str): namespace名
+
+    Returns:
+        namespace created：
+            namespace create info (str)
+        namespace create failed：
+            None
+    """
+    try:
+        config.load_incluster_config()
+
+        # 使用するAPIの宣言
+        v1 = client.CoreV1Api()
+        
+        # 引数の設定
+        body = client.V1Namespace(metadata=client.V1ObjectMeta(name=name))
+
+        # namespaceの作成
+        globals.logger.debug('create namespace :')
+        ret = v1.create_namespace(body=body)
+
+        globals.logger.debug("ret: %s" % (ret))
+        return ret 
+
+    except Exception as e:
+        globals.logger.debug("Except: %s" % (e))
+        return None
