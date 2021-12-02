@@ -15,7 +15,7 @@ RUN apt-get -y update \
 
 COPY ./command /usr/local/bin
 
-chmod +x /usr/local/bin/*
+RUN chmod +x /usr/local/bin/*
 
 # TEST
 ENTRYPOINT ["/bin/sh", "-c", "while :; do sleep 10; done"]
