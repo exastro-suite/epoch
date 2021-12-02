@@ -26,6 +26,11 @@ RUN echo "RUN START"  \
 &&  curl -LO -k "https://storage.googleapis.com/kubernetes-release/release/$(curl -s -k https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl" \
 &&  chmod +x ./kubectl \
 &&  mv ./kubectl /usr/local/bin/kubectl \
+&&  VERSION=$(curl --silent "https://api.github.com/repos/argoproj/argo-cd/releases/latest" | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/') \
+&&  curl -sSL -k -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/download/$VERSION/argocd-linux-amd64 \
+&&  chmod +x /usr/local/bin/argocd \
+&&  curl -sSL -k -o /usr/local/bin/kubectl-argo-rollouts https://github.com/argoproj/argo-rollouts/releases/latest/download/kubectl-argo-rollouts-darwin-amd64 \
+&&  chmod +x /usr/local/bin/kubectl-argo-rollouts \
 &&  echo "RUN FINISH"
 
 WORKDIR /app
