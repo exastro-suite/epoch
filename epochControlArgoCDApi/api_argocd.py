@@ -169,6 +169,48 @@ def create_argocd(workspace_id):
     except Exception as e:
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
 
+
+@app.route('/workspace/<int:workspace_id>/argocd/settings', methods=['POST'])
+def call_argocd_settings(workspace_id):
+    """workspace/workspace_id/argocd/settings 呼び出し
+
+    Args:
+        workspace_id (int): ワークスペースID
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'POST':
+            # argocd pod 生成
+            return argocd_settings(workspace_id)
+        else:
+            # エラー
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+
+def argocd_settings(workspace_id):
+    """ArgoCD設定
+
+    Args:
+        workspace_id (int): ワークスペースID
+
+    Returns:
+        Response: HTTP Respose
+    """
+    ret_status = 200
+
+    # 戻り値をそのまま返却        
+    return jsonify({"result": ret_status}), ret_status
+
+
 def get_access_info(workspace_id):
     """ワークスペースアクセス情報取得
 
