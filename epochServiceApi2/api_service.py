@@ -30,6 +30,8 @@ from datetime import timedelta, timezone
 
 import globals
 import common
+import api_service_manifest
+import api_service_cd
 
 # 設定ファイル読み込み・globals初期化
 app = Flask(__name__)
@@ -48,7 +50,7 @@ def alive():
 
 @app.route('/workspace', methods=['POST','GET'])
 def call_workspace():
-    """workspace呼び出し
+    """workspaceCall
 
     Returns:
         Response: HTTP Respose
@@ -71,10 +73,10 @@ def call_workspace():
 
 @app.route('/workspace/<int:workspace_id>', methods=['GET','PUT'])
 def call_workspace_by_id(workspace_id):
-    """workspace/workspace_id 呼び出し
+    """workspace/workspace_id Call
 
     Args:
-        workspace_id (int): ワークスペースID
+        workspace_id (int): workspace ID
 
     Returns:
         Response: HTTP Respose
@@ -97,10 +99,10 @@ def call_workspace_by_id(workspace_id):
 
 @app.route('/workspace/<int:workspace_id>/pod', methods=['POST'])
 def call_pod(workspace_id):
-    """workspace/workspace_id/pod 呼び出し
+    """workspace/workspace_id/pod Call
 
     Args:
-        workspace_id (int): ワークスペースID
+        workspace_id (int): workspace ID
 
     Returns:
         Response: HTTP Respose
@@ -114,7 +116,7 @@ def call_pod(workspace_id):
             # workspace作成
             return post_pod(workspace_id)
         else:
-            # エラー
+            # Error
             raise Exception("method not support!")
 
     except Exception as e:
@@ -123,10 +125,10 @@ def call_pod(workspace_id):
 
 @app.route('/workspace/<int:workspace_id>/ci/pipeline', methods=['POST'])
 def call_ci_pipeline(workspace_id):
-    """workspace/workspace_id/ci/pipeline 呼び出し
+    """workspace/workspace_id/ci/pipeline Call
 
     Args:
-        workspace_id (int): ワークスペースID
+        workspace_id (int): workspace ID
 
     Returns:
         Response: HTTP Respose
@@ -140,7 +142,7 @@ def call_ci_pipeline(workspace_id):
             # CIパイプライン情報設定
             return post_ci_pipeline(workspace_id)
         else:
-            # エラー
+            # Error
             raise Exception("method not support!")
 
     except Exception as e:
@@ -149,10 +151,10 @@ def call_ci_pipeline(workspace_id):
 
 @app.route('/workspace/<int:workspace_id>/cd/pipeline', methods=['POST'])
 def call_cd_pipeline(workspace_id):
-    """workspace/workspace_id/cd/pipeline 呼び出し
+    """workspace/workspace_id/cd/pipeline Call
 
     Args:
-        workspace_id (int): ワークスペースID
+        workspace_id (int): workspace ID
 
     Returns:
         Response: HTTP Respose
@@ -164,14 +166,124 @@ def call_cd_pipeline(workspace_id):
 
         if request.method == 'POST':
             # CDパイプライン情報設定
-            return post_cd_pipeline(workspace_id)
+            return api_service_cd.post_cd_pipeline(workspace_id)
         else:
-            # エラー
+            # Error
             raise Exception("method not support!")
 
     except Exception as e:
         return common.server_error(e)
 
+
+@app.route('/workspace/<int:workspace_id>/manifest/parameter', methods=['POST','PUT'])
+def call_manifest_parameter(workspace_id):
+    """workspace/workspace_id/manifest/parameter Call
+
+    Args:
+        workspace_id (int): workspace ID
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'POST':
+            # manifest parameter setting (post)
+            return api_service_manifest.post_manifest_parameter(workspace_id)
+        elif request.method == 'PUT':
+            # manifest parameter setting (put)
+            return api_service_manifest.put_manifest_parameter(workspace_id)
+        else:
+            # Error
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+
+@app.route('/workspace/<int:workspace_id>/manifest/template', methods=['POST','GET'])
+def call_manifest_template(workspace_id):
+    """workspace/workspace_id/manifest/template Call
+
+    Args:
+        workspace_id (int): workspace ID
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'POST':
+            # manifest template setting (post)
+            return api_service_manifest.post_manifest_template(workspace_id)
+        elif request.method == 'GET':
+            # get manifest template list (put)
+            return api_service_manifest.get_manifest_template_list(workspace_id)
+        else:
+            # Error
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+
+@app.route('/workspace/<int:workspace_id>/manifest/template/<int:file_id>', methods=['DELETE'])
+def call_manifest_template_id(workspace_id, file_id):
+    """workspace/workspace_id/manifest/template/file_id Call
+
+    Args:
+        workspace_id (int): workspace ID
+        file_id (int): file ID
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}] file_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id, file_id))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'DELETE':
+            # manifest parameter setting (post)
+            return api_service_manifest.delete_manifest_template(workspace_id, file_id)
+        else:
+            # Error
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+
+@app.route('/workspace/<int:workspace_id>/cd/exec', methods=['POST'])
+def call_cd_exec(workspace_id):
+    """workspace/workspace_id/cd/exec Call
+
+    Args:
+        workspace_id (int): workspace ID
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'POST':
+            # cd execute (post)
+            return api_service_cd.cd_execute(workspace_id)
+        else:
+            # Error
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
 
 def create_workspace():
     """ワークスペース作成
@@ -284,7 +396,7 @@ def get_workspace(workspace_id):
     """ワークスペース情報取得
 
     Args:
-        workspace_id (int): ワークスペースID
+        workspace_id (int): workspace ID
 
     Returns:
         Response: HTTP Respose
@@ -341,7 +453,7 @@ def put_workspace(workspace_id):
     """ワークスペース情報更新
 
     Args:
-        workspace_id (int): ワークスペースID
+        workspace_id (int): workspace ID
 
     Returns:
         Response: HTTP Respose
@@ -399,7 +511,7 @@ def post_pod(workspace_id):
     """ワークスペース作成
 
     Args:
-        workspace_id (int): ワークスペースID
+        workspace_id (int): workspace ID
 
     Returns:
         Response: HTTP Respose
@@ -487,7 +599,7 @@ def post_ci_pipeline(workspace_id):
     """CIパイプライン情報設定
 
     Args:
-        workspace_id (int): ワークスペースID
+        workspace_id (int): workspace ID
 
     Returns:
         Response: HTTP Respose
@@ -608,110 +720,6 @@ def post_ci_pipeline(workspace_id):
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
     except Exception as e:
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
-
-
-def post_cd_pipeline(workspace_id):
-    """CDパイプライン情報設定
-
-    Args:
-        workspace_id (int): ワークスペースID
-
-    Returns:
-        Response: HTTP Respose
-    """
-
-    app_name = "ワークスペース情報:"
-    exec_stat = "CDパイプライン情報設定"
-    error_detail = ""
-
-    try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
-
-        # ヘッダ情報
-        post_headers = {
-            'Content-Type': 'application/json',
-        }
-
-        # 引数をJSON形式で受け取りそのまま引数に設定
-        post_data = request.json.copy()
-
-        # epoch-control-argocd-api の呼び先設定
-        api_url = "{}://{}:{}/workspace/{}/argocd/settings".format(os.environ['EPOCH_CONTROL_ARGOCD_PROTOCOL'],
-                                                                   os.environ['EPOCH_CONTROL_ARGOCD_HOST'],
-                                                                   os.environ['EPOCH_CONTROL_ARGOCD_PORT'],
-                                                                   workspace_id)
-        # argocd/settings post送信
-        # response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
-        # globals.logger.debug("post argocd/settings response:{}".format(response.text))
-
-        # if response.status_code != 200:
-        #     error_detail = 'argocd/settings post処理に失敗しました'
-        #     raise common.UserException(error_detail)
-
-        # authentication-infra-api の呼び先設定
-        api_url_epai = "{}://{}:{}/".format(os.environ["EPOCH_EPAI_API_PROTOCOL"], 
-                                            os.environ["EPOCH_EPAI_API_HOST"], 
-                                            os.environ["EPOCH_EPAI_API_PORT"])
-
-        # postする情報
-        clients = [
-            {
-                "client_id" :   'epoch-ws-{}-ita'.format(workspace_id),
-                "client_host" : os.environ["EPOCH_EPAI_HOST"],
-                "client_protocol" : "https",
-                # "client_port" : "31183",
-                "conf_template" : "epoch-ws-ita-template.conf",
-                "backend_url" : "http://it-automation.epoch-workspace.svc:8084/",
-            },
-            {
-                "client_id" :   'epoch-ws-{}-argocd'.format(workspace_id),
-                "client_host" : os.environ["EPOCH_EPAI_HOST"],
-                "client_protocol" : "https",
-                # "client_port" : "31184",
-                "conf_template" : "epoch-ws-argocd-template.conf",
-                "backend_url" : "https://argocd-server.epoch-workspace.svc/",
-            },
-            {
-                "client_id" :   'epoch-ws-{}-sonarqube'.format(workspace_id),
-                "client_host" : os.environ["EPOCH_EPAI_HOST"],
-                "client_protocol" : "https",
-                # "client_port" : "31185",
-                "conf_template" : "epoch-ws-sonarqube-template.conf",
-                "backend_url" : "http://sonarqube.epoch-tekton-pipeline-1.svc:9000/",
-            },
-        ]
-
-        # post送信（アクセス情報生成）
-        exec_stat = "認証基盤 初期情報設定"
-        for client in clients:
-            response = requests.post("{}{}/{}/{}".format(api_url_epai, 'settings', os.environ["EPOCH_EPAI_REALM_NAME"], 'clients'), headers=post_headers, data=json.dumps(client))
-
-            # 正常時以外はExceptionを発行して終了する
-            if response.status_code != 200:
-                globals.logger.debug(response.text)
-                error_detail = "認証基盤 初期情報設定の生成に失敗しました。 {}".format(response.status_code)
-                raise Exception
-
-        exec_stat = "認証基盤 設定読み込み"
-        response = requests.put("{}{}".format(api_url_epai, 'apply_settings'))
-
-        # 正常時以外はExceptionを発行して終了する
-        if response.status_code != 200:
-            error_detail = "認証基盤 設定読み込みに失敗しました。 {}".format(response.status_code)
-            raise Exception
-
-        ret_status = 200
-
-        # 戻り値をそのまま返却        
-        return jsonify({"result": ret_status}), ret_status
-
-    except common.UserException as e:
-        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
-    except Exception as e:
-        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
-
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('API_SERVICE_PORT', '8000')), threaded=True)
