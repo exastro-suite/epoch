@@ -88,25 +88,22 @@ def post_cd_pipeline(workspace_id):
                 "client_id" :   'epoch-ws-{}-ita'.format(workspace_id),
                 "client_host" : os.environ["EPOCH_EPAI_HOST"],
                 "client_protocol" : "https",
-                # "client_port" : "31183",
                 "conf_template" : "epoch-ws-ita-template.conf",
-                "backend_url" : "http://it-automation.epoch-workspace.svc:8084/",
+                "backend_url" : "http://it-automation.{}.svc:8084/".format(workspace_namespace(workspace_id)),
             },
             {
                 "client_id" :   'epoch-ws-{}-argocd'.format(workspace_id),
                 "client_host" : os.environ["EPOCH_EPAI_HOST"],
                 "client_protocol" : "https",
-                # "client_port" : "31184",
                 "conf_template" : "epoch-ws-argocd-template.conf",
-                "backend_url" : "https://argocd-server.epoch-workspace.svc/",
+                "backend_url" : "https://argocd-server.{}.svc/".format(workspace_namespace(workspace_id)),
             },
             {
                 "client_id" :   'epoch-ws-{}-sonarqube'.format(workspace_id),
                 "client_host" : os.environ["EPOCH_EPAI_HOST"],
                 "client_protocol" : "https",
-                # "client_port" : "31185",
                 "conf_template" : "epoch-ws-sonarqube-template.conf",
-                "backend_url" : "http://sonarqube.epoch-tekton-pipeline-1.svc:9000/",
+                "backend_url" : "http://sonarqube.{}.svc:9000/".format(tekton_pipeline_namespace(workspace_id)),
             },
         ]
 
@@ -169,3 +166,24 @@ def cd_execute(workspace_id):
     except Exception as e:
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
 
+def tekton_pipeline_namespace(workspace_id):
+    """TEKTON pipeline用namespace取得
+
+    Args:
+        workspace_id (int): ワークスペースID
+
+    Returns:
+        str: TEKTON pipeline用namespace
+    """
+    return  'epoch-tekton-pipeline-{}'.format(workspace_id)
+
+def workspace_namespace(workspace_id):
+    """workspace用namespace取得
+
+    Args:
+        workspace_id (int): ワークスペースID
+
+    Returns:
+        str: workspace用namespace
+    """
+    return  'epoch-ws-{}'.format(workspace_id)
