@@ -31,20 +31,22 @@ import hashlib
 
 import globals
 import common
+import api_ita_manifests
+import api_ita_cd
 
-WAIT_SEC_ITA_POD_UP = 120 # ITA Pod起動待ち時間(秒)
-WAIT_SEC_ITA_IMPORT = 60 # ITA Import最大待ち時間(秒)
+WAIT_SEC_ITA_POD_UP = 120 # ITA Pod 起動待ち時間(sec) ready check wait time
+WAIT_SEC_ITA_IMPORT = 60 # ITA Import最大待ち時間(sec) import wait time
 EPOCH_ITA_HOST = "it-automation"
 EPOCH_ITA_PORT = "8084"
 
-# 設定ファイル読み込み・globals初期化
+# 設定ファイル読み込み・globals初期化 flask setting file read and globals initialize
 app = Flask(__name__)
 app.config.from_envvar('CONFIG_API_ITA_PATH')
 globals.init(app)
 
 @app.route('/alive', methods=["GET"])
 def alive():
-    """死活監視
+    """死活監視(alive monitor)
 
     Returns:
         Response: HTTP Respose
@@ -54,10 +56,10 @@ def alive():
 
 @app.route('/workspace/<int:workspace_id>/it-automation', methods=['POST'])
 def call_ita(workspace_id):
-    """workspace/workspace_id/it-automation 呼び出し
+    """workspace/workspace_id/it-automation call
 
     Args:
-        workspace_id (int): ワークスペースID
+        workspace_id (int): workspace id
 
     Returns:
         Response: HTTP Respose
@@ -68,10 +70,10 @@ def call_ita(workspace_id):
         globals.logger.debug('#' * 50)
 
         if request.method == 'POST':
-            # it-automation pod 生成
+            # it-automation pod create
             return create_ita(workspace_id)
         else:
-            # エラー
+            # Error
             raise Exception("method not support!")
 
     except Exception as e:
@@ -80,10 +82,10 @@ def call_ita(workspace_id):
 
 @app.route('/workspace/<int:workspace_id>/it-automation/settings', methods=['POST'])
 def call_ita_settings(workspace_id):
-    """workspace/workspace_id/it-automation/settings 呼び出し
+    """workspace/workspace_id/it-automation/settings call
 
     Args:
-        workspace_id (int): ワークスペースID
+        workspace_id (int): workspace id
 
     Returns:
         Response: HTTP Respose
@@ -94,20 +96,151 @@ def call_ita_settings(workspace_id):
         globals.logger.debug('#' * 50)
 
         if request.method == 'POST':
-            # it-automation pod 生成
+            # it-automation setting
             return settings_ita(workspace_id)
         else:
-            # エラー
+            # Error
             raise Exception("method not support!")
 
     except Exception as e:
         return common.server_error(e)
 
-def create_ita(workspace_id):
-    """IT-Automation Pod 作成
+
+@app.route('/workspace/<int:workspace_id>/it-automation/manifest/git', methods=['POST'])
+def call_ita_manifest_git(workspace_id):
+    """workspace/workspace_id/it-automation/manifest/git call
 
     Args:
-        workspace_id (int): ワークスペースID
+        workspace_id (int): workspace id
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'POST':
+            # it-automation git-environment settging
+            return settings_git_environment(workspace_id)
+        else:
+            # Error
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+
+@app.route('/workspace/<int:workspace_id>/it-automation/manifest/parameter', methods=['POST'])
+def call_ita_manifest_parameter(workspace_id):
+    """workspace/workspace_id/it-automation/manifest/parameter call
+
+    Args:
+        workspace_id (int): workspace id
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'POST':
+            # it-automation manifest-parameter settging
+            return api_ita_manifests.settings_manifest_parameter(workspace_id)
+        else:
+            # Error
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+
+@app.route('/workspace/<int:workspace_id>/it-automation/manifest/templates', methods=['POST'])
+def call_ita_manifest_templates(workspace_id):
+    """workspace/workspace_id/it-automation/manifest/templates call
+
+    Args:
+        workspace_id (int): workspace id
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'POST':
+            # it-automation manifest-templates settging
+            return api_ita_manifests.settings_manifest_templates(workspace_id)
+        else:
+            # Error
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+
+@app.route('/workspace/<int:workspace_id>/it-automation/cd/operations', methods=['GET'])
+def call_ita_cd_operations(workspace_id):
+    """workspace/workspace_id/it-automation/cd/operations call
+
+    Args:
+        workspace_id (int): workspace id
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'GET':
+            # it-automation get cd-operations 
+            return api_ita_cd.get_cd_operations(workspace_id)
+        else:
+            # Error
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+
+@app.route('/workspace/<int:workspace_id>/it-automation/cd/execute', methods=['POST'])
+def call_ita_cd_execute(workspace_id):
+    """workspace/workspace_id/it-automation/cd/execute call
+
+    Args:
+        workspace_id (int): workspace id
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'POST':
+            # it-automation cd execute
+            return api_ita_cd.cd_execute(workspace_id)
+        else:
+            # Error
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+
+def create_ita(workspace_id):
+    """IT-Automation Pod Create
+
+    Args:
+        workspace_id (int): workspace id
 
     Returns:
         Response: HTTP Respose
@@ -190,7 +323,7 @@ def settings_ita(workspace_id):
     """IT-Automation 設定
 
     Args:
-        workspace_id (int): ワークスペースID
+        workspace_id (int): workspace id
 
     Returns:
         Response: HTTP Respose
@@ -355,7 +488,7 @@ def get_access_info(workspace_id):
     """ワークスペースアクセス情報取得
 
     Args:
-        workspace_id (int): ワークスペースID
+        workspace_id (int): workspace id
 
     Returns:
         json: アクセス情報
@@ -647,6 +780,37 @@ def is_ita_pod_running(namespace):
     else:
         return False
     # return (pod_describe['items'][0]['status']['phase'] == "Running")
+
+
+def settings_git_environment(workspace_id):
+    """git environment setting
+
+    Args:
+        workspace_id (int): workspace ID
+
+    Returns:
+        Response: HTTP Respose
+    """
+
+    app_name = "ワークスペース情報:"
+    exec_stat = "IT-Automation git情報設定"
+    error_detail = ""
+
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
+        globals.logger.debug('#' * 50)
+
+        # 正常終了
+        ret_status = 200
+
+        # 戻り値をそのまま返却        
+        return jsonify({"result": ret_status}), ret_status
+
+    except common.UserException as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+    except Exception as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
 
 
 if __name__ == "__main__":
