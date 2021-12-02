@@ -107,3 +107,28 @@ def is_json_format(str):
     except Exception:
         return False
     return True
+
+
+def get_namespace_name(workspace_id):
+    """workspace_idに対するnamespace名取得
+
+    Args:
+        workspace_id (int): workspace ID
+
+    Returns:
+        str: namespace name
+    """
+    return  'epoch-ws-{}'.format(workspace_id)
+
+
+def get_pipeline_name(workspace_id):
+    """workspace_idに対するpipeline namespace名取得
+
+    Args:
+        workspace_id (int): workspace ID
+
+    Returns:
+        str: pipeline namespace name
+    """
+    return  'epoch-tekton-pipeline-{}'.format(workspace_id)
+

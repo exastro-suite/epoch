@@ -54,7 +54,49 @@ def post_manifest_parameter(workspace_id):
         globals.logger.debug('#' * 50)
         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
         globals.logger.debug('#' * 50)
-    
+
+        # ヘッダ情報 post header info.
+        post_headers = {
+            'Content-Type': 'application/json',
+        }
+
+        # 引数をJSON形式で受け取りそのまま引数に設定 Receive the argument in JSON format and set it as it is
+        post_data = request.json.copy()
+
+        # send put (workspace data update)
+        apiInfo = "{}://{}:{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'], os.environ['EPOCH_RS_WORKSPACE_HOST'], os.environ['EPOCH_RS_WORKSPACE_PORT'])
+        globals.logger.debug("workspace put call: worksapce_id:{}".format(workspace_id))
+        request_response = requests.put( "{}/workspace/{}/manifestParameter".format(apiInfo, workspace_id), headers=post_headers, data=post_data)
+        # エラーの際は処理しない
+        if request_response.status_code != 200:
+            globals.logger.error("call rs workspace error:{}".format(request_response.status_code))
+            error_detail = "ワークスペース情報更新失敗"
+            raise common.Userexception(error_detail)
+
+        # ヘッダ情報
+        post_headers = {
+            'Content-Type': 'application/json',
+        }
+
+        # 引数をJSON形式で受け取りそのまま引数に設定 Receive the argument in JSON format and set it as it is
+        post_data = request.json.copy()
+
+        # 呼び出すapiInfoは、環境変数より取得
+        apiInfo = "{}://{}:{}".format(os.environ["EPOCH_CICD_PROTOCOL"], os.environ["EPOCH_CICD_HOST"], os.environ["EPOCH_CICD_PORT"])
+        globals.logger.debug("apiInfo:" + apiInfo)
+
+        # Manifestパラメータ設定(ITA)
+        globals.logger.debug("ita/manifestParameter post call: worksapce_id:{}".format(workspace_id))
+        request_response = requests.post( "{}/ita/manifestParameter".format(apiInfo), headers=post_headers, data=post_data)
+        # globals.logger.debug("ita/manifestParameter:response:" + request_response.text.encode().decode('unicode-escape'))
+        ret = json.loads(request_response.text)
+        #ret = request_response.text
+        # globals.logger.debug(ret["result"])
+        if request_response.status_code != 200:
+            globals.logger.error("call ita/manifestParameter error:{}".format(request_response.status_code))
+            error_detail = "IT-Automation パラメータ登録失敗"
+            raise common.Userexception(error_detail)
+
         # 正常終了 normal return code
         ret_status = 200
 
