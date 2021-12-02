@@ -17,5 +17,4 @@ COPY ./command /usr/local/bin
 
 RUN chmod +x /usr/local/bin/*
 
-# TEST
-ENTRYPOINT ["/bin/sh", "-c", "while :; do sleep 10; done"]
+# ENTRYPOINT ["/bin/sh", "-c", "while :; do sleep 10; done"]
