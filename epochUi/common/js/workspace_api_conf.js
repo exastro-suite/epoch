@@ -54,9 +54,9 @@ var workspace_api_conf = {
             "post":     URL_BASE + "/api2/workspace/{workspace_id}/manifest/parameter",
         },
         "manifestTemplate": {
-            "post" :    URL_BASE + "/api2/workspace/{workspace_id}/manifests/template",
-            "get" :     URL_BASE + "/api2/workspace/{workspace_id}/manifests/template",
-            "delete" :  URL_BASE + "/api2/workspace/{workspace_id}/manifests/template/{file_id}",
+            "post" :    URL_BASE + "/api2/workspace/{workspace_id}/manifest/template",
+            "get" :     URL_BASE + "/api2/workspace/{workspace_id}/manifest/template",
+            "delete" :  URL_BASE + "/api2/workspace/{workspace_id}/manifest/template/{file_id}",
         },
         "cdExecDesignation": {
             "post" :    URL_BASE + "/api2/workspace/{workspace_id}/cd/exec",
