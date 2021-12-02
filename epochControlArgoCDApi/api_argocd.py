@@ -38,6 +38,8 @@ app = Flask(__name__)
 app.config.from_envvar('CONFIG_API_ARGOCD_PATH')
 globals.init(app)
 
+WAIT_APPLICATION_DELETE = 180 # アプリケーションが削除されるまでの最大待ち時間
+
 @app.route('/alive', methods=["GET"])
 def alive():
     """死活監視
@@ -205,11 +207,147 @@ def argocd_settings(workspace_id):
     Returns:
         Response: HTTP Respose
     """
-    ret_status = 200
 
-    # 戻り値をそのまま返却        
-    return jsonify({"result": ret_status}), ret_status
+    # ワークスペースアクセス情報取得
+    access_data = get_access_info(workspace_id)
 
+    argo_host = 'argocd-server.epoch-ws-{}.svc'.format(workspace_id)
+    argo_id = access_data['ARGOCD_USER']
+    argo_password = access_data['ARGOCD_PASSWORD']
+
+    # 引数で指定されたCD環境を取得
+    request_json = json.loads(request.data)
+    request_ci_env = request_json["ci_config"]["environments"]
+    request_cd_env = request_json["cd_config"]["environments"]
+
+    try:
+        #
+        # argocd login
+        #
+        globals.logger.debug("argocd login :")
+        globals.logger.debug("argo_host {} , argo_id {} , argo_password {}".format(argo_host, argo_id, argo_password))
+        stdout_cd = subprocess.check_output(["argocd","login",argo_host,"--insecure","--username",argo_id,"--password",argo_password],stderr=subprocess.STDOUT)
+        globals.logger.debug(stdout_cd.decode('utf-8'))
+
+        #
+        # repo setting
+        #
+        # リポジトリ情報の一覧を取得する
+        globals.logger.debug("argocd repo list :")
+        stdout_cd = subprocess.check_output(["argocd","repo","list","-o","json"],stderr=subprocess.STDOUT)
+        globals.logger.debug(stdout_cd.decode('utf-8'))
+
+        # 設定済みのリポジトリ情報をクリア
+        repo_list = json.loads(stdout_cd)
+        for repo in repo_list:
+            globals.logger.debug("argocd repo rm [repo] {} :".format(repo['repo']))
+            stdout_cd = subprocess.check_output(["argocd","repo","rm",repo['repo']],stderr=subprocess.STDOUT)
+            globals.logger.debug(stdout_cd.decode('utf-8'))
+
+        # 環境群数分処理を実行
+        for env in request_cd_env:
+            env_name = env["name"]
+            gitUrl = ""
+            for ci_env in request_ci_env:
+                if ci_env["environment_id"] == env["environment_id"]:
+                    gitUrl = ci_env["git_url"]
+                    gitUsername = ci_env["git_user"]
+                    gitPassword = ci_env["git_password"]
+                    housing = ci_env["git_housing"]
+                    break
+            
+            # レポジトリの情報を追加
+            globals.logger.debug ("argocd repo add :")
+            if housing == "inner":
+                stdout_cd = subprocess.check_output(["argocd","repo","add","--insecure-ignore-host-key",gitUrl,"--username",gitUsername,"--password",gitPassword],stderr=subprocess.STDOUT)
+            else:
+                stdout_cd = subprocess.check_output(["argocd","repo","add",gitUrl,"--username",gitUsername,"--password",gitPassword],stderr=subprocess.STDOUT)
+            globals.logger.debug(stdout_cd.decode('utf-8'))
+
+        #
+        # app setting
+        #
+        # アプリケーション情報の一覧を取得する
+        globals.logger.debug("argocd app list :")
+        stdout_cd = subprocess.check_output(["argocd","app","list","-o","json"],stderr=subprocess.STDOUT)
+        globals.logger.debug(stdout_cd.decode('utf-8'))
+
+        # アプリケーション情報を削除する
+        app_list = json.loads(stdout_cd)
+        for app in app_list:
+            globals.logger.debug('argocd app delete [app] {} :'.format(app['metadata']['name']))
+            stdout_cd = subprocess.check_output(["argocd","app","delete",app['metadata']['name'],"-y"],stderr=subprocess.STDOUT)
+
+        # アプリケーションが消えるまでWaitする
+        globals.logger.debug("wait : argocd app list clean")
+
+        for i in range(WAIT_APPLICATION_DELETE):
+            # アプリケーションの一覧を取得し、結果が0件になるまでWaitする
+            stdout_cd = subprocess.check_output(["argocd","app","list","-o","json"],stderr=subprocess.STDOUT)
+            app_list = json.loads(stdout_cd)
+            if len(app_list) == 0:
+                break
+            time.sleep(1) # 1秒ごとに確認
+
+        globals.logger.debug(stdout_cd.decode('utf-8'))
+
+        # 環境群数分処理を実行
+        # keyList = request_deploy["enviroments"].keys()
+        # for key in keyList:
+        #     logger.debug ("KEY:" + key)
+        #     env_name = key
+        #     env_value = request_deploy["enviroments"][key]
+        #     gitUrl = env_value["git"]["url"]
+        #     cluster = env_value["cluster"]
+        #     namespace = env_value["namespace"]
+        for env in request_cd_env:
+            env_name = env["name"]
+            cluster = env["deploy_destination"]["cluster_url"]
+            namespace = env["deploy_destination"]["namespace"]
+            gitUrl = ""
+            # manifest git urlは、ci_configより取得
+            for ci_env in request_ci_env:
+                if ci_env["environment_id"] == env["environment_id"]:
+                    gitUrl = ci_env["git_url"]
+                    break
+
+            # namespaceの存在チェック
+            ret = common.get_namespace(namespace)
+            if ret is None:
+                # 存在しない(None)ならnamespace作成
+                ret = common.create_namespace(namespace)
+
+                if ret is None:
+                    # namespaceの作成に失敗(None)した場合はエラー
+                    raise Exception
+
+            # argocd app create catalogue \
+            # --repo [repogitory URL] \
+            # --path ./ \
+            # --dest-server https://kubernetes.default.svc \
+            # --dest-namespace [namespace] \
+            # --auto-prune \
+            # --sync-policy automated
+            # アプリケーション作成
+            globals.logger.debug("argocd app create :")
+            stdout_cd = subprocess.check_output(["argocd","app","create",env_name,
+                "--repo",gitUrl,
+                "--path","./",
+                "--dest-server",cluster,
+                "--dest-namespace",namespace,
+                "--auto-prune",
+                "--sync-policy","automated",
+                ],stderr=subprocess.STDOUT)
+            globals.logger.debug(stdout_cd.decode('utf-8'))
+
+        ret_status = 200
+
+        # 戻り値をそのまま返却        
+        return jsonify({"result": ret_status}), ret_status
+
+    except Exception as e:
+        globals.logger.debug ("argocd_settings Exception:{}".format(e.args))
+        raise
 
 def get_access_info(workspace_id):
     """ワークスペースアクセス情報取得
