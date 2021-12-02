@@ -66,47 +66,50 @@ def post_cd_pipeline(workspace_id):
 
         # epoch-control-argocd-api の呼び先設定
         api_url = "{}://{}:{}/workspace/{}/argocd/settings".format(os.environ['EPOCH_CONTROL_ARGOCD_PROTOCOL'],
-                                                                   os.environ['EPOCH_CONTROL_ARGOCD_HOST'],
-                                                                   os.environ['EPOCH_CONTROL_ARGOCD_PORT'],
-                                                                   workspace_id)
+                                                                    os.environ['EPOCH_CONTROL_ARGOCD_HOST'],
+                                                                    os.environ['EPOCH_CONTROL_ARGOCD_PORT'],
+                                                                    workspace_id)
         # argocd/settings post送信
-        # response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
-        # globals.logger.debug("post argocd/settings response:{}".format(response.text))
+        response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
+        globals.logger.debug("post argocd/settings response:{}".format(response.text))
 
-        # if response.status_code != 200:
-        #     error_detail = 'argocd/settings post処理に失敗しました'
-        #     raise common.UserException(error_detail)
+        if response.status_code != 200:
+            error_detail = 'argocd/settings post処理に失敗しました'
+            raise common.UserException(error_detail)
 
         # authentication-infra-api の呼び先設定
         api_url_epai = "{}://{}:{}/".format(os.environ["EPOCH_EPAI_API_PROTOCOL"], 
                                             os.environ["EPOCH_EPAI_API_HOST"], 
                                             os.environ["EPOCH_EPAI_API_PORT"])
 
-        # postする情報
+        # get namespace
+        namespace = common.get_namespace_name(workspace_id)
+
+        # get pipeline name
+        pipeline_name = common.get_pipeline_name(workspace_id)
+
+        # postする情報 post information
         clients = [
             {
                 "client_id" :   'epoch-ws-{}-ita'.format(workspace_id),
                 "client_host" : os.environ["EPOCH_EPAI_HOST"],
                 "client_protocol" : "https",
-                # "client_port" : "31183",
                 "conf_template" : "epoch-ws-ita-template.conf",
-                "backend_url" : "http://it-automation.epoch-workspace.svc:8084/",
+                "backend_url" : "http://it-automation.{}.svc:8084/".format(namespace),
             },
             {
                 "client_id" :   'epoch-ws-{}-argocd'.format(workspace_id),
                 "client_host" : os.environ["EPOCH_EPAI_HOST"],
                 "client_protocol" : "https",
-                # "client_port" : "31184",
                 "conf_template" : "epoch-ws-argocd-template.conf",
-                "backend_url" : "https://argocd-server.epoch-workspace.svc/",
+                "backend_url" : "https://argocd-server.{}.svc/".format(namespace),
             },
             {
                 "client_id" :   'epoch-ws-{}-sonarqube'.format(workspace_id),
                 "client_host" : os.environ["EPOCH_EPAI_HOST"],
                 "client_protocol" : "https",
-                # "client_port" : "31185",
                 "conf_template" : "epoch-ws-sonarqube-template.conf",
-                "backend_url" : "http://sonarqube.epoch-tekton-pipeline-1.svc:9000/",
+                "backend_url" : "http://sonarqube.{}.svc:9000/".format(pipeline_name),
             },
         ]
 
@@ -119,7 +122,7 @@ def post_cd_pipeline(workspace_id):
             if response.status_code != 200:
                 globals.logger.debug(response.text)
                 error_detail = "認証基盤 初期情報設定の生成に失敗しました。 {}".format(response.status_code)
-                raise Exception
+                raise common.UserException(error_detail)
 
         exec_stat = "認証基盤 設定読み込み"
         response = requests.put("{}{}".format(api_url_epai, 'apply_settings'))
@@ -127,7 +130,7 @@ def post_cd_pipeline(workspace_id):
         # 正常時以外はExceptionを発行して終了する
         if response.status_code != 200:
             error_detail = "認証基盤 設定読み込みに失敗しました。 {}".format(response.status_code)
-            raise Exception
+            raise common.UserException(error_detail)
 
         ret_status = 200
 
@@ -152,6 +155,67 @@ def cd_execute(workspace_id):
 
     app_name = "ワークスペース情報:"
     exec_stat = "CD実行"
+    error_detail = ""
+
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
+        globals.logger.debug('#' * 50)
+    
+        # 正常終了 normal return code
+        ret_status = 200
+
+        return jsonify({"result": ret_status}), ret_status
+
+    except common.UserException as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+    except Exception as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+
+
+def get_cd_pipeline_result(workspace_id):
+    """cdパイプライン結果取得 cd pipeline result
+
+    Args:
+        workspace_id (int): workspace ID
+
+    Returns:
+        Response: HTTP Respose
+    """
+
+    app_name = "ワークスペース情報:"
+    exec_stat = "CDパイプライン結果取得"
+    error_detail = ""
+
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
+        globals.logger.debug('#' * 50)
+    
+        # 正常終了 normal return code
+        ret_status = 200
+
+        return jsonify({"result": ret_status}), ret_status
+
+    except common.UserException as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+    except Exception as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+
+
+def get_cd_pipeline_result_taskrun_logs(workspace_id, taskrun_name):
+    """cdパイプライン結果取得 cd pipeline result
+
+    Args:
+        workspace_id (int): workspace ID
+        taskrun_name (str): taskrun name
+
+    Returns:
+        Response: HTTP Respose
+    """
+
+    app_name = "ワークスペース情報:"
+    exec_stat = "タスク実行"
     error_detail = ""
 
     try:

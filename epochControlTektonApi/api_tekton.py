@@ -67,6 +67,8 @@ templates = {
 
 # event lstener名
 event_listener_name='event-listener'
+event_listener_resource_name='eventlistener.triggers.tekton.dev/event-listener'
+event_listener_delete_timeout=30
 
 # yamlの出力先
 dest_folder='/var/epoch/tekton'
@@ -387,6 +389,15 @@ def delete_workspace_pipeline(workspace_id, kind):
 
             db.commit()
 
+    # event-listenerが消え去ることを確認
+    for i in range(event_listener_delete_timeout):
+        try:
+            result = subprocess.check_output(['kubectl', 'get', event_listener_resource_name, '-n', tekton_pipeline_namespace(workspace_id)], stderr=subprocess.STDOUT)
+            globals.logger.debug('wait for event listener deleted ...')
+            time.sleep(1)
+        except subprocess.CalledProcessError as e:
+            globals.logger.debug('event listener deleted')
+            break
 
 @app.route('/workspace/<int:workspace_id>/tekton/pipeline', methods=['DELETE'])
 def delete_tekton_pipeline(workspace_id):
