@@ -175,7 +175,7 @@ def call_cd_pipeline(workspace_id):
         return common.server_error(e)
 
 
-@app.route('/workspace/<int:workspace_id>/manifest/parameter', methods=['POST','PUT'])
+@app.route('/workspace/<int:workspace_id>/manifest/parameter', methods=['POST'])
 def call_manifest_parameter(workspace_id):
     """workspace/workspace_id/manifest/parameter Call
 
@@ -193,9 +193,6 @@ def call_manifest_parameter(workspace_id):
         if request.method == 'POST':
             # manifest parameter setting (post)
             return api_service_manifest.post_manifest_parameter(workspace_id)
-        elif request.method == 'PUT':
-            # manifest parameter setting (put)
-            return api_service_manifest.put_manifest_parameter(workspace_id)
         else:
             # Error
             raise Exception("method not support!")
