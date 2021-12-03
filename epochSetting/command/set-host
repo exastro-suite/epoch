@@ -182,6 +182,7 @@ curl \
     -X POST \
     -H  'content-type: application/json'    \
     -d  @- \
+    -Ss \
     -o "${API_RESPONSE}" \
     http://authentication-infra-api.exastro-platform-authentication-infra.svc:8000/settings \
     << EOF
