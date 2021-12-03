@@ -108,36 +108,6 @@ def post_manifest_parameter(workspace_id):
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
 
 
-def put_manifest_parameter(workspace_id):
-    """manifest パラメータ更新 manifest parameter update
-
-    Args:
-        workspace_id (int): workspace ID
-
-    Returns:
-        Response: HTTP Respose
-    """
-
-    app_name = "ワークスペース情報:"
-    exec_stat = "manifestパラメータ更新"
-    error_detail = ""
-
-    try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
-    
-        # 正常終了 normal return code
-        ret_status = 200
-
-        return jsonify({"result": ret_status}), ret_status
-
-    except common.UserException as e:
-        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
-    except Exception as e:
-        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
-
-
 def post_manifest_template(workspace_id):
     """manifest テンプレート登録 manifest template registration
 

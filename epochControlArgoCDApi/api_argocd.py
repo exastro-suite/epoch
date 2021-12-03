@@ -208,6 +208,10 @@ def argocd_settings(workspace_id):
         Response: HTTP Respose
     """
 
+    app_name = "ワークスペース情報:"
+    exec_stat = "ArgoCD設定"
+    error_detail = ""
+
     # ワークスペースアクセス情報取得
     access_data = get_access_info(workspace_id)
 
@@ -225,7 +229,6 @@ def argocd_settings(workspace_id):
         # argocd login
         #
         globals.logger.debug("argocd login :")
-        globals.logger.debug("argo_host {} , argo_id {} , argo_password {}".format(argo_host, argo_id, argo_password))
         stdout_cd = subprocess.check_output(["argocd","login",argo_host,"--insecure","--username",argo_id,"--password",argo_password],stderr=subprocess.STDOUT)
         globals.logger.debug(stdout_cd.decode('utf-8'))
 
@@ -256,6 +259,9 @@ def argocd_settings(workspace_id):
                     housing = ci_env["git_housing"]
                     break
             
+            exec_stat = "ArgoCD設定 - リポジトリ作成"
+            error_detail = "IaCリポジトリの設定内容を確認してください"
+
             # レポジトリの情報を追加
             globals.logger.debug ("argocd repo add :")
             if housing == "inner":
@@ -289,8 +295,6 @@ def argocd_settings(workspace_id):
                 break
             time.sleep(1) # 1秒ごとに確認
 
-        globals.logger.debug(stdout_cd.decode('utf-8'))
-
         # 環境群数分処理を実行
         # keyList = request_deploy["enviroments"].keys()
         # for key in keyList:
@@ -318,8 +322,12 @@ def argocd_settings(workspace_id):
                 ret = common.create_namespace(namespace)
 
                 if ret is None:
-                    # namespaceの作成に失敗(None)した場合はエラー
-                    raise Exception
+                    # namespaceの作成で失敗(None)が返ってきた場合はエラー
+                    error_detail = 'create namespace処理に失敗しました'
+                    raise common.UserException(error_detail)
+
+            exec_stat = "ArgoCD設定 - アプリケーション作成"
+            error_detail = "ArgoCDの入力内容を確認してください"
 
             # argocd app create catalogue \
             # --repo [repogitory URL] \
@@ -345,9 +353,10 @@ def argocd_settings(workspace_id):
         # 戻り値をそのまま返却        
         return jsonify({"result": ret_status}), ret_status
 
+    except common.UserException as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
     except Exception as e:
-        globals.logger.debug ("argocd_settings Exception:{}".format(e.args))
-        raise
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
 
 def get_access_info(workspace_id):
     """ワークスペースアクセス情報取得
