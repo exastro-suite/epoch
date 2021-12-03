@@ -127,6 +127,102 @@ def post_manifest_template(workspace_id):
         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
         globals.logger.debug('#' * 50)
     
+        apiInfo = "{}://{}:{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+                                      os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                      os.environ['EPOCH_RS_WORKSPACE_PORT'])
+
+        # ヘッダ情報
+        post_headers = {
+            'Content-Type': 'application/json',
+        }
+
+        # データ情報(追加用)
+        post_data_add = {
+            "manifests": [
+
+            ]
+        }
+
+        # データ情報(更新用)
+        post_data_upd = {
+            "manifests": [
+
+            ]
+        }
+
+        # RsWorkspace API呼び出し(全件取得)
+        response = requests.get("{}/workspace/{}/manifests".format(apiInfo, workspace_id), headers=post_headers)
+
+        # 戻り値が正常値以外の場合は、処理を終了
+        if response.status_code != 200:
+            raise Exception("CALL responseAPI /manifests Error")
+
+        ret_manifests = json.loads(response.text)
+        globals.logger.debug("get Filedata ------------------ S")
+        globals.logger.debug(ret_manifests["rows"])
+        globals.logger.debug("get Filedata ------------------ E")
+
+        # 送信されたマニフェストファイル数分処理する
+        for manifest_file in request.files.getlist('manifest_files'):
+
+            with manifest_file.file as f:
+
+                file_text = ''
+
+                # ↓ 2重改行になっているので、変更するかも ↓
+                for line in f.readlines():
+
+                    file_text += line.decode('utf-8')
+
+            # ファイル情報(manifest_data)
+            manifest_data = {
+                "file_name": manifest_file.name,
+                "file_text": file_text
+            }
+
+            # 同一ファイルがあるかファイルIDを取得
+            file_id = common.get_file_id(ret_manifests["rows"], manifest_file.name)
+            
+            # 同一ファイル名が登録されている場合は、更新とする
+            if not file_id:
+                # データ登録情報(manifest_dataと結合)
+                post_data_add['manifests'].append(manifest_data)
+            else:
+                manifest_data["file_id"] = file_id 
+                # データ更新情報(manifest_dataと結合)
+                post_data_upd['manifests'].append(manifest_data)
+
+        globals.logger.debug("post_data_add ------------------ S")
+        globals.logger.debug(post_data_add)
+        globals.logger.debug("post_data_add ------------------ E")
+
+        globals.logger.debug("post_data_upd ------------------ S")
+        globals.logger.debug(post_data_upd)
+        globals.logger.debug("post_data_upd ------------------ E")
+
+        # RsWorkspace API呼び出し(削除)
+        # response = requests.delete( apiInfo + "/workspace/" + str(workspace_id) + "/manifests", headers=post_headers)
+
+        # 更新は１件ずつ実施
+        for upd in post_data_upd['manifests']:
+            # JSON形式に変換
+            post_data = json.dumps(upd)
+
+            # RsWorkspace API呼び出し(更新)
+            response = requests.put( "{}/workspace/{}/manifests/{}".format(apiInfo, workspace_id, upd["file_id"]), headers=post_headers, data=post_data)
+
+        # JSON形式に変換
+        post_data = json.dumps(post_data_add)
+
+        # RsWorkspace API呼び出し(登録)
+        response = requests.post( "{}/workspace/{}/manifests".format(apiInfo, workspace_id), headers=post_headers, data=post_data)
+
+        # ITA呼び出し
+        globals.logger.debug("CALL ita_registration Start")
+        response = ita_registration(workspace_id)
+        globals.logger.debug("CALL ita_registration End response:")
+        globals.logger.debug(response)
+
         # 正常終了 normal return code
         ret_status = 200
 
@@ -138,18 +234,19 @@ def post_manifest_template(workspace_id):
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
 
 
-def get_manifest_template_list(workspace_id):
+def get_manifest_template_list(workspace_id, file_id):
     """manifest テンプレート登録 manifest template registration
 
     Args:
         workspace_id (int): workspace ID
+        file_id (int): file ID
 
     Returns:
         Response: HTTP Respose
     """
 
     app_name = "ワークスペース情報:"
-    exec_stat = "manifestテンプレート登録"
+    exec_stat = "manifestテンプレート取得"
     error_detail = ""
 
     try:
@@ -157,13 +254,38 @@ def get_manifest_template_list(workspace_id):
         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
         globals.logger.debug('#' * 50)
     
-        rows = [
-            {
-                "file_id": 1,
-                "file_name": "file1",
-            }
-        ]
+        resourceProtocol = os.environ['EPOCH_RS_WORKSPACE_PROTOCOL']
+        resourceHost = os.environ['EPOCH_RS_WORKSPACE_HOST']
+        resourcePort = os.environ['EPOCH_RS_WORKSPACE_PORT']
+        apiurl = "{}://{}:{}/workspace/{}/manifests/{}".format(resourceProtocol, resourceHost, resourcePort, workspace_id, file_id)
 
+        # ヘッダ情報
+        headers = {
+            'Content-Type': 'application/json',
+        }
+
+        # GET送信（作成）
+        response = requests.get(apiurl, headers=headers)
+
+        globals.logger.debug("get_manifests return --------------------")
+        globals.logger.debug(json.loads(response.text))
+        globals.logger.debug("--------------------")
+
+        if response.status_code == 200 and common.isJsonFormat(response.text):
+            error_detail = '取得データ(JSON)の形式が正しくありません'
+            raise common.UserException(error_detail)
+
+        elif response.status_code == 404:
+            error_detail = 'manifest template data not found'
+            raise common.UserException(error_detail)
+        
+        elif response.status_code != 200:
+            # 200(正常), 404(not found) 以外の応答の場合
+            error_detail = 'CALL responseAPI Error'
+            raise Exception
+
+        rows = response.text
+        
         # 正常終了 normal return code
         ret_status = 200
 
@@ -195,6 +317,39 @@ def delete_manifest_template(workspace_id, file_id):
         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
         globals.logger.debug('#' * 50)
     
+        # ヘッダ情報
+        headers = {
+            'Content-Type': 'application/json',
+        }
+
+        # DELETE送信（作成）
+        resourceProtocol = os.environ['EPOCH_RS_WORKSPACE_PROTOCOL']
+        resourceHost = os.environ['EPOCH_RS_WORKSPACE_HOST']
+        resourcePort = os.environ['EPOCH_RS_WORKSPACE_PORT']
+        apiurl = "{}://{}:{}/workspace/{}/manifests/{}".format(resourceProtocol, resourceHost, resourcePort, workspace_id, file_id)
+
+        response = requests.delete(apiurl, headers=headers)
+
+        if response.status_code == 200 and common.isJsonFormat(response.text):
+            error_detail = '取得データ(JSON)の形式が正しくありません'
+            raise common.UserException(error_detail)
+
+        elif response.status_code == 404:
+            # manifestデータが見つからない(404)場合
+            error_detail = 'manifest template data not found'
+            raise common.UserException(error_detail)
+
+        elif response.status_code != 200:
+            # 200(正常), 404(not found) 以外の応答の場合
+            error_detail = 'CALL responseAPI Error'
+            raise Exception
+
+        # ITA呼び出し
+        globals.logger.debug("CALL ita_registration Start")
+        response = ita_registration(workspace_id)
+        globals.logger.debug("CALL ita_registration End response:")
+        globals.logger.debug(response)
+
         # 正常終了 normal return code
         ret_status = 200
 
@@ -204,3 +359,76 @@ def delete_manifest_template(workspace_id, file_id):
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
     except Exception as e:
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+
+
+def ita_registration(workspace_id):
+    """ITA登録
+
+    Args:
+        workspace_id (Int): ワークスペースID
+
+    Returns:
+        Json: 設定したManifest情報
+    """
+
+    try:
+        globals.logger.debug("CALL ita_registration")
+
+        # post先のURL初期化
+        resourceProtocol = os.environ['EPOCH_RS_WORKSPACE_PROTOCOL']
+        resourceHost = os.environ['EPOCH_RS_WORKSPACE_HOST']
+        resourcePort = os.environ['EPOCH_RS_WORKSPACE_PORT']
+        apiurl = "{}://{}:{}/workspace/{}/manifests".format(resourceProtocol, resourceHost, resourcePort, workspace_id)
+
+        # ヘッダ情報
+        post_headers = {
+            'Content-Type': 'application/json',
+        }
+
+        globals.logger.debug("CALL responseAPI : url:{}".format(apiurl))
+        # RsWorkspace API呼び出し
+        response = requests.get(apiurl, headers=post_headers)
+#        print("CALL responseAPI : response:{}, text:{}".format(response, response.text))
+
+        # 戻り値が正常値以外の場合は、処理を終了
+        if response.status_code != 200:
+            raise Exception("CALL responseAPI Error")
+
+        # json形式変換
+        ret_manifests = json.loads(response.text)
+        # print("--------------------------")
+        # print("manifest Json")
+        # print(response.text)
+        # print(ret_manifests['rows'])
+#        print(json.loads(manifest_data))
+        # print("--------------------------")
+
+        # パラメータ情報(JSON形式)
+        ita_protocol = os.environ['EPOCH_CONTROL_ITA_PROTOCOL']
+        ita_host = os.environ['EPOCH_CONTROL_ITA_HOST']
+        ita_port = os.environ['EPOCH_CONTROL_ITA_PORT']
+
+        send_data = { "manifests": 
+            ret_manifests['rows']
+        }
+        globals.logger.debug("--------------------------")
+        globals.logger.debug("send_data:")
+        globals.logger.debug(send_data)
+        globals.logger.debug("--------------------------")
+
+        send_data = json.dumps(send_data)
+
+        apiurl = "{}://{}:{}/workspace/{}/it-automation/manifest/templates".format(ita_protocol, ita_host, ita_port, workspace_id)
+
+        # RsWorkspace API呼び出し
+        response = requests.post(apiurl, headers=post_headers, data=send_data)
+        globals.logger.debug("CALL manifestTemplates : status:{}".format(response.status_code))
+
+        # 正常時はmanifest情報取得した内容を返却
+        if response.status_code == 200:
+            return ret_manifests['rows']
+        else:
+            raise Exception("post manifestTemplates Error")
+
+    except Exception:
+        raise

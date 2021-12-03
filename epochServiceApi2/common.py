@@ -132,3 +132,29 @@ def get_pipeline_name(workspace_id):
     """
     return  'epoch-tekton-pipeline-{}'.format(workspace_id)
 
+
+def get_file_id(dict, fileName):
+    """辞書からfile_nameの値が一致するものがあるかチェックする
+
+    Args:
+        dict (json): 検索する対象Json
+        fileName (String): 検索対象ファイル名（完全一致）
+
+    Returns:
+        String: ファイルID
+    """
+
+    try:
+        # 戻り値の初期化
+        file_id = ""
+
+        for dictP in dict:
+            # 該当する文字列が一致した場合は、処理を抜ける
+            if dictP["file_name"] == fileName:
+                file_id = dictP["id"]
+                break
+
+        return file_id
+
+    except Exception:
+        raise
