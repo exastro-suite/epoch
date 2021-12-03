@@ -74,6 +74,8 @@ def post_cd_pipeline(workspace_id):
         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
         globals.logger.debug('#' * 50)
 
+
+
         # ヘッダ情報
         post_headers = {
             'Content-Type': 'application/json',
@@ -82,6 +84,32 @@ def post_cd_pipeline(workspace_id):
         # 引数をJSON形式で受け取りそのまま引数に設定
         post_data = request.json.copy()
 
+        exec_stat = "CDパイプライン情報設定(ITA - Git環境情報設定)"
+
+        # epoch-control-ita-api の呼び先設定
+        api_url = "{}://{}:{}/workspace/{}/it-automation/manifest/git".format(os.environ['EPOCH_CONTROL_ITA_PROTOCOL'],
+                                                                            os.environ['EPOCH_CONTROL_ITA_HOST'],
+                                                                            os.environ['EPOCH_CONTROL_ITA_PORT'],
+                                                                            workspace_id)
+
+        # パイプライン設定(ITA - Git環境情報設定)
+        response = requests.post( api_url, headers=post_headers, data=json.dumps(post_data))
+        globals.logger.debug("it-automation/manifest/git:response:" + response.text)
+        if response.status_code != 200 and response.status_code != 201:
+            if common.is_json_format(response.text):
+                ret = json.loads(response.text)
+                globals.logger.debug(ret["result"])
+                if "errorDetail" in ret:
+                    exec_detail = ret["errorDetail"]
+                else:
+                    exec_detail = ""
+                raise common.UserException(exec_detail)
+            else:
+                globals.logger.debug(response.text)
+                error_detail = 'it-automation/manifest/git post処理に失敗しました'
+                raise common.UserException(error_detail)
+
+        exec_stat = "CDパイプライン情報設定(ArgoCD設定)"
         # epoch-control-argocd-api の呼び先設定
         api_url = "{}://{}:{}/workspace/{}/argocd/settings".format(os.environ['EPOCH_CONTROL_ARGOCD_PROTOCOL'],
                                                                     os.environ['EPOCH_CONTROL_ARGOCD_HOST'],

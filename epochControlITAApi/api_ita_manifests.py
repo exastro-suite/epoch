@@ -127,6 +127,9 @@ def settings_git_environment(workspace_id):
         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
         globals.logger.debug('#' * 50)
 
+        # パラメータ情報(JSON形式) prameter save
+        payload = request.json.copy()
+
         # ワークスペースアクセス情報取得
         access_info = api_access_info.get_access_info(workspace_id)
 
@@ -451,9 +454,12 @@ def settings_manifest_parameter(workspace_id):
         # Responseデータの初期化
         response = {"result":"200",}
 
+        globals.logger.debug("opelist:{}".format(opelist_json['resultdata']['CONTENTS']['BODY']))
         # マニフェスト環境パラメータのデータ成型
         maniparam_edit = []
         for environment in payload['ci_config']['environments']:
+
+            globals.logger.debug("git_url:{}".format(environment['git_url']))
 
             idx_ope = search_opration(opelist_json['resultdata']['CONTENTS']['BODY'], column_indexes_opelist, environment['git_url'])
 

@@ -66,12 +66,12 @@ def post_manifest_parameter(workspace_id):
         # send put (workspace data update)
         apiInfo = "{}://{}:{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'], os.environ['EPOCH_RS_WORKSPACE_HOST'], os.environ['EPOCH_RS_WORKSPACE_PORT'])
         globals.logger.debug("workspace put call: worksapce_id:{}".format(workspace_id))
-        request_response = requests.put( "{}/workspace/{}/manifestParameter".format(apiInfo, workspace_id), headers=post_headers, data=post_data)
+        request_response = requests.put( "{}/workspace/{}/manifestParameter".format(apiInfo, workspace_id), headers=post_headers, data=json.dumps(post_data))
         # エラーの際は処理しない
         if request_response.status_code != 200:
             globals.logger.error("call rs workspace error:{}".format(request_response.status_code))
             error_detail = "ワークスペース情報更新失敗"
-            raise common.Userexception(error_detail)
+            raise common.UserException(error_detail)
 
         # ヘッダ情報
         post_headers = {
@@ -87,7 +87,7 @@ def post_manifest_parameter(workspace_id):
 
         # Manifestパラメータ設定(ITA)
         globals.logger.debug("ita/manifestParameter post call: worksapce_id:{}".format(workspace_id))
-        request_response = requests.post( "{}/workspace/{}/it-automation/manifest/parameter".format(apiInfo, workspace_id), headers=post_headers, data=post_data)
+        request_response = requests.post( "{}/workspace/{}/it-automation/manifest/parameter".format(apiInfo, workspace_id), headers=post_headers, data=json.dumps(post_data))
         # globals.logger.debug("ita/manifestParameter:response:" + request_response.text.encode().decode('unicode-escape'))
         ret = json.loads(request_response.text)
         #ret = request_response.text
