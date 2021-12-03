@@ -256,14 +256,10 @@ def cd_execute(workspace_id):
         post_data = json.dumps(post_data)
 
         # CD実行(ITA) cd execute ita
-        request_response = requests.post(apiInfo + "/cd/execute", headers=post_headers, data=post_data)
+        response = requests.post(apiInfo + "/cd/execute", headers=post_headers, data=post_data)
         # 戻り値がJson形式かチェックする return parameter is json?
-        if request_response.status_code != 200:  
-            globals.logger.debug("status error: ita/execute:response:{}".format(request_response.text))
-            error_detail = "CD実行に失敗しました"
-            raise common.UserException(error_detail)
-        else:
-            globals.logger.debug("ita/execute:response:{}".format(request_response.text))
+        if response.status_code != 200:  
+            globals.logger.debug("status error: ita/execute:response:{}".format(response.text))
             error_detail = "CD実行に失敗しました"
             raise common.UserException(error_detail)
 
@@ -277,3 +273,52 @@ def cd_execute(workspace_id):
     except Exception as e:
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
 
+
+def search_opration_id(opelist, column_indexes, git_url):
+    """オペレーションの検索
+
+    Args:
+        opelist (dict): Operation list
+        column_indexes (dict): column indexes
+        git_url (str): git url
+
+    Returns:
+        str: operation id
+    """
+    for idx, row in enumerate(opelist):
+        if idx == 0:
+            # 1行目はヘッダなので読み飛ばし
+            continue
+
+        if row[column_indexes_common["delete"]] != "":
+            # 削除は無視
+            continue
+
+        if row[column_indexes['remarks']] is None:
+            # 備考設定なしは無視
+            continue
+
+        globals.logger.debug('git_url:'+git_url)
+        globals.logger.debug('row[column_indexes[remarks]]:'+row[column_indexes['remarks']])
+        if git_url == row[column_indexes['remarks']]:
+            # 備考にgit_urlが含まれているとき
+            globals.logger.debug('find:' + str(idx))
+            return row[column_indexes['operation_id']]
+
+    # 存在しないとき
+    return None
+
+def column_indexes(column_names, row_header):
+    """項目位置の取得
+
+    Args:
+        column_names (str): column name
+        row_header (dict): row header info.
+
+    Returns:
+        [type]: [description]
+    """
+    column_indexes = {}
+    for idx in column_names:
+        column_indexes[idx] = row_header.index(column_names[idx])
+    return column_indexes

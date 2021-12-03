@@ -95,7 +95,7 @@ def post_manifest_parameter(workspace_id):
         if request_response.status_code != 200:
             globals.logger.error("call ita/manifestParameter error:{}".format(request_response.status_code))
             error_detail = "IT-Automation パラメータ登録失敗"
-            raise common.Userexception(error_detail)
+            raise common.UserException(error_detail)
 
         # 正常終了 normal return code
         ret_status = 200
