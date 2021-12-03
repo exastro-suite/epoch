@@ -104,6 +104,7 @@ column_names_manifest_param = {
 param_value_host="ita-worker"
 param_value_method_entry='登録'
 param_value_method_update='更新'
+param_value_method_delete='廃止'
 param_value_operation_date='2999/12/31 23:59'
 param_value_operation_name_prefix='CD実行:'
 
