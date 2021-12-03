@@ -258,15 +258,10 @@ def cd_execute(workspace_id):
         # CD実行(ITA) cd execute ita
         request_response = requests.post(apiInfo + "/cd/execute", headers=post_headers, data=post_data)
         # 戻り値がJson形式かチェックする return parameter is json?
-        if common.is_json_format(request_response.text):
-            ret = json.loads(request_response.text)
-            #ret = request_response.text
-            globals.logger.debug("result:{}".format(ret["result"]))
-            # 正常の判断 Normal judgment
-            if ret["result"] != "200" and ret["result"] != "201":
-                globals.logger.debug("status error: ita/execute:response:{}".format(request_response.text))
-                error_detail = "CD実行に失敗しました"
-                raise common.UserException(error_detail)
+        if request_response.status_code != 200:  
+            globals.logger.debug("status error: ita/execute:response:{}".format(request_response.text))
+            error_detail = "CD実行に失敗しました"
+            raise common.UserException(error_detail)
         else:
             globals.logger.debug("ita/execute:response:{}".format(request_response.text))
             error_detail = "CD実行に失敗しました"
