@@ -82,12 +82,12 @@ def post_manifest_parameter(workspace_id):
         post_data = request.json.copy()
 
         # 呼び出すapiInfoは、環境変数より取得
-        apiInfo = "{}://{}:{}".format(os.environ["EPOCH_CICD_PROTOCOL"], os.environ["EPOCH_CICD_HOST"], os.environ["EPOCH_CICD_PORT"])
+        apiInfo = "{}://{}:{}".format(os.environ["EPOCH_CONTROL_ITA_PROTOCOL"], os.environ["EPOCH_CONTROL_ITA_HOST"], os.environ["EPOCH_CONTROL_ITA_PORT"])
         globals.logger.debug("apiInfo:" + apiInfo)
 
         # Manifestパラメータ設定(ITA)
         globals.logger.debug("ita/manifestParameter post call: worksapce_id:{}".format(workspace_id))
-        request_response = requests.post( "{}/ita/manifestParameter".format(apiInfo), headers=post_headers, data=post_data)
+        request_response = requests.post( "{}/workspace/{}/it-automation/manifest/parameter".format(apiInfo, workspace_id), headers=post_headers, data=post_data)
         # globals.logger.debug("ita/manifestParameter:response:" + request_response.text.encode().decode('unicode-escape'))
         ret = json.loads(request_response.text)
         #ret = request_response.text
