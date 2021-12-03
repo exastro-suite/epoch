@@ -176,10 +176,13 @@ done;
 STEP=$(expr ${STEP} + 1)
 echo "**** STEP : ${STEP} / ${ALLSTEPS} : Setting api call ..."
 
-curl -I -s \
+API_RESPONSE="/tmp/${BASENAME}-infra-setting.$$"
+
+curl \
     -X POST \
     -H  'content-type: application/json'    \
     -d  @- \
+    -o "${API_RESPONSE}" \
     http://authentication-infra-api.exastro-platform-authentication-infra.svc:8000/settings \
     << EOF
     {
@@ -260,5 +263,19 @@ if [ $? -ne 0 ]; then
     exit 2
 fi
 
-echo "**** The setting is completed ****"
+API_RESULT=$(cat "${API_RESPONSE}" | jq -r ".result")
+if [ $? -ne 0 ]; then
+    echo "---- API Error Response ----"
+    cat "${API_RESPONSE}"
+    echo "ERROR : Setting api call"
+    exit 2
+fi
+if [ "${API_RESULT}" != "200" ]; then
+    echo "---- API Error Response ----"
+    cat "${API_RESPONSE}"
+    echo "ERROR : Setting api call"
+    exit 2
+fi
+
+echo "**** ${BASENAME} completed successfully ****"
 exit 0
