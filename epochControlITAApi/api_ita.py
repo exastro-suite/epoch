@@ -123,7 +123,7 @@ def call_ita_manifest_git(workspace_id):
 
         if request.method == 'POST':
             # it-automation git-environment settging
-            return settings_git_environment(workspace_id)
+            return api_ita_manifests.settings_git_environment(workspace_id)
         else:
             # Error
             raise Exception("method not support!")
@@ -780,37 +780,6 @@ def is_ita_pod_running(namespace):
     else:
         return False
     # return (pod_describe['items'][0]['status']['phase'] == "Running")
-
-
-def settings_git_environment(workspace_id):
-    """git environment setting
-
-    Args:
-        workspace_id (int): workspace ID
-
-    Returns:
-        Response: HTTP Respose
-    """
-
-    app_name = "ワークスペース情報:"
-    exec_stat = "IT-Automation git情報設定"
-    error_detail = ""
-
-    try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
-
-        # 正常終了
-        ret_status = 200
-
-        # 戻り値をそのまま返却        
-        return jsonify({"result": ret_status}), ret_status
-
-    except common.UserException as e:
-        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
-    except Exception as e:
-        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
 
 
 if __name__ == "__main__":
