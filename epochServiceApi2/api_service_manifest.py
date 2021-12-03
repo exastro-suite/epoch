@@ -232,7 +232,7 @@ def post_manifest_template(workspace_id):
         # 正常終了 normal return code
         ret_status = 200
 
-        return jsonify({"result": ret_status}), ret_status
+        return jsonify({"result": ret_status, "rows": response}), ret_status
 
     except common.UserException as e:
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
@@ -358,7 +358,7 @@ def delete_manifest_template(workspace_id, file_id):
         # 正常終了 normal return code
         ret_status = 200
 
-        return jsonify({"result": ret_status}), ret_status
+        return jsonify({"result": ret_status, "rows": response}), ret_status
 
     except common.UserException as e:
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
