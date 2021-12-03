@@ -13,6 +13,8 @@ RUN apt-get -y update \
 &&  chmod 700 get_helm.sh \
 &&  ./get_helm.sh
 
+RUN apt-get -y install vim
+
 COPY ./command /usr/local/bin
 
 RUN chmod +x /usr/local/bin/*
