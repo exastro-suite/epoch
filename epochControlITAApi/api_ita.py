@@ -31,6 +31,7 @@ import hashlib
 
 import globals
 import common
+import api_access_info
 import api_ita_manifests
 import api_ita_cd
 
@@ -342,7 +343,7 @@ def settings_ita(workspace_id):
         payload = request.json.copy()
 
         # ワークスペースアクセス情報取得
-        access_info = get_access_info(workspace_id)
+        access_info = api_access_info.get_access_info(workspace_id)
 
         # namespaceの取得
         namespace = common.get_namespace_name(workspace_id)
@@ -482,38 +483,6 @@ def settings_ita(workspace_id):
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
     except Exception as e:
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
-
-
-def get_access_info(workspace_id):
-    """ワークスペースアクセス情報取得
-
-    Args:
-        workspace_id (int): workspace id
-
-    Returns:
-        json: アクセス情報
-    """
-    try:
-        # url設定
-        api_info = "{}://{}:{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'], os.environ['EPOCH_RS_WORKSPACE_HOST'], os.environ['EPOCH_RS_WORKSPACE_PORT'])
-
-        # アクセス情報取得
-        # Select送信（workspace_access取得）
-        globals.logger.debug("workspace_access get call: worksapce_id:{}".format(workspace_id))
-        request_response = requests.get( "{}/workspace/{}/access".format(api_info, workspace_id))
-        # globals.logger.debug (request_response)
-
-        # 情報が存在する場合は、更新、存在しない場合は、登録
-        if request_response.status_code == 200:
-            ret = json.loads(request_response.text)
-        else:
-            raise Exception("workspace_access get error status:{}, responce:{}".format(request_response.status_code, request_response.text))
-
-        return ret
-
-    except Exception as e:
-        globals.logger.debug("get_access_info Exception:{}".format(e.args))
-        raise # 再スロー
 
 
 def is_already_imported(host, auth, init_auth):

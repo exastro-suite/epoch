@@ -31,6 +31,7 @@ import hashlib
 
 import globals
 import common
+import api_access_info
 
 # 設定ファイル読み込み・globals初期化 flask setting file read and globals initialize
 app = Flask(__name__)
@@ -127,25 +128,25 @@ def settings_git_environment(workspace_id):
         globals.logger.debug('#' * 50)
 
         # ワークスペースアクセス情報取得
-        access_info = get_access_info(workspace_id)
+        access_info = api_access_info.get_access_info(workspace_id)
 
         # namespaceの取得
         namespace = common.get_namespace_name(workspace_id)
 
-        ita_restapi_endpoint = "{}.{}.svc:{}/default/menu/07_rest_api_ver1.php".format(EPOCH_ITA_HOST, namespace, EPOCH_ITA_PORT)
+        ita_restapi_endpoint = "http://{}.{}.svc:{}/default/menu/07_rest_api_ver1.php".format(EPOCH_ITA_HOST, namespace, EPOCH_ITA_PORT)
         ita_user = access_info['ITA_USER']
         ita_pass = access_info['ITA_PASSWORD']
 
         # HTTPヘッダの生成
         filter_headers = {
-            'host': ita_host + ':' + ita_port,
+            'host': EPOCH_ITA_HOST + ':' + EPOCH_ITA_PORT,
             'Content-Type': 'application/json',
             'Authorization': base64.b64encode((ita_user + ':' + ita_pass).encode()),
             'X-Command': 'FILTER',
         }
 
         edit_headers = {
-            'host': ita_host + ':' + ita_port,
+            'host': EPOCH_ITA_HOST + ':' + EPOCH_ITA_PORT,
             'Content-Type': 'application/json',
             'Authorization': base64.b64encode((ita_user + ':' + ita_pass).encode()),
             'X-Command': 'EDIT',
@@ -158,18 +159,18 @@ def settings_git_environment(workspace_id):
         opelist_json = json.loads(opelist_resp.text)
         globals.logger.debug('---- Operation ----')
         #logger.debug(opelist_resp.text.encode().decode('unicode-escape'))
-        globals.logger.debug(opelist_resp.text)
+        # globals.logger.debug(opelist_resp.text)
 
         # 項目位置の取得
         column_indexes_opelist = column_indexes(column_names_opelist, opelist_json['resultdata']['CONTENTS']['BODY'][0])
         globals.logger.debug('---- Operation Index ----')
-        globals.logger.debug(column_indexes_opelist)
+        # globals.logger.debug(column_indexes_opelist)
 
         #
         # オペレーションの追加処理
         #
         opelist_edit = []
-        for idx_req, row_req in enumerate(json.loads(request.body)['ci_config']['environments']):
+        for idx_req, row_req in enumerate(payload['ci_config']['environments']):
             if search_opration(opelist_json['resultdata']['CONTENTS']['BODY'], column_indexes_opelist, row_req['git_url']) == -1:
                 # オペレーションになければ、追加データを設定
                 opelist_edit.append(
@@ -212,10 +213,10 @@ def settings_git_environment(workspace_id):
         # logger.debug(column_indexes_gitlist)
 
         # Responseデータの初期化
-        response = {"result":"200", "items":[]}
+        response = {"items":[]}
         # Git環境情報の追加・更新
         gitlist_edit = []
-        for idx_req, row_req in enumerate(json.loads(request.body)['ci_config']['environments']):
+        for idx_req, row_req in enumerate(payload['ci_config']['environments']):
             idx_git = search_gitlist(gitlist_json['resultdata']['CONTENTS']['BODY'], column_indexes_gitlist, row_req['git_url'])
             if idx_git == -1:
                 # リストになければ、追加データを設定
@@ -278,13 +279,13 @@ def settings_git_environment(workspace_id):
 
         globals.logger.debug('---- Git Environments Post Response ----')
         #logger.debug(gitlist_edit_resp.text.encode().decode('unicode-escape'))
-        globals.logger.debug(gitlist_edit_resp.text)
+        # globals.logger.debug(gitlist_edit_resp.text)
 
         # 正常終了
         ret_status = 200
 
         # 戻り値をそのまま返却        
-        return jsonify({"result": ret_status}), ret_status
+        return jsonify({"result": ret_status, "rows": response["items"]}), ret_status
 
     except common.UserException as e:
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
@@ -384,32 +385,35 @@ def settings_manifest_parameter(workspace_id):
         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
         globals.logger.debug('#' * 50)
 
+        # パラメータ情報(JSON形式) prameter save
+        payload = request.json.copy()
+
         # ワークスペースアクセス情報取得
-        access_info = get_access_info(workspace_id)
+        access_info = api_access_info.get_access_info(workspace_id)
 
         # namespaceの取得
         namespace = common.get_namespace_name(workspace_id)
 
-        ita_restapi_endpoint = "{}.{}.svc:{}/default/menu/07_rest_api_ver1.php".format(EPOCH_ITA_HOST, namespace, EPOCH_ITA_PORT)
+        ita_restapi_endpoint = "http://{}.{}.svc:{}/default/menu/07_rest_api_ver1.php".format(EPOCH_ITA_HOST, namespace, EPOCH_ITA_PORT)
         ita_user = access_info['ITA_USER']
         ita_pass = access_info['ITA_PASSWORD']
 
         # HTTPヘッダの生成
         filter_headers = {
-            'host': ita_host + ':' + ita_port,
+            'host': EPOCH_ITA_HOST + ':' + EPOCH_ITA_PORT,
             'Content-Type': 'application/json',
             'Authorization': base64.b64encode((ita_user + ':' + ita_pass).encode()),
             'X-Command': 'FILTER',
         }
 
         edit_headers = {
-            'host': ita_host + ':' + ita_port,
+            'host': EPOCH_ITA_HOST + ':' + EPOCH_ITA_PORT,
             'Content-Type': 'application/json',
             'Authorization': base64.b64encode((ita_user + ':' + ita_pass).encode()),
             'X-Command': 'EDIT',
         }
 
-        globals.logger.debug(json.loads(request.body))
+        # globals.logger.debug(payload)
 
         #
         # オペレーションの取得
@@ -449,18 +453,14 @@ def settings_manifest_parameter(workspace_id):
 
         # マニフェスト環境パラメータのデータ成型
         maniparam_edit = []
-        for environment in json.loads(request.body)['ci_config']['environments']:
+        for environment in payload['ci_config']['environments']:
 
             idx_ope = search_opration(opelist_json['resultdata']['CONTENTS']['BODY'], column_indexes_opelist, environment['git_url'])
 
             # ITAからオペレーション(=環境)が取得できなければ異常
             if idx_ope == -1:
-                response = {
-                    "result": "400",
-                    "output": "CD環境が設定されていません。",
-                    "datetime": datetime.datetime.now(pytz.timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M:%S'),
-                }
-                return JsonResponse(response, status=400)
+                error_detail = "CD環境が設定されていません。"
+                raise common.UserException(error_detail)
 
             req_maniparam_operation_id = opelist_json['resultdata']['CONTENTS']['BODY'][idx_ope][column_indexes_common['record_no']]
 
@@ -645,14 +645,14 @@ def settings_manifest_parameter(workspace_id):
                 )
 
         globals.logger.debug('---- Updating Manifest Parameters ----')
-        globals.logger.debug(json.dumps(maniparam_edit))
+        # globals.logger.debug(json.dumps(maniparam_edit))
 
         manuparam_edit_resp = requests.post(ita_restapi_endpoint + '?no=' + ita_menu_manifest_param, headers=edit_headers, data=json.dumps(maniparam_edit))
         maniparam_json = json.loads(manuparam_edit_resp.text)
 
         globals.logger.debug('---- Manifest Parameters Post Response ----')
         # logger.debug(manuparam_edit_resp.text)
-        globals.logger.debug(maniparam_json)
+        # globals.logger.debug(maniparam_json)
 
         if maniparam_json["status"] != "SUCCEED" or maniparam_json["resultdata"]["LIST"]["NORMAL"]["error"]["ct"] != 0:
             raise common.server_error_to_message(manuparam_edit_resp.text.encode().decode('unicode-escape'))
@@ -735,26 +735,29 @@ def settings_manifest_templates(workspace_id):
         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
         globals.logger.debug('#' * 50)
 
+        # パラメータ情報(JSON形式) prameter save
+        payload = request.json.copy()
+
         # ワークスペースアクセス情報取得
-        access_info = get_access_info(workspace_id)
+        access_info = api_access_info.get_access_info(workspace_id)
 
         # namespaceの取得
         namespace = common.get_namespace_name(workspace_id)
 
-        ita_restapi_endpoint = "{}.{}.svc:{}/default/menu/07_rest_api_ver1.php".format(EPOCH_ITA_HOST, namespace, EPOCH_ITA_PORT)
+        ita_restapi_endpoint = "http://{}.{}.svc:{}/default/menu/07_rest_api_ver1.php".format(EPOCH_ITA_HOST, namespace, EPOCH_ITA_PORT)
         ita_user = access_info['ITA_USER']
         ita_pass = access_info['ITA_PASSWORD']
 
         # HTTPヘッダの生成
         filter_headers = {
-            'host': ita_host + ':' + ita_port,
+            'host': EPOCH_ITA_HOST + ':' + EPOCH_ITA_PORT,
             'Content-Type': 'application/json',
             'Authorization': base64.b64encode((ita_user + ':' + ita_pass).encode()),
             'X-Command': 'FILTER',
         }
 
         edit_headers = {
-            'host': ita_host + ':' + ita_port,
+            'host': EPOCH_ITA_HOST + ':' + EPOCH_ITA_PORT,
             'Content-Type': 'application/json',
             'Authorization': base64.b64encode((ita_user + ':' + ita_pass).encode()),
             'X-Command': 'EDIT',
@@ -775,9 +778,9 @@ def settings_manifest_templates(workspace_id):
         manitpl_json = json.loads(manitpl_resp.text)
         globals.logger.debug('---- Current Manifest Templates ----')
         # logger.debug(manitpl_resp.text)
-        globals.logger.debug(manitpl_json)
+        # globals.logger.debug(manitpl_json)
 
-        req_data = json.loads(request.body)['manifests']
+        req_data = payload['manifests']
         mani_req_len = len(req_data)
         mani_ita_len = manitpl_json['resultdata']['CONTENTS']['RECORD_LENGTH']
         max_loop_cnt = max(mani_req_len, mani_ita_len)
@@ -785,7 +788,7 @@ def settings_manifest_templates(workspace_id):
 
         ita_data = manitpl_json['resultdata']['CONTENTS']["BODY"]
         ita_data.pop(0)
-        globals.logger.debug(ita_data)
+        # globals.logger.debug(ita_data)
 
         edit_data = {
             "UPLOAD_FILE": []
@@ -870,13 +873,13 @@ def settings_manifest_templates(workspace_id):
                 edit_data[str(i)] = tmp_data
                 edit_data["UPLOAD_FILE"].append({"4": base64.b64encode(req_data[i]["file_text"].encode()).decode()})
 
-        globals.logger.debug(edit_data)
+        # globals.logger.debug(edit_data)
 
         # ITAへREST実行
         manutemplate_edit_resp = requests.post(ita_restapi_endpoint + '?no=' + ita_menu_manifest_template, headers=edit_headers, data=json.dumps(edit_data))
-        manitemplate_json = json.loads(manutemplate_edit_resp.text)
+        # manitemplate_json = json.loads(manutemplate_edit_resp.text)
 
-        globals.logger.debug(manitemplate_json)
+        # globals.logger.debug(manitemplate_json)
 
         # 正常終了
         ret_status = 200
@@ -888,4 +891,3 @@ def settings_manifest_templates(workspace_id):
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
     except Exception as e:
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
-

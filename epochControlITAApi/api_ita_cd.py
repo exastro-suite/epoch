@@ -31,6 +31,7 @@ import hashlib
 
 import globals
 import common
+import api_access_info
 
 # 設定ファイル読み込み・globals初期化 flask setting file read and globals initialize
 app = Flask(__name__)
@@ -61,12 +62,12 @@ def get_cd_operations(workspace_id):
         globals.logger.debug('#' * 50)
 
         # ワークスペースアクセス情報取得
-        access_info = get_access_info(workspace_id)
+        access_info = api_access_info.get_access_info(workspace_id)
 
         # namespaceの取得
         namespace = common.get_namespace_name(workspace_id)
 
-        ita_restapi_endpoint = "{}.{}.svc:{}/default/menu/07_rest_api_ver1.php".format(EPOCH_ITA_HOST, namespace, EPOCH_ITA_PORT)
+        ita_restapi_endpoint = "http://{}.{}.svc:{}/default/menu/07_rest_api_ver1.php".format(EPOCH_ITA_HOST, namespace, EPOCH_ITA_PORT)
         ita_user = access_info['ITA_USER']
         ita_pass = access_info['ITA_PASSWORD']
 
@@ -124,12 +125,12 @@ def cd_execute(workspace_id):
         payload = request.json.copy()
 
         # ワークスペースアクセス情報取得 get workspace access info.
-        access_info = get_access_info(workspace_id)
+        access_info = api_access_info.get_access_info(workspace_id)
 
         # namespaceの取得 get namespace 
         namespace = common.get_namespace_name(workspace_id)
 
-        ita_restapi_endpoint = "{}.{}.svc:{}/default/menu/07_rest_api_ver1.php".format(EPOCH_ITA_HOST, namespace, EPOCH_ITA_PORT)
+        ita_restapi_endpoint = "http://{}.{}.svc:{}/default/menu/07_rest_api_ver1.php".format(EPOCH_ITA_HOST, namespace, EPOCH_ITA_PORT)
         ita_user = access_info['ITA_USER']
         ita_pass = access_info['ITA_PASSWORD']
 
@@ -174,4 +175,3 @@ def cd_execute(workspace_id):
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
     except Exception as e:
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
-

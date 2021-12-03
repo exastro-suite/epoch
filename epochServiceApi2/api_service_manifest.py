@@ -126,7 +126,13 @@ def post_manifest_template(workspace_id):
         globals.logger.debug('#' * 50)
         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
         globals.logger.debug('#' * 50)
-    
+
+        # ファイルの存在チェック exists file check
+        if 'manifest_files' not in request.files:
+            error_detail = "アップロードファイルがありません"
+            globals.logger.debug('upload file not found')
+            raise common.UserException(error_detail)
+
         apiInfo = "{}://{}:{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
                                       os.environ['EPOCH_RS_WORKSPACE_HOST'],
                                       os.environ['EPOCH_RS_WORKSPACE_PORT'])
@@ -155,7 +161,9 @@ def post_manifest_template(workspace_id):
 
         # 戻り値が正常値以外の場合は、処理を終了
         if response.status_code != 200:
-            raise Exception("CALL responseAPI /manifests Error")
+            error_detail = "manifestテンプレート情報取得失敗"
+            globals.logger.debug("CALL responseAPI /manifests Error")
+            raise common.UserException(error_detail)
 
         ret_manifests = json.loads(response.text)
         globals.logger.debug("get Filedata ------------------ S")
@@ -165,18 +173,16 @@ def post_manifest_template(workspace_id):
         # 送信されたマニフェストファイル数分処理する
         for manifest_file in request.files.getlist('manifest_files'):
 
-            with manifest_file.file as f:
+            file_text = ''
 
-                file_text = ''
+            # ↓ 2重改行になっているので、変更するかも ↓
+            for line in manifest_file:
 
-                # ↓ 2重改行になっているので、変更するかも ↓
-                for line in f.readlines():
-
-                    file_text += line.decode('utf-8')
+                file_text += line.decode('utf-8')
 
             # ファイル情報(manifest_data)
             manifest_data = {
-                "file_name": manifest_file.name,
+                "file_name": manifest_file.filename,
                 "file_text": file_text
             }
 
@@ -428,6 +434,7 @@ def ita_registration(workspace_id):
         if response.status_code == 200:
             return ret_manifests['rows']
         else:
+            globals.logger.debug("CALL manifestTemplates : response:{}".format(response.text))
             raise Exception("post manifestTemplates Error")
 
     except Exception:
