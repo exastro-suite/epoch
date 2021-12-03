@@ -277,8 +277,8 @@ def get_manifest_template_list(workspace_id):
         globals.logger.debug("--------------------")
 
         if response.status_code == 200 and common.is_json_format(response.text):
-            error_detail = '取得データ(JSON)の形式が正しくありません'
-            raise common.UserException(error_detail)
+            # 200(正常)かつ、レスポンスデータがJSON形式の場合は、後続の処理を実行
+            pass
 
         elif response.status_code == 404:
             error_detail = 'manifest template data not found'
@@ -336,8 +336,8 @@ def delete_manifest_template(workspace_id, file_id):
         response = requests.delete(apiurl, headers=headers)
 
         if response.status_code == 200 and common.is_json_format(response.text):
-            error_detail = '取得データ(JSON)の形式が正しくありません'
-            raise common.UserException(error_detail)
+            # 200(正常)かつ、レスポンスデータがJSON形式の場合は、後続の処理を実行
+            pass
 
         elif response.status_code == 404:
             # manifestデータが見つからない(404)場合
