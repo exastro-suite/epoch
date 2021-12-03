@@ -289,7 +289,9 @@ def get_manifest_template_list(workspace_id):
             error_detail = 'CALL responseAPI Error'
             raise common.UserException(error_detail)
 
-        rows = response.text
+        ret_manifests = json.loads(response.text)
+
+        rows = ret_manifests["rows"]
         
         # 正常終了 normal return code
         ret_status = 200
