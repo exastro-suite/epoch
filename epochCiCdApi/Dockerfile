@@ -2,13 +2,13 @@ FROM    ubuntu:18.04
 
 RUN echo "RUN START"  \
 &&  apt-get -y update   \
-#&&  apt-get -y upgrade  \
+&&  apt-get -y upgrade  \
 &&  apt-get -y install \
     locales \
     curl \
     python3-distutils \
-    git \
-    vim \
+#    git \
+#    vim \
 #    sudo \
     wget \
     unzip \
