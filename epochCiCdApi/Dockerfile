@@ -32,6 +32,7 @@ RUN echo "RUN START"  \
 &&  chmod +x /usr/local/bin/argocd \
 &&  curl -sSL -k -o /usr/local/bin/kubectl-argo-rollouts https://github.com/argoproj/argo-rollouts/releases/latest/download/kubectl-argo-rollouts-darwin-amd64 \
 &&  chmod +x /usr/local/bin/kubectl-argo-rollouts \
+&&  rm -rf /var/lib/apt/lists/* \
 &&  echo "RUN FINISH"
 
 WORKDIR /app
