@@ -253,7 +253,7 @@ def call_manifest_parameter(workspace_id):
         return common.server_error(e)
 
 
-@app.route('/workspace/<int:workspace_id>/manifest/template', methods=['POST'])
+@app.route('/workspace/<int:workspace_id>/manifest/template', methods=['POST','GET'])
 def call_manifest_template(workspace_id):
     """workspace/workspace_id/manifest/template Call
 
@@ -271,6 +271,9 @@ def call_manifest_template(workspace_id):
         if request.method == 'POST':
             # manifest template setting (post)
             return api_service_manifest.post_manifest_template(workspace_id)
+        elif request.method == 'GET':
+            # get manifest template list (get)
+            return api_service_manifest.get_manifest_template_list(workspace_id)
         else:
             # Error
             raise Exception("method not support!")
@@ -279,7 +282,7 @@ def call_manifest_template(workspace_id):
         return common.server_error(e)
 
 
-@app.route('/workspace/<int:workspace_id>/manifest/template/<int:file_id>', methods=['GET','DELETE'])
+@app.route('/workspace/<int:workspace_id>/manifest/template/<int:file_id>', methods=['DELETE'])
 def call_manifest_template_id(workspace_id, file_id):
     """workspace/workspace_id/manifest/template/file_id Call
 
@@ -295,10 +298,7 @@ def call_manifest_template_id(workspace_id, file_id):
         globals.logger.debug('CALL {}:from[{}] workspace_id[{}] file_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id, file_id))
         globals.logger.debug('#' * 50)
 
-        if request.method == 'GET':
-            # get manifest template list (get)
-            return api_service_manifest.get_manifest_template_list(workspace_id, file_id)
-        elif request.method == 'DELETE':
+        if request.method == 'DELETE':
             # parameter template delete (delete)
             return api_service_manifest.delete_manifest_template(workspace_id, file_id)
         else:
