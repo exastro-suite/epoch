@@ -7,7 +7,7 @@ RUN echo "RUN START"  \
     locales \
     curl \
     python3-distutils \
-    git \
+#    git \
     vim \
 #    sudo \
     wget \
