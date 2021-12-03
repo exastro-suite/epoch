@@ -2271,7 +2271,7 @@ const cdRunning = function(){
     console.log("CALL : CD実行開始");
     api_param = {
       "type": "POST",
-      "url": workspace_api_conf.api.cdExecDesignation.post,
+      "url": workspace_api_conf.api.cdExecDesignation.post.replace('{workspace_id}', workspace_id),
       "data": JSON.stringify(reqbody),
       contentType: "application/json",
       dataType: "json",
