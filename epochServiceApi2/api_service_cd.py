@@ -37,6 +37,24 @@ app.config.from_envvar('CONFIG_API_SERVICE_PATH')
 globals.init(app)
 
 
+# 共通項目
+column_indexes_common = {
+    "method": 0,    # 実行処理種別
+    "delete": 1,    # 廃止
+    "record_no": 2, # No
+}
+
+# 項目名リスト
+column_names_opelist = {
+    'operation_id': 'オペレーションID',
+    'operation_name': 'オペレーション名',
+    'operation_date': '実施予定日時',
+    'remarks': '備考',
+}
+
+COND_CLASS_NO_CD_EXEC = 2
+
+
 def post_cd_pipeline(workspace_id):
     """CDパイプライン情報設定
 
@@ -161,68 +179,71 @@ def cd_execute(workspace_id):
         globals.logger.debug('#' * 50)
         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
         globals.logger.debug('#' * 50)
-    
-        # 正常終了 normal return code
-        ret_status = 200
 
-        return jsonify({"result": ret_status}), ret_status
+        # 引数をJSON形式で受け取りそのまま引数に設定 parameter set json
+        request_json = request.json.copy()
 
-    except common.UserException as e:
-        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
-    except Exception as e:
-        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+        # ヘッダ情報 header info.
+        post_headers = {
+            'Content-Type': 'application/json',
+        }
 
+        # 呼び出すapiInfoは環境変数より取得 api url set
+        apiInfo = "{}://{}:{}/workspace/{}/it-automation".format(os.environ["EPOCH_CONTROL_ITA_PROTOCOL"],
+                                                                os.environ["EPOCH_CONTROL_ITA_HOST"],
+                                                                os.environ["EPOCH_CONTROL_ITA_PORT"],
+                                                                workspace_id)
+        # globals.logger.debug ("cicd url:" + apiInfo)
 
-def get_cd_pipeline_result(workspace_id):
-    """cdパイプライン結果取得 cd pipeline result
+        # オペレーション一覧の取得(ITA) get a ita operations
+        request_response = requests.get(apiInfo + "/cd/operations", headers=post_headers)
+        # globals.logger.debug("cd/operations:" + request_response.text)
+        # 戻り値がJson形式かチェックする return parameter is json?
+        if common.is_json_format(request_response.text):
+            ret = json.loads(request_response.text)
+        else:
+            globals.logger.debug("cd/operations:response:{}".format(request_response.text))
+            error_detail = "CD実行に失敗しました"
+            raise common.UserException(error_detail)
 
-    Args:
-        workspace_id (int): workspace ID
+        ret_ita = ret['rows']
+        # 項目位置の取得 get columns 
+        column_indexes_opelist = column_indexes(column_names_opelist, ret_ita['resultdata']['CONTENTS']['BODY'][0])
+        globals.logger.debug('---- Operation Index ----')
+        globals.logger.debug(column_indexes_opelist)
 
-    Returns:
-        Response: HTTP Respose
-    """
+        # 引数のgit urlをもとにオペレーションIDを取得 get operation id for git-url
+        ope_id = search_opration_id(ret_ita['resultdata']['CONTENTS']['BODY'], column_indexes_opelist, request_json['operationSearchKey'])
+        if ope_id is None:
+            globals.logger.debug("Operation ID Not found!")
+            error_detail = "Operation ID Not found!"
+            raise common.UserException(error_detail)
 
-    app_name = "ワークスペース情報:"
-    exec_stat = "CDパイプライン結果取得"
-    error_detail = ""
+        # CD実行の引数を設定 paramater of cd execute 
+        post_data = {
+            "operation_id" : ope_id,
+            "conductor_class_no" : COND_CLASS_NO_CD_EXEC,
+            "preserve_datetime" : request_json["preserveDatetime"]
+        }
+        post_data = json.dumps(post_data)
 
-    try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
-    
-        # 正常終了 normal return code
-        ret_status = 200
+        # CD実行(ITA) cd execute ita
+        request_response = requests.post(apiInfo + "/cd/execute", headers=post_headers, data=post_data)
+        # 戻り値がJson形式かチェックする return parameter is json?
+        if common.is_json_format(request_response.text):
+            ret = json.loads(request_response.text)
+            #ret = request_response.text
+            globals.logger.debug("result:{}".format(ret["result"]))
+            # 正常の判断 Normal judgment
+            if ret["result"] != "200" and ret["result"] != "201":
+                globals.logger.debug("status error: ita/execute:response:{}".format(request_response.text))
+                error_detail = "CD実行に失敗しました"
+                raise common.UserException(error_detail)
+        else:
+            globals.logger.debug("ita/execute:response:{}".format(request_response.text))
+            error_detail = "CD実行に失敗しました"
+            raise common.UserException(error_detail)
 
-        return jsonify({"result": ret_status}), ret_status
-
-    except common.UserException as e:
-        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
-    except Exception as e:
-        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
-
-
-def get_cd_pipeline_result_taskrun_logs(workspace_id, taskrun_name):
-    """cdパイプライン結果取得 cd pipeline result
-
-    Args:
-        workspace_id (int): workspace ID
-        taskrun_name (str): taskrun name
-
-    Returns:
-        Response: HTTP Respose
-    """
-
-    app_name = "ワークスペース情報:"
-    exec_stat = "タスク実行"
-    error_detail = ""
-
-    try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
-    
         # 正常終了 normal return code
         ret_status = 200
 

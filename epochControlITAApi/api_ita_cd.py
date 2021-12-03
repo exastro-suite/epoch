@@ -37,6 +37,13 @@ app = Flask(__name__)
 app.config.from_envvar('CONFIG_API_ITA_PATH')
 globals.init(app)
 
+EPOCH_ITA_HOST = "it-automation"
+EPOCH_ITA_PORT = "8084"
+
+# メニューID
+ite_menu_operation = '2100000304'
+ite_menu_conductor_exec = '2100180004'
+
 def get_cd_operations(workspace_id):
     """get cd-operations list
 
@@ -45,7 +52,7 @@ def get_cd_operations(workspace_id):
     """
 
     app_name = "ワークスペース情報:"
-    exec_stat = "manifestパラメータ登録"
+    exec_stat = "Operation情報取得"
     error_detail = ""
 
     try:
@@ -53,17 +60,37 @@ def get_cd_operations(workspace_id):
         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
         globals.logger.debug('#' * 50)
 
-        rows = [
-            # ita 戻り値に準拠 Compliant with return value from ITA
-            {
-                "ope_id": "1",
-                "ope_name": "ope1 name",
-            },
-            {
-                "ope_id": "1",
-                "ope_name": "ope1 name",
-            }
-        ]
+        # ワークスペースアクセス情報取得
+        access_info = get_access_info(workspace_id)
+
+        # namespaceの取得
+        namespace = common.get_namespace_name(workspace_id)
+
+        ita_restapi_endpoint = "{}.{}.svc:{}/default/menu/07_rest_api_ver1.php".format(EPOCH_ITA_HOST, namespace, EPOCH_ITA_PORT)
+        ita_user = access_info['ITA_USER']
+        ita_pass = access_info['ITA_PASSWORD']
+
+        # HTTPヘッダの生成
+        filter_headers = {
+            'host': EPOCH_ITA_HOST + ':' + EPOCH_ITA_PORT,
+            'Content-Type': 'application/json',
+            'Authorization': base64.b64encode((ita_user + ':' + ita_pass).encode()),
+            'X-Command': 'FILTER',
+        }
+
+        #
+        # オペレーションの取得
+        #
+        opelist_resp = requests.post(ita_restapi_endpoint + '?no=' + ite_menu_operation, headers=filter_headers)
+        globals.logger.debug('---- Operation ----')
+        globals.logger.debug(opelist_resp.text)
+        if common.is_json_format(opelist_resp.text):
+            opelist_json = json.loads(opelist_resp.text)
+        else:
+            error_detail = "Operation情報取得失敗"
+            raise common.UserException(error_detail)
+
+        rows = opelist_json
 
         # 正常終了
         ret_status = 200
@@ -77,21 +104,65 @@ def get_cd_operations(workspace_id):
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
 
 
-def settings_manifest_templates(workspace_id):
-    """manifest templates setting
+def cd_execute(workspace_id):
+    """cd execute
 
     Returns:
         Response: HTTP Respose
     """
 
     app_name = "ワークスペース情報:"
-    exec_stat = "manifestテンプレートファイル登録"
+    exec_stat = "CD実行"
     error_detail = ""
 
     try:
         globals.logger.debug('#' * 50)
         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
         globals.logger.debug('#' * 50)
+
+        # パラメータ情報(JSON形式) prameter save
+        payload = request.json.copy()
+
+        # ワークスペースアクセス情報取得 get workspace access info.
+        access_info = get_access_info(workspace_id)
+
+        # namespaceの取得 get namespace 
+        namespace = common.get_namespace_name(workspace_id)
+
+        ita_restapi_endpoint = "{}.{}.svc:{}/default/menu/07_rest_api_ver1.php".format(EPOCH_ITA_HOST, namespace, EPOCH_ITA_PORT)
+        ita_user = access_info['ITA_USER']
+        ita_pass = access_info['ITA_PASSWORD']
+
+        operation_id = payload["operation_id"]
+        conductor_class_no = payload["conductor_class_no"]
+        preserve_datetime = payload["preserve_datetime"]
+
+        # POST送信する
+        # HTTPヘッダの生成
+        filter_headers = {
+            'host': EPOCH_ITA_HOST + ':' + EPOCH_ITA_PORT,
+            'Content-Type': 'application/json',
+            'Authorization': base64.b64encode((ita_user + ':' + ita_pass).encode()),
+            'X-Command': 'EXECUTE',
+        }
+
+        # 実行パラメータ設定
+        data = {
+            "CONDUCTOR_CLASS_NO": conductor_class_no,
+            "OPERATION_ID": operation_id,
+            "PRESERVE_DATETIME": preserve_datetime,
+        }
+
+        # json文字列に変換（"utf-8"形式に自動エンコードされる）
+        json_data = json.dumps(data)
+
+        # リクエスト送信
+        exec_response = requests.post(ita_restapi_endpoint + '?no=' + ite_menu_conductor_exec, headers=filter_headers, data=json_data)
+
+        globals.logger.debug("-------------------------")
+        globals.logger.debug("response:")
+        globals.logger.debug(exec_response.text)
+        globals.logger.debug("-------------------------")
 
         # 正常終了
         ret_status = 200
