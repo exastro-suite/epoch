@@ -41,7 +41,7 @@ spec:
           name: epoch-control-workspace-conf
       containers:
       - name: epoch-control-workspace-api
-        image: exastro/epoch-control-workspace-api:0.3.0_20211129_1500
+        image: exastro/epoch-control-workspace-api:0.3.0_20211206_1030
         env:
         - name: CONFIG_API_WORKSPACE_PATH
           value: "/etc/epoch/epochControlWorkspaceApi/api_workspace.conf"
@@ -54,17 +54,17 @@ spec:
         - name: EPOCH_RS_WORKSPACE_PROTOCOL
           valueFrom:
             configMapKeyRef:
-              name: epoch-cicd-api-config
+              name: epoch-control-api-config
               key: RS_WORKSPACE_PROTOCOL
         - name: EPOCH_RS_WORKSPACE_HOST
           valueFrom:
             configMapKeyRef:
-              name: epoch-cicd-api-config
+              name: epoch-control-api-config
               key: RS_WORKSPACE_HOST
         - name: EPOCH_RS_WORKSPACE_PORT
           valueFrom:
             configMapKeyRef:
-              name: epoch-cicd-api-config
+              name: epoch-control-api-config
               key: RS_WORKSPACE_PORT
         volumeMounts:
         - name: epoch-control-workspace-conf

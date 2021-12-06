@@ -12,19 +12,20 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 apiVersion: v1
-kind: Namespace
+kind: ConfigMap
 metadata:
-  name: epoch-system
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: epoch-system-crb
-subjects:
-- kind: ServiceAccount
-  name: default
+  name: epoch-control-api-config
   namespace: epoch-system
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: cluster-admin
+data:
+  HTTP_PROXY: ""
+  HTTPS_PROXY: ""
+  NO_PROXY: "localhost,127.0.0.1"
+  ARGOCD_NO_PROXY: "localhost,127.0.0.1,kurbernetes.default.svc,kurbernetes.default.svc.cluster.local,10.96.0.1,argocd-server,argocd-dex-server,argocd-redis,argocd-repo-server,argocd-server-metrics"
+  ARGOCD_HOST: "argocd-server.epoch-workspace.svc"
+  ITA_HOST: "it-automation.epoch-workspace.svc"
+  ITA_PORT: "8084"
+  ITA_WORKER_HOST: "ita-worker.epoch-workspace.svc"
+  WEBHOOK_PORT: "30443"
+  RS_WORKSPACE_PROTOCOL: "http"
+  RS_WORKSPACE_HOST: "epoch-rs-workspace-api"
+  RS_WORKSPACE_PORT: "8000"

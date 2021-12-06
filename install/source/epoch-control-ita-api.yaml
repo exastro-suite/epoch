@@ -41,7 +41,7 @@ spec:
           name: epoch-control-ita-conf
       containers:
       - name: epoch-control-ita-api
-        image: exastro/epoch-control-ita-api:0.3.0_20211129_1500
+        image: exastro/epoch-control-ita-api:0.3.0_20211206_1030
         env:
         - name: CONFIG_API_ITA_PATH
           value: "/etc/epoch/epochControlITAApi/api_ita.conf"
@@ -64,22 +64,22 @@ spec:
         - name: EPOCH_NO_PROXY
           valueFrom:
             configMapKeyRef:
-              name: epoch-cicd-api-config
+              name: epoch-control-api-config
               key: NO_PROXY
         - name: EPOCH_RS_WORKSPACE_PROTOCOL
           valueFrom:
             configMapKeyRef:
-              name: epoch-cicd-api-config
+              name: epoch-control-api-config
               key: RS_WORKSPACE_PROTOCOL
         - name: EPOCH_RS_WORKSPACE_HOST
           valueFrom:
             configMapKeyRef:
-              name: epoch-cicd-api-config
+              name: epoch-control-api-config
               key: RS_WORKSPACE_HOST
         - name: EPOCH_RS_WORKSPACE_PORT
           valueFrom:
             configMapKeyRef:
-              name: epoch-cicd-api-config
+              name: epoch-control-api-config
               key: RS_WORKSPACE_PORT
         volumeMounts:
         - name: epoch-control-ita-conf
