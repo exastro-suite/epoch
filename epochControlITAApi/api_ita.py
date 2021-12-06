@@ -339,6 +339,10 @@ def settings_ita(workspace_id):
         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
         globals.logger.debug('#' * 50)
 
+        ita_db_name = "ita_db"
+        ita_db_user = "ita_db_user"
+        ita_db_password = "ita_db_password"
+
         # パラメータ情報(JSON形式)
         payload = request.json.copy()
 
@@ -365,10 +369,24 @@ def settings_ita(workspace_id):
                 error_detail = "IT-Automation 初期設定でタイムアウトしました。再度、実行してください。"
                 raise common.UserException(error_detail)
 
+        # *-*-*-* podが立ち上がるのを待つ *-*-*-*
+        start_time = time.time()
+        while True:
+            globals.logger.debug("waiting for ita mariaDB up...")
+            time.sleep(1)
+
+            # PodがRunningになったら終了
+            if is_ita_mysql_running(namespace, ita_db_user, ita_db_password):
+                break
+
+            # timeout
+            current_time = time.time()
+            if (current_time - start_time) > WAIT_SEC_ITA_POD_UP:
+                globals.logger.debug("ITA mariaDB start Time out")
+                error_detail = "IT-Automation 初期設定でタイムアウトしました。再度、実行してください。"
+                raise common.UserException(error_detail)
+
         # *-*-*-* パスワード更新済み判定とする *-*-*-*
-        ita_db_name = "ita_db"
-        ita_db_user = "ita_db_user"
-        ita_db_password = "ita_db_password"
         # command = "mysql -u %s -p%s %s < /app/epoch/tmp/ita_table_update.sql" % (ita_db_user, ita_db_password, ita_db_name)
         command = "mysql -u %s -p%s %s -e'UPDATE A_ACCOUNT_LIST SET PW_LAST_UPDATE_TIME = \"2999-12-31 23:59:58\" WHERE USER_ID = 1;'" % (ita_db_user, ita_db_password, ita_db_name)
         stdout_ita = subprocess.check_output(["kubectl", "exec", "-i", "-n", namespace, "deployment/it-automation", "--", "bash", "-c", command], stderr=subprocess.STDOUT)
@@ -727,7 +745,7 @@ def import_execute(host, auth, upload_id, menu_list, upload_filename):
 
 
 def is_ita_pod_running(namespace):
-    """podの状態チェック
+    """podの起動チェック
 
     Args:
         namespace (str): namespace名
@@ -749,6 +767,34 @@ def is_ita_pod_running(namespace):
     else:
         return False
     # return (pod_describe['items'][0]['status']['phase'] == "Running")
+
+
+def is_ita_mysql_running(namespace, ita_db_user, ita_db_password):
+    """mysqlの起動チェック
+
+    Args:
+        namespace (str): namespace名
+        ita_db_user (str): DB user
+        ita_db_password (str): DB user password
+
+    Returns:
+        True: ready ok!
+    """
+
+    ret = False
+    command = "mysqladmin ping -u {} -p{}".format(ita_db_user, ita_db_password)
+    try:
+        stdout_exec = subprocess.check_output(["kubectl", "exec", "-i", "-n", namespace, "deployment/it-automation", "--", "bash", "-c", command], stderr=subprocess.STDOUT)
+        # globals.logger.error(stdout_exec)
+        # 起動が完了しているかチェック Check if booting is complete
+        if stdout_exec == b'mysqld is alive\n':
+            ret = True
+
+    except Exception as e:
+        globals.logger.error(e.args)
+        pass
+
+    return ret
 
 
 if __name__ == "__main__":
