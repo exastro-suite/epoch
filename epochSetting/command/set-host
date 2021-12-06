@@ -134,11 +134,11 @@ fi
 STEP=$(expr ${STEP} + 1)
 echo "**** STEP : ${STEP} / ${ALLSTEPS} : restart to reflect the settings ..."
 
-kubectl rollout restart deploy -n epoch-system epoch-service-api
-if [ $? -ne 0 ]; then
-    echo "ERROR : rollout restart epoch-service-api"
-    exit 2
-fi
+# kubectl rollout restart deploy -n epoch-system epoch-service-api
+# if [ $? -ne 0 ]; then
+#     echo "ERROR : rollout restart epoch-service-api"
+#     exit 2
+# fi
 
 kubectl rollout restart deploy -n epoch-system epoch-service-api2
 if [ $? -ne 0 ]; then
