@@ -110,7 +110,8 @@ def create_argocd(workspace_id):
             # テンプレートファイルからyamlの生成
             yamltext = render_template('argocd_rolebinding.yaml',
                         param={
-                            "workspace_namespace": workspace_namespace(workspace_id)
+                            "workspace_id" : workspace_id,
+                            "workspace_namespace": workspace_namespace(workspace_id),
                         })
             path_yamlfile = '{}/{}'.format(tempdir, "argocd_rolebinding.yaml")
             with open(path_yamlfile, mode='w') as fp:
