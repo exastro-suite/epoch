@@ -75,7 +75,6 @@ def post_cd_pipeline(workspace_id):
         globals.logger.debug('#' * 50)
 
 
-
         # ヘッダ情報
         post_headers = {
             'Content-Type': 'application/json',
@@ -171,7 +170,17 @@ def post_cd_pipeline(workspace_id):
                 raise common.UserException(error_detail)
 
         exec_stat = "認証基盤 設定読み込み"
-        response = requests.put("{}{}".format(api_url_epai, 'apply_settings'))
+
+        # ヘッダ情報
+        post_headers = {
+            'Content-Type': 'application/json',
+        }
+
+        # workspace_id send data
+        apply_data = {
+            "workspace_id": workspace_id,
+        }
+        response = requests.put("{}{}".format(api_url_epai, 'apply_settings'), headers=post_headers, data=json.dumps(apply_data))
 
         # 正常時以外はExceptionを発行して終了する
         if response.status_code != 200:
