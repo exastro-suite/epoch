@@ -103,14 +103,14 @@ if [ $? -ne 0 ]; then
 fi
 
 
-kubectl patch configmap -n epoch-system epoch-service-api-epai-config -p "\
+kubectl patch configmap -n epoch-system epoch-service-api-config -p "\
 {\
     \"data\" : {\
         \"EPOCH_EPAI_HOST\" : \"${PRM_MY_HOST}\"\
     }\
 }"
 if [ $? -ne 0 ]; then
-    echo "ERROR : patch configmap epoch-service-api-epai-config"
+    echo "ERROR : patch configmap epoch-service-api-config"
     exit 2
 fi
 
