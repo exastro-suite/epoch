@@ -2728,6 +2728,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
           wsDataJSON['git-service-argo']['git-service-argo-account-select'] = data_workspace['ci_config']['environments'][0]['account_select'];
           wsDataJSON['git-service-argo']['git-service-argo-user'] = data_workspace['ci_config']['environments'][0]['git_user'];
           wsDataJSON['git-service-argo']['git-service-argo-token'] = data_workspace['ci_config']['environments'][0]['git_token'];
+          wsDataJSON['git-service-argo']['git-service-argo-select'] = data_workspace['ci_config']['environments'][0]['git_housing'] == 'inner'? 'epoch': data_workspace['ci_config']['environments'][0]['git_interface'];
         }
 
         resolve();
