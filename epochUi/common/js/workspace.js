@@ -1735,10 +1735,8 @@ function templateFileDelete(key, file_id){
 
     console.log("CALL : Manifestテンプレート削除 : key:" + key + ", id:" + file_id);
     api_param = {
-      "type": "POST",
+      "type": "DELETE",
       "url": workspace_api_conf.api.manifestTemplate.delete.replace('{workspace_id}', workspace_id).replace('{file_id}', file_id),
-      "data": { "id": file_id, "_method": "DELETE" },
-      dataType: "json",
     }
 
     $.ajax(api_param).done(function(data) {
