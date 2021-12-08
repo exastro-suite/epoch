@@ -12,10 +12,7 @@ data:
     \ OIDCClientSecret {{ epoch_system_client_secret }}\n  <Location />\n    ProxyPass
     \       http://epoch-ui.epoch-system.svc:8000/ retry=0\n    ProxyPassReverse http://epoch-ui.epoch-system.svc:8000/\n
     \   AuthType openid-connect\n    Require claim \"epoch-role:epoch-user\"\n  </Location>\n
-    \ <Location /api/>\n    ProxyPass        http://epoch-service-api.epoch-system.svc:8000/
-    retry=0 timeout=600\n    ProxyPassReverse http://epoch-service-api.epoch-system.svc:8000/\n
-    \   AuthType openid-connect\n    Require claim \"epoch-role:epoch-user\"\n  </Location>\n
-    \ <Location /api2/>\n    ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/
+    \ <Location /api/>\n    ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/
     retry=0 timeout=600\n    ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/\n
     \   AuthType openid-connect\n    Require claim \"epoch-role:epoch-user\"\n  </Location>\n
     \ <Location /api/user/>\n    ProxyPass        http://authentication-infra-api:8000/user/

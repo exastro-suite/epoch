@@ -31,6 +31,19 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: epoch-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: epoch-system-crb
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: epoch-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
 
 #---- exastro-platform-authentication-infra.yaml
 ---
@@ -85,7 +98,7 @@ data:
   HTTP_PROXY: ""
   HTTPS_PROXY: ""
 
-#---- epoch-cicd-api-config.yaml
+#---- epoch-control-api-config.yaml
 ---
 #   Copyright 2019 NEC Corporation
 #
@@ -103,7 +116,7 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: epoch-cicd-api-config
+  name: epoch-control-api-config
   namespace: epoch-system
 data:
   HTTP_PROXY: ""
@@ -118,92 +131,6 @@ data:
   RS_WORKSPACE_PROTOCOL: "http"
   RS_WORKSPACE_HOST: "epoch-rs-workspace-api"
   RS_WORKSPACE_PORT: "8000"
-
-#---- epoch-cicd-api.yaml
----
-#   Copyright 2019 NEC Corporation
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: epoch-system-crb
-subjects:
-- kind: ServiceAccount
-  name: default
-  namespace: epoch-system
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: cluster-admin
-
----
-
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: epoch-cicd-api
-  namespace: epoch-system
-spec:
-  selector:
-    matchLabels:
-      name: epoch-cicd-api
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        name: epoch-cicd-api
-    spec:
-      containers:
-      - name: epoch-cicd-api
-        image: exastro/epoch-cicd-api:0.1.5_20211027_1530
-        env:
-          - name: HTTP_PROXY
-            valueFrom:
-              configMapKeyRef:
-                name: proxy-setting-config
-                key: HTTP_PROXY
-          - name: HTTPS_PROXY
-            valueFrom:
-              configMapKeyRef:
-                name: proxy-setting-config
-                key: HTTPS_PROXY
-          - name: NO_PROXY
-            value: localhost,127.0.0.1,10.96.0.1,kurbernetes.default.svc,kurbernetes.default.svc.cluster.local,it-automation.epoch-workspace.svc,argocd-server.epoch-workspace.svc
-          - name: PYTHONIOENCODING
-            value: utf-8
-        envFrom:
-          - prefix: EPOCH_
-            configMapRef:
-              name: epoch-cicd-api-config
-
----
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: epoch-cicd-api
-  labels:
-    name: epoch-cicd-api
-  namespace: epoch-system
-spec:
-  type: ClusterIP
-  ports:
-  - name: http
-    port: 8000
-    targetPort: 8000
-  selector:
-    name: epoch-cicd-api
 
 #---- epoch-control-workspace-api.yaml
 ---
@@ -250,7 +177,7 @@ spec:
           name: epoch-control-workspace-conf
       containers:
       - name: epoch-control-workspace-api
-        image: exastro/epoch-control-workspace-api:0.3.0_20211129_1500
+        image: exastro/epoch-control-workspace-api:0.3.0_20211206_1030
         env:
         - name: CONFIG_API_WORKSPACE_PATH
           value: "/etc/epoch/epochControlWorkspaceApi/api_workspace.conf"
@@ -263,17 +190,17 @@ spec:
         - name: EPOCH_RS_WORKSPACE_PROTOCOL
           valueFrom:
             configMapKeyRef:
-              name: epoch-cicd-api-config
+              name: epoch-control-api-config
               key: RS_WORKSPACE_PROTOCOL
         - name: EPOCH_RS_WORKSPACE_HOST
           valueFrom:
             configMapKeyRef:
-              name: epoch-cicd-api-config
+              name: epoch-control-api-config
               key: RS_WORKSPACE_HOST
         - name: EPOCH_RS_WORKSPACE_PORT
           valueFrom:
             configMapKeyRef:
-              name: epoch-cicd-api-config
+              name: epoch-control-api-config
               key: RS_WORKSPACE_PORT
         volumeMounts:
         - name: epoch-control-workspace-conf
@@ -340,7 +267,7 @@ spec:
           name: epoch-control-github-conf
       containers:
       - name: epoch-control-github-api
-        image: exastro/epoch-control-github-api:0.3.0_20211129_1455
+        image: exastro/epoch-control-github-api:0.3.0_20211206_1030
         env:
         - name: HTTP_PROXY
           valueFrom:
@@ -365,7 +292,7 @@ spec:
         - name: EPOCH_WEBHOOK_PORT
           valueFrom:
             configMapKeyRef:
-              name: epoch-cicd-api-config
+              name: epoch-control-api-config
               key: WEBHOOK_PORT
         volumeMounts:
         - name: epoch-control-github-conf
@@ -432,7 +359,7 @@ spec:
           name: epoch-control-inside-gitlab-conf
       containers:
       - name: epoch-control-inside-gitlab-api
-        image: exastro/epoch-control-inside-gitlab-api:0.1.5_20211027_1530
+        image: exastro/epoch-control-inside-gitlab-api:0.3.0_20211206_1030
         env:
         - name: CONFIG_API_INSIDE_GITLAB_PATH
           value: "/etc/epoch/epochControlInsideGitLabApi/api_inside_gitlab.conf"
@@ -529,7 +456,7 @@ spec:
           name: epoch-control-tekton-conf
       containers:
       - name: epoch-control-tekton-api
-        image: exastro/epoch-control-tekton-api:0.3.0_20211129_1630
+        image: exastro/epoch-control-tekton-api:0.3.0_20211206_1030
         env:
         - name: CONFIG_API_TEKTON_PATH
           value: "/etc/epoch/epochControlTektonApi/api_tekton.conf"
@@ -624,7 +551,7 @@ spec:
           name: epoch-control-argocd-conf
       containers:
       - name: epoch-control-argocd-api
-        image: exastro/epoch-control-argocd-api:0.3.0_20211129_1455
+        image: exastro/epoch-control-argocd-api:0.3.0_20211206_1630
         env:
         - name: CONFIG_API_ARGOCD_PATH
           value: "/etc/epoch/epochControlArgoCDApi/api_argocd.conf"
@@ -637,7 +564,7 @@ spec:
         envFrom:
           - prefix: EPOCH_
             configMapRef:
-              name: epoch-cicd-api-config
+              name: epoch-control-api-config
         volumeMounts:
         - name: epoch-control-argocd-conf
           mountPath: /etc/epoch/epochControlArgoCDApi
@@ -703,7 +630,7 @@ spec:
           name: epoch-control-ita-conf
       containers:
       - name: epoch-control-ita-api
-        image: exastro/epoch-control-ita-api:0.3.0_20211129_1500
+        image: exastro/epoch-control-ita-api:0.3.0_20211206_1500
         env:
         - name: CONFIG_API_ITA_PATH
           value: "/etc/epoch/epochControlITAApi/api_ita.conf"
@@ -726,22 +653,22 @@ spec:
         - name: EPOCH_NO_PROXY
           valueFrom:
             configMapKeyRef:
-              name: epoch-cicd-api-config
+              name: epoch-control-api-config
               key: NO_PROXY
         - name: EPOCH_RS_WORKSPACE_PROTOCOL
           valueFrom:
             configMapKeyRef:
-              name: epoch-cicd-api-config
+              name: epoch-control-api-config
               key: RS_WORKSPACE_PROTOCOL
         - name: EPOCH_RS_WORKSPACE_HOST
           valueFrom:
             configMapKeyRef:
-              name: epoch-cicd-api-config
+              name: epoch-control-api-config
               key: RS_WORKSPACE_HOST
         - name: EPOCH_RS_WORKSPACE_PORT
           valueFrom:
             configMapKeyRef:
-              name: epoch-cicd-api-config
+              name: epoch-control-api-config
               key: RS_WORKSPACE_PORT
         volumeMounts:
         - name: epoch-control-ita-conf
@@ -815,7 +742,7 @@ spec:
           name: epoch-rs-workspace-conf
       containers:
       - name: epoch-rs-workspace-api
-        image: exastro/epoch-rs-workspace-api:0.3.0_20211119_1610
+        image: exastro/epoch-rs-workspace-api:0.3.0_20211206_1030
         env:
         - name: CONFIG_API_WORKSPACE_PATH
           value: "/etc/epoch/epochRsWorkspaceApi/api_workspace.conf"
@@ -900,7 +827,7 @@ spec:
           name: epoch-rs-ci-result-conf
       containers:
       - name: epoch-rs-ci-result-api
-        image: exastro/epoch-rs-ci-result-api:0.1.5_20211027_1530
+        image: exastro/epoch-rs-ci-result-api:0.3.0_20211206_1030
         env:
         - name: CONFIG_API_CI_RESULT_PATH
           value: "/etc/epoch/epochRsCiResultApi/api_ci_result.conf"
@@ -932,7 +859,7 @@ spec:
   selector:
     name: epoch-rs-ci-result-api
 
-#---- epoch-service-api.yaml
+#---- epoch-service-api-config.yaml
 ---
 #   Copyright 2019 NEC Corporation
 #
@@ -947,21 +874,6 @@ spec:
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: epoch-service-crb
-subjects:
-- kind: ServiceAccount
-  name: default
-  namespace: epoch-system
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: cluster-admin
-
----
 
 apiVersion: v1
 kind: ConfigMap
@@ -1004,82 +916,6 @@ data:
   EPOCH_EPAI_API_PORT: "8000"
   EPOCH_EPAI_REALM_NAME: "exastroplatform"
   PYTHONIOENCODING: utf-8
-
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: epoch-service-api-epai-config
-  namespace: epoch-system
-data:
-  EPOCH_EPAI_PROTOCOL: "https"
-  EPOCH_EPAI_HOST: ""
-  EPOCH_EPAI_PORT: "31182"
-  EPOCH_EPAI_API_PROTOCOL: "http"
-  EPOCH_EPAI_API_HOST: "authentication-infra-api.exastro-platform-authentication-infra.svc"
-  EPOCH_EPAI_API_PORT: "8000"
-  EPOCH_EPAI_REALM_NAME: "exastroplatform"
-
-# ---
-
-# apiVersion: v1
-# kind: Secret
-# metadata:
-#   name: epoch-service-api-secret
-#   namespace: epoch-system
-# type: Opaque
-# stringData:
-#   ENV_NAME: value
-
----
-
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: epoch-service-api
-  namespace: epoch-system
-spec:
-  selector:
-    matchLabels:
-      name: epoch-service-api
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        name: epoch-service-api
-    spec:
-      containers:
-      - name: epoch-service-api
-        image: exastro/epoch-service-api:0.1.5_20211027_1530
-        env:
-        - name: PYTHONIOENCODING
-          value: utf-8
-        envFrom:
-          - configMapRef:
-              name: epoch-service-api-config
-          - configMapRef:
-              name: epoch-service-api-epai-config
-          # - prefix: EPOCH_
-          #   secretRef:
-          #     name: epoch-service-api-secret
-
----
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: epoch-service-api
-  labels:
-    name: epoch-service-api
-  namespace: epoch-system
-spec:
-  type: ClusterIP
-  ports:
-  - name: http
-    port: 8000
-    targetPort: 8000
-  selector:
-    name: epoch-service-api
 
 #---- epoch-service-api2.yaml
 ---
@@ -1127,7 +963,7 @@ spec:
           name: epoch-service-api2-conf
       containers:
       - name: epoch-service-api2
-        image: exastro/epoch-service-api2:0.3.0_20211129_1630
+        image: exastro/epoch-service-api2:0.3.0_20211206_1700
         env:
         - name: CONFIG_API_SERVICE_PATH
           value: "/etc/epoch/epochServiceApi/api_service.conf"
@@ -1140,8 +976,8 @@ spec:
         envFrom:
           - configMapRef:
               name: epoch-service-api-config
-          - configMapRef:
-              name: epoch-service-api-epai-config
+          # - configMapRef:
+          #     name: epoch-service-api-epai-config
           # - prefix: EPOCH_
           #   secretRef:
           #     name: epoch-service-api-secret
@@ -1199,7 +1035,7 @@ spec:
     spec:
       containers:
       - name: epoch-ui
-        image: exastro/epoch-ui:0.3.0_20211129_1500
+        image: exastro/epoch-ui:0.3.0_20211206_1630
 
 ---
 apiVersion: v1
@@ -1779,10 +1615,7 @@ data:
     \ OIDCClientSecret {{ epoch_system_client_secret }}\n  <Location />\n    ProxyPass
     \       http://epoch-ui.epoch-system.svc:8000/ retry=0\n    ProxyPassReverse http://epoch-ui.epoch-system.svc:8000/\n
     \   AuthType openid-connect\n    Require claim \"epoch-role:epoch-user\"\n  </Location>\n
-    \ <Location /api/>\n    ProxyPass        http://epoch-service-api.epoch-system.svc:8000/
-    retry=0 timeout=600\n    ProxyPassReverse http://epoch-service-api.epoch-system.svc:8000/\n
-    \   AuthType openid-connect\n    Require claim \"epoch-role:epoch-user\"\n  </Location>\n
-    \ <Location /api2/>\n    ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/
+    \ <Location /api/>\n    ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/
     retry=0 timeout=600\n    ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/\n
     \   AuthType openid-connect\n    Require claim \"epoch-role:epoch-user\"\n  </Location>\n
     \ <Location /api/user/>\n    ProxyPass        http://authentication-infra-api:8000/user/
@@ -1921,7 +1754,7 @@ spec:
           name: nodeport-template
       containers:
       - name: authentication-infra-api
-        image: exastro/authentication-infra-api:0.3.0_20211129_1500
+        image: exastro/authentication-infra-api:0.3.0_20211206_1700
         env:
         - name: CONFIG_API_AUTHC_INFRA_PATH
           value: "/etc/exastro-authentication-infra/authentication-infra-api/api_authc_infra.conf"
@@ -2050,7 +1883,7 @@ spec:
           name: gateway-httpd-conf
       containers:
       - name: gateway-httpd
-        image: exastro/gateway-httpd:0.1.5_20211026_1420
+        image: exastro/gateway-httpd:0.3.0_20211206_1030
         volumeMounts:
         - name: gateway-httpd-conf
           mountPath: /etc/httpd/conf.d/exastroSettings/
@@ -2107,7 +1940,7 @@ data:
         }\
     }"
 
-    kubectl patch configmap -n epoch-system epoch-service-api-epai-config -p "\
+    kubectl patch configmap -n epoch-system epoch-service-api-config -p "\
     {\
         \"data\" : {\
             \"EPOCH_EPAI_HOST\" : \"${MY_HOST}\"\
@@ -2126,7 +1959,6 @@ data:
 
     # Rollout Restart API   
     echo "---- rollout restart"
-    kubectl rollout restart deploy -n epoch-system epoch-service-api
     kubectl rollout restart deploy -n epoch-system epoch-service-api2
     kubectl rollout restart deploy -n exastro-platform-authentication-infra authentication-infra-api
     kubectl rollout restart deploy -n exastro-platform-authentication-infra keycloak

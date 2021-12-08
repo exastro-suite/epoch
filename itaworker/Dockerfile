@@ -17,6 +17,8 @@ RUN apt-get -y update   \
 &&  echo "epoch ALL=NOPASSWD: ALL" >> /etc/sudoers \
 &&  mkdir /run/sshd
 
+RUN git config --global http.sslVerify false
+
 CMD ["/usr/sbin/sshd", "-De"]
 
 

@@ -30,7 +30,7 @@ data:
         }\
     }"
 
-    kubectl patch configmap -n epoch-system epoch-service-api-epai-config -p "\
+    kubectl patch configmap -n epoch-system epoch-service-api-config -p "\
     {\
         \"data\" : {\
             \"EPOCH_EPAI_HOST\" : \"${MY_HOST}\"\
@@ -49,7 +49,6 @@ data:
 
     # Rollout Restart API   
     echo "---- rollout restart"
-    kubectl rollout restart deploy -n epoch-system epoch-service-api
     kubectl rollout restart deploy -n epoch-system epoch-service-api2
     kubectl rollout restart deploy -n exastro-platform-authentication-infra authentication-infra-api
     kubectl rollout restart deploy -n exastro-platform-authentication-infra keycloak

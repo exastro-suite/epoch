@@ -118,6 +118,26 @@ do
 	kubectl delete ClusterRoleBinding ${crbname};
 done
 
+echo "---- delete ClusterRoleBinding"
+for crbname in \
+	$( kubectl get ClusterRoleBinding -o jsonpath="{range .items[*]}{@.metadata.name}{\"\n\"}{end}" | grep '^trigger-sa-cluster-rolebinding-' )
+do
+	echo "ClusterRoleBinding : ${crbname}";
+	kubectl delete ClusterRoleBinding ${crbname};
+done
+for crbname in \
+	$( kubectl get ClusterRoleBinding -o jsonpath="{range .items[*]}{@.metadata.name}{\"\n\"}{end}" | grep '^argocd-application-controller-' )
+do
+	echo "ClusterRoleBinding : ${crbname}";
+	kubectl delete ClusterRoleBinding ${crbname};
+done
+for crbname in \
+	$( kubectl get ClusterRoleBinding -o jsonpath="{range .items[*]}{@.metadata.name}{\"\n\"}{end}" | grep '^argocd-server-' )
+do
+	echo "ClusterRoleBinding : ${crbname}";
+	kubectl delete ClusterRoleBinding ${crbname};
+done
+
 echo "---- delete ClusterRole"
 for crname in \
 	$( kubectl get ClusterRole -o jsonpath="{range .items[*]}{@.metadata.name}{\"\n\"}{end}" | grep '^trigger-sa-cluster-role-' )

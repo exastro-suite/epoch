@@ -11,41 +11,21 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: epoch-ui
-  namespace: epoch-system
-spec:
-  selector:
-    matchLabels:
-      name: epoch-ui
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        name: epoch-ui
-    spec:
-      containers:
-      - name: epoch-ui
-        image: exastro/epoch-ui:0.3.0_20211206_1630
-
----
 apiVersion: v1
-kind: Service
+kind: ConfigMap
 metadata:
-  name: epoch-ui
-  labels:
-    name: epoch-ui
+  name: epoch-control-api-config
   namespace: epoch-system
-spec:
-  type: ClusterIP
-  ports:
-  - name: http
-    port: 8000
-    targetPort: 8000
-  #- name: https
-  #  port: 4430
-  #  targetPort: 4430
-  selector:
-    name: epoch-ui
+data:
+  HTTP_PROXY: ""
+  HTTPS_PROXY: ""
+  NO_PROXY: "localhost,127.0.0.1"
+  ARGOCD_NO_PROXY: "localhost,127.0.0.1,kurbernetes.default.svc,kurbernetes.default.svc.cluster.local,10.96.0.1,argocd-server,argocd-dex-server,argocd-redis,argocd-repo-server,argocd-server-metrics"
+  ARGOCD_HOST: "argocd-server.epoch-workspace.svc"
+  ITA_HOST: "it-automation.epoch-workspace.svc"
+  ITA_PORT: "8084"
+  ITA_WORKER_HOST: "ita-worker.epoch-workspace.svc"
+  WEBHOOK_PORT: "30443"
+  RS_WORKSPACE_PROTOCOL: "http"
+  RS_WORKSPACE_HOST: "epoch-rs-workspace-api"
+  RS_WORKSPACE_PORT: "8000"

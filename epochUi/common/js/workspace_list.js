@@ -121,15 +121,15 @@ function workspaceList( list ) {
 
 
 $(function(){
-    console.log("GET /api2/workspace");
+    console.log("GET /api/workspace");
 
     const fn = new epochCommon();
 
     $.ajax({
       "type": "GET",
-      "url": URL_BASE + "/api2/workspace"
+      "url": URL_BASE + "/api/workspace"
     }).done(function(data) {
-      console.log("RESPONSE GET /api2/workspace:");
+      console.log("RESPONSE GET /api/workspace:");
       console.log(JSON.stringify(data));
 
       workspaceListData = [];

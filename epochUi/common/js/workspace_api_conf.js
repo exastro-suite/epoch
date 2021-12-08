@@ -28,9 +28,9 @@ var workspace_api_conf = {
     },
     "api" : {
         "resource": {
-            "get" :     URL_BASE + "/api2/workspace/{workspace_id}",
-            "post" :    URL_BASE + "/api2/workspace",
-            "put" :     URL_BASE + "/api2/workspace/{workspace_id}",
+            "get" :     URL_BASE + "/api/workspace/{workspace_id}",
+            "post" :    URL_BASE + "/api/workspace",
+            "put" :     URL_BASE + "/api/workspace/{workspace_id}",
         },
         "client": {
             "get" :     URL_BASE + "/api/client/{client_id}",
@@ -41,35 +41,35 @@ var workspace_api_conf = {
             }
         },
         "workspace": {
-            "post":     URL_BASE + "/api2/workspace/{workspace_id}/pod",
+            "post":     URL_BASE + "/api/workspace/{workspace_id}/pod",
             "wait": 30000,
         },
         "ci_pipeline": {
-            "post":     URL_BASE + "/api2/workspace/{workspace_id}/ci/pipeline",
+            "post":     URL_BASE + "/api/workspace/{workspace_id}/ci/pipeline",
         },
         "cd_pipeline": {
-            "post":     URL_BASE + "/api2/workspace/{workspace_id}/cd/pipeline",
+            "post":     URL_BASE + "/api/workspace/{workspace_id}/cd/pipeline",
         },
         "manifestParameter": {
-            "post":     URL_BASE + "/api/workspace/{workspace_id}/manifestParameter",
+            "post":     URL_BASE + "/api/workspace/{workspace_id}/manifest/parameter",
         },
         "manifestTemplate": {
-            "post" :    URL_BASE + "/api/workspace/{workspace_id}/manifests/",
-            "get" :     URL_BASE + "/api/workspace/{workspace_id}/manifests/",
-            "delete" :  URL_BASE + "/api/workspace/{workspace_id}/manifests/{file_id}",
+            "post" :    URL_BASE + "/api/workspace/{workspace_id}/manifest/template",
+            "get" :     URL_BASE + "/api/workspace/{workspace_id}/manifest/template",
+            "delete" :  URL_BASE + "/api/workspace/{workspace_id}/manifest/template/{file_id}",
         },
         "cdExecDesignation": {
-            "post" :    URL_BASE + "/api/cdExecDesignation/",
+            "post" :    URL_BASE + "/api/workspace/{workspace_id}/cd/exec",
         },
         "ciResult": {
             "nop" : {
-                "get" : URL_BASE + "/api2/alive"
+                "get" : URL_BASE + "/api/alive"
             },
             "pipelinerun": {
-                "get" :    URL_BASE + "/api/ciResult/workspace/{workspace_id}/tekton/pipelinerun",
+                "get" :    URL_BASE + "/api/workspace/{workspace_id}/ci/pipeline/result",
             },
             "taskrunlogs": {
-                "get" :    URL_BASE + "/api/ciResult/workspace/{workspace_id}/tekton/taskrun/{taskrun_name}/logs",
+                "get" :    URL_BASE + "/api/workspace/{workspace_id}/ci/pipeline/result/{taskrun_name}/logs",
             }
         }
     }

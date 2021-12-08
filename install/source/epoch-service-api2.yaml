@@ -42,7 +42,7 @@ spec:
           name: epoch-service-api2-conf
       containers:
       - name: epoch-service-api2
-        image: exastro/epoch-service-api2:0.3.0_20211129_1630
+        image: exastro/epoch-service-api2:0.3.0_20211206_1700
         env:
         - name: CONFIG_API_SERVICE_PATH
           value: "/etc/epoch/epochServiceApi/api_service.conf"
@@ -55,8 +55,8 @@ spec:
         envFrom:
           - configMapRef:
               name: epoch-service-api-config
-          - configMapRef:
-              name: epoch-service-api-epai-config
+          # - configMapRef:
+          #     name: epoch-service-api-epai-config
           # - prefix: EPOCH_
           #   secretRef:
           #     name: epoch-service-api-secret

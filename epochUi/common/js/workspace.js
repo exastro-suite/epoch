@@ -1735,10 +1735,8 @@ function templateFileDelete(key, file_id){
 
     console.log("CALL : Manifestテンプレート削除 : key:" + key + ", id:" + file_id);
     api_param = {
-      "type": "POST",
+      "type": "DELETE",
       "url": workspace_api_conf.api.manifestTemplate.delete.replace('{workspace_id}', workspace_id).replace('{file_id}', file_id),
-      "data": { "id": file_id, "_method": "DELETE" },
-      dataType: "json",
     }
 
     $.ajax(api_param).done(function(data) {
@@ -2271,7 +2269,7 @@ const cdRunning = function(){
     console.log("CALL : CD実行開始");
     api_param = {
       "type": "POST",
-      "url": workspace_api_conf.api.cdExecDesignation.post,
+      "url": workspace_api_conf.api.cdExecDesignation.post.replace('{workspace_id}', workspace_id),
       "data": JSON.stringify(reqbody),
       contentType: "application/json",
       dataType: "json",
@@ -2730,6 +2728,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
           wsDataJSON['git-service-argo']['git-service-argo-account-select'] = data_workspace['ci_config']['environments'][0]['account_select'];
           wsDataJSON['git-service-argo']['git-service-argo-user'] = data_workspace['ci_config']['environments'][0]['git_user'];
           wsDataJSON['git-service-argo']['git-service-argo-token'] = data_workspace['ci_config']['environments'][0]['git_token'];
+          wsDataJSON['git-service-argo']['git-service-argo-select'] = data_workspace['ci_config']['environments'][0]['git_housing'] == 'inner'? 'epoch': data_workspace['ci_config']['environments'][0]['git_interface'];
         }
 
         resolve();

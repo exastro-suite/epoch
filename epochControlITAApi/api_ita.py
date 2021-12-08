@@ -31,20 +31,23 @@ import hashlib
 
 import globals
 import common
+import api_access_info
+import api_ita_manifests
+import api_ita_cd
 
-WAIT_SEC_ITA_POD_UP = 120 # ITA Pod起動待ち時間(秒)
-WAIT_SEC_ITA_IMPORT = 60 # ITA Import最大待ち時間(秒)
+WAIT_SEC_ITA_POD_UP = 120 # ITA Pod 起動待ち時間(sec) ready check wait time
+WAIT_SEC_ITA_IMPORT = 60 # ITA Import最大待ち時間(sec) import wait time
 EPOCH_ITA_HOST = "it-automation"
 EPOCH_ITA_PORT = "8084"
 
-# 設定ファイル読み込み・globals初期化
+# 設定ファイル読み込み・globals初期化 flask setting file read and globals initialize
 app = Flask(__name__)
 app.config.from_envvar('CONFIG_API_ITA_PATH')
 globals.init(app)
 
 @app.route('/alive', methods=["GET"])
 def alive():
-    """死活監視
+    """死活監視(alive monitor)
 
     Returns:
         Response: HTTP Respose
@@ -54,10 +57,10 @@ def alive():
 
 @app.route('/workspace/<int:workspace_id>/it-automation', methods=['POST'])
 def call_ita(workspace_id):
-    """workspace/workspace_id/it-automation 呼び出し
+    """workspace/workspace_id/it-automation call
 
     Args:
-        workspace_id (int): ワークスペースID
+        workspace_id (int): workspace id
 
     Returns:
         Response: HTTP Respose
@@ -68,10 +71,10 @@ def call_ita(workspace_id):
         globals.logger.debug('#' * 50)
 
         if request.method == 'POST':
-            # it-automation pod 生成
+            # it-automation pod create
             return create_ita(workspace_id)
         else:
-            # エラー
+            # Error
             raise Exception("method not support!")
 
     except Exception as e:
@@ -80,10 +83,10 @@ def call_ita(workspace_id):
 
 @app.route('/workspace/<int:workspace_id>/it-automation/settings', methods=['POST'])
 def call_ita_settings(workspace_id):
-    """workspace/workspace_id/it-automation/settings 呼び出し
+    """workspace/workspace_id/it-automation/settings call
 
     Args:
-        workspace_id (int): ワークスペースID
+        workspace_id (int): workspace id
 
     Returns:
         Response: HTTP Respose
@@ -94,20 +97,151 @@ def call_ita_settings(workspace_id):
         globals.logger.debug('#' * 50)
 
         if request.method == 'POST':
-            # it-automation pod 生成
+            # it-automation setting
             return settings_ita(workspace_id)
         else:
-            # エラー
+            # Error
             raise Exception("method not support!")
 
     except Exception as e:
         return common.server_error(e)
 
-def create_ita(workspace_id):
-    """IT-Automation Pod 作成
+
+@app.route('/workspace/<int:workspace_id>/it-automation/manifest/git', methods=['POST'])
+def call_ita_manifest_git(workspace_id):
+    """workspace/workspace_id/it-automation/manifest/git call
 
     Args:
-        workspace_id (int): ワークスペースID
+        workspace_id (int): workspace id
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'POST':
+            # it-automation git-environment settging
+            return api_ita_manifests.settings_git_environment(workspace_id)
+        else:
+            # Error
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+
+@app.route('/workspace/<int:workspace_id>/it-automation/manifest/parameter', methods=['POST'])
+def call_ita_manifest_parameter(workspace_id):
+    """workspace/workspace_id/it-automation/manifest/parameter call
+
+    Args:
+        workspace_id (int): workspace id
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'POST':
+            # it-automation manifest-parameter settging
+            return api_ita_manifests.settings_manifest_parameter(workspace_id)
+        else:
+            # Error
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+
+@app.route('/workspace/<int:workspace_id>/it-automation/manifest/templates', methods=['POST'])
+def call_ita_manifest_templates(workspace_id):
+    """workspace/workspace_id/it-automation/manifest/templates call
+
+    Args:
+        workspace_id (int): workspace id
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'POST':
+            # it-automation manifest-templates settging
+            return api_ita_manifests.settings_manifest_templates(workspace_id)
+        else:
+            # Error
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+
+@app.route('/workspace/<int:workspace_id>/it-automation/cd/operations', methods=['GET'])
+def call_ita_cd_operations(workspace_id):
+    """workspace/workspace_id/it-automation/cd/operations call
+
+    Args:
+        workspace_id (int): workspace id
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'GET':
+            # it-automation get cd-operations 
+            return api_ita_cd.get_cd_operations(workspace_id)
+        else:
+            # Error
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+
+@app.route('/workspace/<int:workspace_id>/it-automation/cd/execute', methods=['POST'])
+def call_ita_cd_execute(workspace_id):
+    """workspace/workspace_id/it-automation/cd/execute call
+
+    Args:
+        workspace_id (int): workspace id
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'POST':
+            # it-automation cd execute
+            return api_ita_cd.cd_execute(workspace_id)
+        else:
+            # Error
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+
+def create_ita(workspace_id):
+    """IT-Automation Pod Create
+
+    Args:
+        workspace_id (int): workspace id
 
     Returns:
         Response: HTTP Respose
@@ -190,7 +324,7 @@ def settings_ita(workspace_id):
     """IT-Automation 設定
 
     Args:
-        workspace_id (int): ワークスペースID
+        workspace_id (int): workspace id
 
     Returns:
         Response: HTTP Respose
@@ -205,11 +339,15 @@ def settings_ita(workspace_id):
         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
         globals.logger.debug('#' * 50)
 
+        ita_db_name = "ita_db"
+        ita_db_user = "ita_db_user"
+        ita_db_password = "ita_db_password"
+
         # パラメータ情報(JSON形式)
         payload = request.json.copy()
 
         # ワークスペースアクセス情報取得
-        access_info = get_access_info(workspace_id)
+        access_info = api_access_info.get_access_info(workspace_id)
 
         # namespaceの取得
         namespace = common.get_namespace_name(workspace_id)
@@ -231,10 +369,24 @@ def settings_ita(workspace_id):
                 error_detail = "IT-Automation 初期設定でタイムアウトしました。再度、実行してください。"
                 raise common.UserException(error_detail)
 
+        # *-*-*-* podが立ち上がるのを待つ *-*-*-*
+        start_time = time.time()
+        while True:
+            globals.logger.debug("waiting for ita mariaDB up...")
+            time.sleep(1)
+
+            # PodがRunningになったら終了
+            if is_ita_mysql_running(namespace, ita_db_user, ita_db_password):
+                break
+
+            # timeout
+            current_time = time.time()
+            if (current_time - start_time) > WAIT_SEC_ITA_POD_UP:
+                globals.logger.debug("ITA mariaDB start Time out")
+                error_detail = "IT-Automation 初期設定でタイムアウトしました。再度、実行してください。"
+                raise common.UserException(error_detail)
+
         # *-*-*-* パスワード更新済み判定とする *-*-*-*
-        ita_db_name = "ita_db"
-        ita_db_user = "ita_db_user"
-        ita_db_password = "ita_db_password"
         # command = "mysql -u %s -p%s %s < /app/epoch/tmp/ita_table_update.sql" % (ita_db_user, ita_db_password, ita_db_name)
         command = "mysql -u %s -p%s %s -e'UPDATE A_ACCOUNT_LIST SET PW_LAST_UPDATE_TIME = \"2999-12-31 23:59:58\" WHERE USER_ID = 1;'" % (ita_db_user, ita_db_password, ita_db_name)
         stdout_ita = subprocess.check_output(["kubectl", "exec", "-i", "-n", namespace, "deployment/it-automation", "--", "bash", "-c", command], stderr=subprocess.STDOUT)
@@ -349,38 +501,6 @@ def settings_ita(workspace_id):
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
     except Exception as e:
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
-
-
-def get_access_info(workspace_id):
-    """ワークスペースアクセス情報取得
-
-    Args:
-        workspace_id (int): ワークスペースID
-
-    Returns:
-        json: アクセス情報
-    """
-    try:
-        # url設定
-        api_info = "{}://{}:{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'], os.environ['EPOCH_RS_WORKSPACE_HOST'], os.environ['EPOCH_RS_WORKSPACE_PORT'])
-
-        # アクセス情報取得
-        # Select送信（workspace_access取得）
-        globals.logger.debug("workspace_access get call: worksapce_id:{}".format(workspace_id))
-        request_response = requests.get( "{}/workspace/{}/access".format(api_info, workspace_id))
-        # globals.logger.debug (request_response)
-
-        # 情報が存在する場合は、更新、存在しない場合は、登録
-        if request_response.status_code == 200:
-            ret = json.loads(request_response.text)
-        else:
-            raise Exception("workspace_access get error status:{}, responce:{}".format(request_response.status_code, request_response.text))
-
-        return ret
-
-    except Exception as e:
-        globals.logger.debug("get_access_info Exception:{}".format(e.args))
-        raise # 再スロー
 
 
 def is_already_imported(host, auth, init_auth):
@@ -625,7 +745,7 @@ def import_execute(host, auth, upload_id, menu_list, upload_filename):
 
 
 def is_ita_pod_running(namespace):
-    """podの状態チェック
+    """podの起動チェック
 
     Args:
         namespace (str): namespace名
@@ -647,6 +767,34 @@ def is_ita_pod_running(namespace):
     else:
         return False
     # return (pod_describe['items'][0]['status']['phase'] == "Running")
+
+
+def is_ita_mysql_running(namespace, ita_db_user, ita_db_password):
+    """mysqlの起動チェック
+
+    Args:
+        namespace (str): namespace名
+        ita_db_user (str): DB user
+        ita_db_password (str): DB user password
+
+    Returns:
+        True: ready ok!
+    """
+
+    ret = False
+    command = "mysqladmin ping -u {} -p{}".format(ita_db_user, ita_db_password)
+    try:
+        stdout_exec = subprocess.check_output(["kubectl", "exec", "-i", "-n", namespace, "deployment/it-automation", "--", "bash", "-c", command], stderr=subprocess.STDOUT)
+        # globals.logger.error(stdout_exec)
+        # 起動が完了しているかチェック Check if booting is complete
+        if stdout_exec == b'mysqld is alive\n':
+            ret = True
+
+    except Exception as e:
+        globals.logger.error(e.args)
+        pass
+
+    return ret
 
 
 if __name__ == "__main__":
