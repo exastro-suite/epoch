@@ -15,6 +15,7 @@
 from flask import jsonify
 import random, string
 import json
+import traceback
 
 import globals
 
@@ -171,10 +172,10 @@ def get_current_user(header):
     try:
         # 該当の要素が無い場合は、confの設定に誤り
         HEAD_REMOTE_USER = "X-REMOTE-USER"
-        if not HEAD_REMOTE_USER in request.headers:
+        if not HEAD_REMOTE_USER in header:
             raise Exception("get_current_user error not found header:{}".format(HEAD_REMOTE_USER))
 
-        remote_user = request.headers[HEAD_REMOTE_USER]
+        remote_user = header[HEAD_REMOTE_USER]
         # globals.logger.debug('{}:{}'.format(HEAD_REMOTE_USER, remote_user))
 
         # 最初の@があるところまでをuser_idとする

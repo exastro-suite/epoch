@@ -122,70 +122,72 @@ def post_cd_pipeline(workspace_id):
             error_detail = 'argocd/settings post処理に失敗しました'
             raise common.UserException(error_detail)
 
-        # authentication-infra-api の呼び先設定
-        api_url_epai = "{}://{}:{}/".format(os.environ["EPOCH_EPAI_API_PROTOCOL"], 
-                                            os.environ["EPOCH_EPAI_API_HOST"], 
-                                            os.environ["EPOCH_EPAI_API_PORT"])
+        # TODO:削除
 
-        # get namespace
-        namespace = common.get_namespace_name(workspace_id)
+        # # authentication-infra-api の呼び先設定
+        # api_url_epai = "{}://{}:{}/".format(os.environ["EPOCH_EPAI_API_PROTOCOL"], 
+        #                                     os.environ["EPOCH_EPAI_API_HOST"], 
+        #                                     os.environ["EPOCH_EPAI_API_PORT"])
 
-        # get pipeline name
-        pipeline_name = common.get_pipeline_name(workspace_id)
+        # # get namespace
+        # namespace = common.get_namespace_name(workspace_id)
 
-        # postする情報 post information
-        clients = [
-            {
-                "client_id" :   'epoch-ws-{}-ita'.format(workspace_id),
-                "client_host" : os.environ["EPOCH_EPAI_HOST"],
-                "client_protocol" : "https",
-                "conf_template" : "epoch-ws-ita-template.conf",
-                "backend_url" : "http://it-automation.{}.svc:8084/".format(namespace),
-            },
-            {
-                "client_id" :   'epoch-ws-{}-argocd'.format(workspace_id),
-                "client_host" : os.environ["EPOCH_EPAI_HOST"],
-                "client_protocol" : "https",
-                "conf_template" : "epoch-ws-argocd-template.conf",
-                "backend_url" : "https://argocd-server.{}.svc/".format(namespace),
-            },
-            {
-                "client_id" :   'epoch-ws-{}-sonarqube'.format(workspace_id),
-                "client_host" : os.environ["EPOCH_EPAI_HOST"],
-                "client_protocol" : "https",
-                "conf_template" : "epoch-ws-sonarqube-template.conf",
-                "backend_url" : "http://sonarqube.{}.svc:9000/".format(pipeline_name),
-            },
-        ]
+        # # get pipeline name
+        # pipeline_name = common.get_pipeline_name(workspace_id)
 
-        # post送信（アクセス情報生成）
-        exec_stat = "認証基盤 初期情報設定"
-        for client in clients:
-            response = requests.post("{}{}/{}/{}".format(api_url_epai, 'settings', os.environ["EPOCH_EPAI_REALM_NAME"], 'clients'), headers=post_headers, data=json.dumps(client))
+        # # postする情報 post information
+        # clients = [
+        #     {
+        #         "client_id" :   'epoch-ws-{}-ita'.format(workspace_id),
+        #         "client_host" : os.environ["EPOCH_EPAI_HOST"],
+        #         "client_protocol" : "https",
+        #         "conf_template" : "epoch-ws-ita-template.conf",
+        #         "backend_url" : "http://it-automation.{}.svc:8084/".format(namespace),
+        #     },
+        #     {
+        #         "client_id" :   'epoch-ws-{}-argocd'.format(workspace_id),
+        #         "client_host" : os.environ["EPOCH_EPAI_HOST"],
+        #         "client_protocol" : "https",
+        #         "conf_template" : "epoch-ws-argocd-template.conf",
+        #         "backend_url" : "https://argocd-server.{}.svc/".format(namespace),
+        #     },
+        #     {
+        #         "client_id" :   'epoch-ws-{}-sonarqube'.format(workspace_id),
+        #         "client_host" : os.environ["EPOCH_EPAI_HOST"],
+        #         "client_protocol" : "https",
+        #         "conf_template" : "epoch-ws-sonarqube-template.conf",
+        #         "backend_url" : "http://sonarqube.{}.svc:9000/".format(pipeline_name),
+        #     },
+        # ]
 
-            # 正常時以外はExceptionを発行して終了する
-            if response.status_code != 200:
-                globals.logger.debug(response.text)
-                error_detail = "認証基盤 初期情報設定の生成に失敗しました。 {}".format(response.status_code)
-                raise common.UserException(error_detail)
+        # # post送信（アクセス情報生成）
+        # exec_stat = "認証基盤 初期情報設定"
+        # for client in clients:
+        #     response = requests.post("{}{}/{}/{}".format(api_url_epai, 'settings', os.environ["EPOCH_EPAI_REALM_NAME"], 'clients'), headers=post_headers, data=json.dumps(client))
 
-        exec_stat = "認証基盤 設定読み込み"
+        #     # 正常時以外はExceptionを発行して終了する
+        #     if response.status_code != 200:
+        #         globals.logger.debug(response.text)
+        #         error_detail = "認証基盤 初期情報設定の生成に失敗しました。 {}".format(response.status_code)
+        #         raise common.UserException(error_detail)
 
-        # ヘッダ情報
-        post_headers = {
-            'Content-Type': 'application/json',
-        }
+        # exec_stat = "認証基盤 設定読み込み"
 
-        # workspace_id send data
-        apply_data = {
-            "workspace_id": workspace_id,
-        }
-        response = requests.put("{}{}".format(api_url_epai, 'apply_settings'), headers=post_headers, data=json.dumps(apply_data))
+        # # ヘッダ情報
+        # post_headers = {
+        #     'Content-Type': 'application/json',
+        # }
 
-        # 正常時以外はExceptionを発行して終了する
-        if response.status_code != 200:
-            error_detail = "認証基盤 設定読み込みに失敗しました。 {}".format(response.status_code)
-            raise common.UserException(error_detail)
+        # # workspace_id send data
+        # apply_data = {
+        #     "workspace_id": workspace_id,
+        # }
+        # response = requests.put("{}{}".format(api_url_epai, 'apply_settings'), headers=post_headers, data=json.dumps(apply_data))
+
+        # # 正常時以外はExceptionを発行して終了する
+        # if response.status_code != 200:
+        #     error_detail = "認証基盤 設定読み込みに失敗しました。 {}".format(response.status_code)
+        #     raise common.UserException(error_detail)
 
         ret_status = 200
 
