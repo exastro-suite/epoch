@@ -158,3 +158,33 @@ def get_file_id(dict, fileName):
 
     except Exception:
         raise
+
+def get_current_user(header):
+    """ログインユーザID取得
+
+    Args:
+        header (dict): request header情報
+
+    Returns:
+        str: ユーザID
+    """
+    try:
+        # 該当の要素が無い場合は、confの設定に誤り
+        HEAD_REMOTE_USER = "X-REMOTE-USER"
+        if not HEAD_REMOTE_USER in request.headers:
+            raise Exception("get_current_user error not found header:{}".format(HEAD_REMOTE_USER))
+
+        remote_user = request.headers[HEAD_REMOTE_USER]
+        # globals.logger.debug('{}:{}'.format(HEAD_REMOTE_USER, remote_user))
+
+        # 最初の@があるところまでをuser_idとする
+        idx = remote_user.rfind('@')
+        user_id = remote_user[:idx]
+        # globals.logger.debug('user_id:{}'.format(user_id))
+
+        return user_id
+
+    except Exception as e:
+        globals.logger.debug(e.args)
+        globals.logger.debug(traceback.format_exc())
+        raise

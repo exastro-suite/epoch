@@ -358,6 +358,9 @@ def create_workspace():
         # 引数をJSON形式で受け取りそのまま引数に設定
         post_data = request.json.copy()
 
+        # user_idの取得
+        user_id = common.get_current_user(request.headers)
+
         # workspace put送信
         api_url = "{}://{}:{}/workspace".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
                                                 os.environ['EPOCH_RS_WORKSPACE_HOST'],
@@ -377,6 +380,53 @@ def create_workspace():
                     error_detail = ret["errorDetail"]
 
             raise common.UserException("{} Error post workspace db status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
+
+        #
+        # スタブ実装
+        #
+        workspace_id=rows[0]["workspace_id"]
+
+        #
+        # create workspace role - ワークスペースロール生成
+        #
+        api_url = "{}://{}:{}/client/epoch-system/role".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
+                                                               os.environ['EPOCH_EPAI_API_HOST'],
+                                                               os.environ['EPOCH_EPAI_API_PORT']
+                                                        )
+        post_data = {
+            "roles" : [
+                {
+                    "id": "ws-{}-role-ws-reference".format(workspace_id),
+                    "composite_roles": []
+                },
+                # ... ワークスペースで必要なロールを列挙
+                {
+                    "id": "ws-{}-owner".format(workspace_id),
+                    "composite_roles": [ "ws-{}-role-ws-reference".format(workspace_id) ]
+                }
+            ]
+        }
+        
+        response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
+
+        #
+        # append workspace owner role - ワークスペースオーナーロールの付与
+        #
+        api_url = "{}://{}:{}/user/{}/roles/epoch-system".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
+                                                                os.environ['EPOCH_EPAI_API_HOST'],
+                                                                os.environ['EPOCH_EPAI_API_PORT'],
+                                                                user_id,
+                                                        )
+        post_data = {
+            "roles" : [
+                {
+                    "id": "ws-{}-owner".format(workspace_id),
+                    "enabled": "true"
+                }
+            ]
+        }
+
+        response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
 
         ret_status = response.status_code
 
