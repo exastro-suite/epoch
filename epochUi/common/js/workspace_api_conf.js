@@ -42,7 +42,8 @@ var workspace_api_conf = {
         },
         "workspace": {
             "post":     URL_BASE + "/api/workspace/{workspace_id}/pod",
-            "wait": 30000,
+            //"wait": 30000,
+            "wait": 0,
         },
         "ci_pipeline": {
             "post":     URL_BASE + "/api/workspace/{workspace_id}/ci/pipeline",
