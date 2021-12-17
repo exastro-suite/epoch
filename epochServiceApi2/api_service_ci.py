@@ -30,6 +30,7 @@ from datetime import timedelta, timezone
 
 import globals
 import common
+import multi_lang
 
 # 設定ファイル読み込み・globals初期化
 app = Flask(__name__)

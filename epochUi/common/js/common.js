@@ -630,3 +630,29 @@ webStorage.prototype = {
         }
     }
 };
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//   multi language
+// 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+function getText(textId, originText, ...args){
+
+  let text = "";
+
+  // textId存在チェック
+  if(textId in langArray){
+      text = (langArray[textId]);
+
+      for(var i = 0; i < args.length; i++){
+          // {0}, {1}..に埋め込む変数を第3引数以降（args）で指定した文字列に置き換える
+          text = text.replace('{' + i + '}', args[i]);
+      }
+  }
+  else{
+      // textIdが存在しない場合は、原文を表示
+      text = originText;
+  }
+
+  return text;
+};
