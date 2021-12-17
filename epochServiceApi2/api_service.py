@@ -426,12 +426,12 @@ def create_workspace_setting_roles(workspace_id,user_id):
     post_data = {
         "roles" : [
             {
-                "id": "ws-{}-role-ws-reference".format(workspace_id),
+                "name": "ws-{}-role-ws-reference".format(workspace_id),
                 "composite_roles": []
             },
             # ... ワークスペースで必要なロールを列挙
             {
-                "id": "ws-{}-owner".format(workspace_id),
+                "name": "ws-{}-owner".format(workspace_id),
                 "composite_roles": [ "ws-{}-role-ws-reference".format(workspace_id) ]
             }
         ]
@@ -450,7 +450,7 @@ def create_workspace_setting_roles(workspace_id,user_id):
     post_data = {
         "roles" : [
             {
-                "id": "ws-{}-owner".format(workspace_id),
+                "name": "ws-{}-owner".format(workspace_id),
                 "enabled": "true"
             }
         ]
