@@ -381,115 +381,15 @@ def create_workspace():
 
             raise common.UserException("{} Error post workspace db status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
 
-        #
-        # スタブ実装
-        #
+        # Get the workspace ID - ワークスペースIDを取得する
         workspace_id=rows[0]["workspace_id"]
 
-        #
-        # create workspace role - ワークスペースロール生成
-        #
-        api_url = "{}://{}:{}/client/epoch-system/role".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
-                                                               os.environ['EPOCH_EPAI_API_HOST'],
-                                                               os.environ['EPOCH_EPAI_API_PORT']
-                                                        )
-        post_data = {
-            "roles" : [
-                {
-                    "id": "ws-{}-role-ws-reference".format(workspace_id),
-                    "composite_roles": []
-                },
-                # ... ワークスペースで必要なロールを列挙
-                {
-                    "id": "ws-{}-owner".format(workspace_id),
-                    "composite_roles": [ "ws-{}-role-ws-reference".format(workspace_id) ]
-                }
-            ]
-        }
-        
-        response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
 
-        #
-        # append workspace owner role - ワークスペースオーナーロールの付与
-        #
-        api_url = "{}://{}:{}/user/{}/roles/epoch-system".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
-                                                                os.environ['EPOCH_EPAI_API_HOST'],
-                                                                os.environ['EPOCH_EPAI_API_PORT'],
-                                                                user_id,
-                                                        )
-        post_data = {
-            "roles" : [
-                {
-                    "id": "ws-{}-owner".format(workspace_id),
-                    "enabled": "true"
-                }
-            ]
-        }
+        # Set workspace roles - ワークスペースのロールを設定する
+        create_workspace_setting_roles(workspace_id, user_id)
 
-        response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
-
-        # authentication-infra-api の呼び先設定
-        api_url_epai = "{}://{}:{}/".format(os.environ["EPOCH_EPAI_API_PROTOCOL"], 
-                                            os.environ["EPOCH_EPAI_API_HOST"], 
-                                            os.environ["EPOCH_EPAI_API_PORT"])
-
-        # get namespace
-        namespace = common.get_namespace_name(workspace_id)
-
-        # get pipeline name
-        pipeline_name = common.get_pipeline_name(workspace_id)
-
-        # postする情報 post information
-        clients = [
-            {
-                "client_id" :   'epoch-ws-{}-ita'.format(workspace_id),
-                "client_host" : os.environ["EPOCH_EPAI_HOST"],
-                "client_protocol" : "https",
-                "conf_template" : "epoch-ws-ita-template.conf",
-                "backend_url" : "http://it-automation.{}.svc:8084/".format(namespace),
-            },
-            {
-                "client_id" :   'epoch-ws-{}-argocd'.format(workspace_id),
-                "client_host" : os.environ["EPOCH_EPAI_HOST"],
-                "client_protocol" : "https",
-                "conf_template" : "epoch-ws-argocd-template.conf",
-                "backend_url" : "https://argocd-server.{}.svc/".format(namespace),
-            },
-            {
-                "client_id" :   'epoch-ws-{}-sonarqube'.format(workspace_id),
-                "client_host" : os.environ["EPOCH_EPAI_HOST"],
-                "client_protocol" : "https",
-                "conf_template" : "epoch-ws-sonarqube-template.conf",
-                "backend_url" : "http://sonarqube.{}.svc:9000/".format(pipeline_name),
-            },
-        ]
-
-        # post送信（アクセス情報生成）
-        exec_stat = "認証基盤 client設定"
-        for client in clients:
-            response = requests.post("{}{}/{}/{}".format(api_url_epai, 'settings', os.environ["EPOCH_EPAI_REALM_NAME"], 'clients'), headers=post_headers, data=json.dumps(client))
-
-            # 正常時以外はExceptionを発行して終了する
-            if response.status_code != 200:
-                globals.logger.debug(response.text)
-                error_detail = "認証基盤 client設定に失敗しました。 {}".format(response.status_code)
-                raise common.UserException(error_detail)
-
-
-
-
-        exec_stat = "認証基盤 設定読み込み"
-
-        # ヘッダ情報
-        post_headers = {
-            'Content-Type': 'application/json',
-        }
-
-        # workspace_id send data
-        apply_data = {
-            "workspace_id": workspace_id,
-        }
-        response = requests.put("{}{}".format(api_url_epai, 'apply_settings'), headers=post_headers, data=json.dumps(apply_data))
+        # exastro-authentication-infra setting - 認証基盤の設定
+        create_workspace_setting_auth_infra(workspace_id)
 
         ret_status = response.status_code
 
@@ -500,6 +400,135 @@ def create_workspace():
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
     except Exception as e:
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+
+
+def create_workspace_setting_roles(workspace_id,user_id):
+    """Set workspace roles - ワークスペースのロールを設定する
+
+    Args:
+        workspace_id (int): workspace id
+        user_id (str): login user id
+    """
+
+    #
+    # TODO:スタブ実装
+    #
+
+    # ヘッダ情報
+    post_headers = {
+        'Content-Type': 'application/json',
+    }
+
+    api_url = "{}://{}:{}/client/epoch-system/role".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
+                                                            os.environ['EPOCH_EPAI_API_HOST'],
+                                                            os.environ['EPOCH_EPAI_API_PORT']
+                                                    )
+    post_data = {
+        "roles" : [
+            {
+                "id": "ws-{}-role-ws-reference".format(workspace_id),
+                "composite_roles": []
+            },
+            # ... ワークスペースで必要なロールを列挙
+            {
+                "id": "ws-{}-owner".format(workspace_id),
+                "composite_roles": [ "ws-{}-role-ws-reference".format(workspace_id) ]
+            }
+        ]
+    }
+    
+    response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
+
+    #
+    # append workspace owner role - ワークスペースオーナーロールの付与
+    #
+    api_url = "{}://{}:{}/user/{}/roles/epoch-system".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
+                                                            os.environ['EPOCH_EPAI_API_HOST'],
+                                                            os.environ['EPOCH_EPAI_API_PORT'],
+                                                            user_id,
+                                                    )
+    post_data = {
+        "roles" : [
+            {
+                "id": "ws-{}-owner".format(workspace_id),
+                "enabled": "true"
+            }
+        ]
+    }
+
+    response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
+
+def create_workspace_setting_auth_infra(workspace_id):
+    """exastro-authentication-infra setting - 認証基盤の設定
+
+    Args:
+        workspace_id (int): workspace id
+    """
+
+    #
+    # TODO:スタブ実装
+    #
+
+    # ヘッダ情報
+    post_headers = {
+        'Content-Type': 'application/json',
+    }
+
+    # authentication-infra-api の呼び先設定
+    api_url_epai = "{}://{}:{}/".format(os.environ["EPOCH_EPAI_API_PROTOCOL"], 
+                                        os.environ["EPOCH_EPAI_API_HOST"], 
+                                        os.environ["EPOCH_EPAI_API_PORT"])
+
+    # get namespace
+    namespace = common.get_namespace_name(workspace_id)
+
+    # get pipeline name
+    pipeline_name = common.get_pipeline_name(workspace_id)
+
+    # postする情報 post information
+    clients = [
+        {
+            "client_id" :   'epoch-ws-{}-ita'.format(workspace_id),
+            "client_host" : os.environ["EPOCH_EPAI_HOST"],
+            "client_protocol" : "https",
+            "conf_template" : "epoch-ws-ita-template.conf",
+            "backend_url" : "http://it-automation.{}.svc:8084/".format(namespace),
+        },
+        {
+            "client_id" :   'epoch-ws-{}-argocd'.format(workspace_id),
+            "client_host" : os.environ["EPOCH_EPAI_HOST"],
+            "client_protocol" : "https",
+            "conf_template" : "epoch-ws-argocd-template.conf",
+            "backend_url" : "https://argocd-server.{}.svc/".format(namespace),
+        },
+        {
+            "client_id" :   'epoch-ws-{}-sonarqube'.format(workspace_id),
+            "client_host" : os.environ["EPOCH_EPAI_HOST"],
+            "client_protocol" : "https",
+            "conf_template" : "epoch-ws-sonarqube-template.conf",
+            "backend_url" : "http://sonarqube.{}.svc:9000/".format(pipeline_name),
+        },
+    ]
+
+    # post送信（アクセス情報生成）
+    exec_stat = "認証基盤 client設定"
+    for client in clients:
+        response = requests.post("{}{}/{}/{}".format(api_url_epai, 'settings', os.environ["EPOCH_EPAI_REALM_NAME"], 'clients'), headers=post_headers, data=json.dumps(client))
+
+        # 正常時以外はExceptionを発行して終了する
+        if response.status_code != 200:
+            globals.logger.debug(response.text)
+            error_detail = "認証基盤 client設定に失敗しました。 {}".format(response.status_code)
+            raise common.UserException(error_detail)
+
+
+    exec_stat = "認証基盤 設定読み込み"
+
+    # workspace_id send data
+    apply_data = {
+        "workspace_id": workspace_id,
+    }
+    response = requests.put("{}{}".format(api_url_epai, 'apply_settings'), headers=post_headers, data=json.dumps(apply_data))
 
 
 def get_workspace_list():
@@ -552,7 +581,6 @@ def get_workspace_list():
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
     except Exception as e:
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
-
 
 def get_workspace(workspace_id):
     """ワークスペース情報取得
