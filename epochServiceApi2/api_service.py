@@ -419,9 +419,10 @@ def create_workspace_setting_roles(workspace_id,user_id):
         'Content-Type': 'application/json',
     }
 
-    api_url = "{}://{}:{}/client/epoch-system/role".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
+    api_url = "{}://{}:{}/{}/client/epoch-system/role".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
                                                             os.environ['EPOCH_EPAI_API_HOST'],
-                                                            os.environ['EPOCH_EPAI_API_PORT']
+                                                            os.environ['EPOCH_EPAI_API_PORT'],
+                                                            os.environ["EPOCH_EPAI_REALM_NAME"]
                                                     )
     post_data = {
         "roles" : [
@@ -442,9 +443,10 @@ def create_workspace_setting_roles(workspace_id,user_id):
     #
     # append workspace owner role - ワークスペースオーナーロールの付与
     #
-    api_url = "{}://{}:{}/user/{}/roles/epoch-system".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
+    api_url = "{}://{}:{}/{}/user/{}/roles/epoch-system".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
                                                             os.environ['EPOCH_EPAI_API_HOST'],
                                                             os.environ['EPOCH_EPAI_API_PORT'],
+                                                            os.environ["EPOCH_EPAI_REALM_NAME"],
                                                             user_id,
                                                     )
     post_data = {
