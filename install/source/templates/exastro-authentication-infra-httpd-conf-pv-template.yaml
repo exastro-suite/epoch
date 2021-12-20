@@ -1,0 +1,49 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: exastro-authentication-infra-sc
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: exastro-authentication-infra-httpd-conf
+  labels:
+    type: local
+  annotations:
+    pv.kubernetes.io/bound-by-controller: "yes"
+spec:
+  storageClassName: exastro-authentication-infra-sc
+  capacity:
+    storage: 500Mi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: /var/data/epoch/authc-httpd/conf
+    type: DirectoryOrCreate
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - #WORKER-NODE-NAME#
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: exastro-authentication-infra-httpd-conf
+  namespace: exastro-platform-authentication-infra
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 500Mi
+  storageClassName: exastro-authentication-infra-sc
+  volumeMode: Filesystem
+  volumeName: exastro-authentication-infra-httpd-conf

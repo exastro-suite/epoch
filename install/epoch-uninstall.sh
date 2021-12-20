@@ -19,10 +19,26 @@ if [ ! -f "${BASEDIR}/epoch-install.yaml" ]; then
 	echo "(ERROR) File Not Found: ${BASEDIR}/epoch-install.yaml"
 	exit 1
 fi
-if [ ! -f "${BASEDIR}/epoch-pv.yaml" ]; then
-	echo "(ERROR) File Not Found: ${BASEDIR}/epoch-pv.yaml"
+if [ ! -f "${BASEDIR}/source/tekton/tekton-trigger-interceptors.yaml" ]; then
+	echo "(ERROR) File Not Found: ${BASEDIR}/source/tekton/tekton-trigger-interceptors.yaml"
 	exit 1
 fi
+if [ ! -f "${BASEDIR}/source/tekton/tekton-trigger-release.yaml" ]; then
+	echo "(ERROR) File Not Found: ${BASEDIR}/source/tekton/tekton-trigger-release.yaml"
+	exit 1
+fi
+if [ ! -f "${BASEDIR}/source/tekton/tekton-pipeline-release.yaml" ]; then
+	echo "(ERROR) File Not Found: ${BASEDIR}/source/tekton/tekton-trigger-release.yaml"
+	exit 1
+fi
+if [ ! -f "${BASEDIR}/source/tekton/tekton-pipeline-release.yaml" ]; then
+	echo "(ERROR) File Not Found: ${BASEDIR}/source/tekton/tekton-trigger-release.yaml"
+	exit 1
+fi
+#if [ ! -f "${BASEDIR}/epoch-pv.yaml" ]; then
+#	echo "(ERROR) File Not Found: ${BASEDIR}/epoch-pv.yaml"
+#	exit 1
+#fi
 
 #
 # TEKTON resource delete
@@ -154,5 +170,8 @@ kubectl delete -f "${BASEDIR}/source/tekton/tekton-pipeline-release.yaml" --igno
 echo "-- DELETE EPOCH POD --"
 kubectl delete -f "${BASEDIR}/epoch-install.yaml" --ignore-not-found
 
-echo "-- DELETE EPOCH PV --"
-kubectl delete -f "${BASEDIR}/epoch-pv.yaml" --ignore-not-found
+#echo "-- DELETE EPOCH PV --"
+#kubectl delete -f "${BASEDIR}/epoch-pv.yaml" --ignore-not-found
+
+echo "-- DELETE exastro-authentication-infra-httpd-conf-pv --"
+kubectl delete -f "${BASEDIR}/source/templates/exastro-authentication-infra-httpd-conf-pv-template.yaml" --ignore-not-found

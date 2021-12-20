@@ -1617,17 +1617,115 @@ data:
     \   AuthType openid-connect\n    Require claim \"epoch-role:epoch-user\"\n  </Location>\n
     \ <Location /api/>\n    ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/
     retry=0 timeout=600\n    ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/\n
-    \   AuthType openid-connect\n    Require claim \"epoch-role:epoch-user\"\n  </Location>\n
-    \ <Location /api/user/>\n    ProxyPass        http://authentication-infra-api:8000/user/
-    retry=0\n    ProxyPassReverse http://authentication-infra-api:8000/user/\n    AuthType
-    openid-connect\n    Require valid-user\n  </Location>\n  <Location /api/client/>\n
-    \   ProxyPass        http://authentication-infra-api:8000/client/ retry=0\n    ProxyPassReverse
-    http://authentication-infra-api:8000/client/\n    AuthType openid-connect\n    Require
-    claim \"epoch-role:epoch-user\"\n  </Location>\n  <Location /api/listener/>\n
-    \   ProxyPass        http://epoch-control-tekton-api.epoch-system.svc:8000/listener/
+    \   AuthType openid-connect\n    Require claim \"epoch-role:epoch-user\"\n  </Location>\n\n
+    \ IncludeOptional conf.d/exastroSettings/epoch-system/*.conf\n\n  <Location /api/user/>\n
+    \   ProxyPass        http://authentication-infra-api:8000/user/ retry=0\n    ProxyPassReverse
+    http://authentication-infra-api:8000/user/\n    AuthType openid-connect\n    Require
+    valid-user\n  </Location>\n  <Location /api/client/>\n    ProxyPass        http://authentication-infra-api:8000/client/
+    retry=0\n    ProxyPassReverse http://authentication-infra-api:8000/client/\n    AuthType
+    openid-connect\n    Require claim \"epoch-role:epoch-user\"\n  </Location>\n  <Location
+    /api/listener/>\n    ProxyPass        http://epoch-control-tekton-api.epoch-system.svc:8000/listener/
     retry=0\n    ProxyPassReverse http://epoch-control-tekton-api.epoch-system.svc:8000/listener/\n
     \   Require all granted\n  </Location>\n  <Location /favicon.ico>\n    Require
     all granted\n  </Location>\n</VirtualHost>\n"
+  epoch-system-ws-template.conf: |2
+
+      <Location /api/workspace/{{ param.workspace_id }}/ci>
+        ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/ci retry=0 timeout=600
+        ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/ci
+        AuthType openid-connect
+        <Limit POST PUT>
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-ci-update"
+        </Limit>
+        <Limit DELETE>
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-delete"
+        </Limit>
+        <LimitExcept POST PUT DELETE>
+            Require all denied
+        </LimitExcept>
+      </Location>
+
+      <Location /api/workspace/{{ param.workspace_id }}/manifest>
+        ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/manifest retry=0 timeout=600
+        ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/manifest
+        AuthType openid-connect
+        <Limit GET>
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-reference"
+        </Limit>
+        <Limit POST PUT DELETE>
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-manifest-setting"
+        </Limit>
+        <LimitExcept GET POST PUT DELETE>
+            Require all denied
+        </LimitExcept>
+      </Location>
+
+      <Location /api/workspace/{{ param.workspace_id }}/cd/pipeline>
+        ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/cd/pipeline retry=0 timeout=600
+        ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/cd/pipeline
+        AuthType openid-connect
+        <Limit POST PUT>
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-cd-update"
+        </Limit>
+        <Limit DELETE>
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-delete"
+        </Limit>
+        <LimitExcept POST PUT DELETE>
+            Require all denied
+        </LimitExcept>
+      </Location>
+
+      <Location /api/workspace/{{ param.workspace_id }}/cd/exec>
+        ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/cd/exec retry=0 timeout=600
+        ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/cd/exec
+        AuthType openid-connect
+        <Limit POST>
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-cd-execute"
+        </Limit>
+        <LimitExcept POST>
+            Require all denied
+        </LimitExcept>
+      </Location>
+
+      <Location /api/workspace/{{ param.workspace_id }}/pod>
+        ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/pod retry=0 timeout=600
+        ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/pod
+        AuthType openid-connect
+        <Limit GET>
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-reference"
+        </Limit>
+        <Limit POST PUT>
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-name-update"
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-ci-update"
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-cd-update"
+        </Limit>
+        <Limit DELETE>
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-delete"
+        </Limit>
+        <LimitExcept GET POST PUT DELETE>
+            Require all denied
+        </LimitExcept>
+      </Location>
+
+      <Location /api/workspace/{{ param.workspace_id }}>
+        ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }} retry=0 timeout=600
+        ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}
+        AuthType openid-connect
+        <Limit GET>
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-reference"
+        </Limit>
+        <Limit POST PUT>
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-name-update"
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-ci-update"
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-cd-update"
+        </Limit>
+        <Limit DELETE>
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-delete"
+        </Limit>
+        <LimitExcept GET POST PUT DELETE>
+            Require all denied
+        </LimitExcept>
+      </Location>
   epoch-ws-argocd-template.conf: "Listen {{ client_port }}\n<VirtualHost *:{{ client_port
     }}>\n  SSLProxyEngine On\n  SSLEngine on\n  SSLCertificateFile /etc/pki/tls/certs/exastro-platform-authentication-infra.pem\n
     \ SSLCertificateKeyFile /etc/pki/tls/private/exastro-platform-authentication-infra.key\n
@@ -1752,6 +1850,9 @@ spec:
       - name: nodeport-template
         configMap:
           name: nodeport-template
+      - name: gateway-httpd-conf
+        persistentVolumeClaim:
+          claimName: exastro-authentication-infra-httpd-conf
       containers:
       - name: authentication-infra-api
         image: exastro/authentication-infra-api:0.3.0_20211206_1700
@@ -1824,6 +1925,8 @@ spec:
           value: "exastro-platform-authentication-infra"
         - name: GATEWAY_HTTPD_DEPLOY_NAME
           value: "gateway-httpd"
+        - name: GATEWAY_HTTPD_CONF_PATH
+          value: "/var/exastro-authentication-infra/httpd-conf"
         volumeMounts:
         - name: authentication-infra-conf
           mountPath: /etc/exastro-authentication-infra/authentication-infra-api
@@ -1831,6 +1934,8 @@ spec:
           mountPath: /app/exastro-authentication-infra/authentication-infra-conf-templates
         - name: nodeport-template
           mountPath: /app/exastro-authentication-infra/authentication-infra-nodeport-templates
+        - name: gateway-httpd-conf
+          mountPath: /var/exastro-authentication-infra/httpd-conf
 
 ---
 
@@ -1852,14 +1957,28 @@ spec:
 
 #---- gateway-httpd.yaml
 ---
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: gateway-httpd-conf
-  namespace: exastro-platform-authentication-infra
-data:
-  gateway-httpd.conf: |
-    #
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
+# apiVersion: v1
+# kind: ConfigMap
+# metadata:
+#   name: gateway-httpd-conf
+#   namespace: exastro-platform-authentication-infra
+# data:
+#   gateway-httpd.conf: |
+#     #
 
 ---
 apiVersion: apps/v1
@@ -1878,15 +1997,18 @@ spec:
         name: gateway-httpd
     spec:
       volumes:
+      # - name: gateway-httpd-conf
+      #   configMap:
+      #     name: gateway-httpd-conf
       - name: gateway-httpd-conf
-        configMap:
-          name: gateway-httpd-conf
+        persistentVolumeClaim:
+          claimName: exastro-authentication-infra-httpd-conf
       containers:
       - name: gateway-httpd
         image: exastro/gateway-httpd:0.3.0_20211206_1030
         volumeMounts:
         - name: gateway-httpd-conf
-          mountPath: /etc/httpd/conf.d/exastroSettings/
+          mountPath: /etc/httpd/conf.d/exastroSettings
 
 ---
 apiVersion: v1
@@ -1905,6 +2027,141 @@ spec:
   selector:
     name: gateway-httpd
   type: NodePort
+
+#---- gateway-httpd-pv-create-script.yaml
+---
+apiVersion: v1
+data:
+  epoch-pv-creator.sh: |
+    #!/bin/bash
+
+    echo "[INFO] START: $(basename $0)"
+
+    SCRIPT_PATH=$(dirname $0)
+
+    kubectl get pod -n "${PRM_NAMESPACE}" "${HOSTNAME}" &> /dev/null
+    if [ $? -ne 0 ]; then
+        echo "[ERROR] Not Found Pod : namespace=${PRM_NAMESPACE} jobname=${PRM_JOBNAME} hostname=${HOSTNAME}"
+        exit 1
+    fi
+
+    WORKER_NODE_NAME=$(kubectl get pod -n "${PRM_NAMESPACE}" "${HOSTNAME}" -o jsonpath="{.spec.nodeName}")
+    echo "WORKER_NODE_NAME:${WORKER_NODE_NAME}"
+
+    if [ -z "${WORKER_NODE_NAME}" ]; then
+        echo "[ERROR] Could not get the node name : namespace=${PRM_NAMESPACE} jobname=${PRM_JOBNAME}"
+        exit 1
+    fi
+
+    sed -e "s/#WORKER-NODE-NAME#/${WORKER_NODE_NAME}/g" "${SCRIPT_PATH}/${PRM_PV_TEMPLATE}" | \
+    kubectl apply -f -
+    if [ $? -ne 0 ]; then
+        echo "[ERROR] Failed to create Persistent Volume : namespace=${PRM_NAMESPACE} jobname=${PRM_JOBNAME}"
+        exit 1
+    fi
+
+    kubectl delete job -n "${PRM_NAMESPACE}" "${PRM_JOBNAME}"
+  exastro-authentication-infra-httpd-conf-pv-template.yaml: |
+    apiVersion: storage.k8s.io/v1
+    kind: StorageClass
+    metadata:
+      name: exastro-authentication-infra-sc
+    provisioner: kubernetes.io/no-provisioner
+    volumeBindingMode: WaitForFirstConsumer
+
+    ---
+    apiVersion: v1
+    kind: PersistentVolume
+    metadata:
+      name: exastro-authentication-infra-httpd-conf
+      labels:
+        type: local
+      annotations:
+        pv.kubernetes.io/bound-by-controller: "yes"
+    spec:
+      storageClassName: exastro-authentication-infra-sc
+      capacity:
+        storage: 500Mi
+      accessModes:
+        - ReadWriteMany
+      hostPath:
+        path: /var/data/epoch/authc-httpd/conf
+        type: DirectoryOrCreate
+      nodeAffinity:
+        required:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+              - #WORKER-NODE-NAME#
+
+    ---
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: exastro-authentication-infra-httpd-conf
+      namespace: exastro-platform-authentication-infra
+    spec:
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: 500Mi
+      storageClassName: exastro-authentication-infra-sc
+      volumeMode: Filesystem
+      volumeName: exastro-authentication-infra-httpd-conf
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: gateway-httpd-pv-create-script
+  namespace: epoch-system
+
+#---- gateway-httpd-pv-create.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: gateway-httpd-pv-create
+  namespace: epoch-system
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      volumes:
+      - name: script
+        configMap:
+          name: gateway-httpd-pv-create-script
+      containers:
+      - name: pv-creator
+        image: exastro/epoch-kube-command:0.1.5_20211026_1600
+        env:
+        - name: PRM_JOBNAME
+          value: gateway-httpd-pv-create
+        - name: PRM_NAMESPACE
+          value: epoch-system
+        - name: PRM_PV_TEMPLATE
+          value: exastro-authentication-infra-httpd-conf-pv-template.yaml
+        volumeMounts:
+        - mountPath: /job-script
+          name: script
+        command: ["sh", "-c"]
+        args:
+          - |
+            bash /job-script/epoch-pv-creator.sh
 
 #---- authentication-infra-setting.yaml
 ---

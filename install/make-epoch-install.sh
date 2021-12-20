@@ -24,6 +24,7 @@ TEKTON_MANIFEST="${BASE_DIR}/source/tekton"
 # ---- templatesフォルダ内のtemplateファイルをもとに定義用のyaml生成 ----
 kubectl create cm gateway-conf-template -n exastro-platform-authentication-infra --dry-run=client -o yaml \
     --from-file=${TEMPLATES_DIR}/epoch-system-template.conf       \
+    --from-file=${TEMPLATES_DIR}/epoch-system-ws-template.conf    \
     --from-file=${TEMPLATES_DIR}/epoch-ws-argocd-template.conf    \
     --from-file=${TEMPLATES_DIR}/epoch-ws-ita-template.conf       \
     --from-file=${TEMPLATES_DIR}/epoch-ws-sonarqube-template.conf \
@@ -51,6 +52,12 @@ kubectl create cm tekton-installer-script -n epoch-system --dry-run=client -o ya
     --from-file=${TEKTON_MANIFEST}/tekton-trigger-release.yaml \
     --from-file=${TEKTON_MANIFEST}/tekton-trigger-interceptors.yaml \
     >>   ${SOURCE_MANIFEST}/tekton-installer-script.yaml
+
+kubectl create cm gateway-httpd-pv-create-script -n epoch-system --dry-run=client -o yaml \
+    --from-file=${TEMPLATES_DIR}/epoch-pv-creator.sh \
+    --from-file=${TEMPLATES_DIR}/exastro-authentication-infra-httpd-conf-pv-template.yaml \
+    >   ${SOURCE_MANIFEST}/gateway-httpd-pv-create-script.yaml
+
 
 # ---- source内のyamlファイル定義 ----
 YAMLFILES=()
@@ -82,6 +89,8 @@ YAMLFILES+=("gateway-conf-template.yaml")
 YAMLFILES+=("nodeport-template.yaml")
 YAMLFILES+=("authentication-infra-api.yaml")
 YAMLFILES+=("gateway-httpd.yaml")
+YAMLFILES+=("gateway-httpd-pv-create-script.yaml")
+YAMLFILES+=("gateway-httpd-pv-create.yaml")
 
 YAMLFILES+=("authentication-infra-setting.yaml")
 

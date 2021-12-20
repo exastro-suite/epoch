@@ -47,6 +47,9 @@ spec:
       - name: nodeport-template
         configMap:
           name: nodeport-template
+      - name: gateway-httpd-conf
+        persistentVolumeClaim:
+          claimName: exastro-authentication-infra-httpd-conf
       containers:
       - name: authentication-infra-api
         image: exastro/authentication-infra-api:0.3.0_20211206_1700
@@ -119,6 +122,8 @@ spec:
           value: "exastro-platform-authentication-infra"
         - name: GATEWAY_HTTPD_DEPLOY_NAME
           value: "gateway-httpd"
+        - name: GATEWAY_HTTPD_CONF_PATH
+          value: "/var/exastro-authentication-infra/httpd-conf"
         volumeMounts:
         - name: authentication-infra-conf
           mountPath: /etc/exastro-authentication-infra/authentication-infra-api
@@ -126,6 +131,8 @@ spec:
           mountPath: /app/exastro-authentication-infra/authentication-infra-conf-templates
         - name: nodeport-template
           mountPath: /app/exastro-authentication-infra/authentication-infra-nodeport-templates
+        - name: gateway-httpd-conf
+          mountPath: /var/exastro-authentication-infra/httpd-conf
 
 ---
 
