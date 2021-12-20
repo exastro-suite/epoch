@@ -2732,11 +2732,15 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         }
 
         resolve();
-      }).fail(function() {
-        console.log("FAIL : ワークスペース情報取得");
+      }).fail(function(jqXHR, textStatus, errorThrown) {
+        console.log("FAIL : ワークスペース情報取得 jqXHR.status:"+jqXHR.status);
+        if(jqXHR.status == 401) {
+          reject({"reason": "http-code-401"});
+        } else {
+          reject();
+        }
         //workspace_id = null;
         // 失敗
-        reject();
       });        
 
     }).then(() => {return new Promise((resolve, reject) => {
@@ -2773,10 +2777,22 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       $('#cicd-tab-item').css('visibility','visible');
       // alert("ワークスペース情報を読み込みました");
       console.log('Complete !!');
-    }).catch(() => {
-      // CI/CD実行タブを表示
+    }).catch((info) => {
+        // CI/CD実行タブを表示
       $('#cicd-tab-item').css('visibility','hidden');
       // alert("ワークスペース情報を読み込みに失敗しました");
+      console.log("catch(info):" + JSON.stringify(info));
+      if(info != null) {
+        switch(info.reason) {
+          case "http-code-401":
+            alert("ワークスペースを表示する権限がありません");
+            window.location = URL_BASE;
+            break;
+          default:
+            //window.location = URL_BASE;
+            break;
+        }
+      }
       console.log('Fail !!');
     });
   }
