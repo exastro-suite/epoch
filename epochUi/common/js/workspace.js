@@ -2864,6 +2864,11 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         // 失敗
         try { reject({"error_statement" : jqXHR.responseJSON.result.errorStatement, "error_detail": jqXHR.responseJSON.result.errorDetail}); } catch { reject(); }
       });
+    }).then(() => {
+      //
+      // ロール最新化のためセッションをリフレッシュ
+      //
+      return refresh_session();
     }).then(() => { return new Promise((resolve, reject) => {
       //
       //  ワークスペース作成API

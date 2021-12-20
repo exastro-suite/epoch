@@ -7,7 +7,7 @@ data:
     }}\n  OIDCSSLValidateServer Off\n  OIDCProviderMetadataURL https://{{ server }}:{{
     auth_port }}/auth/realms/exastroplatform/.well-known/openid-configuration\n  OIDCPassClaimsAs
     headers\n  \n  RewriteEngine On\n  RewriteOptions inherit\n\n  OIDCCacheType file\n
-    \ \n  OIDCAuthNHeader X-Remote-User\n  OIDCClaimPrefix OIDC-CLAIM-\n\n  OIDCRedirectURI
+    \ \n  OIDCAuthNHeader X-Remote-User\n  #OIDCClaimPrefix OIDC-CLAIM-\n\n  OIDCRedirectURI
     \ https://{{ server }}:{{ epoch_port }}/oidc-redirect/\n  OIDCClientID epoch-system\n
     \ OIDCClientSecret {{ epoch_system_client_secret }}\n  <Location />\n    ProxyPass
     \       http://epoch-ui.epoch-system.svc:8000/ retry=0\n    ProxyPassReverse http://epoch-ui.epoch-system.svc:8000/\n
