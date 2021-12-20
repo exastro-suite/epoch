@@ -30,7 +30,7 @@ from datetime import timedelta, timezone
 
 import globals
 import common
-import api_service_workspace
+import const
 import api_service_ci
 import api_service_manifest
 import api_service_cd
@@ -39,301 +39,6 @@ import api_service_cd
 app = Flask(__name__)
 app.config.from_envvar('CONFIG_API_SERVICE_PATH')
 globals.init(app)
-
-@app.route('/alive', methods=["GET"])
-def alive():
-    """死活監視
-
-    Returns:
-        Response: HTTP Respose
-    """
-    return jsonify({"result": "200", "time": str(datetime.now(globals.TZ))}), 200
-
-
-@app.route('/workspace', methods=['POST','GET'])
-def call_workspace():
-    """workspaceCall
-
-    Returns:
-        Response: HTTP Respose
-    """
-    try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}: method[{}]'.format(inspect.currentframe().f_code.co_name, request.method))
-        globals.logger.debug('#' * 50)
-
-        if request.method == 'POST':
-            # ワークスペース情報作成へリダイレクト
-            return api_service_workspace.create_workspace()
-        else:
-            # ワークスペース情報一覧取得へリダイレクト
-            return api_service_workspace.get_workspace_list()
-
-    except Exception as e:
-        return common.server_error(e)
-
-
-@app.route('/workspace/<int:workspace_id>', methods=['GET','PUT'])
-def call_workspace_by_id(workspace_id):
-    """workspace/workspace_id Call
-
-    Args:
-        workspace_id (int): workspace ID
-
-    Returns:
-        Response: HTTP Respose
-    """
-    try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
-
-        if request.method == 'GET':
-            # ワークスペース情報取得
-            return api_service_workspace.get_workspace(workspace_id)
-        else:
-            # ワークスペース情報更新
-            return api_service_workspace.put_workspace(workspace_id)
-
-    except Exception as e:
-        return common.server_error(e)
-
-
-@app.route('/workspace/<int:workspace_id>/pod', methods=['POST'])
-def call_pod(workspace_id):
-    """workspace/workspace_id/pod Call
-
-    Args:
-        workspace_id (int): workspace ID
-
-    Returns:
-        Response: HTTP Respose
-    """
-    try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
-
-        if request.method == 'POST':
-            # workspace作成
-            return api_service_workspace.post_pod(workspace_id)
-        else:
-            # Error
-            raise Exception("method not support!")
-
-    except Exception as e:
-        return common.server_error(e)
-
-
-@app.route('/workspace/<int:workspace_id>/ci/pipeline', methods=['POST'])
-def call_ci_pipeline(workspace_id):
-    """workspace/workspace_id/ci/pipeline Call
-
-    Args:
-        workspace_id (int): workspace ID
-
-    Returns:
-        Response: HTTP Respose
-    """
-    try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
-
-        if request.method == 'POST':
-            # CIパイプライン情報設定
-            return api_service_ci.post_ci_pipeline(workspace_id)
-        else:
-            # Error
-            raise Exception("method not support!")
-
-    except Exception as e:
-        return common.server_error(e)
-
-
-@app.route('/workspace/<int:workspace_id>/ci/pipeline/result', methods=['GET'])
-def call_ci_result(workspace_id):
-    """workspace/workspace_id/ci/pipeline/result Call
-
-    Args:
-        workspace_id (int): workspace ID
-
-    Returns:
-        Response: HTTP Respose
-    """
-    try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
-
-        if request.method == 'GET':
-            # CIパイプライン結果取得
-            return api_service_ci.get_ci_pipeline_result(workspace_id)
-        else:
-            # Error
-            raise Exception("method not support!")
-
-    except Exception as e:
-        return common.server_error(e)
-
-@app.route('/workspace/<int:workspace_id>/ci/pipeline/result/<taskrun_name>/logs', methods=['GET'])
-def call_ci_result_logs(workspace_id, taskrun_name):
-    """workspace/workspace_id/ci/pipeline/result/taskrun_name/logs Call
-
-    Args:
-        workspace_id (int): workspace ID
-        taskrun_name (str): tekton taskrun_name
-    Returns:
-        Response: HTTP Respose
-    """
-    try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}] taskrun_name[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id, taskrun_name))
-        globals.logger.debug('#' * 50)
-
-        if request.method == 'GET':
-            # CIパイプライン結果取得
-            return api_service_ci.get_ci_pipeline_result_logs(workspace_id, taskrun_name)
-        else:
-            # Error
-            raise Exception("method not support!")
-
-    except Exception as e:
-        return common.server_error(e)
-
-
-@app.route('/workspace/<int:workspace_id>/cd/pipeline', methods=['POST'])
-def call_cd_pipeline(workspace_id):
-    """workspace/workspace_id/cd/pipeline Call
-
-    Args:
-        workspace_id (int): workspace ID
-
-    Returns:
-        Response: HTTP Respose
-    """
-    try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
-
-        if request.method == 'POST':
-            # CDパイプライン情報設定
-            return api_service_cd.post_cd_pipeline(workspace_id)
-        else:
-            # Error
-            raise Exception("method not support!")
-
-    except Exception as e:
-        return common.server_error(e)
-
-
-@app.route('/workspace/<int:workspace_id>/manifest/parameter', methods=['POST'])
-def call_manifest_parameter(workspace_id):
-    """workspace/workspace_id/manifest/parameter Call
-
-    Args:
-        workspace_id (int): workspace ID
-
-    Returns:
-        Response: HTTP Respose
-    """
-    try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
-
-        if request.method == 'POST':
-            # manifest parameter setting (post)
-            return api_service_manifest.post_manifest_parameter(workspace_id)
-        else:
-            # Error
-            raise Exception("method not support!")
-
-    except Exception as e:
-        return common.server_error(e)
-
-
-@app.route('/workspace/<int:workspace_id>/manifest/template', methods=['POST','GET'])
-def call_manifest_template(workspace_id):
-    """workspace/workspace_id/manifest/template Call
-
-    Args:
-        workspace_id (int): workspace ID
-
-    Returns:
-        Response: HTTP Respose
-    """
-    try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
-
-        if request.method == 'POST':
-            # manifest template setting (post)
-            return api_service_manifest.post_manifest_template(workspace_id)
-        elif request.method == 'GET':
-            # get manifest template list (get)
-            return api_service_manifest.get_manifest_template_list(workspace_id)
-        else:
-            # Error
-            raise Exception("method not support!")
-
-    except Exception as e:
-        return common.server_error(e)
-
-
-@app.route('/workspace/<int:workspace_id>/manifest/template/<int:file_id>', methods=['DELETE'])
-def call_manifest_template_id(workspace_id, file_id):
-    """workspace/workspace_id/manifest/template/file_id Call
-
-    Args:
-        workspace_id (int): workspace ID
-        file_id (int): file ID
-
-    Returns:
-        Response: HTTP Respose
-    """
-    try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}] file_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id, file_id))
-        globals.logger.debug('#' * 50)
-
-        if request.method == 'DELETE':
-            # parameter template delete (delete)
-            return api_service_manifest.delete_manifest_template(workspace_id, file_id)
-        else:
-            # Error
-            raise Exception("method not support!")
-
-    except Exception as e:
-        return common.server_error(e)
-
-
-@app.route('/workspace/<int:workspace_id>/cd/exec', methods=['POST'])
-def call_cd_exec(workspace_id):
-    """workspace/workspace_id/cd/exec Call
-
-    Args:
-        workspace_id (int): workspace ID
-
-    Returns:
-        Response: HTTP Respose
-    """
-    try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
-
-        if request.method == 'POST':
-            # cd execute (post)
-            return api_service_cd.cd_execute(workspace_id)
-        else:
-            # Error
-            raise Exception("method not support!")
-
-    except Exception as e:
-        return common.server_error(e)
 
 def create_workspace():
     """ワークスペース作成
@@ -411,11 +116,7 @@ def create_workspace_setting_roles(workspace_id,user_id):
         user_id (str): login user id
     """
 
-    #
-    # TODO:スタブ実装
-    #
-
-    # ヘッダ情報
+    # ヘッダ情報 post header
     post_headers = {
         'Content-Type': 'application/json',
     }
@@ -425,16 +126,74 @@ def create_workspace_setting_roles(workspace_id,user_id):
                                                             os.environ['EPOCH_EPAI_API_PORT'],
                                                             os.environ["EPOCH_EPAI_REALM_NAME"]
                                                     )
+
     post_data = {
         "roles" : [
+            # ロール権限をすべて定義 Define all role permissions
             {
-                "name": "ws-{}-role-ws-reference".format(workspace_id),
-                "composite_roles": []
+                "name": const.ROLE_WS_ROLE_WS_REFERENCE.format(workspace_id),
+                "composite_roles": [],
             },
-            # ... ワークスペースで必要なロールを列挙
             {
-                "name": "ws-{}-owner".format(workspace_id),
-                "composite_roles": [ "ws-{}-role-ws-reference".format(workspace_id) ]
+                "name": const.ROLE_WS_ROLE_WS_NAME_UPDATE.format(workspace_id),
+                "composite_roles": [],
+            },
+            {
+                "name": const.ROLE_WS_ROLE_WS_CI_UPDATE.format(workspace_id),
+                "composite_roles": [],
+            },
+            {
+                "name": const.ROLE_WS_ROLE_WS_CD_UPDATE.format(workspace_id),
+                "composite_roles": [],
+            },
+            {
+                "name": const.ROLE_WS_ROLE_WS_DELETE.format(workspace_id),
+                "composite_roles": [],
+            },
+            {
+                "name": const.ROLE_WS_ROLE_OWNER_ROLE_SETTING.format(workspace_id),
+                "composite_roles": [],
+            },
+            {
+                "name": const.ROLE_WS_ROLE_MEMBER_ADD.format(workspace_id),
+                "composite_roles": [],
+            },
+            {
+                "name": const.ROLE_WS_ROLE_MEMBER_ROLE_UPDATE.format(workspace_id),
+                "composite_roles": [],
+            },
+            {
+                "name": const.ROLE_WS_ROLE_CI_PIPELINE_RESULT.format(workspace_id),
+                "composite_roles": [],
+            },
+            {
+                "name": const.ROLE_WS_ROLE_MANIFEST_SETTING.format(workspace_id),
+                "composite_roles": [],
+            },
+            {
+                "name": const.ROLE_WS_ROLE_CD_EXECUTE.format(workspace_id),
+                "composite_roles": [],
+            },
+            {
+                "name": const.ROLE_WS_ROLE_CD_EXECUTE_RESULT.format(workspace_id),
+                "composite_roles": [],
+            },
+            # ロールをすべて定義 Define all roles
+            {
+                "name": const.ROLE_WS_OWNER.format(workspace_id),
+                "composite_roles": [ const.ROLE_WS_ROLE_WS_REFERENCE.format(workspace_id),
+                                    const.ROLE_WS_ROLE_WS_NAME_UPDATE.format(workspace_id),
+                                    const.ROLE_WS_ROLE_WS_CI_UPDATE.format(workspace_id),
+                                    const.ROLE_WS_ROLE_WS_CD_UPDATE.format(workspace_id),
+                                    const.ROLE_WS_ROLE_WS_DELETE.format(workspace_id),
+                                    const.ROLE_WS_ROLE_OWNER_ROLE_SETTING.format(workspace_id),
+                                    const.ROLE_WS_ROLE_MEMBER_ADD.format(workspace_id),
+                                    const.ROLE_WS_ROLE_MEMBER_ROLE_UPDATE.format(workspace_id),
+                                    const.ROLE_WS_ROLE_CI_PIPELINE_RESULT.format(workspace_id),
+                                    const.ROLE_WS_ROLE_MANIFEST_SETTING.format(workspace_id),
+                                    const.ROLE_WS_ROLE_CD_EXECUTE.format(workspace_id),
+                                    const.ROLE_WS_ROLE_CD_EXECUTE_RESULT.format(workspace_id),
+                ]
             }
         ]
     }
@@ -453,8 +212,8 @@ def create_workspace_setting_roles(workspace_id,user_id):
     post_data = {
         "roles" : [
             {
-                "name": "ws-{}-owner".format(workspace_id),
-                "enabled": "true"
+                "name": const.ROLE_WS_OWNER.format(workspace_id),
+                "enabled": True,
             }
         ]
     }
@@ -467,6 +226,10 @@ def create_workspace_setting_auth_infra(workspace_id):
     Args:
         workspace_id (int): workspace id
     """
+
+    #
+    # TODO:スタブ実装
+    #
 
     # ヘッダ情報
     post_headers = {
@@ -484,10 +247,6 @@ def create_workspace_setting_auth_infra(workspace_id):
     # get pipeline name
     pipeline_name = common.get_pipeline_name(workspace_id)
 
-
-    #
-    # Generate a client for use in the workspace - ワークスペースで使用するクライアントを生成
-    #
     # postする情報 post information
     clients = [
         {
@@ -524,37 +283,14 @@ def create_workspace_setting_auth_infra(workspace_id):
             error_detail = "認証基盤 client設定に失敗しました。 {}".format(response.status_code)
             raise common.UserException(error_detail)
 
-    #
-    # Set usage authority of url used in workspace - ワークスペースで使用するurlの使用権限の設定する
-    #
-    exec_stat = "認証基盤 route設定"
-    post_data = {
-        "route_id" : namespace,
-        "template_file" : "epoch-system-ws-template.conf",
-        "render_params" : {
-            "workspace_id" : workspace_id,
-        }
-    }
-    response = requests.post(
-        "{}settings/{}/clients/epoch-system/route".format(api_url_epai, os.environ["EPOCH_EPAI_REALM_NAME"]),
-        headers=post_headers,
-        data=json.dumps(post_data)
-    )
-    # 正常時以外はExceptionを発行して終了する
-    if response.status_code != 200:
-        globals.logger.debug(response.text)
-        error_detail = "認証基盤 route設定に失敗しました。 {}".format(response.status_code)
-        raise common.UserException(error_detail)
 
-    #
-    # Do "httpd graceful" - Apacheの設定読込を行う
-    #
     exec_stat = "認証基盤 設定読み込み"
-    response = requests.put("{}{}".format(api_url_epai, 'apply_settings'), headers=post_headers, data="{}")
-    if response.status_code != 200:
-        globals.logger.debug(response.text)
-        error_detail = "認証基盤 設定読み込みに失敗しました。 {}".format(response.status_code)
-        raise common.UserException(error_detail)
+
+    # workspace_id send data
+    apply_data = {
+        "workspace_id": workspace_id,
+    }
+    response = requests.put("{}{}".format(api_url_epai, 'apply_settings'), headers=post_headers, data=json.dumps(apply_data))
 
 
 def get_workspace_list():
