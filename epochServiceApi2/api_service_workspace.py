@@ -227,10 +227,6 @@ def create_workspace_setting_auth_infra(workspace_id):
         workspace_id (int): workspace id
     """
 
-    #
-    # TODO:スタブ実装
-    #
-
     # ヘッダ情報
     post_headers = {
         'Content-Type': 'application/json',
@@ -247,6 +243,10 @@ def create_workspace_setting_auth_infra(workspace_id):
     # get pipeline name
     pipeline_name = common.get_pipeline_name(workspace_id)
 
+
+    #
+    # Generate a client for use in the workspace - ワークスペースで使用するクライアントを生成
+    #
     # postする情報 post information
     clients = [
         {
@@ -283,15 +283,38 @@ def create_workspace_setting_auth_infra(workspace_id):
             error_detail = "認証基盤 client設定に失敗しました。 {}".format(response.status_code)
             raise common.UserException(error_detail)
 
-
-    exec_stat = "認証基盤 設定読み込み"
-
-    # workspace_id send data
-    apply_data = {
-        "workspace_id": workspace_id,
+    #
+    # Set usage authority of url used in workspace - ワークスペースで使用するurlの使用権限の設定する
+    #
+    exec_stat = "認証基盤 route設定"
+    post_data = {
+        "route_id" : namespace,
+        "template_file" : "epoch-system-ws-template.conf",
+        "render_params" : {
+            "workspace_id" : workspace_id,
+        }
     }
-    response = requests.put("{}{}".format(api_url_epai, 'apply_settings'), headers=post_headers, data=json.dumps(apply_data))
+    response = requests.post(
+        "{}settings/{}/clients/epoch-system/route".format(api_url_epai, os.environ["EPOCH_EPAI_REALM_NAME"]),
+        headers=post_headers,
+        data=json.dumps(post_data)
+    )
+    # 正常時以外はExceptionを発行して終了する
+    if response.status_code != 200:
+        globals.logger.debug(response.text)
+        error_detail = "認証基盤 route設定に失敗しました。 {}".format(response.status_code)
+        raise common.UserException(error_detail)
 
+    #
+    # Do "httpd graceful" - Apacheの設定読込を行う
+    #
+    exec_stat = "認証基盤 設定読み込み"
+    response = requests.put("{}{}".format(api_url_epai, 'apply_settings'), headers=post_headers, data="{}")
+    if response.status_code != 200:
+        globals.logger.debug(response.text)
+        error_detail = "認証基盤 設定読み込みに失敗しました。 {}".format(response.status_code)
+        raise common.UserException(error_detail)
+# 
 
 def get_workspace_list():
     """ワークスペース情報一覧取得
