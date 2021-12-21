@@ -247,7 +247,91 @@ def create_workspace_setting_roles(workspace_id,user_id):
                     "display": [ const.ROLE_WS_OWNER[1] ],
                     "display_default": [ const.ROLE_WS_OWNER[2] ],
                 }
-            }
+            },
+            {
+                "name": const.ROLE_WS_MANAGER[0].format(workspace_id),
+                "composite_roles": [ const.ROLE_WS_ROLE_WS_REFERENCE[0].format(workspace_id),
+                                    const.ROLE_WS_ROLE_WS_NAME_UPDATE[0].format(workspace_id),
+                                    const.ROLE_WS_ROLE_WS_CI_UPDATE[0].format(workspace_id),
+                                    const.ROLE_WS_ROLE_WS_CD_UPDATE[0].format(workspace_id),
+                                    const.ROLE_WS_ROLE_MEMBER_ADD[0].format(workspace_id),
+                                    const.ROLE_WS_ROLE_MEMBER_ROLE_UPDATE[0].format(workspace_id),
+                                    const.ROLE_WS_ROLE_CI_PIPELINE_RESULT[0].format(workspace_id),
+                                    const.ROLE_WS_ROLE_MANIFEST_SETTING[0].format(workspace_id),
+                                    const.ROLE_WS_ROLE_CD_EXECUTE[0].format(workspace_id),
+                                    const.ROLE_WS_ROLE_CD_EXECUTE_RESULT[0].format(workspace_id),
+                ],
+                "attributes": {
+                    "display": [ const.ROLE_WS_MANAGER[1] ],
+                    "display_default": [ const.ROLE_WS_MANAGER[2] ],
+                }
+            },
+            {
+                "name": const.ROLE_WS_MEMBER_MG[0].format(workspace_id),
+                "composite_roles": [ const.ROLE_WS_ROLE_WS_REFERENCE[0].format(workspace_id),
+                                    const.ROLE_WS_ROLE_MEMBER_ADD[0].format(workspace_id),
+                                    const.ROLE_WS_ROLE_MEMBER_ROLE_UPDATE[0].format(workspace_id),
+                ],
+                "attributes": {
+                    "display": [ const.ROLE_WS_MEMBER_MG[1] ],
+                    "display_default": [ const.ROLE_WS_MEMBER_MG[2] ],
+                }
+            },
+            {
+                "name": const.ROLE_WS_CI_SETTING[0].format(workspace_id),
+                "composite_roles": [ const.ROLE_WS_ROLE_WS_REFERENCE[0].format(workspace_id),
+                                    const.ROLE_WS_ROLE_WS_CI_UPDATE[0].format(workspace_id),
+                                    const.ROLE_WS_ROLE_CI_PIPELINE_RESULT[0].format(workspace_id),
+                ],
+                "attributes": {
+                    "display": [ const.ROLE_WS_CI_SETTING[1] ],
+                    "display_default": [ const.ROLE_WS_CI_SETTING[2] ],
+                }
+            },
+            {
+                "name": const.ROLE_WS_CI_RESULT[0].format(workspace_id),
+                "composite_roles": [ const.ROLE_WS_ROLE_WS_REFERENCE[0].format(workspace_id),
+                                    const.ROLE_WS_ROLE_CI_PIPELINE_RESULT[0].format(workspace_id),
+                ],
+                "attributes": {
+                    "display": [ const.ROLE_WS_CI_RESULT[1] ],
+                    "display_default": [ const.ROLE_WS_CI_RESULT[2] ],
+                }
+            },
+            {
+                "name": const.ROLE_WS_CD_SETTING[0].format(workspace_id),
+                "composite_roles": [ const.ROLE_WS_ROLE_WS_REFERENCE[0].format(workspace_id),
+                                    const.ROLE_WS_ROLE_WS_CD_UPDATE[0].format(workspace_id),
+                                    const.ROLE_WS_ROLE_CD_EXECUTE_RESULT[0].format(workspace_id),
+                ],
+                "attributes": {
+                    "display": [ const.ROLE_WS_CD_SETTING[1] ],
+                    "display_default": [ const.ROLE_WS_CD_SETTING[2] ],
+                }
+            },
+            {
+                "name": const.ROLE_WS_CD_EXECUTE[0].format(workspace_id),
+                "composite_roles": [ const.ROLE_WS_ROLE_WS_REFERENCE[0].format(workspace_id),
+                                    const.ROLE_WS_ROLE_CI_PIPELINE_RESULT[0].format(workspace_id),
+                                    const.ROLE_WS_ROLE_MANIFEST_SETTING[0].format(workspace_id),
+                                    const.ROLE_WS_ROLE_CD_EXECUTE[0].format(workspace_id),
+                                    const.ROLE_WS_ROLE_CD_EXECUTE_RESULT[0].format(workspace_id),
+                ],
+                "attributes": {
+                    "display": [ const.ROLE_WS_CD_EXECUTE[1] ],
+                    "display_default": [ const.ROLE_WS_CD_EXECUTE[2] ],
+                }
+            },
+            {
+                "name": const.ROLE_WS_CD_RESULT[0].format(workspace_id),
+                "composite_roles": [ const.ROLE_WS_ROLE_WS_REFERENCE[0].format(workspace_id),
+                                    const.ROLE_WS_ROLE_CD_EXECUTE_RESULT[0].format(workspace_id),
+                ],
+                "attributes": {
+                    "display": [ const.ROLE_WS_CD_RESULT[1] ],
+                    "display_default": [ const.ROLE_WS_CD_RESULT[2] ],
+                }
+            },
         ]
     }
     
