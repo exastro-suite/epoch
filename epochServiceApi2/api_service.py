@@ -499,304 +499,304 @@ def call_cd_exec(workspace_id):
 #         raise common.UserException(error_detail)
 
 
-def get_workspace_list():
-    """ワークスペース情報一覧取得
+# def get_workspace_list():
+#     """ワークスペース情報一覧取得
 
-    Returns:
-        Response: HTTP Respose
-    """
+#     Returns:
+#         Response: HTTP Respose
+#     """
 
-    app_name = "ワークスペース情報:"
-    exec_stat = "一覧取得"
-    error_detail = ""
+#     app_name = "ワークスペース情報:"
+#     exec_stat = "一覧取得"
+#     error_detail = ""
 
-    try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
+#     try:
+#         globals.logger.debug('#' * 50)
+#         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
+#         globals.logger.debug('#' * 50)
 
-        # ヘッダ情報 header info
-        post_headers = {
-            'Content-Type': 'application/json',
-        }
+#         # ヘッダ情報 header info
+#         post_headers = {
+#             'Content-Type': 'application/json',
+#         }
 
-        # ワークスペース情報取得 get workspace info
-        api_url = "{}://{}:{}/workspace".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
-                                                os.environ['EPOCH_RS_WORKSPACE_HOST'],
-                                                os.environ['EPOCH_RS_WORKSPACE_PORT'])
-        response = requests.get(api_url, headers=post_headers)
+#         # ワークスペース情報取得 get workspace info
+#         api_url = "{}://{}:{}/workspace".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+#                                                 os.environ['EPOCH_RS_WORKSPACE_HOST'],
+#                                                 os.environ['EPOCH_RS_WORKSPACE_PORT'])
+#         response = requests.get(api_url, headers=post_headers)
 
-       # user_idの取得 get user id
-        user_id = common.get_current_user(request.headers)
+#        # user_idの取得 get user id
+#         user_id = common.get_current_user(request.headers)
 
-        # ユーザクライアントロール情報取得 get user client role info
-        epai_api_url = "{}://{}:{}/{}/user/{}/roles/epoch-system".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
-                                                               os.environ['EPOCH_EPAI_API_HOST'],
-                                                               os.environ['EPOCH_EPAI_API_PORT'],
-                                                               os.environ["EPOCH_EPAI_REALM_NAME"],
-                                                               user_id)
-        epai_resp_user_role = requests.get(epai_api_url, headers=post_headers)
-        user_role = json.loads(epai_resp_user_role.text)
+#         # ユーザクライアントロール情報取得 get user client role info
+#         epai_api_url = "{}://{}:{}/{}/user/{}/roles/epoch-system".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
+#                                                                os.environ['EPOCH_EPAI_API_HOST'],
+#                                                                os.environ['EPOCH_EPAI_API_PORT'],
+#                                                                os.environ["EPOCH_EPAI_REALM_NAME"],
+#                                                                user_id)
+#         epai_resp_user_role = requests.get(epai_api_url, headers=post_headers)
+#         user_role = json.loads(epai_resp_user_role.text)
         
-        rows = []
-        roles = []
-        for item in user_role["rows"]:
-            for role in item["roles"]:
-                # クライアントロール表示名取得 get client role display name
-                epai_api_url = "{}://{}:{}/{}/client/epoch-system/role/{}".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
-                                                                                os.environ['EPOCH_EPAI_API_HOST'],
-                                                                                os.environ['EPOCH_EPAI_API_PORT'],
-                                                                                os.environ["EPOCH_EPAI_REALM_NAME"],
-                                                                                role["name"])
+#         rows = []
+#         roles = []
+#         for item in user_role["rows"]:
+#             for role in item["roles"]:
+#                 # クライアントロール表示名取得 get client role display name
+#                 epai_api_url = "{}://{}:{}/{}/client/epoch-system/role/{}".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
+#                                                                                 os.environ['EPOCH_EPAI_API_HOST'],
+#                                                                                 os.environ['EPOCH_EPAI_API_PORT'],
+#                                                                                 os.environ["EPOCH_EPAI_REALM_NAME"],
+#                                                                                 role["name"])
 
-                epai_resp_role_disp_name = requests.get(epai_api_url, headers=post_headers)
-                role_disp_name = json.loads(epai_resp_role_disp_name.text)["rows"]
+#                 epai_resp_role_disp_name = requests.get(epai_api_url, headers=post_headers)
+#                 role_disp_name = json.loads(epai_resp_role_disp_name.text)["rows"]
                 
-                # JSON整形 JSON formatting
-                roles.append(
-                    {
-                        "id": role["name"],
-                        "name": role_disp_name["display_name"]
-                    }
-                )
+#                 # JSON整形 JSON formatting
+#                 roles.append(
+#                     {
+#                         "id": role["name"],
+#                         "name": role_disp_name["display_name"]
+#                     }
+#                 )
         
-        if response.status_code == 200 and common.is_json_format(response.text) \
-        and epai_resp_user_role.status_code == 200 and common.is_json_format(epai_resp_user_role.text):
-            # 取得した情報で必要な部分のみを編集して返却する Edit and return only the necessary part of the acquired information
-            ret = json.loads(response.text)
-            for data_row in ret["rows"]:
-                # メンバー数取得 get the number of members
-                epai_api_url = "{}://{}:{}/{}/client/epoch-system/roles/{}/users".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
-                                                                                        os.environ['EPOCH_EPAI_API_HOST'],
-                                                                                        os.environ['EPOCH_EPAI_API_PORT'],
-                                                                                        os.environ["EPOCH_EPAI_REALM_NAME"],
-                                                                                        "ws-{}-role-ws-reference".format(data_row["workspace_id"]))
-                epai_resp_role_users = requests.get(epai_api_url, headers=post_headers)
-                role_users = json.loads(epai_resp_role_users.text)
+#         if response.status_code == 200 and common.is_json_format(response.text) \
+#         and epai_resp_user_role.status_code == 200 and common.is_json_format(epai_resp_user_role.text):
+#             # 取得した情報で必要な部分のみを編集して返却する Edit and return only the necessary part of the acquired information
+#             ret = json.loads(response.text)
+#             for data_row in ret["rows"]:
+#                 # メンバー数取得 get the number of members
+#                 epai_api_url = "{}://{}:{}/{}/client/epoch-system/roles/{}/users".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
+#                                                                                         os.environ['EPOCH_EPAI_API_HOST'],
+#                                                                                         os.environ['EPOCH_EPAI_API_PORT'],
+#                                                                                         os.environ["EPOCH_EPAI_REALM_NAME"],
+#                                                                                         "ws-{}-role-ws-reference".format(data_row["workspace_id"]))
+#                 epai_resp_role_users = requests.get(epai_api_url, headers=post_headers)
+#                 role_users = json.loads(epai_resp_role_users.text)
                 
-                # 返り値 JSON整形 Return value JSON formatting
-                row = {
-                    "workspace_id": data_row["workspace_id"],
-                    "workspace_name": data_row["common"]["name"],
-                    "roles": roles,
-                    "members": len(role_users["rows"]),
-                    "workspace_remarks": data_row["common"]["note"],
-                    "update_at": data_row["update_at"],
-                }
-                rows.append(row)
+#                 # 返り値 JSON整形 Return value JSON formatting
+#                 row = {
+#                     "workspace_id": data_row["workspace_id"],
+#                     "workspace_name": data_row["common"]["name"],
+#                     "roles": roles,
+#                     "members": len(role_users["rows"]),
+#                     "workspace_remarks": data_row["common"]["note"],
+#                     "update_at": data_row["update_at"],
+#                 }
+#                 rows.append(row)
 
-        elif not response.status_code == 404:
-            # 404以外の場合は、エラー、404はレコードなしで返却（エラーにはならない） If it is other than 404, it is an error, and 404 is returned without a record (it does not become an error)
-            raise Exception('{} Error:{}'.format(inspect.currentframe().f_code.co_name, response.status_code))
+#         elif not response.status_code == 404:
+#             # 404以外の場合は、エラー、404はレコードなしで返却（エラーにはならない） If it is other than 404, it is an error, and 404 is returned without a record (it does not become an error)
+#             raise Exception('{} Error:{}'.format(inspect.currentframe().f_code.co_name, response.status_code))
 
-        return jsonify({"result": "200", "rows": rows}), 200
+#         return jsonify({"result": "200", "rows": rows}), 200
 
-    except common.UserException as e:
-        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
-    except Exception as e:
-        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+#     except common.UserException as e:
+#         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+#     except Exception as e:
+#         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
 
-def get_workspace(workspace_id):
-    """ワークスペース情報取得
+# def get_workspace(workspace_id):
+#     """ワークスペース情報取得
 
-    Args:
-        workspace_id (int): workspace ID
+#     Args:
+#         workspace_id (int): workspace ID
 
-    Returns:
-        Response: HTTP Respose
-    """
+#     Returns:
+#         Response: HTTP Respose
+#     """
 
-    app_name = "ワークスペース情報:"
-    exec_stat = "取得"
-    error_detail = ""
+#     app_name = "ワークスペース情報:"
+#     exec_stat = "取得"
+#     error_detail = ""
 
-    try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
+#     try:
+#         globals.logger.debug('#' * 50)
+#         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
+#         globals.logger.debug('#' * 50)
 
-        # ヘッダ情報
-        post_headers = {
-            'Content-Type': 'application/json',
-        }
+#         # ヘッダ情報
+#         post_headers = {
+#             'Content-Type': 'application/json',
+#         }
 
-        # workspace GET送信
-        api_url = "{}://{}:{}/workspace/{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
-                                                    os.environ['EPOCH_RS_WORKSPACE_HOST'],
-                                                    os.environ['EPOCH_RS_WORKSPACE_PORT'],
-                                                    workspace_id)
-        response = requests.get(api_url, headers=post_headers)
+#         # workspace GET送信
+#         api_url = "{}://{}:{}/workspace/{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+#                                                     os.environ['EPOCH_RS_WORKSPACE_HOST'],
+#                                                     os.environ['EPOCH_RS_WORKSPACE_PORT'],
+#                                                     workspace_id)
+#         response = requests.get(api_url, headers=post_headers)
 
-        if response.status_code == 200 and common.is_json_format(response.text):
-            # 取得したJSON結果が正常でない場合、例外を返す
-            ret = json.loads(response.text)
-            rows = ret["rows"]
-            ret_status = response.status_code
-        elif response.status_code == 404:
-            # 情報が取得できない場合は、0件で返す
-            rows = []
-            ret_status = response.status_code
-        else:
-            if response.status_code == 500 and common.is_json_format(response.text):
-                # 戻り値がJsonの場合は、値を取得
-                ret = json.loads(response.text)
-                # 詳細エラーがある場合は詳細を設定
-                if ret["errorDetail"] is not None:
-                    error_detail = ret["errorDetail"]
+#         if response.status_code == 200 and common.is_json_format(response.text):
+#             # 取得したJSON結果が正常でない場合、例外を返す
+#             ret = json.loads(response.text)
+#             rows = ret["rows"]
+#             ret_status = response.status_code
+#         elif response.status_code == 404:
+#             # 情報が取得できない場合は、0件で返す
+#             rows = []
+#             ret_status = response.status_code
+#         else:
+#             if response.status_code == 500 and common.is_json_format(response.text):
+#                 # 戻り値がJsonの場合は、値を取得
+#                 ret = json.loads(response.text)
+#                 # 詳細エラーがある場合は詳細を設定
+#                 if ret["errorDetail"] is not None:
+#                     error_detail = ret["errorDetail"]
 
-            raise common.UserException("{} Error get workspace db status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
+#             raise common.UserException("{} Error get workspace db status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
 
-        return jsonify({"result": ret_status, "rows": rows}), ret_status
+#         return jsonify({"result": ret_status, "rows": rows}), ret_status
 
-    except common.UserException as e:
-        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
-    except Exception as e:
-        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+#     except common.UserException as e:
+#         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+#     except Exception as e:
+#         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
 
-def put_workspace(workspace_id):
-    """ワークスペース情報更新
+# def put_workspace(workspace_id):
+#     """ワークスペース情報更新
 
-    Args:
-        workspace_id (int): workspace ID
+#     Args:
+#         workspace_id (int): workspace ID
 
-    Returns:
-        Response: HTTP Respose
-    """
+#     Returns:
+#         Response: HTTP Respose
+#     """
 
-    app_name = "ワークスペース情報:"
-    exec_stat = "更新"
-    error_detail = ""
+#     app_name = "ワークスペース情報:"
+#     exec_stat = "更新"
+#     error_detail = ""
 
-    try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
+#     try:
+#         globals.logger.debug('#' * 50)
+#         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
+#         globals.logger.debug('#' * 50)
 
-        # ヘッダ情報
-        post_headers = {
-            'Content-Type': 'application/json',
-        }
+#         # ヘッダ情報
+#         post_headers = {
+#             'Content-Type': 'application/json',
+#         }
 
-        # 引数をJSON形式で受け取りそのまま引数に設定
-        post_data = request.json.copy()
+#         # 引数をJSON形式で受け取りそのまま引数に設定
+#         post_data = request.json.copy()
 
-        # workspace put送信
-        api_url = "{}://{}:{}/workspace/{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
-                                                    os.environ['EPOCH_RS_WORKSPACE_HOST'],
-                                                    os.environ['EPOCH_RS_WORKSPACE_PORT'],
-                                                    workspace_id)
-        response = requests.put(api_url, headers=post_headers, data=json.dumps(post_data))
+#         # workspace put送信
+#         api_url = "{}://{}:{}/workspace/{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+#                                                     os.environ['EPOCH_RS_WORKSPACE_HOST'],
+#                                                     os.environ['EPOCH_RS_WORKSPACE_PORT'],
+#                                                     workspace_id)
+#         response = requests.put(api_url, headers=post_headers, data=json.dumps(post_data))
 
-        if response.status_code == 200:
-            # 正常時は戻り値がレコードの値なのでそのまま返却する
-            ret = json.loads(response.text)
-            rows = ret['rows']
-        else:
-            if common.is_json_format(response.text):
-                ret = json.loads(response.text)
-                # 詳細エラーがある場合は詳細を設定
-                if ret["errorDetail"] is not None:
-                    error_detail = ret["errorDetail"]
+#         if response.status_code == 200:
+#             # 正常時は戻り値がレコードの値なのでそのまま返却する
+#             ret = json.loads(response.text)
+#             rows = ret['rows']
+#         else:
+#             if common.is_json_format(response.text):
+#                 ret = json.loads(response.text)
+#                 # 詳細エラーがある場合は詳細を設定
+#                 if ret["errorDetail"] is not None:
+#                     error_detail = ret["errorDetail"]
 
-            raise common.UserException("{} Error put workspace db status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
+#             raise common.UserException("{} Error put workspace db status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
 
-        ret_status = response.status_code
+#         ret_status = response.status_code
 
-        # 戻り値をそのまま返却        
-        return jsonify({"result": ret_status}), ret_status
+#         # 戻り値をそのまま返却        
+#         return jsonify({"result": ret_status}), ret_status
 
-    except common.UserException as e:
-        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
-    except Exception as e:
-        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+#     except common.UserException as e:
+#         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+#     except Exception as e:
+#         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
 
 
-def post_pod(workspace_id):
-    """ワークスペース作成
+# def post_pod(workspace_id):
+#     """ワークスペース作成
 
-    Args:
-        workspace_id (int): workspace ID
+#     Args:
+#         workspace_id (int): workspace ID
 
-    Returns:
-        Response: HTTP Respose
-    """
+#     Returns:
+#         Response: HTTP Respose
+#     """
 
-    app_name = "ワークスペース情報:"
-    exec_stat = "作成"
-    error_detail = ""
+#     app_name = "ワークスペース情報:"
+#     exec_stat = "作成"
+#     error_detail = ""
 
-    try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
+#     try:
+#         globals.logger.debug('#' * 50)
+#         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
+#         globals.logger.debug('#' * 50)
 
-        # ヘッダ情報
-        post_headers = {
-            'Content-Type': 'application/json',
-        }
+#         # ヘッダ情報
+#         post_headers = {
+#             'Content-Type': 'application/json',
+#         }
 
-        # 引数をJSON形式で受け取りそのまま引数に設定
-        post_data = request.json.copy()
+#         # 引数をJSON形式で受け取りそのまま引数に設定
+#         post_data = request.json.copy()
 
-        # workspace post送信
-        api_url = "{}://{}:{}/workspace/{}".format(os.environ['EPOCH_CONTROL_WORKSPACE_PROTOCOL'],
-                                                   os.environ['EPOCH_CONTROL_WORKSPACE_HOST'],
-                                                   os.environ['EPOCH_CONTROL_WORKSPACE_PORT'],
-                                                   workspace_id)
-        response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
-        globals.logger.debug("post workspace response:{}".format(response.text))
+#         # workspace post送信
+#         api_url = "{}://{}:{}/workspace/{}".format(os.environ['EPOCH_CONTROL_WORKSPACE_PROTOCOL'],
+#                                                    os.environ['EPOCH_CONTROL_WORKSPACE_HOST'],
+#                                                    os.environ['EPOCH_CONTROL_WORKSPACE_PORT'],
+#                                                    workspace_id)
+#         response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
+#         globals.logger.debug("post workspace response:{}".format(response.text))
         
-        if response.status_code != 200:
-            error_detail = 'workspace post処理に失敗しました'
-            raise common.UserException(error_detail)
+#         if response.status_code != 200:
+#             error_detail = 'workspace post処理に失敗しました'
+#             raise common.UserException(error_detail)
 
-        # argocd post送信
-        api_url = "{}://{}:{}/workspace/{}/argocd".format(os.environ['EPOCH_CONTROL_ARGOCD_PROTOCOL'],
-                                                          os.environ['EPOCH_CONTROL_ARGOCD_HOST'],
-                                                          os.environ['EPOCH_CONTROL_ARGOCD_PORT'],
-                                                          workspace_id)
-        response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
-        globals.logger.debug("post argocd response:{}".format(response.text))
+#         # argocd post送信
+#         api_url = "{}://{}:{}/workspace/{}/argocd".format(os.environ['EPOCH_CONTROL_ARGOCD_PROTOCOL'],
+#                                                           os.environ['EPOCH_CONTROL_ARGOCD_HOST'],
+#                                                           os.environ['EPOCH_CONTROL_ARGOCD_PORT'],
+#                                                           workspace_id)
+#         response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
+#         globals.logger.debug("post argocd response:{}".format(response.text))
 
-        if response.status_code != 200:
-            error_detail = 'argocd post処理に失敗しました'
-            raise common.UserException(error_detail)
+#         if response.status_code != 200:
+#             error_detail = 'argocd post処理に失敗しました'
+#             raise common.UserException(error_detail)
 
-        # ita post送信
-        api_url = "{}://{}:{}/workspace/{}/it-automation".format(os.environ['EPOCH_CONTROL_ITA_PROTOCOL'],
-                                                                 os.environ['EPOCH_CONTROL_ITA_HOST'],
-                                                                 os.environ['EPOCH_CONTROL_ITA_PORT'],
-                                                                 workspace_id)
-        response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
-        globals.logger.debug("post it-automation response:{}".format(response.text))
+#         # ita post送信
+#         api_url = "{}://{}:{}/workspace/{}/it-automation".format(os.environ['EPOCH_CONTROL_ITA_PROTOCOL'],
+#                                                                  os.environ['EPOCH_CONTROL_ITA_HOST'],
+#                                                                  os.environ['EPOCH_CONTROL_ITA_PORT'],
+#                                                                  workspace_id)
+#         response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
+#         globals.logger.debug("post it-automation response:{}".format(response.text))
 
-        if response.status_code != 200:
-            error_detail = 'it-automation post処理に失敗しました'
-            raise common.UserException(error_detail)
+#         if response.status_code != 200:
+#             error_detail = 'it-automation post処理に失敗しました'
+#             raise common.UserException(error_detail)
 
-        # epoch-control-ita-api の呼び先設定
-        api_url = "{}://{}:{}/workspace/{}/it-automation/settings".format(os.environ['EPOCH_CONTROL_ITA_PROTOCOL'],
-                                                                            os.environ['EPOCH_CONTROL_ITA_HOST'],
-                                                                            os.environ['EPOCH_CONTROL_ITA_PORT'],
-                                                                            workspace_id)
+#         # epoch-control-ita-api の呼び先設定
+#         api_url = "{}://{}:{}/workspace/{}/it-automation/settings".format(os.environ['EPOCH_CONTROL_ITA_PROTOCOL'],
+#                                                                             os.environ['EPOCH_CONTROL_ITA_HOST'],
+#                                                                             os.environ['EPOCH_CONTROL_ITA_PORT'],
+#                                                                             workspace_id)
 
-        # it-automation/settings post送信
-        response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
-        globals.logger.debug("post it-automation/settings response:{}".format(response.text))
+#         # it-automation/settings post送信
+#         response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
+#         globals.logger.debug("post it-automation/settings response:{}".format(response.text))
 
-        if response.status_code != 200:
-            error_detail = 'it-automation/settings post処理に失敗しました'
-            raise common.UserException(error_detail)
+#         if response.status_code != 200:
+#             error_detail = 'it-automation/settings post処理に失敗しました'
+#             raise common.UserException(error_detail)
 
-        ret_status = 200
+#         ret_status = 200
 
-        # 戻り値をそのまま返却        
-        return jsonify({"result": ret_status}), ret_status
+#         # 戻り値をそのまま返却        
+#         return jsonify({"result": ret_status}), ret_status
 
-    except common.UserException as e:
-        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
-    except Exception as e:
-        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+#     except common.UserException as e:
+#         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+#     except Exception as e:
+#         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
 
 
 if __name__ == "__main__":
