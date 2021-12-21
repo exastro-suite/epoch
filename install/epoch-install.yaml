@@ -963,7 +963,7 @@ spec:
           name: epoch-service-api2-conf
       containers:
       - name: epoch-service-api2
-        image: exastro/epoch-service-api2:0.3.0_20211206_1700
+        image: exastro/epoch-service-api2:0.3.0_20211221_1300
         env:
         - name: CONFIG_API_SERVICE_PATH
           value: "/etc/epoch/epochServiceApi/api_service.conf"
@@ -1035,7 +1035,7 @@ spec:
     spec:
       containers:
       - name: epoch-ui
-        image: exastro/epoch-ui:0.3.0_20211206_1630
+        image: exastro/epoch-ui:0.3.0_20211221_1300
 
 ---
 apiVersion: v1
@@ -1855,7 +1855,7 @@ spec:
           claimName: exastro-authentication-infra-httpd-conf
       containers:
       - name: authentication-infra-api
-        image: exastro/authentication-infra-api:0.3.0_20211206_1700
+        image: exastro/authentication-infra-api:0.3.0_20211221_1300
         env:
         - name: CONFIG_API_AUTHC_INFRA_PATH
           value: "/etc/exastro-authentication-infra/authentication-infra-api/api_authc_infra.conf"
