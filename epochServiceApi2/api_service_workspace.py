@@ -406,58 +406,69 @@ def get_workspace_list():
                                                                         os.environ["EPOCH_EPAI_REALM_NAME"],
                                                                         user_id)
         epai_resp_user_role = requests.get(epai_api_url, headers=post_headers)
-        user_role = json.loads(epai_resp_user_role.text)
         
         rows = []
-        roles = []
-        for item in user_role["rows"]:
-            for role in item["roles"]:
-                # クライアントロール表示名取得 get client role display name
-                epai_api_url = "{}://{}:{}/{}/client/epoch-system/role/{}".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
-                                                                                os.environ['EPOCH_EPAI_API_HOST'],
-                                                                                os.environ['EPOCH_EPAI_API_PORT'],
-                                                                                os.environ["EPOCH_EPAI_REALM_NAME"],
-                                                                                role["name"])
-
-                epai_resp_role_disp_name = requests.get(epai_api_url, headers=post_headers)
-                role_info = json.loads(epai_resp_role_disp_name.text)["rows"]
-                
-                disp_row = {
-                    "id": role["name"],
-                    "name": "",
-                }
-                # 表示する項目が存在した際は、多言語変換を実施して値を設定
-                # If there is an item to be displayed, perform multilingual conversion and set the value.
-                if "attributes" in role_info:
-                    if "display" in role_info["attributes"]:
-                        disp_row["name"] = multi_lang.get_text(role_disp_name["attributes"]["display"], role_disp_name["attributes"]["display_default"])
-
-                roles.append(disp_row)           
         
         if response.status_code == 200 and common.is_json_format(response.text) \
         and epai_resp_user_role.status_code == 200 and common.is_json_format(epai_resp_user_role.text):
+            user_roles = json.loads(epai_resp_user_role.text)
             # 取得した情報で必要な部分のみを編集して返却する Edit and return only the necessary part of the acquired information
             ret = json.loads(response.text)
             for data_row in ret["rows"]:
-                # メンバー数取得 get the number of members
-                epai_api_url = "{}://{}:{}/{}/client/epoch-system/roles/{}/users".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
+                # ログインユーザーのロールが該当するワークスペースの参照権限があるかチェックする
+                # Check if the logged-in user's role has read permission for the applicable workspace
+                find = False
+                roles = []
+                for user_role in user_roles["rows"]:
+                    if user_role["name"] == const.ROLE_WS_ROLE_WS_REFERENCE[0].format(data_row["workspace_id"]):
+                        find = True
+
+                        # クライアントロール表示名取得 get client role display name
+                        epai_api_url = "{}://{}:{}/{}/client/epoch-system/role/{}".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
                                                                                         os.environ['EPOCH_EPAI_API_HOST'],
                                                                                         os.environ['EPOCH_EPAI_API_PORT'],
                                                                                         os.environ["EPOCH_EPAI_REALM_NAME"],
-                                                                                        "ws-{}-role-ws-reference".format(data_row["workspace_id"]))
-                epai_resp_role_users = requests.get(epai_api_url, headers=post_headers)
-                role_users = json.loads(epai_resp_role_users.text)
+                                                                                        user_role["name"])
+
+                        epai_resp_role_disp_name = requests.get(epai_api_url, headers=post_headers)
+                        role_info = json.loads(epai_resp_role_disp_name.text)["rows"]
+                        globals.logger.debug("role_info:{}".format(role_info))
+                        
+                        disp_row = {
+                            "id": user_role["name"],
+                            "name": "",
+                        }
+                        # 表示する項目が存在した際は、多言語変換を実施して値を設定
+                        # If there is an item to be displayed, perform multilingual conversion and set the value.
+                        if "attributes" in role_info:
+                            if "display" in role_info["attributes"]:
+                                disp_row["name"] = multi_lang.get_text(role_info["attributes"]["display"], role_info["attributes"]["display_default"])
+
+                        roles.append(disp_row)           
+
+                        break
                 
-                # 返り値 JSON整形 Return value JSON formatting
-                row = {
-                    "workspace_id": data_row["workspace_id"],
-                    "workspace_name": data_row["common"]["name"],
-                    "roles": roles,
-                    "members": len(role_users["rows"]),
-                    "workspace_remarks": data_row["common"]["note"],
-                    "update_at": data_row["update_at"],
-                }
-                rows.append(row)
+                # 参照ロールありで一覧に表示する Display in list with reference role
+                if find:
+                    # メンバー数取得 get the number of members
+                    epai_api_url = "{}://{}:{}/{}/client/epoch-system/roles/{}/users".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
+                                                                                            os.environ['EPOCH_EPAI_API_HOST'],
+                                                                                            os.environ['EPOCH_EPAI_API_PORT'],
+                                                                                            os.environ["EPOCH_EPAI_REALM_NAME"],
+                                                                                            const.ROLE_WS_ROLE_WS_REFERENCE[0].format(data_row["workspace_id"]))
+                    epai_resp_role_users = requests.get(epai_api_url, headers=post_headers)
+                    role_users = json.loads(epai_resp_role_users.text)
+                    
+                    # 返り値 JSON整形 Return value JSON formatting
+                    row = {
+                        "workspace_id": data_row["workspace_id"],
+                        "workspace_name": data_row["common"]["name"],
+                        "roles": roles,
+                        "members": len(role_users["rows"]),
+                        "workspace_remarks": data_row["common"]["note"],
+                        "update_at": data_row["update_at"],
+                    }
+                    rows.append(row)
 
         elif not response.status_code == 404:
             # 404以外の場合は、エラー、404はレコードなしで返却（エラーにはならない） If it is other than 404, it is an error, and 404 is returned without a record (it does not become an error)
