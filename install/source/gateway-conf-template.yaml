@@ -14,6 +14,9 @@ data:
     \   AuthType openid-connect\n    Require claim \"epoch-role:epoch-user\"\n  </Location>\n
     \ <Location /api/>\n    ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/
     retry=0 timeout=600\n    ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/\n
+    \   AuthType openid-connect\n    Require claim \"epoch-role:epoch-user\"\n  </Location>\n
+    \ <Location /api/member>\n    ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/member
+    retry=0 timeout=600\n    ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/member\n
     \   AuthType openid-connect\n    Require claim \"epoch-role:epoch-user\"\n  </Location>\n\n
     \ IncludeOptional conf.d/exastroSettings/epoch-system/*.conf\n\n  <Location /api/user/>\n
     \   ProxyPass        http://authentication-infra-api:8000/user/ retry=0\n    ProxyPassReverse
