@@ -1105,7 +1105,8 @@ data:
       organization_id  int unsigned not null,
       specification json,
       create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
-      update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      role_update_at datetime not null DEFAULT CURRENT_TIMESTAMP
     );
     create table workspace_history (
       history_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
@@ -1617,6 +1618,9 @@ data:
     \   AuthType openid-connect\n    Require claim \"epoch-role:epoch-user\"\n  </Location>\n
     \ <Location /api/>\n    ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/
     retry=0 timeout=600\n    ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/\n
+    \   AuthType openid-connect\n    Require claim \"epoch-role:epoch-user\"\n  </Location>\n
+    \ <Location /api/member>\n    ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/member
+    retry=0 timeout=600\n    ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/member\n
     \   AuthType openid-connect\n    Require claim \"epoch-role:epoch-user\"\n  </Location>\n\n
     \ IncludeOptional conf.d/exastroSettings/epoch-system/*.conf\n\n  <Location /api/user/>\n
     \   ProxyPass        http://authentication-infra-api:8000/user/ retry=0\n    ProxyPassReverse
@@ -1707,6 +1711,14 @@ data:
         </LimitExcept>
       </Location>
 
+      <Location /api/workspace/{{ param.workspace_id }}/members>
+        ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/members retry=0 timeout=600
+        ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/members
+        AuthType openid-connect
+        Require claim "epoch-role:ws-{{ param.workspace_id }}-role-member-add"
+        Require claim "epoch-role:ws-{{ param.workspace_id }}-role-member-role-update"
+      </Location>
+
       <Location /api/workspace/{{ param.workspace_id }}>
         ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }} retry=0 timeout=600
         ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}
@@ -1722,7 +1734,14 @@ data:
         <Limit DELETE>
             Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-delete"
         </Limit>
-        <LimitExcept GET POST PUT DELETE>
+        <Limit PATCH>
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-name-update"
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-ci-update"
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-cd-update"
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-member-add"
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-member-role-update"
+        </Limit>
+        <LimitExcept GET POST PUT DELETE PATCH>
             Require all denied
         </LimitExcept>
       </Location>
