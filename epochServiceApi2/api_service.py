@@ -34,6 +34,7 @@ import api_service_workspace
 import api_service_ci
 import api_service_manifest
 import api_service_cd
+import api_service_member
 
 # 設定ファイル読み込み・globals初期化
 app = Flask(__name__)
@@ -334,6 +335,58 @@ def call_cd_exec(workspace_id):
 
     except Exception as e:
         return common.server_error(e)
+
+@app.route('/member', methods=['GET'])
+def call_members():
+    """member Call
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}]'.format(inspect.currentframe().f_code.co_name, request.method))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'GET':
+            # all users get
+            return api_service_member.get_users()
+        else:
+            # Error
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+@app.route('/workspace/<int:workspace_id>/member', methods=['GET','POST'])
+def call_workspace_member(workspace_id):
+    """workspace member Call
+
+    Args:
+        workspace_id (int): workspace ID
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'GET':
+            # all workspace members get
+            return api_service_member.get_workspace_members(workspace_id)
+        elif request.method == 'POST':
+            # workspace members merge
+            return api_service_member.merge_workspace_members(workspace_id)
+        else:
+            # Error
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('API_SERVICE_PORT', '8000')), threaded=True)
