@@ -119,7 +119,14 @@ data:
         <Limit DELETE>
             Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-delete"
         </Limit>
-        <LimitExcept GET POST PUT DELETE>
+        <Limit PATCH>
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-name-update"
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-ci-update"
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-cd-update"
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-member-add"
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-member-role-update"
+        </Limit>
+        <LimitExcept GET POST PUT DELETE PATCH>
             Require all denied
         </LimitExcept>
       </Location>
