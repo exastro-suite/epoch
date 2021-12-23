@@ -104,6 +104,14 @@ data:
         </LimitExcept>
       </Location>
 
+      <Location /api/workspace/{{ param.workspace_id }}/members>
+        ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/members retry=0 timeout=600
+        ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/members
+        AuthType openid-connect
+        Require claim "epoch-role:ws-{{ param.workspace_id }}-role-member-add"
+        Require claim "epoch-role:ws-{{ param.workspace_id }}-role-member-role-update"
+      </Location>
+
       <Location /api/workspace/{{ param.workspace_id }}>
         ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }} retry=0 timeout=600
         ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}
