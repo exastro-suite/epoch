@@ -44,7 +44,8 @@ data:
       organization_id  int unsigned not null,
       specification json,
       create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
-      update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      role_update_at datetime not null DEFAULT CURRENT_TIMESTAMP
     );
     create table workspace_history (
       history_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
