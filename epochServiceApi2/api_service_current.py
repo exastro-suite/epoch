@@ -94,24 +94,55 @@ def current_user_get():
             raise common.UserException("{} Error user role get status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
 
         ret_roles = json.loads(response.text)
-        globals.logger.debug(f"roles:{ret_roles}")
+        # globals.logger.debug(f"roles:{ret_roles}")
 
-        set_role_kind = []
+        sorted_roles = sorted(ret_roles["rows"], key=lambda x:x['name'])
+        globals.logger.debug(f"sorted_roles:{sorted_roles}")
+
+        stock_workspace_id = []
+        set_role_display = []
+        ret_role = ""
         # 取得したすべてのロールから絞り込む Narrow down from all acquired roles
-        for get_role in ret_roles["rows"]:
-            kind = common.get_role_kind(get_role["name"])
+        for get_role in sorted_roles:
+            role_info = common.get_role_info(get_role["name"])
             # 該当のロールのみチェック Check only the corresponding role
-            if kind is not None:
+            if role_info is not None:
                 ex_role = re.match("ws-({}|\d+)-(.+)", get_role["name"])
                 globals.logger.debug("role_workspace_id:{} kind:{}".format(ex_role[1], ex_role[2]))
-                # 該当のワークスペースのみの絞り込み Narrow down only the applicable workspace
-                if ex_role[1] == str(workspace_id):
-                    set_role_kind.append(
-                        {
-                            "kind" : kind
-                        }
-                    )
+
+                # 取得したロール名を配列にする Make the acquired role name into an array
+                set_role_display.append(multi_lang.get_text(role_info[1], role_info[2]))
+
+                # ワークスペースは重複があるので、1回のみ抽出 Workspaces are duplicated, so extract only once
+                if ex_role[1] in stock_workspace_id:
+                    # workspace_id が 変わった際にレコード化 Record when workspace_id changes
+                    ret_role = ',"{}":["{}"]'.format(workspace_name, '","'.join(set_role_display))
+                    # ret_role[workspace_name] = set_role_display
+                    set_role_display = []
+                    continue
+
+                workspace_id = ex_role[1]
+                stock_workspace_id.append(workspace_id)
+                # workspace get
+                api_url = "{}://{}:{}/workspace/{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+                                                            os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                            os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                            workspace_id)
+
+                response = requests.get(api_url)
+                if response.status_code != 200:
+                    error_detail = multi_lang.get_text("EP020-0013", "ワークスペース情報の取得に失敗しました")
+                    raise common.UserException("{} Error workspace get status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
+
+                ret_ws = json.loads(response.text)
+                workspace_name = ret_ws["rows"][0]["common"]["name"]
+                # workspace name empty to set fix name
+                if len(workspace_name) == 0:
+                    workspace_name = multi_lang.get_text("EP000-0025", "名称未設定")
         
+        ret_role = ret_role + ',"{}":["{}"]'.format(workspace_name, '","'.join(set_role_display))
+        ret_role = "{" + ret_role[1:] + "}" 
+
         ret_user = {
             "user_id": user_id,
             "username": users["info"]["username"],
@@ -119,8 +150,9 @@ def current_user_get():
             "firstName": users["info"]["firstName"],
             "lastName": users["info"]["lastName"],
             "email": users["info"]["email"],
-            "role": set_role_kind
+            "role": ret_role
         }
+        globals.logger.debug(f"ret_user:{ret_user}")
 
         return jsonify({"result": "200", "info": ret_user}), 200
 

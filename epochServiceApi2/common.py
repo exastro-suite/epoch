@@ -263,3 +263,40 @@ def get_role_kind(role_name):
 
     except Exception:
         raise
+
+
+def get_role_info(role_name):
+    """正規表現で一致するロール情報を取得する Get the matching role info. in a regular expression
+
+    Args:
+        role_name (str): ロール role name
+
+    Returns:
+        str: role kind name
+    """
+
+    try:
+        roles = [
+            const.ROLE_WS_OWNER,
+            const.ROLE_WS_MANAGER,
+            const.ROLE_WS_MEMBER_MG,
+            const.ROLE_WS_CI_SETTING,
+            const.ROLE_WS_CI_RESULT,
+            const.ROLE_WS_CD_SETTING,
+            const.ROLE_WS_CD_EXECUTE,
+            const.ROLE_WS_CD_RESULT,
+        ]
+
+        ret_info = None
+        for role in roles:
+            # 正規表現を使って、role名を判断する Use regular expressions to determine role names
+            ex_role_src = re.match("ws-({}|\d+)-(.+)", role_name)
+            ex_role = re.match("ws-({}|\d+)-(.+)", role[0])
+            if ex_role[2] == ex_role_src[2]:
+                ret_info = role
+                break
+
+        return ret_info
+
+    except Exception:
+        raise
