@@ -1626,7 +1626,10 @@ data:
     \ IncludeOptional conf.d/exastroSettings/epoch-system/*.conf\n\n  <Location /api/user/>\n
     \   ProxyPass        http://authentication-infra-api:8000/user/ retry=0\n    ProxyPassReverse
     http://authentication-infra-api:8000/user/\n    AuthType openid-connect\n    Require
-    valid-user\n  </Location>\n  <Location /api/client/>\n    ProxyPass        http://authentication-infra-api:8000/client/
+    valid-user\n  </Location>\n  <Location /api/user/current>\n    ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/user/current
+    retry=0 timeout=600\n    ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/user/current\n
+    \   AuthType openid-connect\n    Require claim \"epoch-role:epoch-user\"\n  </Location>\n
+    \ <Location /api/client/>\n    ProxyPass        http://authentication-infra-api:8000/client/
     retry=0\n    ProxyPassReverse http://authentication-infra-api:8000/client/\n    AuthType
     openid-connect\n    Require claim \"epoch-role:epoch-user\"\n  </Location>\n  <Location
     /api/listener/>\n    ProxyPass        http://epoch-control-tekton-api.epoch-system.svc:8000/listener/
