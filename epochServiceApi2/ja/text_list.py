@@ -36,4 +36,4 @@ class TextList:
     lang_array['EP000-0019'] = "Manifestテンプレート・パラメータ編集"
     lang_array['EP000-0020'] = "CD実行"
     lang_array['EP000-0021'] = "CD実行結果確認"
-
+    lang_array['EP020-0010'] = "退去"

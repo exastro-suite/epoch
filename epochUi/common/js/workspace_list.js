@@ -138,7 +138,7 @@ function workspaceList( list ) {
     }
 }
 
-// 退去
+// 退去 leave
 function leave_workspace(workspace_id) {
   console.log("[CALL] leave_workspace()");
   new Promise((resolve, reject) =>{
@@ -158,17 +158,17 @@ function leave_workspace(workspace_id) {
         }
     });
   }).then(() => {
-      console.log('[DONE] 退去');
-      alert("ワークスペースから退去しました");
+      console.log(getText("EP010-0110", "[DONE] 退去"));
+      alert(getText("EP010-0107", "ワークスペースから退去しました"));
       window.location.reload();
   }).catch((reason) => {
-      console.log('[FAIL] 退去');
+      console.log(getText("EP010-0110", "[FAIL] 退去"));
       switch(reason) {
         case "only-owner":
-          alert("あなた以外のオーナーがいないので退去できません");
+          alert(getText("EP010-0108", "あなた以外のオーナーがいないので退去できません"));
           break;
         default:
-          alert("ワークスペースからの退去に失敗しました");
+          alert(getText("EP010-0109", "ワークスペースからの退去に失敗しました"));
           break;
       }
       window.location.reload();
