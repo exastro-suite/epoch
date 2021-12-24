@@ -59,6 +59,36 @@ def update_workspace(cursor, specification, workspace_id):
     # 更新した件数をreturn
     return upd_cnt
 
+def patch_workspace(cursor, workspace_id, role_date_at, json):
+    """workspace情報更新パッチ
+
+    Args:
+        cursor (mysql.connector.cursor): カーソル
+        specification (Dict)): ワークスペース情報のJson形式
+        role_date_at (Date)): role update date
+
+    Returns:
+        int: アップデート件数
+        
+    """
+    data = []
+    for key in json:
+        # JSON整形
+        data.append(
+            {
+                str(key) : json[str(key)].values()
+            }
+        )
+
+    # UPDATE文の”role_date_at”の部分を整形したkeyの数だけ置き換える（未実装）
+    
+    # workspace情報 update実行
+    upd_cnt = cursor.execute('UPDATE workspace SET role_date_at = %(role_date_at)s WHERE workspace_id = %(workspace_id)s', data)
+    
+    # 更新した件数をreturn
+    return upd_cnt
+    
+
 def select_workspace_id(cursor, workspace_id):
     """workspace情報取得(id指定)
 
@@ -100,8 +130,8 @@ def insert_history(cursor, workspace_id):
         workspace_id (int): ワークスペースID
     """
     cursor.execute(
-        '''INSERT INTO workspace_history (workspace_id, organization_id, update_at, specification)
-            SELECT workspace_id, organization_id, update_at, specification FROM workspace WHERE workspace_id = %(workspace_id)s''',
+        '''INSERT INTO workspace_history (workspace_id, organization_id, update_at, role_update_at, specification)
+            SELECT workspace_id, organization_id, update_at, role_update_at, specification FROM workspace WHERE workspace_id = %(workspace_id)s''',
         {
             'workspace_id' : workspace_id
         }

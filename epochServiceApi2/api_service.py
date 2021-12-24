@@ -74,7 +74,7 @@ def call_workspace():
         return common.server_error(e)
 
 
-@app.route('/workspace/<int:workspace_id>', methods=['GET','PUT'])
+@app.route('/workspace/<int:workspace_id>', methods=['GET','PUT','PATCH'])
 def call_workspace_by_id(workspace_id):
     """workspace/workspace_id Call
 
