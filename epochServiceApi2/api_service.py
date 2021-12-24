@@ -35,6 +35,7 @@ import api_service_ci
 import api_service_manifest
 import api_service_cd
 import api_service_member
+import api_service_current
 
 # 設定ファイル読み込み・globals初期化
 app = Flask(__name__)
@@ -351,6 +352,28 @@ def call_members():
         if request.method == 'GET':
             # all users get
             return api_service_member.get_users()
+        else:
+            # Error
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+@app.route('/user/current', methods=['GET'])
+def call_user_current():
+    """current_user Call
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}]'.format(inspect.currentframe().f_code.co_name, request.method))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'GET':
+            # all users get
+            return api_service_current.current_user_get()
         else:
             # Error
             raise Exception("method not support!")
