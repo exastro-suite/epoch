@@ -83,6 +83,37 @@ def post_cd_pipeline(workspace_id):
         # 引数をJSON形式で受け取りそのまま引数に設定
         post_data = request.json.copy()
 
+        # Automatic generation of IaC repository - IaCリポジトリの自動生成
+        exec_stat = "CDパイプライン情報設定(IaCリポジトリ生成)"
+
+        # epoch-control-inside-gitlab-api の呼び先設定
+        api_url_gitlab = "{}://{}:{}/workspace/{}/gitlab".format(os.environ["EPOCH_CONTROL_INSIDE_GITLAB_PROTOCOL"], 
+                                                                 os.environ["EPOCH_CONTROL_INSIDE_GITLAB_HOST"], 
+                                                                 os.environ["EPOCH_CONTROL_INSIDE_GITLAB_PORT"],
+                                                                 workspace_id)
+
+        git_projects = []
+        if post_data['cd_config']['environments_common']['git_repositry']['housing'] == 'inner':
+            for pipeline_iac in post_data['cd_config']['environments']:
+                ap_data = {
+                    'git_repositry': {
+                        'user': post_data['cd_config']['environments_common']['git_repositry']['user'],
+                        'token': post_data['cd_config']['environments_common']['git_repositry']['token'],
+                        'url': pipeline_iac['git_repositry']['url'],
+                    }
+                }
+                git_projects.append(ap_data)
+
+        for proj_data in git_projects:
+            # gitlab/repos post送信
+            response = requests.post('{}/repos'.format(api_url_gitlab), headers=post_headers, data=json.dumps(proj_data))
+            globals.logger.debug("post gitlab/repos response:{}".format(response.text))
+
+            if response.status_code != 200:
+                error_detail = 'gitlab/repos post処理に失敗しました'
+                raise common.UserException(error_detail)
+
+
         exec_stat = "CDパイプライン情報設定(ITA - Git環境情報設定)"
 
         # epoch-control-ita-api の呼び先設定
