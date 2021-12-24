@@ -14,6 +14,7 @@
 
 import os
 import json
+import datetime
 
 import globals
 from dbconnector import dbcursor
@@ -59,33 +60,50 @@ def update_workspace(cursor, specification, workspace_id):
     # 更新した件数をreturn
     return upd_cnt
 
-def patch_workspace(cursor, workspace_id, role_date_at, json):
+def patch_workspace(cursor, workspace_id, update_items):
     """workspace情報更新パッチ
 
     Args:
         cursor (mysql.connector.cursor): カーソル
-        specification (Dict)): ワークスペース情報のJson形式
-        role_date_at (Date)): role update date
+        workspace_id (str): workspace_id
+        update_items (dict)): update items
 
     Returns:
         int: アップデート件数
         
     """
+    set_update = []
     data = []
-    for key in json:
-        # JSON整形
-        data.append(
-            {
-                str(key) : json[str(key)].values()
-            }
-        )
+    for item in update_items:
+        key = str(item)
+        # keyの種類によって、システム日付を設定する Set the system date according to the key type
+        if item == "role_update_at":
+            value = datetime.datetime.now()
+        else:
+            value = item.values()
 
-    # UPDATE文の”role_date_at”の部分を整形したkeyの数だけ置き換える（未実装）
+        set_update.append(f" AND {key} = %s")
+
+        # JSON整形 JSON formatting
+        data.append(value)
+
+    # 設定値のはじめをSETに置き換え Replaced the beginning of the set value with SET
+    if len(set_update) > 0:
+        set_update[0] = " SET" + set_update[0][4:]
+
+    # 更新キー The update key
+    set_update.append(" WHERE workspace_id = %s")
+    data.append(workspace_id)
+
+    # UPDATE文の生成 Generation of UPDATE statement
+    str_sql = "UPDATE workspace" + "".join(set_update)
+    globals.logger.debug('sql:{}'.format(str_sql))
+    globals.logger.debug('data:{}'.format(data))
     
-    # workspace情報 update実行
-    upd_cnt = cursor.execute('UPDATE workspace SET role_date_at = %(role_date_at)s WHERE workspace_id = %(workspace_id)s', data)
+    # workspace update
+    upd_cnt = cursor.execute(str_sql, data)
     
-    # 更新した件数をreturn
+    # 更新した件数をreturn Return the number of updates
     return upd_cnt
     
 

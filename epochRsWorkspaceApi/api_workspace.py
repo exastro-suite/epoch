@@ -240,6 +240,8 @@ def patch_workspace(workspace_id):
             exec_stat = "更新実行"
             upd_cnt = da_workspace.patch_workspace(cursor, workspace_id, request_json)
 
+            globals.logger.debug('workspace update complete update_count:{}'.format(upd_cnt))
+
             if upd_cnt == 0:
                 # データがないときは404応答
                 db.rollback()
@@ -248,15 +250,17 @@ def patch_workspace(workspace_id):
             # workspace履歴追加
             exec_stat = "登録実行(履歴)"
             da_workspace.insert_history(cursor, workspace_id)
+            globals.logger.debug('workspace history add complete')
 
             # workspace情報の再取得
             exec_stat = "登録データ確認"
             fetch_rows = da_workspace.select_workspace_id(cursor, workspace_id)
+            globals.logger.debug('workspace get complete')
 
         # Response用のjsonに変換
         response_rows = fetch_rows
 
-        return jsonify({"result": "200", "rows": response_rows })
+        return jsonify({"result": "200", "rows": response_rows }), 200
 
     except Exception as e:
         return common.serverError(e, app_name + exec_stat, exec_detail)

@@ -16,8 +16,10 @@ from flask import jsonify
 import random, string
 import json
 import traceback
+import re
 
 import globals
+import const
 
 class UserException(Exception):
     pass
@@ -188,4 +190,40 @@ def get_current_user(header):
     except Exception as e:
         globals.logger.debug(e.args)
         globals.logger.debug(traceback.format_exc())
+        raise
+
+
+def get_role_name(kind_role):
+    """正規表現で一致するロールを取得する
+
+    Args:
+        kind_role (str): ロールの種類 role kind
+
+    Returns:
+        str: role name
+    """
+
+    try:
+        roles = [
+            const.ROLE_WS_OWNER[0],
+            const.ROLE_WS_MANAGER[0],
+            const.ROLE_WS_MEMBER_MG[0],
+            const.ROLE_WS_CI_SETTING[0],
+            const.ROLE_WS_CI_RESULT[0],
+            const.ROLE_WS_CD_SETTING[0],
+            const.ROLE_WS_CD_EXECUTE[0],
+            const.ROLE_WS_CD_RESULT[0],
+        ]
+
+        ret_role = None
+        for role in roles:
+            # 正規表現を使って、role名を判断する Use regular expressions to determine role names
+            ex_role = re.match("ws-({}|\d+)-(.+)", role)
+            if ex_role[2] == kind_role:
+                ret_role = role
+                break
+
+        return ret_role
+
+    except Exception:
         raise
