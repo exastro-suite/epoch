@@ -386,6 +386,26 @@ def call_workspace_member(workspace_id):
     except Exception as e:
         return common.server_error(e)
 
+@app.route('/workspace/<int:workspace_id>/leave', methods=['POST'])
+def call_workspace_leave(workspace_id):
+    """Exit from a member of the workspace - ワークスペースのメンバーから抜けます
+
+    Args:
+        workspace_id (int): workspace ID
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
+        globals.logger.debug('#' * 50)
+
+
+        return api_service_member.leave_workspace(workspace_id)
+
+    except Exception as e:
+        return common.server_error(e)
 
 
 if __name__ == "__main__":
