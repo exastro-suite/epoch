@@ -195,7 +195,13 @@ userInfo.prototype = {
         };
 
         // ロールリスト role list
-        u.role = data["info"]["role"];
+        try {
+          u.role = JSON.parse(data["info"]["role"]);
+        } catch(e) {
+          alert(e);
+        }
+        // ロールリスト role list
+        // u.role = data["info"]["role"];
         u.set();
 
       }).fail((jqXHR, textStatus, errorThrown) => {
