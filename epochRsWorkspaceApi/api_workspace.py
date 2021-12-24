@@ -151,10 +151,10 @@ def update_workspace(workspace_id):
     try:
         if request.method == 'PUT':
             # ワークスペース更新 put workspace
-            put_workspace(workspace_id)
+            return put_workspace(workspace_id)
         elif request.method == 'PATCH':
             # ワークスペース更新パッチ patch update workspace
-            patch_workspace(workspace_id)
+            return patch_workspace(workspace_id)
         else:
             # Error
             raise Exception("method not support!")
