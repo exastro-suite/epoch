@@ -194,7 +194,7 @@ def get_current_user(header):
 
 
 def get_role_name(kind_role):
-    """正規表現で一致するロールを取得する
+    """正規表現で一致するロールを取得する Get a matching role in a regular expression
 
     Args:
         kind_role (str): ロールの種類 role kind
@@ -224,6 +224,42 @@ def get_role_name(kind_role):
                 break
 
         return ret_role
+
+    except Exception:
+        raise
+
+def get_role_kind(role_name):
+    """正規表現で一致するロール種類を取得する Get the matching role type in a regular expression
+
+    Args:
+        role_name (str): ロール role name
+
+    Returns:
+        str: role kind name
+    """
+
+    try:
+        roles = [
+            const.ROLE_WS_OWNER[0],
+            const.ROLE_WS_MANAGER[0],
+            const.ROLE_WS_MEMBER_MG[0],
+            const.ROLE_WS_CI_SETTING[0],
+            const.ROLE_WS_CI_RESULT[0],
+            const.ROLE_WS_CD_SETTING[0],
+            const.ROLE_WS_CD_EXECUTE[0],
+            const.ROLE_WS_CD_RESULT[0],
+        ]
+
+        ret_kind = None
+        for role in roles:
+            # 正規表現を使って、role名を判断する Use regular expressions to determine role names
+            ex_role_src = re.match("ws-({}|\d+)-(.+)", role_name)
+            ex_role = re.match("ws-({}|\d+)-(.+)", role)
+            if ex_role[2] == ex_role_src[2]:
+                ret_kind = ex_role[2]
+                break
+
+        return ret_kind
 
     except Exception:
         raise
