@@ -1712,6 +1712,13 @@ data:
         </LimitExcept>
       </Location>
 
+      <Location /api/workspace/{{ param.workspace_id }}/leave>
+        ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/leave retry=0 timeout=600
+        ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/leave
+        AuthType openid-connect
+        Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-reference"
+      </Location>
+
       <Location /api/workspace/{{ param.workspace_id }}/members>
         ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/members retry=0 timeout=600
         ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/members
