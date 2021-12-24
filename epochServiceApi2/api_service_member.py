@@ -32,9 +32,6 @@ import globals
 import common
 import const
 import multi_lang
-import api_service_ci
-import api_service_manifest
-import api_service_cd
 
 # 設定ファイル読み込み・globals初期化
 app = Flask(__name__)
