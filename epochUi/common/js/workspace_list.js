@@ -51,6 +51,13 @@ function workspaceList( list ) {
             'text': 'ワークスペース編集',
             'separate': 'on'
           },
+          //-- TODO: ADD START Sprint70 暫定
+          'member': {
+            'icon': 'icon-edit',
+            'text': 'メンバー編集',
+            'separate': 'on'
+          },
+          //-- TODO: ADD END Sprint70 暫定
           // 'delete': {
           //   'icon': 'icon-trash',
           //   'text': 'ワークスペース削除'
@@ -101,6 +108,11 @@ function workspaceList( list ) {
             case 'edit':
               location.href = 'workspace.html?workspace_id=' + idKey;
               break;
+            //-- TODO: ADD START Sprint70 暫定
+            case 'member':
+              location.href = 'workspace_member_list.html?workspace_id=' + idKey;
+              break;
+            //-- TODO: ADD END Sprint70 暫定
             // 削除
             case 'delete':
               if ( confirm('削除しますか？') ) {
