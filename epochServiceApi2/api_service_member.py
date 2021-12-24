@@ -58,29 +58,34 @@ def get_users():
         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
         globals.logger.debug('#' * 50)
 
-        rows = [
-            {
-                "user_id": "xxxxxx1",
-                "username": "taro",
-                "roles": [
-                    {
-                        "kind": "owner"
-                    }
-                ]
-            },
-            {
-                "user_id": "xxxxxx2",
-                "username": "jiro",
-                "roles": [
-                    {
-                        "kind": "manager"
-                    },
-                    {
-                        "kind": "member-mg" 
-                    }
-                ]
+        api_url = "{}://{}:{}/{}/user".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
+                                            os.environ['EPOCH_EPAI_API_HOST'],
+                                            os.environ['EPOCH_EPAI_API_PORT'],
+                                            os.environ["EPOCH_EPAI_REALM_NAME"],
+                                            )
+        #
+        # get users - ユーザー取得
+        #
+        response = requests.get(api_url)
+        if response.status_code != 200 and response.status_code != 404:
+            error_detail = multi_lang.get_text("EP020-0008", "ユーザー情報の取得に失敗しました")
+            raise common.UserException("{} Error user get status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
+
+        users = json.loads(response.text)
+
+        # globals.logger.debug(f"users:{users}")
+
+        ret_users = []
+
+        for user in users["rows"]:
+            ret_user = {
+                "user_id": user["id"],
+                "username": user["username"],
             }
-        ]
+
+            ret_users.append(ret_user)
+
+        rows = ret_users
 
         return jsonify({"result": "200", "rows": rows}), 200
 
@@ -106,29 +111,96 @@ def get_workspace_members(workspace_id):
         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
         globals.logger.debug('#' * 50)
 
-        rows = [
-            {
-                "user_id": "xxxxxx1",
-                "username": "taro",
-                "roles": [
-                    {
-                        "kind": "owner"
-                    }
-                ]
-            },
-            {
-                "user_id": "xxxxxx2",
-                "username": "jiro",
-                "roles": [
-                    {
-                        "kind": "manager"
-                    },
-                    {
-                        "kind": "member-mg" 
-                    }
-                ]
-            }
+        roles = [
+            const.ROLE_WS_OWNER[0],
+            const.ROLE_WS_MANAGER[0],
+            const.ROLE_WS_MEMBER_MG[0],
+            const.ROLE_WS_CI_SETTING[0],
+            const.ROLE_WS_CI_RESULT[0],
+            const.ROLE_WS_CD_SETTING[0],
+            const.ROLE_WS_CD_EXECUTE[0],
+            const.ROLE_WS_CD_RESULT[0],
         ]
+
+        stock_user_id = []  
+        ret_users = []
+        for role in roles:
+            # workspace 参照権限のあるユーザーをすべて取得する Get all users with read permission
+            # 子のロールでは取得できないので割り当てたロールで取得する
+            # Since it cannot be acquired by the child role, it is acquired by the assigned role.
+            api_url = "{}://{}:{}/{}/client/epoch-system/roles/{}/users".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
+                                                    os.environ['EPOCH_EPAI_API_HOST'],
+                                                    os.environ['EPOCH_EPAI_API_PORT'],
+                                                    os.environ["EPOCH_EPAI_REALM_NAME"],
+                                                    role.format(workspace_id)
+                                                )
+            #
+            # get users - ユーザー取得
+            #
+            response = requests.get(api_url)
+            if response.status_code != 200 and response.status_code != 404:
+                error_detail = multi_lang.get_text("EP020-0008", "ユーザー情報の取得に失敗しました")
+                raise common.UserException("{} Error user get status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
+
+            users = json.loads(response.text)
+
+            # globals.logger.debug(f"users:{users}")
+
+            for user in users["rows"]:
+                
+                # すでに同じユーザーがいた場合は処理しない If the same user already exists, it will not be processed
+                # if len(stock_user_id) > 0:
+                if user["user_id"] in stock_user_id:
+                    continue
+
+                # 取得したユーザーのロールを取得 Get the role of the acquired user
+                api_url = "{}://{}:{}/{}/user/{}/roles/epoch-system".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
+                                                                        os.environ['EPOCH_EPAI_API_HOST'],
+                                                                        os.environ['EPOCH_EPAI_API_PORT'],
+                                                                        os.environ["EPOCH_EPAI_REALM_NAME"],
+                                                                        user["user_id"]
+                                                                )
+
+                #
+                # get user role - ユーザーロール情報取得
+                #
+                response = requests.get(api_url)
+                if response.status_code != 200:
+                    error_detail = multi_lang.get_text("EP020-0009", "ユーザーロール情報の取得に失敗しました")
+                    raise common.UserException("{} Error user role get status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
+
+                ret_roles = json.loads(response.text)
+                globals.logger.debug(f"roles:{ret_roles}")
+
+                set_role_kind = []
+                # 取得したすべてのロールから絞り込む Narrow down from all acquired roles
+                for get_role in ret_roles["rows"]:
+                    kind = common.get_role_kind(get_role["name"])
+                    # 該当のロールのみチェック Check only the corresponding role
+                    if kind is not None:
+                        ex_role = re.match("ws-({}|\d+)-(.+)", get_role["name"])
+                        globals.logger.debug("role_workspace_id:{} kind:{}".format(ex_role[1], ex_role[2]))
+                        # 該当のワークスペースのみの絞り込み Narrow down only the applicable workspace
+                        if ex_role[1] == str(workspace_id):
+                            set_role_kind.append(
+                                {
+                                    "kind" : kind
+                                }
+                            )
+                
+                ret_user = {
+                    "user_id": user["user_id"],
+                    "username": user["user_name"],
+                    "roles": set_role_kind
+                }
+
+                ret_users.append(ret_user)
+
+                stock_user_id.append(user["user_id"])
+
+        globals.logger.debug(f"users:{ret_users}")
+
+        rows = ret_users
 
         return jsonify({"result": "200", "rows": rows}), 200
 
