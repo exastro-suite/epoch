@@ -224,6 +224,9 @@ def argocd_settings(workspace_id):
     request_json = json.loads(request.data)
     request_ci_env = request_json["ci_config"]["environments"]
     request_cd_env = request_json["cd_config"]["environments"]
+    gitUsername = request_json["cd_config"]["environments_common"]["git_repositry"]["user"]
+    gitPassword = request_json["cd_config"]["environments_common"]["git_repositry"]["token"]
+    housing = request_json["cd_config"]["environments_common"]["git_repositry"]["housing"]
 
     try:
         #
@@ -248,18 +251,12 @@ def argocd_settings(workspace_id):
             stdout_cd = subprocess.check_output(["argocd","repo","rm",repo['repo']],stderr=subprocess.STDOUT)
             globals.logger.debug(stdout_cd.decode('utf-8'))
 
+
         # 環境群数分処理を実行
         for env in request_cd_env:
             env_name = env["name"]
-            gitUrl = ""
-            for ci_env in request_ci_env:
-                if ci_env["environment_id"] == env["environment_id"]:
-                    gitUrl = ci_env["git_url"]
-                    gitUsername = ci_env["git_user"]
-                    gitPassword = ci_env["git_password"]
-                    housing = ci_env["git_housing"]
-                    break
-            
+            gitUrl = env["git_repositry"]["url"]
+
             exec_stat = "ArgoCD設定 - リポジトリ作成"
             error_detail = "IaCリポジトリの設定内容を確認してください"
 
@@ -297,24 +294,11 @@ def argocd_settings(workspace_id):
             time.sleep(1) # 1秒ごとに確認
 
         # 環境群数分処理を実行
-        # keyList = request_deploy["enviroments"].keys()
-        # for key in keyList:
-        #     logger.debug ("KEY:" + key)
-        #     env_name = key
-        #     env_value = request_deploy["enviroments"][key]
-        #     gitUrl = env_value["git"]["url"]
-        #     cluster = env_value["cluster"]
-        #     namespace = env_value["namespace"]
         for env in request_cd_env:
             env_name = env["name"]
             cluster = env["deploy_destination"]["cluster_url"]
             namespace = env["deploy_destination"]["namespace"]
-            gitUrl = ""
-            # manifest git urlは、ci_configより取得
-            for ci_env in request_ci_env:
-                if ci_env["environment_id"] == env["environment_id"]:
-                    gitUrl = ci_env["git_url"]
-                    break
+            gitUrl = env["git_repositry"]["url"]
 
             # namespaceの存在チェック
             ret = common.get_namespace(namespace)

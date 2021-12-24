@@ -174,15 +174,15 @@ def settings_git_environment(workspace_id):
         # オペレーションの追加処理
         #
         opelist_edit = []
-        for idx_req, row_req in enumerate(payload['ci_config']['environments']):
-            if search_opration(opelist_json['resultdata']['CONTENTS']['BODY'], column_indexes_opelist, row_req['git_url']) == -1:
+        for idx_req, row_req in enumerate(payload['cd_config']['environments']):
+            if search_opration(opelist_json['resultdata']['CONTENTS']['BODY'], column_indexes_opelist, row_req['git_repositry']['url']) == -1:
                 # オペレーションになければ、追加データを設定
                 opelist_edit.append(
                     {
                         str(column_indexes_common['method']) : param_value_method_entry,
-                        str(column_indexes_opelist['operation_name']) : param_value_operation_name_prefix + row_req['git_url'],
+                        str(column_indexes_opelist['operation_name']) : param_value_operation_name_prefix + row_req['git_repositry']['url'],
                         str(column_indexes_opelist['operation_date']) : param_value_operation_date,
-                        str(column_indexes_opelist['remarks']) : row_req['git_url'],
+                        str(column_indexes_opelist['remarks']) : row_req['git_repositry']['url'],
                     }
                 )
 
@@ -220,12 +220,12 @@ def settings_git_environment(workspace_id):
         response = {"items":[]}
         # Git環境情報の追加・更新
         gitlist_edit = []
-        for idx_req, row_req in enumerate(payload['ci_config']['environments']):
-            idx_git = search_gitlist(gitlist_json['resultdata']['CONTENTS']['BODY'], column_indexes_gitlist, row_req['git_url'])
+        for idx_req, row_req in enumerate(payload['cd_config']['environments']):
+            idx_git = search_gitlist(gitlist_json['resultdata']['CONTENTS']['BODY'], column_indexes_gitlist, row_req['git_repositry']['url'])
             if idx_git == -1:
                 # リストになければ、追加データを設定
                 # 追加対象のURLのオペレーション
-                idx_ope = search_opration(opelist_json['resultdata']['CONTENTS']['BODY'], column_indexes_opelist, row_req['git_url'])
+                idx_ope = search_opration(opelist_json['resultdata']['CONTENTS']['BODY'], column_indexes_opelist, row_req['git_repositry']['url'])
 
                 # 追加処理データの設定
                 gitlist_edit.append(
@@ -234,9 +234,9 @@ def settings_git_environment(workspace_id):
                         str(column_indexes_gitlist['host']) : param_value_host,
                         str(column_indexes_gitlist['operation_id']) : opelist_json['resultdata']['CONTENTS']['BODY'][idx_ope][column_indexes_opelist['operation_id']],
                         str(column_indexes_gitlist['operation']) : format_opration_info(opelist_json['resultdata']['CONTENTS']['BODY'][idx_ope], column_indexes_opelist),
-                        str(column_indexes_gitlist['git_url']) : row_req['git_url'],
-                        str(column_indexes_gitlist['git_user']) : row_req['git_user'],
-                        str(column_indexes_gitlist['git_password']) : row_req['git_password'],
+                        str(column_indexes_gitlist['git_url']) : row_req['git_repositry']['url'],
+                        str(column_indexes_gitlist['git_user']) : payload['cd_config']['environments_common']['git_repositry']['user'],
+                        str(column_indexes_gitlist['git_password']) : payload['cd_config']['environments_common']['git_repositry']['token'],
                     }
                 )
 
@@ -244,9 +244,9 @@ def settings_git_environment(workspace_id):
                 response["items"].append(
                     {
                         'operation_id' : opelist_json['resultdata']['CONTENTS']['BODY'][idx_ope][column_indexes_opelist['operation_id']],
-                        'git_url' : row_req['git_url'],
-                        'git_user' : row_req['git_user'],
-                        'git_password' : row_req['git_password'],
+                        'git_url' : row_req['git_repositry']['url'],
+                        'git_user' : payload['cd_config']['environments_common']['git_repositry']['user'],
+                        'git_password' : payload['cd_config']['environments_common']['git_repositry']['token'],
                     }
                 )
 
@@ -258,9 +258,9 @@ def settings_git_environment(workspace_id):
                         str(column_indexes_common['record_no']) : gitlist_json['resultdata']['CONTENTS']['BODY'][idx_git][column_indexes_common['record_no']],
                         str(column_indexes_gitlist['host']) : gitlist_json['resultdata']['CONTENTS']['BODY'][idx_git][column_indexes_gitlist['host']],
                         str(column_indexes_gitlist['operation']) : gitlist_json['resultdata']['CONTENTS']['BODY'][idx_git][column_indexes_gitlist['operation']],
-                        str(column_indexes_gitlist['git_url']) : row_req['git_url'],
-                        str(column_indexes_gitlist['git_user']) : row_req['git_user'],
-                        str(column_indexes_gitlist['git_password']) : row_req['git_password'],
+                        str(column_indexes_gitlist['git_url']) : row_req['git_repositry']['url'],
+                        str(column_indexes_gitlist['git_user']) : payload['cd_config']['environments_common']['git_repositry']['user'],
+                        str(column_indexes_gitlist['git_password']) : payload['cd_config']['environments_common']['git_repositry']['token'],
                         str(column_indexes_gitlist['lastupdate']) : gitlist_json['resultdata']['CONTENTS']['BODY'][idx_git][column_indexes_gitlist['lastupdate']],
                     }
                 )
@@ -269,9 +269,9 @@ def settings_git_environment(workspace_id):
                 response["items"].append(
                     {
                         'operation_id' : gitlist_json['resultdata']['CONTENTS']['BODY'][idx_git][column_indexes_gitlist['operation_id']],
-                        'git_url' : row_req['git_url'],
-                        'git_user' : row_req['git_user'],
-                        'git_password' : row_req['git_password'],
+                        'git_url' : row_req['git_repositry']['url'],
+                        'git_user' : payload['cd_config']['environments_common']['git_repositry']['user'],
+                        'git_password' : payload['cd_config']['environments_common']['git_repositry']['token'],
                     }
                 )
 

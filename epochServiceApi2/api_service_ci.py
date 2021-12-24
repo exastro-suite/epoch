@@ -98,16 +98,17 @@ def post_ci_pipeline(workspace_id):
                 }
                 git_projects.append(ap_data)
         # IaC
-        for pipeline_iac in request_body['ci_config']['environments']:
-            if pipeline_iac['git_housing'] == 'inner':
-                iac_data = {
+        if request_body['cd_config']['environments_common']['git_repositry']['housing'] == 'inner':
+            for pipeline_iac in request_body['cd_config']['environments']:
+                ap_data = {
                     'git_repositry': {
-                        'user': pipeline_iac['git_user'],
-                        'token': pipeline_iac['git_token'],
-                        'url': pipeline_iac['git_url'],
+                        'user': request_body['cd_config']['environments_common']['git_repositry']['user'],
+                        'token': request_body['cd_config']['environments_common']['git_repositry']['token'],
+                        'url': pipeline_iac['git_repositry']['url'],
                     }
                 }
-                git_projects.append(iac_data)
+                git_projects.append(ap_data)
+
 
         for proj_data in git_projects:
             # gitlab/repos post送信

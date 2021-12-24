@@ -2709,7 +2709,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
           wsDataJSON['environment'][item][item + '-environment-certificate']= data_environments[i]['deploy_destination']['base64_encoded_certificate'];
 
           // マニフェストgitリポジトリ情報の設定
-          wsDataJSON['environment'][item][item + '-git-service-argo-repository-url']= data_workspace['ci_config']['environments'][i]['git_url'];
+          wsDataJSON['environment'][item][item + '-git-service-argo-repository-url']= data_environments[i]['git_repositry']['url'];
 
           // マニフェストパラメータの設定
           wsDataJSON['environment'][item]['parameter'] =  {};
@@ -2723,15 +2723,14 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         }
 
         // data_workspaceからwsDataJSONのマニフェストgitリポジトリ情報へ書き出す
-        wsDataJSON['git-service-argo'] = {};
-        if(data_workspace['ci_config']['environments'][0]) {
-          wsDataJSON['git-service-argo']['git-service-argo-account-select'] = data_workspace['ci_config']['environments'][0]['account_select'];
-          wsDataJSON['git-service-argo']['git-service-argo-user'] = data_workspace['ci_config']['environments'][0]['git_user'];
-          wsDataJSON['git-service-argo']['git-service-argo-token'] = data_workspace['ci_config']['environments'][0]['git_token'];
-          wsDataJSON['git-service-argo']['git-service-argo-select'] = data_workspace['ci_config']['environments'][0]['git_housing'] == 'inner'? 'epoch': data_workspace['ci_config']['environments'][0]['git_interface'];
-        }
-
+        wsDataJSON['git-service-argo'] = {
+          'git-service-argo-account-select' : data_workspace['cd_config']['environments_common']['git_repositry']['account_select'],
+          'git-service-argo-user' : data_workspace['cd_config']['environments_common']['git_repositry']['user'],
+          'git-service-argo-token' : data_workspace['cd_config']['environments_common']['git_repositry']['token'],
+          'git-service-argo-select' : data_workspace['cd_config']['environments_common']['git_repositry']['housing'] == 'inner'? 'epoch': data_workspace['cd_config']['environments_common']['git_repositry']['interface'],
+        };
         resolve();
+
       }).fail(function(jqXHR, textStatus, errorThrown) {
         console.log("FAIL : ワークスペース情報取得 jqXHR.status:"+jqXHR.status);
         if(jqXHR.status == 401) {
@@ -3100,25 +3099,8 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
     for(var env in wsDataJSON['environment']) {
       var prmenv = {
         'environment_id'    : env,
-        'git_url'           : wsDataJSON['environment'][env][env + '-git-service-argo-repository-url'],
-        'account_select'    : wsDataJSON['git-service-argo']['git-service-argo-account-select'],
         'manifests'         : [],
       }
-      prmenv['git_housing'] = (wsDataJSON['git-service-argo']['git-service-argo-select']=='epoch'? 'inner': 'outer');
-      prmenv['git_interface'] = (wsDataJSON['git-service-argo']['git-service-argo-select']=='epoch'? 'gitlab': wsDataJSON['git-service-argo']['git-service-argo-select']);
-      if (wsDataJSON['git-service-argo']['git-service-argo-account-select'] == "applicationCode") {
-        // アプリケーションコードと同じ
-        prmenv['git_user'] = wsDataJSON['git-service']['git-service-user'];
-        prmenv['git_password'] = wsDataJSON['git-service']['git-service-token'];
-        prmenv['git_token'] = wsDataJSON['git-service']['git-service-token'];
-      } else {
-        // 入力する
-        prmenv['git_user'] = wsDataJSON['git-service-argo']['git-service-argo-user'];
-        prmenv['git_password'] = wsDataJSON['git-service-argo']['git-service-argo-token'];
-        prmenv['git_token'] = wsDataJSON['git-service-argo']['git-service-argo-token'];
-      }
-
-
       for(var flidx in wsDataJSON['manifests']) {
         flid = ("" + wsDataJSON['manifests'][flidx]['file_id']);
         var prmmani = {
@@ -3150,13 +3132,34 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
     }
 
     // パラメータ設定 - CD環境設定
-    reqbody['cd_config'] = {};
-    reqbody['cd_config']['system_config'] = "one-namespace";
-    reqbody['cd_config']['environments'] = [];
+    reqbody['cd_config'] = {
+      'system_config' : 'one-namespace',
+      'environments_common' : {
+          'git_repositry' : {
+            'account_select' : wsDataJSON['git-service-argo']['git-service-argo-account-select'],
+            'housing':    (wsDataJSON['git-service-argo']['git-service-argo-select']=='epoch'? 'inner': 'outer'),
+            'interface':  (wsDataJSON['git-service-argo']['git-service-argo-select']=='epoch'? 'gitlab': wsDataJSON['git-service-argo']['git-service-argo-select']),
+          }
+      },
+      'environments' : [],
+    }
+    if(wsDataJSON['git-service-argo']['git-service-argo-account-select'] == "applicationCode") {
+      reqbody['cd_config'].environments_common.git_repositry.user = wsDataJSON['git-service']['git-service-user'];
+      reqbody['cd_config'].environments_common.git_repositry.password = wsDataJSON['git-service']['git-service-token'];
+      reqbody['cd_config'].environments_common.git_repositry.token = wsDataJSON['git-service']['git-service-token'];
+    } else {
+      reqbody['cd_config'].environments_common.git_repositry.user = wsDataJSON['git-service-argo']['git-service-argo-user'];
+      reqbody['cd_config'].environments_common.git_repositry.password = wsDataJSON['git-service-argo']['git-service-argo-token'];
+      reqbody['cd_config'].environments_common.git_repositry.token = wsDataJSON['git-service-argo']['git-service-argo-token'];
+    }
+
     for(var i in wsDataJSON['environment']) {
       var envitem = {
         'environment_id'  :     i,
         'name' :                (wsDataJSON['environment'][i][i + '-environment-name']? wsDataJSON['environment'][i][i + '-environment-name']: "" ),
+        'git_repositry' : {
+          'url'           : wsDataJSON['environment'][i][i + '-git-service-argo-repository-url'],
+        },
         'deploy_destination' : {
           'cluster_kind' : (wsDataJSON['environment'][i][i + '-environment-deploy-select']? wsDataJSON['environment'][i][i + '-environment-deploy-select']: "internal" ),
           'namespace' :             (wsDataJSON['environment'][i][i + '-environment-namespace']? wsDataJSON['environment'][i][i + '-environment-namespace']: "" ),
