@@ -161,12 +161,12 @@ function initialScreen() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-//   ユーザ情報
+//   ユーザ情報 user info
 // 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 function userInfo(){}
 userInfo.prototype = {
-  // ユーザ情報読み込み
+  // ユーザ情報読み込み get user info
   'init': function( id ){
     const u = this;
     
@@ -176,7 +176,7 @@ userInfo.prototype = {
     u.common = new epochCommon();
     
     setTimeout(function(){
-      // ユーザ情報を読み込み
+      // ユーザ情報を読み込み get user info
       console.log("[START] get user info");
 
       $.ajax({
@@ -194,13 +194,8 @@ userInfo.prototype = {
           "email": data["info"]["email"]
         };
 
-        // ロールリスト（仮）
-        try {
-          u.role = JSON.parse('{"ECサイトA":["オーナー"],"ECサイトB":["更新","CD実行"],"カタログ運営サイト開発":["オーナー"],"販売管理サイト開発A":["CI結果参照"],"販売管理サイト開発B":["CD実行","CD結果"],"販売管理サイト開発C":["CD実行","CD結果"],"販売管理サイト開発D":["CD実行","CD結果"]}');
-        } catch(e) {
-          alert(e);
-        }
-      
+        // ロールリスト role list
+        u.role = data["info"]["role"];
         u.set();
 
       }).fail((jqXHR, textStatus, errorThrown) => {

@@ -51,6 +51,18 @@ function workspaceList( list ) {
             'text': 'ワークスペース編集',
             'separate': 'on'
           },
+          //-- TODO: ADD START Sprint70 暫定
+          'member': {
+            'icon': 'icon-edit',
+            'text': 'メンバー編集',
+            'separate': 'on'
+          },
+          'leave': {
+            'icon': 'icon-trash',
+            'text': '退去',
+            'separate': 'on'
+          },
+          //-- TODO: ADD END Sprint70 暫定
           // 'delete': {
           //   'icon': 'icon-trash',
           //   'text': 'ワークスペース削除'
@@ -101,6 +113,14 @@ function workspaceList( list ) {
             case 'edit':
               location.href = 'workspace.html?workspace_id=' + idKey;
               break;
+            //-- TODO: ADD START Sprint70 暫定
+            case 'member':
+              location.href = 'workspace_member_list.html?workspace_id=' + idKey;
+              break;
+            case 'leave':
+              leave_workspace(idKey);
+              break;
+            //-- TODO: ADD END Sprint70 暫定
             // 削除
             case 'delete':
               if ( confirm('削除しますか？') ) {
@@ -116,9 +136,44 @@ function workspaceList( list ) {
         }
       });
     }
-
 }
 
+// 退去
+function leave_workspace(workspace_id) {
+  console.log("[CALL] leave_workspace()");
+  new Promise((resolve, reject) =>{
+    console.log('[CALL] POST /workspace/{id}/leave');
+    $.ajax({
+        "type": "POST",
+        "url": URL_BASE + "/api/workspace/{workspace_id}/leave".replace('{workspace_id}',workspace_id),
+    }).done(function(data) {
+        console.log('[DONE] POST /workspace/{id}/leave');
+        resolve();
+    }).fail((jqXHR, textStatus, errorThrown) => {
+        console.log('[FAIL] POST /workspace/{id}/leave');
+        if(jqXHR.status == 400) {
+          reject(JSON.parse(jqXHR.responseText).reason);
+        } else {
+          reject();
+        }
+    });
+  }).then(() => {
+      console.log('[DONE] 退去');
+      alert("ワークスペースから退去しました");
+      window.location.reload();
+  }).catch((reason) => {
+      console.log('[FAIL] 退去');
+      switch(reason) {
+        case "only-owner":
+          alert("あなた以外のオーナーがいないので退去できません");
+          break;
+        default:
+          alert("ワークスペースからの退去に失敗しました");
+          break;
+      }
+      window.location.reload();
+  });
+}
 
 $(function(){
     console.log("GET /api/workspace");
@@ -144,3 +199,4 @@ $(function(){
       workspaceList(workspaceListData);
     });
 });
+

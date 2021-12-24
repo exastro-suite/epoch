@@ -372,3 +372,40 @@ def merge_workspace_members(workspace_id):
     except Exception as e:
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
 
+
+def leave_workspace(workspace_id):
+    """Exit from a member of the workspace - ワークスペースのメンバーから抜けます
+
+    Args:
+        workspace_id (int): workspace ID
+
+    Returns:
+        Response: HTTP Respose
+    """
+    app_name = "" #multi_lang.get_text("EP020-0003", "ワークスペース情報:")
+    exec_stat = "" #multi_lang.get_text("EP020-0005", "メンバー登録")
+    error_detail = ""
+
+    try:
+        #
+        # If you are the owner, check if there are other owners - 自分がオーナの場合、他のオーナーがいるかチェックします
+        #
+        if False:
+            # Response when the only owner who is logged in cannot move out - ログイン者が唯一のオーナーは退去できないときの応答
+            return jsonify({"result": "400", "reason": "only-owner"}), 400
+
+        #
+        # Delete all roles related to your own workspace - 自分自身のワークスペースに関するロールを全て削除します
+        #
+
+
+        #
+        # Change the update date of the role to the current time - ロールの更新日を現在時刻に変更します
+        #
+
+
+        return jsonify({"result": "200"}), 200
+    except common.UserException as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+    except Exception as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
