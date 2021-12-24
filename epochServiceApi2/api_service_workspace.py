@@ -655,7 +655,12 @@ def put_workspace(workspace_id):
                                                     os.environ['EPOCH_RS_WORKSPACE_HOST'],
                                                     os.environ['EPOCH_RS_WORKSPACE_PORT'],
                                                     workspace_id)
-        response = requests.put(api_url, headers=post_headers, data=json.dumps(post_data))
+        if request.method == 'PUT':
+            response = requests.put(api_url, headers=post_headers, data=json.dumps(post_data))
+        elif request.method == 'PATCH':
+            response = requests.patch(api_url, headers=post_headers, data=json.dumps(post_data))
+        else:
+            raise Exception("method not support!")
 
         if response.status_code == 200:
             # 正常時は戻り値がレコードの値なのでそのまま返却する

@@ -52,7 +52,8 @@ data:
       workspace_id int unsigned not null,
       organization_id  int unsigned not null,
       specification json,
-      update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      role_update_at datetime not null DEFAULT CURRENT_TIMESTAMP
     );
     create table manifest (
       id int unsigned not null PRIMARY KEY AUTO_INCREMENT,

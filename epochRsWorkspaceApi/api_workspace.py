@@ -138,7 +138,7 @@ def get_workspace(workspace_id):
     except Exception as e:
         return common.serverError(e)
 
-@app.route('/workspace/<int:workspace_id>', methods=['PUT'])
+@app.route('/workspace/<int:workspace_id>', methods=['PUT', 'PATCH'])
 def update_workspace(workspace_id):
     """ワークスペース変更
 
@@ -148,7 +148,30 @@ def update_workspace(workspace_id):
     Returns:
         response: HTTP Respose
     """
-    globals.logger.debug("CALL update_workspace:{}".format(workspace_id))
+    try:
+        if request.method == 'PUT':
+            # ワークスペース更新 put workspace
+            return put_workspace(workspace_id)
+        elif request.method == 'PATCH':
+            # ワークスペース更新パッチ patch update workspace
+            return patch_workspace(workspace_id)
+        else:
+            # Error
+            raise Exception("method not support!")
+        
+    except Exception as e:
+        return common.serverError(e)
+
+def put_workspace(workspace_id):
+    """ワークスペース更新
+
+    Args:
+        workspace_id (int): ワークスペースID
+
+    Returns:
+        response: HTTP Respose
+    """
+    globals.logger.debug("CALL put_workspace:{}".format(workspace_id))
     app_name = "ワークスペース情報更新:"
     exec_stat = "初期化"
     exec_detail = ""
@@ -184,6 +207,64 @@ def update_workspace(workspace_id):
     except Exception as e:
         return common.serverError(e, app_name + exec_stat, exec_detail)
 
+def patch_workspace(workspace_id):
+    """ワークスペース更新パッチ patch update workspace
+
+    Args:
+        workspace_id (int): ワークスペースID
+
+    Returns:
+        response: HTTP Respose
+    """
+    globals.logger.debug("CALL patch_workspace:{}".format(workspace_id))
+    app_name = "ワークスペース更新パッチ:"
+    exec_stat = "更新"
+    exec_detail = ""
+
+# 更新対象のカラム（specification以外）
+# {
+#   "parameter-info": {},
+#   "workspace_id": 1,
+#   "create_at": "Thu, 25 Nov 2021 04:22:31 GMT",
+#   "update_at": "Thu, 25 Nov 2021 04:22:31 GMT",
+#   "role_update_at": "Thu, 25 Nov 2021 04:22:31 GMT"
+# }
+
+    try:
+        # 更新対象の項目をセット
+        request_json = request.json.copy()
+
+        exec_stat = "DB接続"
+        with dbconnector() as db, dbcursor(db) as cursor:
+            # workspace情報 update実行
+            exec_stat = "更新実行"
+            upd_cnt = da_workspace.patch_workspace(cursor, workspace_id, request_json)
+
+            globals.logger.debug('workspace update complete update_count:{}'.format(upd_cnt))
+
+            if upd_cnt == 0:
+                # データがないときは404応答
+                db.rollback()
+                return jsonify({"result": "404", "errorStatement": app_name + exec_stat, "errorDetail" : "更新するデータがありません"}), 404
+
+            # workspace履歴追加
+            exec_stat = "登録実行(履歴)"
+            da_workspace.insert_history(cursor, workspace_id)
+            globals.logger.debug('workspace history add complete')
+
+            # workspace情報の再取得
+            exec_stat = "登録データ確認"
+            fetch_rows = da_workspace.select_workspace_id(cursor, workspace_id)
+            globals.logger.debug('workspace get complete')
+
+        # Response用のjsonに変換
+        response_rows = fetch_rows
+
+        return jsonify({"result": "200", "rows": response_rows }), 200
+
+    except Exception as e:
+        return common.serverError(e, app_name + exec_stat, exec_detail)
+
 @app.route('/workspace/<int:workspace_id>', methods=['DELETE'])
 def delete_workspace(workspace_id):
     """ワークスペース削除
@@ -214,6 +295,7 @@ def convert_workspace_specification(json):
     common.deleteDictKey(result, 'organization_id')
     common.deleteDictKey(result, 'create_at')
     common.deleteDictKey(result, 'update_at')
+    common.deleteDictKey(result, 'role_update_at')
     
     return result
 
@@ -421,6 +503,7 @@ def convert_workspace_response(fetch_rows):
         result_row['workspace_id'] = fetch_row['workspace_id']
         result_row['create_at'] = fetch_row['create_at']
         result_row['update_at'] = fetch_row['update_at']
+        result_row['role_update_at'] = fetch_row['role_update_at']
         result.append(result_row)
     return result
 
