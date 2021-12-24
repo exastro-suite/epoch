@@ -310,21 +310,38 @@ def leave_workspace(workspace_id):
     Returns:
         Response: HTTP Respose
     """
-    app_name = "" #multi_lang.get_text("EP020-0003", "ワークスペース情報:")
-    exec_stat = "" #multi_lang.get_text("EP020-0005", "メンバー登録")
+    app_name = multi_lang.get_text("EP020-0001", "ワークスペース情報:")
+    exec_stat = multi_lang.get_text("EP020-0010", "退去")
     error_detail = ""
 
     try:
+        # ヘッダ情報 header info
+        header_info = {
+            'Content-Type': 'application/json',
+        }
+
+        apiInfo_epai = "{}://{}:{}".format(os.environ["EPOCH_EPAI_API_PROTOCOL"], 
+                                            os.environ["EPOCH_EPAI_API_HOST"], 
+                                            os.environ["EPOCH_EPAI_API_PORT"])
+        
+        # ユーザIDの取得
+        
         #
         # If you are the owner, check if there are other owners - 自分がオーナの場合、他のオーナーがいるかチェックします
         #
         if False:
-            # Response when the only owner who is logged in cannot move out - ログイン者が唯一のオーナーは退去できないときの応答
-            return jsonify({"result": "400", "reason": "only-owner"}), 400
+            
+            response = requests.get("{}/client/epoch-system/roles/{}/users".format(apiInfo_epai, "ws-{}-owner".format(workspace_id)), headers=header_info)
+            users = json.loads(response.text)
+        
+            if len(users["row"]) == 1:
+                # Can't move out when the login person is the only owner - ログイン者が唯一のオーナーの時は退去できない
+                return jsonify({"result": "400", "reason": "only-owner"}), 400
 
         #
         # Delete all roles related to your own workspace - 自分自身のワークスペースに関するロールを全て削除します
         #
+        response = requests.get("{}/user/{}/roles/epoch-system".format(apiInfo_epai, "ws-{}-owner".format(workspace_id)), headers=header_info)
 
 
         #
