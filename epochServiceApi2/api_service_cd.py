@@ -109,7 +109,7 @@ def post_cd_pipeline(workspace_id):
             response = requests.post('{}/repos'.format(api_url_gitlab), headers=post_headers, data=json.dumps(proj_data))
             globals.logger.debug("post gitlab/repos response:{}".format(response.text))
 
-            if response.status_code != 200:
+            if response.status_code != 200 and response.status_code != 201:
                 error_detail = 'gitlab/repos post処理に失敗しました'
                 raise common.UserException(error_detail)
 

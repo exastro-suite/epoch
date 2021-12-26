@@ -115,7 +115,7 @@ def post_ci_pipeline(workspace_id):
             response = requests.post('{}/repos'.format(api_url_gitlab), headers=post_headers, data=json.dumps(proj_data))
             globals.logger.debug("post gitlab/repos response:{}".format(response.text))
 
-            if response.status_code != 200:
+            if response.status_code != 200 and response.status_code != 201:
                 error_detail = 'gitlab/repos post処理に失敗しました'
                 raise common.UserException(error_detail)
 
@@ -139,7 +139,7 @@ def post_ci_pipeline(workspace_id):
                     'webhooks_url': pipeline_ap['webhooks_url'],
                 }
 
-                response = requests.post('{}/webhooks'.format(api_url_gitlab) + "workspace/1/gitlab/webhooks", headers=post_headers, data=json.dumps(ap_data))
+                response = requests.post('{}/webhooks'.format(api_url_gitlab), headers=post_headers, data=json.dumps(ap_data))
                 globals.logger.debug("post gitlab/webhooks response:{}".format(response.text))
 
                 if response.status_code != 200:
