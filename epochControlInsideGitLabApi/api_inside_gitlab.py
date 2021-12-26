@@ -105,7 +105,8 @@ def post_gitlab_webhooks(workspace_id):
         user = request.json['git_repositry']['user']
         token = request.json['git_repositry']['token']
         url = request.json['git_repositry']['url']
-        webhooks_url = request.json['webhooks_url'] + ':' + os.environ['EPOCH_WEBHOOK_PORT']
+        #webhooks_url = request.json['webhooks_url'] + ':' + os.environ['EPOCH_WEBHOOK_PORT']
+        webhooks_url = request.json["webhooks_url"] + ':' + os.environ['EPOCH_WEBHOOK_PORT'] + '/api/listener/{}'.format(workspace_id)
 
         # webhookの存在チェック
         ret_exists = exists_webhook(user, token, url, webhooks_url)
