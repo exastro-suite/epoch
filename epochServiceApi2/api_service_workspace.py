@@ -688,20 +688,28 @@ def put_workspace(workspace_id):
 
         # ワークスペース更新 (CD)有の場合 If workspace update (cd) is available
         if const.ROLE_WS_ROLE_WS_CD_UPDATE[0].format(workspace_id) in roles:
+            save_env = []
             # 元からあるものは一旦消去し、環境内容はIDが一致すれば元のまま、該当しない場合は新規とする
             # Delete the original one, leave the environment contents as they are if the IDs match, and make them new if they do not match.
             for src_env in row["ci_config"]["environments"]:
-                # IDが存在するかチェック Check if the ID exists
-                if src_env["environment_id"] not in req_data["ci_config"]["environments"].values():
-                    del src_env
+                for dest_env in req_data["ci_config"]["environments"]:
+                    # IDが存在するかチェック Check if the ID exists
+                    if src_env["environment_id"] == dest_env["environment_id"]:
+                        save_env.append(src_env)
+                        break 
 
             for dest_env in req_data["ci_config"]["environments"]:
-                # IDが存在するかチェック Check if the ID exists
-                if dest_env["environment_id"] not in row["ci_config"]["environments"].values():
-                    row["ci_config"]["environments"] = {
-                        "environment_id" : dest_env["environment_id"]
-                    }
-            globals.logger.debug('ci_config:{}'.format(row["ci_config"]))
+                found = False
+                for src_env in row["ci_config"]["environments"]:
+                    # IDが存在するかチェック Check if the ID exists
+                    if src_env["environment_id"] == dest_env["environment_id"]:
+                        found = True
+                        break 
+
+                # 存在しない場合は情報を追加する Add information if it does not exist
+                if not found:
+                    save_env.append(dest_env)
+            row["ci_config"]["environments"] = save_env
             row["cd_config"] = req_data["cd_config"]
 
         post_data = row
