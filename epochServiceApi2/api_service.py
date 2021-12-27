@@ -409,7 +409,7 @@ def call_workspace_member(workspace_id):
     except Exception as e:
         return common.server_error(e)
 
-@app.route('/workspace/<int:workspace_id>/leave', methods=['POST'])
+@app.route('/workspace/<int:workspace_id>/member/current', methods=['DELETE'])
 def call_workspace_leave(workspace_id):
     """Exit from a member of the workspace - ワークスペースのメンバーから抜けます
 

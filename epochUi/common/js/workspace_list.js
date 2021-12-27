@@ -142,15 +142,15 @@ function workspaceList( list ) {
 function leave_workspace(workspace_id) {
   console.log("[CALL] leave_workspace()");
   new Promise((resolve, reject) =>{
-    console.log('[CALL] POST /workspace/{id}/leave');
+    console.log('[CALL] DELETE /workspace/{id}/member/current');
     $.ajax({
-        "type": "POST",
-        "url": URL_BASE + "/api/workspace/{workspace_id}/leave".replace('{workspace_id}',workspace_id),
+        "type": "DELETE",
+        "url": URL_BASE + "/api/workspace/{workspace_id}/member/current".replace('{workspace_id}',workspace_id),
     }).done(function(data) {
-        console.log('[DONE] POST /workspace/{id}/leave');
+        console.log('[DONE] DELETE /workspace/{id}/member/current');
         resolve();
     }).fail((jqXHR, textStatus, errorThrown) => {
-        console.log('[FAIL] POST /workspace/{id}/leave');
+        console.log('[FAIL] DELETE /workspace/{id}/member/current');
         if(jqXHR.status == 400) {
           reject(JSON.parse(jqXHR.responseText).reason);
         } else {
@@ -158,19 +158,12 @@ function leave_workspace(workspace_id) {
         }
     });
   }).then(() => {
-      console.log(getText("EP010-0110", "[DONE] 退去"));
+      console.log(getText("EP010-0108", "[DONE] 退去"));
       alert(getText("EP010-0107", "ワークスペースから退去しました"));
       window.location.reload();
   }).catch((reason) => {
-      console.log(getText("EP010-0110", "[FAIL] 退去"));
-      switch(reason) {
-        case "only-owner":
-          alert(getText("EP010-0108", "あなた以外のオーナーがいないので退去できません"));
-          break;
-        default:
-          alert(getText("EP010-0109", "ワークスペースからの退去に失敗しました"));
-          break;
-      }
+      console.log(getText("EP010-0109", "[FAIL] 退去"));
+      alert(reason);
       window.location.reload();
   });
 }
