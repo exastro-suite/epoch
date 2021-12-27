@@ -231,6 +231,7 @@ def merge_workspace_members(workspace_id):
     app_name = multi_lang.get_text("EP020-0003", "ワークスペース情報:")
     exec_stat = multi_lang.get_text("EP020-0005", "メンバー登録")
     error_detail = ""
+    return_code = 500
 
     try:
         globals.logger.debug('#' * 50)
@@ -257,6 +258,7 @@ def merge_workspace_members(workspace_id):
             ret = json.loads(response.text)
             ws_row = ret["rows"][0]
         elif response.status_code == 404:
+            return_code = 400
             error_detail = multi_lang.get_text("EP000-0022", "更新対象(workspace)がありません", "workspace")
             # 情報取得できない場合はエラー Error if information cannot be obtained
             raise common.UserException("{} not found workspace !".format(inspect.currentframe().f_code.co_name))
@@ -275,6 +277,7 @@ def merge_workspace_members(workspace_id):
         # 排他チェック:ロール更新日時が一致しているかチェックする
         # Exclusive check: Check if the role update datetime match
         if str(ws_row["role_update_at"]) != req_json["role_update_at"]:
+            return_code = 400
             error_detail = multi_lang.get_text("EP000-0023", "対象の情報(workspace)が他で更新されたため、更新できません\n画面更新後、再度情報を入力・選択して実行してください", "workspace")
             raise common.UserException("{} update exclusive check error".format(inspect.currentframe().f_code.co_name))
 
@@ -365,7 +368,7 @@ def merge_workspace_members(workspace_id):
         return jsonify({"result": "200"}), 200
 
     except common.UserException as e:
-        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+        return common.user_error_to_message(e, app_name + exec_stat, error_detail, return_code)
     except Exception as e:
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
 

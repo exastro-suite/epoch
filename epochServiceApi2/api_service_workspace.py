@@ -32,9 +32,7 @@ import globals
 import common
 import const
 import multi_lang
-import api_service_ci
-import api_service_manifest
-import api_service_cd
+import api_service_current
 
 # 設定ファイル読み込み・globals初期化
 app = Flask(__name__)
@@ -633,8 +631,128 @@ def put_workspace(workspace_id):
         Response: HTTP Respose
     """
 
-    app_name = "ワークスペース情報:"
-    exec_stat = "更新"
+    app_name = multi_lang.get_text("EP020-0003", "ワークスペース情報:")
+    exec_stat = multi_lang.get_text("EP020-0016", "更新")
+    error_detail = ""
+    return_code = 500
+
+    try:
+
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
+        globals.logger.debug('#' * 50)
+
+        # ヘッダ情報 header info.
+        post_headers = {
+            'Content-Type': 'application/json',
+        }
+
+        # 引数を一旦更新項目として仮保存する Temporarily save the argument as an update item
+        req_data = request.json.copy()
+
+        # 変更前のworkspace取得 Get workspace before change
+        api_url = "{}://{}:{}/workspace/{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+                                                    os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                    os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                    workspace_id)
+        response = requests.get(api_url)
+
+        # 正常以外はエラーを返す Returns an error if not normal
+        if response.status_code != 200:
+            if common.is_json_format(response.text):
+                ret = json.loads(response.text)
+                # 詳細エラーがある場合は詳細を設定
+                if ret["errorDetail"] is not None:
+                    error_detail = ret["errorDetail"]
+            raise common.UserException("{} Error put workspace db status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
+
+        rows = json.loads(response.text)
+        row = rows["rows"][0]
+
+        # 現在のユーザーのロール値を取得 Get the role value of the current user
+        user = api_service_current.user_get()
+        globals.logger.debug(f'cuurent user:{user}')
+        roles = user["composite_roles"]
+
+        # 取得した情報をもとに、画面から送信された更新情報を権限毎に設定する
+        # Based on the acquired information, set the update information sent from the screen for each authority.
+
+        # ワークスペース更新(名称)有の場合 If workspace update (name) is available
+        if const.ROLE_WS_ROLE_WS_NAME_UPDATE[0].format(workspace_id) in roles:
+            row["common"] = req_data["common"]
+
+        # ワークスペース更新 (CI)有の場合 If workspace update (ci) is available
+        if const.ROLE_WS_ROLE_WS_CI_UPDATE[0].format(workspace_id) in roles:
+            row["ci_config"]["pipelines_common"] = req_data["ci_config"]["pipelines_common"]
+            row["ci_config"]["pipelines"] = req_data["ci_config"]["pipelines"]
+
+        # ワークスペース更新 (CD)有の場合 If workspace update (cd) is available
+        if const.ROLE_WS_ROLE_WS_CD_UPDATE[0].format(workspace_id) in roles:
+            # 元からあるものは一旦消去し、環境内容はIDが一致すれば元のまま、該当しない場合は新規とする
+            # Delete the original one, leave the environment contents as they are if the IDs match, and make them new if they do not match.
+            for src_env in row["ci_config"]["environments"]:
+                # IDが存在するかチェック Check if the ID exists
+                if src_env["environment_id"] not in req_data["ci_config"]["environments"].values():
+                    del src_env
+
+            for dest_env in req_data["ci_config"]["environments"]:
+                # IDが存在するかチェック Check if the ID exists
+                if dest_env["environment_id"] not in row["ci_config"]["environments"].values():
+                    row["ci_config"]["environments"] = {
+                        "environment_id" : dest_env["environment_id"]
+                    }
+            globals.logger.debug('ci_config:{}'.format(row["ci_config"]))
+            row["cd_config"] = req_data["cd_config"]
+
+        post_data = row
+
+        # workspace put送信
+        api_url = "{}://{}:{}/workspace/{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+                                                    os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                    os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                    workspace_id)
+        response = requests.put(api_url, headers=post_headers, data=json.dumps(post_data))
+
+        if response.status_code == 200:
+            # 正常時は戻り値がレコードの値なのでそのまま返却する
+            ret = json.loads(response.text)
+            rows = ret['rows']
+        elif response.status_code == 404:
+            return_code = 400
+            error_detail = multi_lang.get_text("EP000-0023", "対象の情報(workspace)が他で更新されたため、更新できません\n画面更新後、再度情報を入力・選択して実行してください", "workspace")
+            raise common.UserException("{} Exclusive check error".format(inspect.currentframe().f_code.co_name))
+        else:
+            if common.is_json_format(response.text):
+                ret = json.loads(response.text)
+                # 詳細エラーがある場合は詳細を設定
+                if ret["errorDetail"] is not None:
+                    error_detail = ret["errorDetail"]
+
+            raise common.UserException("{} Error put workspace db status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
+
+        ret_status = response.status_code
+
+        # 戻り値をそのまま返却        
+        return jsonify({"result": ret_status}), ret_status
+
+    except common.UserException as e:
+        return common.user_error_to_message(e, app_name + exec_stat, error_detail, return_code)
+    except Exception as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+
+
+def patch_workspace(workspace_id):
+    """ワークスペース情報一部更新 workspace info. pacth
+
+    Args:
+        workspace_id (int): workspace ID
+
+    Returns:
+        Response: HTTP Respose
+    """
+
+    app_name = multi_lang.get_text("EP020-0003", "ワークスペース情報:")
+    exec_stat = multi_lang.get_text("EP020-0016", "更新")
     error_detail = ""
 
     try:
@@ -650,17 +768,12 @@ def put_workspace(workspace_id):
         # 引数をJSON形式で受け取りそのまま引数に設定
         post_data = request.json.copy()
 
-        # workspace put送信
+        # workspace patch send
         api_url = "{}://{}:{}/workspace/{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
                                                     os.environ['EPOCH_RS_WORKSPACE_HOST'],
                                                     os.environ['EPOCH_RS_WORKSPACE_PORT'],
                                                     workspace_id)
-        if request.method == 'PUT':
-            response = requests.put(api_url, headers=post_headers, data=json.dumps(post_data))
-        elif request.method == 'PATCH':
-            response = requests.patch(api_url, headers=post_headers, data=json.dumps(post_data))
-        else:
-            raise Exception("method not support!")
+        response = requests.patch(api_url, headers=post_headers, data=json.dumps(post_data))
 
         if response.status_code == 200:
             # 正常時は戻り値がレコードの値なのでそのまま返却する

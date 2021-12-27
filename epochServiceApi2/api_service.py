@@ -91,11 +91,14 @@ def call_workspace_by_id(workspace_id):
         globals.logger.debug('#' * 50)
 
         if request.method == 'GET':
-            # ワークスペース情報取得
+            # ワークスペース情報取得 Workspace info. get
             return api_service_workspace.get_workspace(workspace_id)
-        else:
-            # ワークスペース情報更新
+        elif request.method == 'PUT':
+            # ワークスペース情報更新 Workspace info. put
             return api_service_workspace.put_workspace(workspace_id)
+        else:
+            # ワークスペース情報一部更新 Workspace info. patch
+            return api_service_workspace.patch_workspace(workspace_id)
 
     except Exception as e:
         return common.server_error(e)

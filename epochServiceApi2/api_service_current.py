@@ -43,15 +43,37 @@ globals.init(app)
 
 
 def current_user_get():
-    """ユーザー情報一覧取得 user info list get
+    """ユーザー情報取得 user info get
 
     Returns:
         Response: HTTP Respose
     """
 
     app_name = multi_lang.get_text("EP020-0001", "ユーザー情報:")
-    exec_stat = multi_lang.get_text("EP020-0002", "一覧取得")
+    exec_stat = multi_lang.get_text("EP020-0017", "取得")
     error_detail = ""
+
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
+        globals.logger.debug('#' * 50)
+
+        ret_user = user_get()
+
+        return jsonify({"result": "200", "info": ret_user}), 200
+
+    except common.UserException as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+    except Exception as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+
+
+def user_get():
+    """ユーザー情報取得 user info get
+
+    Returns:
+        dict: user info.
+    """
 
     try:
         globals.logger.debug('#' * 50)
@@ -167,13 +189,12 @@ def current_user_get():
         }
         globals.logger.debug(f"ret_user:{ret_user}")
 
-        return jsonify({"result": "200", "info": ret_user}), 200
+        return ret_user
 
     except common.UserException as e:
-        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+        raise
     except Exception as e:
-        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
-
+        raise
 
 def get_current_user(header):
     """ログインユーザID取得

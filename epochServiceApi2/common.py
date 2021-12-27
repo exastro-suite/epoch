@@ -90,6 +90,31 @@ def server_error_to_message(e, error_statement, error_detail):
         }
     ), 500
 
+def user_error_to_message(e, error_statement, error_detail, return_code):
+    """サーバーエラーレスポンス(メッセージ付き)
+
+    Args:
+        e (Exception): 例外
+        error_statement (str): エラー情報（処理内容）
+        error_detail (str): エラー情報詳細
+        return_code: 
+
+    Returns:
+        response: HTTP Response (HTTP-[return_code])
+    """
+    import traceback
+
+    globals.logger.error(''.join(list(traceback.TracebackException.from_exception(e).format())))
+
+    return jsonify(
+        {
+            'result':       return_code,
+            'errorStatement': error_statement,
+            'errorDetail':  error_detail,
+            'exception':    ''.join(list(traceback.TracebackException.from_exception(e).format())),
+        }
+    ), return_code
+
 
 def is_json_format(str):
     """json値判断

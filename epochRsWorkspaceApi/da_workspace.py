@@ -39,7 +39,7 @@ def insert_workspace(cursor, specification):
     # 追加したワークスペースIDをreturn
     return cursor.lastrowid
 
-def update_workspace(cursor, specification, workspace_id):
+def update_workspace(cursor, specification, workspace_id, update_at):
     """workspace情報更新
 
     Args:
@@ -50,11 +50,18 @@ def update_workspace(cursor, specification, workspace_id):
         int: アップデート件数
         
     """
+
+    sql = "UPDATE workspace" \
+            " SET specification = %(specification)s"\
+            " WHERE workspace_id = %(workspace_id)s"\
+            " AND update_at = %(update_at)s"
+
     # workspace情報 update実行
-    upd_cnt = cursor.execute('UPDATE workspace SET specification = %(specification)s WHERE workspace_id = %(workspace_id)s',
+    upd_cnt = cursor.execute(sql,
         {
             'workspace_id' : workspace_id,
-            'specification': json.dumps(specification)
+            'specification': json.dumps(specification),
+            'update_at' : update_at
         }
     )
     # 更新した件数をreturn

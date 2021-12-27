@@ -14,6 +14,7 @@
 
 from flask import Flask, request, abort, jsonify
 from datetime import datetime
+from dateutil import parser
 import os
 import json
 
@@ -53,7 +54,7 @@ def create_workspace():
     app_name = "ワークスペース情報登録:"
     exec_stat = "初期化"
     exec_detail = ""
-    globals.logger.debug(request.json)
+    # globals.logger.debug(request.json)
 
     try:
         # Requestからspecification項目を生成する
@@ -177,14 +178,18 @@ def put_workspace(workspace_id):
     exec_detail = ""
 
     try:
+        request_json = request.json.copy()
+        update_at = request_json["update_at"]
+        update_at = parser.parse(update_at)
+        globals.logger.debug(f"update_at:{update_at}")
         # Requestからspecification項目を生成する
-        specification = convert_workspace_specification(request.json)
+        specification = convert_workspace_specification(request_json)
 
         exec_stat = "DB接続"
         with dbconnector() as db, dbcursor(db) as cursor:
             # workspace情報 update実行
             exec_stat = "更新実行"
-            upd_cnt = da_workspace.update_workspace(cursor, specification, workspace_id)
+            upd_cnt = da_workspace.update_workspace(cursor, specification, workspace_id, update_at)
 
             if upd_cnt == 0:
                 # データがないときは404応答
