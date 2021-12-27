@@ -102,11 +102,17 @@ def current_user_get():
         stock_workspace_id = []
         set_role_display = []
         ret_role = ""
+        all_roles = []
+        all_composite_roles = []
         # 取得したすべてのロールから絞り込む Narrow down from all acquired roles
         for get_role in sorted_roles:
             role_info = common.get_role_info(get_role["name"])
             # 該当のロールのみチェック Check only the corresponding role
             if role_info is not None:
+                # 同じロールは退避しない Do not save the same role
+                if get_role["name"] not in all_roles:
+                    all_roles.append(get_role["name"])
+
                 ex_role = re.match("ws-({}|\d+)-(.+)", get_role["name"])
                 globals.logger.debug("role_workspace_id:{} kind:{}".format(ex_role[1], ex_role[2]))
 
@@ -139,6 +145,11 @@ def current_user_get():
                 # workspace name empty to set fix name
                 if len(workspace_name) == 0:
                     workspace_name = multi_lang.get_text("EP000-0025", "名称未設定")
+            else:
+                # 同じ子ロールは退避しない Do not save the same composite role
+                if get_role["name"] not in all_composite_roles:
+                    all_composite_roles.append(get_role["name"])
+
         
         ret_role = ret_role + ',"{}":["{}"]'.format(workspace_name, '","'.join(set_role_display))
         ret_role = "{" + ret_role[1:] + "}" 
@@ -150,7 +161,9 @@ def current_user_get():
             "firstName": users["info"]["firstName"],
             "lastName": users["info"]["lastName"],
             "email": users["info"]["email"],
-            "role": ret_role
+            "role": ret_role,
+            "roles": all_roles,
+            "composite_roles": all_composite_roles,
         }
         globals.logger.debug(f"ret_user:{ret_user}")
 
