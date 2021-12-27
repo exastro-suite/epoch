@@ -16,6 +16,7 @@
 // JavaScript Document
 
 var workspace_id = null;
+var workspace_update_at = null;
 var workspace_client_urls = {
   "ita" : null,
   "argo" : null,
@@ -2729,6 +2730,9 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
           'git-service-argo-token' : data_workspace['cd_config']['environments_common']['git_repositry']['token'],
           'git-service-argo-select' : data_workspace['cd_config']['environments_common']['git_repositry']['housing'] == 'inner'? 'epoch': data_workspace['cd_config']['environments_common']['git_repositry']['interface'],
         };
+
+        // Save the update date and time for exclusive control - 排他制御のため更新日時を保存する
+        workspace_update_at = data_workspace['update_at'];
         resolve();
 
       }).fail(function(jqXHR, textStatus, errorThrown) {
@@ -2738,8 +2742,6 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         } else {
           reject();
         }
-        //workspace_id = null;
-        // 失敗
       });        
 
     }).then(() => {return new Promise((resolve, reject) => {
@@ -3039,7 +3041,9 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
   function create_api_body() {
     var date = new Date();
 
-    reqbody = {};
+    reqbody = {
+      'update_at':   workspace_update_at
+    };
   
     // 新IFの設定
 
