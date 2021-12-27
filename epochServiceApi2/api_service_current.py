@@ -104,6 +104,7 @@ def current_user_get():
         ret_role = ""
         all_roles = []
         all_composite_roles = []
+        workspace_name = None
         # 取得したすべてのロールから絞り込む Narrow down from all acquired roles
         for get_role in sorted_roles:
             role_info = common.get_role_info(get_role["name"])
@@ -116,16 +117,15 @@ def current_user_get():
                 ex_role = re.match("ws-({}|\d+)-(.+)", get_role["name"])
                 globals.logger.debug("role_workspace_id:{} kind:{}".format(ex_role[1], ex_role[2]))
 
-                # 取得したロール名を配列にする Make the acquired role name into an array
-                set_role_display.append(multi_lang.get_text(role_info[1], role_info[2]))
-
                 # ワークスペースは重複があるので、1回のみ抽出 Workspaces are duplicated, so extract only once
-                if ex_role[1] in stock_workspace_id:
+                # ただし、1回目は設定しない However, do not set the first time
+                if ex_role[1] not in stock_workspace_id and workspace_name is not None:
                     # workspace_id が 変わった際にレコード化 Record when workspace_id changes
                     ret_role = ',"{}":["{}"]'.format(workspace_name, '","'.join(set_role_display))
-                    # ret_role[workspace_name] = set_role_display
                     set_role_display = []
-                    continue
+
+                # 取得したロール名を配列にする Make the acquired role name into an array
+                set_role_display.append(multi_lang.get_text(role_info[1], role_info[2]))
 
                 workspace_id = ex_role[1]
                 stock_workspace_id.append(workspace_id)
