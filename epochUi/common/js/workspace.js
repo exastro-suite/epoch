@@ -2904,6 +2904,15 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       });
   
     })}).then(() => { return new Promise((resolve, reject) => {
+
+      if((new URLSearchParams(window.location.search)).get('workspace_id') != null
+      && currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ws-ci-update".replace('{ws_id}',workspace_id)) == -1) {
+        // If you do not have permission to update the CI pipeline, proceed to the next without calling the API
+        // CIパイプラインの更新権限が無いときはAPIを呼ばずに次に進む
+        resolve();
+        return;
+      }
+
       //
       // パイプライン作成API
       //
@@ -2936,6 +2945,15 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       });
   
     })}).then(() => { return new Promise((resolve, reject) => {
+
+      if((new URLSearchParams(window.location.search)).get('workspace_id') != null
+      && currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ws-cd-update".replace('{ws_id}',workspace_id)) == -1) {
+        // If you do not have permission to update the CD pipeline, proceed to the next without calling the API
+        // CDパイプラインの更新権限が無いときはAPIを呼ばずに次に進む
+        resolve();
+        return;
+      }
+
       //
       // パイプラインパラメータ設定API
       //
@@ -3263,9 +3281,16 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
   |  ci result polling
   \* ---------------- */
   const ci_result_polling = function() {
-    // console.log("CALL : ci_result_polling");
 
-    if(workspace_id == null) {
+    let ci_result_call = false;
+    try {
+      if(workspace_id != null
+      && currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ci-pipeline-result".replace('{ws_id}',workspace_id)) != -1 ) {
+        ci_result_call = true;
+      }
+    } catch(e) { }
+
+    if(!ci_result_call) {
       $.ajax({
         "type": "GET",
         "url": workspace_api_conf.api.ciResult.nop.get
@@ -3278,10 +3303,6 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         "url": workspace_api_conf.api.ciResult.pipelinerun.get.replace('{workspace_id}', workspace_id),
         "data": {'latest': "True"}
       }).done(function(response) {
-        // console.log("DONE : pipelinerun latest");
-        // console.log("--- data ----");
-        // console.log(JSON.stringify(response));
-
         var run_status = "";
         var current_pipelineruns = response.rows;
         for(let i = 0; i < current_pipelineruns.length; i++) {
@@ -3304,5 +3325,128 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
   
   // window onloadイベント
   $(document).ready(function(){ ci_result_polling(); });
+
+  // Button control by role - ロールによるボタン制御
+  function show_buttons_by_role() {
+
+    let ws_id = (new URLSearchParams(window.location.search)).get('workspace_id');
+    if(ws_id == null) {
+      //
+      // When in a new workspace - 新規ワークスペースのとき
+      //
+
+      // Show all buttons - 全てのボタンを表示する
+      $('#apply-workspace-button').css("display","");
+      $('#reset-button').css("display","");
+
+      $('#gitServiceCheckButton').css("display","");
+      $('#pipelineTektonCheckButton').css("display","");
+      $('#pipelineTektonCheckArea').css("display","");
+      $('#registryServiceCheckButton').css("display","");
+      $('#cdExecutionButtonArea').css("display","");
+      $('#exastroItAutomationResultCheckButton').css("display","");
+      $('#gitServiceArgoCheckButton').css("display","");
+      $('#arogCdResultCheckButton').css("display","");
+
+    } else {
+      //
+      // For existing workspaces - 既存のワークスペースのとき
+      //
+
+      // Waiting for API data acquisition - APIのデータ取得待ち
+      if(currentUser == null) { setTimeout(show_buttons_by_role, 100); return; }
+      if(!currentUser.data)   { setTimeout(show_buttons_by_role, 100); return; }
+
+      // Set the footer button - フッタのボタンを設定する
+      if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ws-name-update".replace('{ws_id}',ws_id)) != -1
+      || currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ws-ci-update".replace('{ws_id}',ws_id)) != -1
+      || currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ws-cd-update".replace('{ws_id}',ws_id)) != -1) {
+        $('#apply-workspace-button').css("display","");
+        $('#reset-button').css("display","");
+      }
+
+      // Set the buttons for the workspace name modal dialog - ワークスペース名モーダルダイアログのボタンを設定する
+      if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ws-name-update".replace('{ws_id}',ws_id)) == -1) {
+        delete wsModalJSON.workspace.footer.ok;
+      }
+
+      // Set buttons for application code repository modal dialog - アプリケーションコードリポジトリモーダルダイアログのボタンを設定する
+      if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ws-ci-update".replace('{ws_id}',ws_id)) == -1) {
+        delete wsModalJSON.gitService.footer.ok;
+      }
+
+      // Set buttons for TEKTON modal dialog - TEKTONモーダルダイアログのボタンを設定する
+      if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ws-ci-update".replace('{ws_id}',ws_id)) == -1) {
+        delete wsModalJSON.pipelineTekton.footer.ok;
+      }
+      
+      // Set buttons for registry service modal dialog - レジストリサービスモーダルダイアログのボタンを設定する
+      if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ws-ci-update".replace('{ws_id}',ws_id)) == -1) {
+        delete wsModalJSON.registryService.footer.ok;
+      }
+
+      // Set buttons for ArgoCD modal dialog - ArgoCDモーダルダイアログのボタンを設定する
+      if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ws-cd-update".replace('{ws_id}',ws_id)) == -1) {
+        delete wsModalJSON.pipelineArgo.footer.ok;
+      }
+
+      // Set buttons for IaC repository modal dialog - IaCリポジトリモーダルダイアログのボタンを設定する
+      if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ws-cd-update".replace('{ws_id}',ws_id)) == -1) {
+        delete wsModalJSON.gitServiceArgo.footer.ok;
+      }
+
+      // Set the execution confirmation button of the application repository
+      // アプリケーションリポジトリの実行確認のボタンを設定する
+      if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ci-pipeline-result".replace('{ws_id}',ws_id)) != -1) {
+        $('#gitServiceCheckButton').css("display","");
+      }
+
+      // Set the TEKTON execution confirmation button
+      // TEKTONの実行確認のボタンを設定する
+      if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ci-pipeline-result".replace('{ws_id}',ws_id)) != -1) {
+        $('#pipelineTektonCheckButton').css("display","");
+        $('#pipelineTektonCheckArea').css("display","");
+      }
+
+      // Set the registry service execution confirmation button
+      // レジストリサービスの実行確認のボタンを設定する
+      if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ci-pipeline-result".replace('{ws_id}',ws_id)) != -1) {
+        $('#registryServiceCheckButton').css("display","");
+      }
+
+      // Set the button to run the CD - CD実行のボタンを設定する
+      if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-cd-execute".replace('{ws_id}',ws_id)) != -1) {
+        $('#cdExecutionButtonArea').css("display","");
+      }
+      
+      // Set the manifest upload button - マニフェストアップロードのボタンを設定する
+      if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-manifest-setting".replace('{ws_id}',ws_id)) == -1) {
+        delete wsModalJSON.kubernetesManifestTemplate.block.templateFileList.button;
+        delete wsModalJSON.kubernetesManifestTemplateUpload.footer.ok;
+        delete wsModalJSON.kubernetesManifestTemplateUpload.footer.reselect;
+      }
+
+      // Set the manifest parameter button - マニフェストパラメータのボタンを設定する
+      if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-manifest-setting".replace('{ws_id}',ws_id)) == -1) {
+        delete wsModalJSON.manifestParametar.footer.ok;
+      }
+
+      // Set the IT-Automation button - IT-Automationのボタンを設定する
+      if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-cd-execute-result".replace('{ws_id}',ws_id)) != -1) {
+        $('#exastroItAutomationResultCheckButton').css("display","");
+      }
+
+      // Set the IaC repository confirmation button - IaCリポジトリ確認のボタンを設定する
+      if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-cd-execute-result".replace('{ws_id}',ws_id)) != -1) {
+        $('#gitServiceArgoCheckButton').css("display","");
+      }
+
+      // Set the Argo CD confirmation button - ArgoCD確認のボタンを設定する
+      if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-cd-execute-result".replace('{ws_id}',ws_id)) != -1) {
+        $('#arogCdResultCheckButton').css("display","");
+      }
+    }
+  }
+  $(document).ready(function(){ show_buttons_by_role(); });
 
 });

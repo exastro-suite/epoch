@@ -387,41 +387,92 @@ def leave_workspace(workspace_id):
     error_detail = ""
 
     try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {} workspace_id [{}]'.format(inspect.currentframe().f_code.co_name, workspace_id))
+        globals.logger.debug('#' * 50)
+
         # ヘッダ情報 header info
-        header_info = {
+        post_header = {
             'Content-Type': 'application/json',
         }
 
-        apiInfo_epai = "{}://{}:{}".format(os.environ["EPOCH_EPAI_API_PROTOCOL"], 
+        api_info_epai = "{}://{}:{}".format(os.environ["EPOCH_EPAI_API_PROTOCOL"], 
                                             os.environ["EPOCH_EPAI_API_HOST"], 
                                             os.environ["EPOCH_EPAI_API_PORT"])
         
-        # ユーザIDの取得
+        realm_name = "exastroplatform"
         
-        #
-        # If you are the owner, check if there are other owners - 自分がオーナの場合、他のオーナーがいるかチェックします
-        #
-        if False:
+        # ユーザIDの取得 get user id
+        user_id = common.get_current_user(request.headers)
+        
+        # 指定のワークスペースIDに対する、オーナーロールのユーザ一覧を取得 Get a list of owner role users for the specified workspace ID
+        response = requests.get("{}/{}/client/epoch-system/roles/{}/users".format(api_info_epai, realm_name, const.ROLE_WS_OWNER[0].format(workspace_id)), headers=post_header)
+
+        users = json.loads(response.text)
+        globals.logger.debug(type(users["rows"]))
+        globals.logger.debug(users["rows"])
+        
+        owner_check = False
+        
+        # 自身がオーナーかどうか確認 Check if you are the owner
+        for user in users["rows"]:
+            if user["user_id"] == user_id:
+                owner_check = True
+                break
+
+        if owner_check:
+            # 自身がオーナの場合、他のオーナーがいるかチェック If you are the owner, check if there are other owners
+            if len(users["rows"]) == 1:
+                # ログイン者が唯一のオーナーの時は退去できない Can't move out when the login person is the only owner
+                return jsonify({"result": "400", "reason": multi_lang.get_text("EP020-0014", "あなた以外のオーナーがいないので退去できません")}), 400
+
+        response = requests.get("{}/{}/user/{}/roles/epoch-system".format(api_info_epai, realm_name, user_id), headers=post_header)
+        
+        user_roles = json.loads(response.text)
+        
+        roles = []
+        
+        for role in user_roles["rows"]:            
+            if "ws-{}".format(workspace_id) in role["name"]:
+                roles.append(
+                    {
+                        "name" : role["name"]
+                    }
+                )
             
-            response = requests.get("{}/client/epoch-system/roles/{}/users".format(apiInfo_epai, "ws-{}-owner".format(workspace_id)), headers=header_info)
-            users = json.loads(response.text)
+        post_data = {
+            "roles" :  roles
+        }
         
-            if len(users["row"]) == 1:
-                # Can't move out when the login person is the only owner - ログイン者が唯一のオーナーの時は退去できない
-                return jsonify({"result": "400", "reason": "only-owner"}), 400
-
-        #
-        # Delete all roles related to your own workspace - 自分自身のワークスペースに関するロールを全て削除します
-        #
-        response = requests.get("{}/user/{}/roles/epoch-system".format(apiInfo_epai, "ws-{}-owner".format(workspace_id)), headers=header_info)
-
-
-        #
-        # Change the update date of the role to the current time - ロールの更新日を現在時刻に変更します
-        #
-
+        globals.logger.debug("post_data : " + json.dumps(post_data))
+        
+        # 自分自身のワークスペースに関するロールを全て削除 - Delete all roles related to your own workspace
+        response = requests.delete("{}/{}/user/{}/roles/epoch-system".format(api_info_epai, realm_name, user_id), headers=post_header, data=json.dumps(post_data))
+        
+        
+        if response.status_code != 200:
+            error_detail = multi_lang.get_text("EP020-0011", "ユーザクライアントロールの削除に失敗しました")
+            return jsonify({"result": "400", "reason": multi_lang.get_text("EP020-0015", "ワークスペースからの退去に失敗しました")}), 400
+    
+        # ロールの更新日を現在時刻に変更 - Change the update date of the role to the current time
+        api_info = "{}://{}:{}/workspace/{}".format(os.environ["EPOCH_RS_WORKSPACE_PROTOCOL"], 
+                                                    os.environ["EPOCH_RS_WORKSPACE_HOST"], 
+                                                    os.environ["EPOCH_RS_WORKSPACE_PORT"],
+                                                    workspace_id)
+        
+        # 現在時刻を設定はrs_workspace側で処理 The current time is set on the rs_workspace side
+        post_data = {
+            'role_update_at' : ''
+        }
+        
+        response = requests.patch(api_info, headers=post_header, data=json.dumps(post_data))
+        
+        if response.status_code != 200:
+            error_detail = multi_lang.get_text("EP020-0012", "ロール更新日の変更に失敗しました")
+            return jsonify({"result": "400", "reason": multi_lang.get_text("EP020-0015", "ワークスペースからの退去に失敗しました")}), 400
 
         return jsonify({"result": "200"}), 200
+
     except common.UserException as e:
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
     except Exception as e:

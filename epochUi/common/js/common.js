@@ -21,6 +21,7 @@
 // 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 var URL_BASE=window.location.protocol + "//" + window.location.hostname + ":" + window.location.port
+var currentUser = null;
 
 function initialScreen() {
 
@@ -156,6 +157,7 @@ function initialScreen() {
     }, '.epoch-popup, .epoch-popup-m');
         
     const user = new userInfo();
+    currentUser = user;
     user.init('user-info');
 }
 
@@ -191,7 +193,8 @@ userInfo.prototype = {
           "enabled": data["info"]["enabled"],
           "firstName": data["info"]["firstName"],
           "lastName": data["info"]["lastName"],
-          "email": data["info"]["email"]
+          "email": data["info"]["email"],
+          "composite_roles": data["info"]["composite_roles"]
         };
 
         // ロールリスト role list
