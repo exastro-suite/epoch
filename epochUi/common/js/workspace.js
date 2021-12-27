@@ -3253,6 +3253,9 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
     if((new URLSearchParams(window.location.search)).get('workspace_id') == null && workspace_id != null) {
       // 新規で登録後は、locationにworkspace_idを付与するため、workspace_idを付けて再描画
       window.location = window.location + "?workspace_id=" + workspace_id;
+    } else if((new URLSearchParams(window.location.search)).get('workspace_id') != null) {
+      // Reload to update the update date and time - 更新日時をアップデートするため再読込する
+      window.location.reload();      
     }
   });
 
