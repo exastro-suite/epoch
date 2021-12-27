@@ -370,7 +370,10 @@ spec:
         - name: PYTHONIOENCODING
           value: utf-8
         - name: EPOCH_WEBHOOK_PORT
-          value: "30804"
+          valueFrom:
+            configMapKeyRef:
+              name: epoch-control-api-config
+              key: WEBHOOK_PORT
         - name: EPOCH_HTTP_PROXY
           valueFrom:
             configMapKeyRef:
@@ -1715,9 +1718,9 @@ data:
         </LimitExcept>
       </Location>
 
-      <Location /api/workspace/{{ param.workspace_id }}/leave>
-        ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/leave retry=0 timeout=600
-        ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/leave
+      <Location /api/workspace/{{ param.workspace_id }}/member/current>
+        ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/member/current retry=0 timeout=600
+        ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/member/current
         AuthType openid-connect
         Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-reference"
       </Location>
