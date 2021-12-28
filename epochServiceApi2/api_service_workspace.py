@@ -600,6 +600,23 @@ def get_workspace(workspace_id):
             ret = json.loads(response.text)
             rows = ret["rows"]
             ret_status = response.status_code
+
+            # 現在のユーザーのロール値を取得 Get the role value of the current user
+            user = api_service_current.user_get()
+            roles = user["composite_roles"]
+
+            # 権限によって、セキュア項目をマスクする Mask secure items by permission
+            # ワークスペース更新 (CI)無しの場合 Without workspace update (CI)
+            if const.ROLE_WS_ROLE_WS_CI_UPDATE[0].format(workspace_id) not in roles:
+                rows[0]["ci_config"]["pipelines_common"]["git_repositry"]["password"] = common.str_mask(rows[0]["ci_config"]["pipelines_common"]["git_repositry"]["password"])
+                rows[0]["ci_config"]["pipelines_common"]["git_repositry"]["token"] = common.str_mask(rows[0]["ci_config"]["pipelines_common"]["git_repositry"]["token"])
+                rows[0]["ci_config"]["pipelines_common"]["container_registry"]["password"] = common.str_mask(rows[0]["ci_config"]["pipelines_common"]["container_registry"]["password"])
+
+            # ワークスペース更新 (CD)無しの場合 Without workspace update (CD)
+            if const.ROLE_WS_ROLE_WS_CD_UPDATE[0].format(workspace_id) not in roles:
+                rows[0]["cd_config"]["environments_common"]["git_repositry"]["password"] = common.str_mask(rows[0]["ci_config"]["pipelines_common"]["git_repositry"]["password"])
+                rows[0]["cd_config"]["environments_common"]["git_repositry"]["token"] = common.str_mask(rows[0]["ci_config"]["pipelines_common"]["git_repositry"]["token"])
+
         elif response.status_code == 404:
             # 情報が取得できない場合は、0件で返す
             rows = []

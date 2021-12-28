@@ -35,22 +35,40 @@ def delete_dict_key(dictobj, key):
         del dictobj[key]
 
 def random_string(n):
-    """ランダム文字列生成
+    """ランダム文字列生成 random string generator
 
     Args:
-        n (int): 文字数
+        n (int): 文字数 length
 
     Returns:
-        str: ランダム文字列
+        str: ランダム文字列 random string
     """
     return ''.join(random.choices(string.ascii_letters + string.digits, k=n))
 
 
-def server_error(e):
-    """サーバーエラーレスポンス
+def str_mask(str):
+    """指定文字列をマスク置き換えする Replace the specified character string with a mask
 
     Args:
-        e (Exception): 例外
+        str (str): 文字列 string
+
+    Returns:
+        str: 置き換え文字列 afeter string
+    """
+
+    # 1文字以上の入力があれば置き換えする If there is more than one character input, replace it
+    if len(str) > 0:
+        ret = '*' * len(str)
+    else:
+        ret = str
+
+    return ret
+
+def server_error(e):
+    """サーバーエラーレスポンス server error response
+
+    Args:
+        e (Exception): 例外 exception
 
     Returns:
         response: HTTP Response (HTTP-500)
@@ -67,12 +85,12 @@ def server_error(e):
     ), 500
 
 def server_error_to_message(e, error_statement, error_detail):
-    """サーバーエラーレスポンス(メッセージ付き)
+    """サーバーエラーレスポンス(メッセージ付き) server error response with message
 
     Args:
-        e (Exception): 例外
-        error_statement (str): エラー情報（処理内容）
-        error_detail (str): エラー情報詳細
+        e (Exception): 例外 exception
+        error_statement (str): エラー情報（処理内容）error info. process contents
+        error_detail (str): エラー情報詳細 error detail
 
     Returns:
         response: HTTP Response (HTTP-500)
@@ -91,13 +109,13 @@ def server_error_to_message(e, error_statement, error_detail):
     ), 500
 
 def user_error_to_message(e, error_statement, error_detail, return_code):
-    """サーバーエラーレスポンス(メッセージ付き)
+    """ユーザー型サーバーエラーレスポンス(メッセージ付き) user server error response with message
 
     Args:
-        e (Exception): 例外
-        error_statement (str): エラー情報（処理内容）
-        error_detail (str): エラー情報詳細
-        return_code: 
+        e (Exception): 例外 exception
+        error_statement (str): エラー情報（処理内容）error info. process contents
+        error_detail (str): エラー情報詳細 error detail
+        return_code (int)  return code
 
     Returns:
         response: HTTP Response (HTTP-[return_code])
@@ -117,16 +135,17 @@ def user_error_to_message(e, error_statement, error_detail, return_code):
 
 
 def is_json_format(str):
-    """json値判断
+    """json値判断 json value judgement
 
     Args:
-        str (str): json文字列
+        str (str): json文字列 json string
 
     Returns:
         bool: True:json, False:not json
     """
     try:
         # Exceptionで引っかかるときはすべてJson意外と判断
+        # When it gets caught in Exception, it is judged that Json is unexpected
         json.loads(str)
     except json.JSONDecodeError:
         return False
