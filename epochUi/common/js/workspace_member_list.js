@@ -57,7 +57,7 @@ $(document).ready(() => {
                 "url": URL_BASE + "/api/workspace/{workspace_id}".replace('{workspace_id}',workspace_id)
             }).done(function(data) {
                 console.log('[DONE] /workspace/{id}');
-                role_update_at = data.rows[0].update_at;
+                role_update_at = data.rows[0].role_update_at;
                 resolve();
             }).fail((jqXHR, textStatus, errorThrown) => {
                 console.log('[FAIL] /workspace/{id}');
