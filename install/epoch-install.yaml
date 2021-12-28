@@ -633,7 +633,7 @@ spec:
           name: epoch-control-ita-conf
       containers:
       - name: epoch-control-ita-api
-        image: exastro/epoch-control-ita-api:0.3.0_20211228_1100
+        image: exastro/epoch-control-ita-api:0.3.0_20211228_1530
         env:
         - name: CONFIG_API_ITA_PATH
           value: "/etc/epoch/epochControlITAApi/api_ita.conf"
@@ -745,7 +745,7 @@ spec:
           name: epoch-rs-workspace-conf
       containers:
       - name: epoch-rs-workspace-api
-        image: exastro/epoch-rs-workspace-api:0.3.0_20211228_1100
+        image: exastro/epoch-rs-workspace-api:0.3.0_20211228_1530
         env:
         - name: CONFIG_API_WORKSPACE_PATH
           value: "/etc/epoch/epochRsWorkspaceApi/api_workspace.conf"
@@ -1889,7 +1889,7 @@ spec:
           claimName: exastro-authentication-infra-httpd-conf
       containers:
       - name: authentication-infra-api
-        image: exastro/authentication-infra-api:0.3.0_20211228_1100
+        image: exastro/authentication-infra-api:0.3.0_20211228_1530
         env:
         - name: CONFIG_API_AUTHC_INFRA_PATH
           value: "/etc/exastro-authentication-infra/authentication-infra-api/api_authc_infra.conf"
