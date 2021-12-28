@@ -525,8 +525,12 @@ def update_manifestParameter(workspace_id):
     globals.logger.debug("CALL update_manifestParameter:{}".format(workspace_id))
 
     try:
+        request_json = request.json.copy()
+        update_at = request_json["update_at"]
+        update_at = parser.parse(update_at)
+
         # Requestからspecification項目を生成する
-        specification = request.json
+        specification = request_json
 
         with dbconnector() as db, dbcursor(db) as cursor:
             # workspace情報取得
@@ -548,7 +552,7 @@ def update_manifestParameter(workspace_id):
             db_specification["parameter-info"] = specification["parameter-info"]
 
             # workspace情報 update実行
-            upd_cnt = da_workspace.update_workspace(cursor, db_specification, workspace_id)
+            upd_cnt = da_workspace.update_workspace(cursor, db_specification, workspace_id, update_at)
 
             if upd_cnt == 0:
                 # データがないときは404応答

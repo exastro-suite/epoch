@@ -459,10 +459,13 @@ def settings_manifest_parameter(workspace_id):
         # マニフェスト環境パラメータのデータ成型
         maniparam_edit = []
         for environment in payload['ci_config']['environments']:
-
-            globals.logger.debug("git_url:{}".format(environment['git_url']))
-
-            idx_ope = search_opration(opelist_json['resultdata']['CONTENTS']['BODY'], column_indexes_opelist, environment['git_url'])
+            
+            idx_ope = -1
+            # cd_configの同一環境情報からgit_urlを取得する Get git_url from the same environment information in cd_config
+            for cd_environment in payload['cd_config']['environments']:
+                if environment['environment_id'] == cd_environment['environment_id']:
+                    globals.logger.debug("git_url:{}".format(cd_environment['git_repositry']['url']))
+                    idx_ope = search_opration(opelist_json['resultdata']['CONTENTS']['BODY'], column_indexes_opelist, cd_environment['git_repositry']['url'])
 
             # ITAからオペレーション(=環境)が取得できなければ異常
             if idx_ope == -1:
