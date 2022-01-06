@@ -3420,7 +3420,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       }
       
       // Set the manifest upload button - マニフェストアップロードのボタンを設定する
-      if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-manifest-setting".replace('{ws_id}',ws_id)) == -1) {
+      if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-manifest-upload".replace('{ws_id}',ws_id)) == -1) {
         delete wsModalJSON.kubernetesManifestTemplate.block.templateFileList.button;
         delete wsModalJSON.kubernetesManifestTemplateUpload.footer.ok;
         delete wsModalJSON.kubernetesManifestTemplateUpload.footer.reselect;
