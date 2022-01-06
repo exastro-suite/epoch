@@ -315,7 +315,6 @@ def set_roles(workspace_id):
     """
 
     try:
-
         json_roles = {
             "roles" : [
                 # ロール権限をすべて定義 Define all role permissions
