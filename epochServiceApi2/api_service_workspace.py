@@ -94,7 +94,7 @@ def create_workspace():
         create_workspace_setting_roles(workspace_id, user_id)
 
         # exastro-authentication-infra setting - 認証基盤の設定
-        create_workspace_setting_auth_infra(workspace_id)
+        create_workspace_setting_auth_infra(workspace_id, user_id)
 
         ret_status = response.status_code
 
@@ -107,7 +107,7 @@ def create_workspace():
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
 
 
-def create_workspace_setting_roles(workspace_id,user_id):
+def create_workspace_setting_roles(workspace_id, user_id):
     """Set workspace roles - ワークスペースのロールを設定する
 
     Args:
@@ -115,340 +115,433 @@ def create_workspace_setting_roles(workspace_id,user_id):
         user_id (str): login user id
     """
 
-    # ヘッダ情報 post header
-    post_headers = {
-        'Content-Type': 'application/json',
-    }
+    try:
 
-    api_url = "{}://{}:{}/{}/client/epoch-system/role".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
-                                                            os.environ['EPOCH_EPAI_API_HOST'],
-                                                            os.environ['EPOCH_EPAI_API_PORT'],
-                                                            os.environ["EPOCH_EPAI_REALM_NAME"]
-                                                    )
+        # ヘッダ情報 post header
+        post_headers = {
+            'Content-Type': 'application/json',
+        }
 
-    post_data = {
-        "roles" : [
-            # ロール権限をすべて定義 Define all role permissions
-            {
-                "name": const.ROLE_WS_ROLE_WS_REFERENCE[0].format(workspace_id),
-                "composite_roles": [],
-                "attributes": {
-                    "display": [ const.ROLE_WS_ROLE_WS_REFERENCE[1] ],
-                    "display_default": [ const.ROLE_WS_ROLE_WS_REFERENCE[2] ],
-                }
-            },
-            {
-                "name": const.ROLE_WS_ROLE_WS_NAME_UPDATE[0].format(workspace_id),
-                "composite_roles": [],
-                "attributes": {
-                    "display": [ const.ROLE_WS_ROLE_WS_NAME_UPDATE[1] ],
-                    "display_default": [ const.ROLE_WS_ROLE_WS_NAME_UPDATE[2] ],
-                }
-            },
-            {
-                "name": const.ROLE_WS_ROLE_WS_CI_UPDATE[0].format(workspace_id),
-                "composite_roles": [],
-                "attributes": {
-                    "display": [ const.ROLE_WS_ROLE_WS_CI_UPDATE[1] ],
-                    "display_default": [ const.ROLE_WS_ROLE_WS_CI_UPDATE[2] ],
-                }
-            },
-            {
-                "name": const.ROLE_WS_ROLE_WS_CD_UPDATE[0].format(workspace_id),
-                "composite_roles": [],
-                "attributes": {
-                    "display": [ const.ROLE_WS_ROLE_WS_CD_UPDATE[1] ],
-                    "display_default": [ const.ROLE_WS_ROLE_WS_CD_UPDATE[2] ],
-                }
-            },
-            {
-                "name": const.ROLE_WS_ROLE_WS_DELETE[0].format(workspace_id),
-                "composite_roles": [],
-                "attributes": {
-                    "display": [ const.ROLE_WS_ROLE_WS_DELETE[1] ],
-                    "display_default": [ const.ROLE_WS_ROLE_WS_DELETE[2] ],
-                }
-            },
-            {
-                "name": const.ROLE_WS_ROLE_OWNER_ROLE_SETTING[0].format(workspace_id),
-                "composite_roles": [],
-                "attributes": {
-                    "display": [ const.ROLE_WS_ROLE_OWNER_ROLE_SETTING[1] ],
-                    "display_default": [ const.ROLE_WS_ROLE_OWNER_ROLE_SETTING[2] ],
-                }
-            },
-            {
-                "name": const.ROLE_WS_ROLE_MEMBER_ADD[0].format(workspace_id),
-                "composite_roles": [],
-                "attributes": {
-                    "display": [ const.ROLE_WS_ROLE_MEMBER_ADD[1] ],
-                    "display_default": [ const.ROLE_WS_ROLE_MEMBER_ADD[2] ],
-                }
-            },
-            {
-                "name": const.ROLE_WS_ROLE_MEMBER_ROLE_UPDATE[0].format(workspace_id),
-                "composite_roles": [],
-                "attributes": {
-                    "display": [ const.ROLE_WS_ROLE_MEMBER_ROLE_UPDATE[1] ],
-                    "display_default": [ const.ROLE_WS_ROLE_MEMBER_ROLE_UPDATE[2] ],
-                }
-            },
-            {
-                "name": const.ROLE_WS_ROLE_CI_PIPELINE_RESULT[0].format(workspace_id),
-                "composite_roles": [],
-                "attributes": {
-                    "display": [ const.ROLE_WS_ROLE_CI_PIPELINE_RESULT[1] ],
-                    "display_default": [ const.ROLE_WS_ROLE_CI_PIPELINE_RESULT[2] ],
-                }
-            },
-            {
-                "name": const.ROLE_WS_ROLE_MANIFEST_SETTING[0].format(workspace_id),
-                "composite_roles": [],
-                "attributes": {
-                    "display": [ const.ROLE_WS_ROLE_MANIFEST_SETTING[1] ],
-                    "display_default": [ const.ROLE_WS_ROLE_MANIFEST_SETTING[2] ],
-                }
-            },
-            {
-                "name": const.ROLE_WS_ROLE_CD_EXECUTE[0].format(workspace_id),
-                "composite_roles": [],
-                "attributes": {
-                    "display": [ const.ROLE_WS_ROLE_CD_EXECUTE[1] ],
-                    "display_default": [ const.ROLE_WS_ROLE_CD_EXECUTE[2] ],
-                }
-            },
-            {
-                "name": const.ROLE_WS_ROLE_CD_EXECUTE_RESULT[0].format(workspace_id),
-                "composite_roles": [],
-                "attributes": {
-                    "display": [ const.ROLE_WS_ROLE_CD_EXECUTE_RESULT[1] ],
-                    "display_default": [ const.ROLE_WS_ROLE_CD_EXECUTE_RESULT[2] ],
-                }
-            },
-            # ロールをすべて定義 Define all roles
-            {
-                "name": const.ROLE_WS_OWNER[0].format(workspace_id),
-                "composite_roles": [ const.ROLE_WS_ROLE_WS_REFERENCE[0].format(workspace_id),
-                                    const.ROLE_WS_ROLE_WS_NAME_UPDATE[0].format(workspace_id),
-                                    const.ROLE_WS_ROLE_WS_CI_UPDATE[0].format(workspace_id),
-                                    const.ROLE_WS_ROLE_WS_CD_UPDATE[0].format(workspace_id),
-                                    const.ROLE_WS_ROLE_WS_DELETE[0].format(workspace_id),
-                                    const.ROLE_WS_ROLE_OWNER_ROLE_SETTING[0].format(workspace_id),
-                                    const.ROLE_WS_ROLE_MEMBER_ADD[0].format(workspace_id),
-                                    const.ROLE_WS_ROLE_MEMBER_ROLE_UPDATE[0].format(workspace_id),
-                                    const.ROLE_WS_ROLE_CI_PIPELINE_RESULT[0].format(workspace_id),
-                                    const.ROLE_WS_ROLE_MANIFEST_SETTING[0].format(workspace_id),
-                                    const.ROLE_WS_ROLE_CD_EXECUTE[0].format(workspace_id),
-                                    const.ROLE_WS_ROLE_CD_EXECUTE_RESULT[0].format(workspace_id),
-                ],
-                "attributes": {
-                    "display": [ const.ROLE_WS_OWNER[1] ],
-                    "display_default": [ const.ROLE_WS_OWNER[2] ],
-                }
-            },
-            {
-                "name": const.ROLE_WS_MANAGER[0].format(workspace_id),
-                "composite_roles": [ const.ROLE_WS_ROLE_WS_REFERENCE[0].format(workspace_id),
-                                    const.ROLE_WS_ROLE_WS_NAME_UPDATE[0].format(workspace_id),
-                                    const.ROLE_WS_ROLE_WS_CI_UPDATE[0].format(workspace_id),
-                                    const.ROLE_WS_ROLE_WS_CD_UPDATE[0].format(workspace_id),
-                                    const.ROLE_WS_ROLE_MEMBER_ADD[0].format(workspace_id),
-                                    const.ROLE_WS_ROLE_MEMBER_ROLE_UPDATE[0].format(workspace_id),
-                                    const.ROLE_WS_ROLE_CI_PIPELINE_RESULT[0].format(workspace_id),
-                                    const.ROLE_WS_ROLE_MANIFEST_SETTING[0].format(workspace_id),
-                                    const.ROLE_WS_ROLE_CD_EXECUTE[0].format(workspace_id),
-                                    const.ROLE_WS_ROLE_CD_EXECUTE_RESULT[0].format(workspace_id),
-                ],
-                "attributes": {
-                    "display": [ const.ROLE_WS_MANAGER[1] ],
-                    "display_default": [ const.ROLE_WS_MANAGER[2] ],
-                }
-            },
-            {
-                "name": const.ROLE_WS_MEMBER_MG[0].format(workspace_id),
-                "composite_roles": [ const.ROLE_WS_ROLE_WS_REFERENCE[0].format(workspace_id),
-                                    const.ROLE_WS_ROLE_MEMBER_ADD[0].format(workspace_id),
-                                    const.ROLE_WS_ROLE_MEMBER_ROLE_UPDATE[0].format(workspace_id),
-                ],
-                "attributes": {
-                    "display": [ const.ROLE_WS_MEMBER_MG[1] ],
-                    "display_default": [ const.ROLE_WS_MEMBER_MG[2] ],
-                }
-            },
-            {
-                "name": const.ROLE_WS_CI_SETTING[0].format(workspace_id),
-                "composite_roles": [ const.ROLE_WS_ROLE_WS_REFERENCE[0].format(workspace_id),
-                                    const.ROLE_WS_ROLE_WS_CI_UPDATE[0].format(workspace_id),
-                                    const.ROLE_WS_ROLE_CI_PIPELINE_RESULT[0].format(workspace_id),
-                ],
-                "attributes": {
-                    "display": [ const.ROLE_WS_CI_SETTING[1] ],
-                    "display_default": [ const.ROLE_WS_CI_SETTING[2] ],
-                }
-            },
-            {
-                "name": const.ROLE_WS_CI_RESULT[0].format(workspace_id),
-                "composite_roles": [ const.ROLE_WS_ROLE_WS_REFERENCE[0].format(workspace_id),
-                                    const.ROLE_WS_ROLE_CI_PIPELINE_RESULT[0].format(workspace_id),
-                ],
-                "attributes": {
-                    "display": [ const.ROLE_WS_CI_RESULT[1] ],
-                    "display_default": [ const.ROLE_WS_CI_RESULT[2] ],
-                }
-            },
-            {
-                "name": const.ROLE_WS_CD_SETTING[0].format(workspace_id),
-                "composite_roles": [ const.ROLE_WS_ROLE_WS_REFERENCE[0].format(workspace_id),
-                                    const.ROLE_WS_ROLE_WS_CD_UPDATE[0].format(workspace_id),
-                                    const.ROLE_WS_ROLE_CD_EXECUTE_RESULT[0].format(workspace_id),
-                ],
-                "attributes": {
-                    "display": [ const.ROLE_WS_CD_SETTING[1] ],
-                    "display_default": [ const.ROLE_WS_CD_SETTING[2] ],
-                }
-            },
-            {
-                "name": const.ROLE_WS_CD_EXECUTE[0].format(workspace_id),
-                "composite_roles": [ const.ROLE_WS_ROLE_WS_REFERENCE[0].format(workspace_id),
-                                    const.ROLE_WS_ROLE_CI_PIPELINE_RESULT[0].format(workspace_id),
-                                    const.ROLE_WS_ROLE_MANIFEST_SETTING[0].format(workspace_id),
-                                    const.ROLE_WS_ROLE_CD_EXECUTE[0].format(workspace_id),
-                                    const.ROLE_WS_ROLE_CD_EXECUTE_RESULT[0].format(workspace_id),
-                ],
-                "attributes": {
-                    "display": [ const.ROLE_WS_CD_EXECUTE[1] ],
-                    "display_default": [ const.ROLE_WS_CD_EXECUTE[2] ],
-                }
-            },
-            {
-                "name": const.ROLE_WS_CD_RESULT[0].format(workspace_id),
-                "composite_roles": [ const.ROLE_WS_ROLE_WS_REFERENCE[0].format(workspace_id),
-                                    const.ROLE_WS_ROLE_CD_EXECUTE_RESULT[0].format(workspace_id),
-                ],
-                "attributes": {
-                    "display": [ const.ROLE_WS_CD_RESULT[1] ],
-                    "display_default": [ const.ROLE_WS_CD_RESULT[2] ],
-                }
-            },
-        ]
-    }
-    
-    response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
+        api_url = "{}://{}:{}/{}/client/epoch-system/role".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
+                                                                os.environ['EPOCH_EPAI_API_HOST'],
+                                                                os.environ['EPOCH_EPAI_API_PORT'],
+                                                                os.environ["EPOCH_EPAI_REALM_NAME"]
+                                                        )
 
-    #
-    # append workspace owner role - ワークスペースオーナーロールの付与
-    #
-    api_url = "{}://{}:{}/{}/user/{}/roles/epoch-system".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
-                                                            os.environ['EPOCH_EPAI_API_HOST'],
-                                                            os.environ['EPOCH_EPAI_API_PORT'],
-                                                            os.environ["EPOCH_EPAI_REALM_NAME"],
-                                                            user_id,
-                                                    )
-    post_data = {
-        "roles" : [
-            {
-                "name": const.ROLE_WS_OWNER[0].format(workspace_id),
-                "enabled": True,
-            }
-        ]
-    }
+        # rolesの取得 get a roles
+        post_data = set_roles(workspace_id)
+        
+        response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
 
-    response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
+        #
+        # append workspace owner role - ワークスペースオーナーロールの付与
+        #
+        api_url = "{}://{}:{}/{}/user/{}/roles/epoch-system".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
+                                                                os.environ['EPOCH_EPAI_API_HOST'],
+                                                                os.environ['EPOCH_EPAI_API_PORT'],
+                                                                os.environ["EPOCH_EPAI_REALM_NAME"],
+                                                                user_id,
+                                                        )
+        post_data = {
+            "roles" : [
+                {
+                    "name": const.ROLE_WS_OWNER[0].format(workspace_id),
+                    "enabled": True,
+                }
+            ]
+        }
 
-def create_workspace_setting_auth_infra(workspace_id):
+        response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
+
+    except common.UserException as e:
+        globals.logger.debug(e.args)
+        raise
+    except Exception as e:
+        globals.logger.debug(e.args)
+        raise
+
+def create_workspace_setting_auth_infra(workspace_id, user_id):
     """exastro-authentication-infra setting - 認証基盤の設定
 
     Args:
         workspace_id (int): workspace id
+        user_id (str): login user id
     """
 
-    # ヘッダ情報
-    post_headers = {
-        'Content-Type': 'application/json',
-    }
+    try:
 
-    # authentication-infra-api の呼び先設定
-    api_url_epai = "{}://{}:{}/".format(os.environ["EPOCH_EPAI_API_PROTOCOL"], 
-                                        os.environ["EPOCH_EPAI_API_HOST"], 
-                                        os.environ["EPOCH_EPAI_API_PORT"])
+        # ヘッダ情報
+        post_headers = {
+            'Content-Type': 'application/json',
+        }
 
-    # get namespace
-    namespace = common.get_namespace_name(workspace_id)
+        # authentication-infra-api の呼び先設定
+        api_url_epai = "{}://{}:{}/".format(os.environ["EPOCH_EPAI_API_PROTOCOL"], 
+                                            os.environ["EPOCH_EPAI_API_HOST"], 
+                                            os.environ["EPOCH_EPAI_API_PORT"])
 
-    # get pipeline name
-    pipeline_name = common.get_pipeline_name(workspace_id)
+        # get namespace
+        namespace = common.get_namespace_name(workspace_id)
+
+        # get pipeline name
+        pipeline_name = common.get_pipeline_name(workspace_id)
 
 
-    #
-    # Generate a client for use in the workspace - ワークスペースで使用するクライアントを生成
-    #
-    # postする情報 post information
-    clients = [
-        {
-            "client_id" :   'epoch-ws-{}-ita'.format(workspace_id),
-            "client_host" : os.environ["EPOCH_EPAI_HOST"],
-            "client_protocol" : "https",
-            "conf_template" : "epoch-ws-ita-template.conf",
-            "backend_url" : "http://it-automation.{}.svc:8084/".format(namespace),
-        },
-        {
-            "client_id" :   'epoch-ws-{}-argocd'.format(workspace_id),
-            "client_host" : os.environ["EPOCH_EPAI_HOST"],
-            "client_protocol" : "https",
-            "conf_template" : "epoch-ws-argocd-template.conf",
-            "backend_url" : "https://argocd-server.{}.svc/".format(namespace),
-        },
-        {
-            "client_id" :   'epoch-ws-{}-sonarqube'.format(workspace_id),
-            "client_host" : os.environ["EPOCH_EPAI_HOST"],
-            "client_protocol" : "https",
-            "conf_template" : "epoch-ws-sonarqube-template.conf",
-            "backend_url" : "http://sonarqube.{}.svc:9000/".format(pipeline_name),
-        },
-    ]
+        #
+        # Generate a client for use in the workspace - ワークスペースで使用するクライアントを生成
+        #
+        # postする情報 post information
+        clients = [
+            {
+                "client_id" :   'epoch-ws-{}-ita'.format(workspace_id),
+                "client_host" : os.environ["EPOCH_EPAI_HOST"],
+                "client_protocol" : "https",
+                "conf_template" : "epoch-ws-ita-template.conf",
+                "backend_url" : "http://it-automation.{}.svc:8084/".format(namespace),
+            },
+            {
+                "client_id" :   'epoch-ws-{}-argocd'.format(workspace_id),
+                "client_host" : os.environ["EPOCH_EPAI_HOST"],
+                "client_protocol" : "https",
+                "conf_template" : "epoch-ws-argocd-template.conf",
+                "backend_url" : "https://argocd-server.{}.svc/".format(namespace),
+            },
+            {
+                "client_id" :   'epoch-ws-{}-sonarqube'.format(workspace_id),
+                "client_host" : os.environ["EPOCH_EPAI_HOST"],
+                "client_protocol" : "https",
+                "conf_template" : "epoch-ws-sonarqube-template.conf",
+                "backend_url" : "http://sonarqube.{}.svc:9000/".format(pipeline_name),
+            },
+        ]
 
-    # post送信（アクセス情報生成）
-    exec_stat = "認証基盤 client設定"
-    for client in clients:
-        response = requests.post("{}{}/{}/{}".format(api_url_epai, 'settings', os.environ["EPOCH_EPAI_REALM_NAME"], 'clients'), headers=post_headers, data=json.dumps(client))
+        # post送信（アクセス情報生成）
+        exec_stat = "認証基盤 client設定"
+        for client in clients:
+            response = requests.post("{}{}/{}/{}".format(api_url_epai, 'settings', os.environ["EPOCH_EPAI_REALM_NAME"], 'clients'), headers=post_headers, data=json.dumps(client))
 
+            # 正常時以外はExceptionを発行して終了する
+            if response.status_code != 200:
+                globals.logger.debug(response.text)
+                error_detail = "認証基盤 client設定に失敗しました。 {}".format(response.status_code)
+                raise common.UserException(error_detail)
+
+            # ヘッダ情報 post header
+            post_headers = {
+                'Content-Type': 'application/json',
+            }
+
+            api_url = "{}://{}:{}/{}/client/{}/role".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
+                                                            os.environ['EPOCH_EPAI_API_HOST'],
+                                                            os.environ['EPOCH_EPAI_API_PORT'],
+                                                            os.environ["EPOCH_EPAI_REALM_NAME"],
+                                                            client["client_id"]
+                                                            )
+            
+            # rolesの取得 get a roles
+            post_data = set_roles(workspace_id)
+
+            response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
+
+            #
+            # append workspace owner role - ワークスペースオーナーロールの付与
+            #
+            api_url = "{}://{}:{}/{}/user/{}/roles/{}".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
+                                                                os.environ['EPOCH_EPAI_API_HOST'],
+                                                                os.environ['EPOCH_EPAI_API_PORT'],
+                                                                os.environ["EPOCH_EPAI_REALM_NAME"],
+                                                                user_id,
+                                                                client["client_id"]
+                                                            )
+            post_data = {
+                "roles" : [
+                    {
+                        "name": const.ROLE_WS_OWNER[0].format(workspace_id),
+                        "enabled": True,
+                    }
+                ]
+            }
+
+            response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
+
+        #
+        # Set usage authority of url used in workspace - ワークスペースで使用するurlの使用権限の設定する
+        #
+        exec_stat = "認証基盤 route設定"
+        post_data = {
+            "route_id" : namespace,
+            "template_file" : "epoch-system-ws-template.conf",
+            "render_params" : {
+                "workspace_id" : workspace_id,
+            }
+        }
+        response = requests.post(
+            "{}settings/{}/clients/epoch-system/route".format(api_url_epai, os.environ["EPOCH_EPAI_REALM_NAME"]),
+            headers=post_headers,
+            data=json.dumps(post_data)
+        )
         # 正常時以外はExceptionを発行して終了する
         if response.status_code != 200:
             globals.logger.debug(response.text)
-            error_detail = "認証基盤 client設定に失敗しました。 {}".format(response.status_code)
+            error_detail = "認証基盤 route設定に失敗しました。 {}".format(response.status_code)
             raise common.UserException(error_detail)
 
-    #
-    # Set usage authority of url used in workspace - ワークスペースで使用するurlの使用権限の設定する
-    #
-    exec_stat = "認証基盤 route設定"
-    post_data = {
-        "route_id" : namespace,
-        "template_file" : "epoch-system-ws-template.conf",
-        "render_params" : {
-            "workspace_id" : workspace_id,
-        }
-    }
-    response = requests.post(
-        "{}settings/{}/clients/epoch-system/route".format(api_url_epai, os.environ["EPOCH_EPAI_REALM_NAME"]),
-        headers=post_headers,
-        data=json.dumps(post_data)
-    )
-    # 正常時以外はExceptionを発行して終了する
-    if response.status_code != 200:
-        globals.logger.debug(response.text)
-        error_detail = "認証基盤 route設定に失敗しました。 {}".format(response.status_code)
-        raise common.UserException(error_detail)
+        #
+        # Do "httpd graceful" - Apacheの設定読込を行う
+        #
+        exec_stat = "認証基盤 設定読み込み"
+        response = requests.put("{}{}".format(api_url_epai, 'apply_settings'), headers=post_headers, data="{}")
+        if response.status_code != 200:
+            globals.logger.debug(response.text)
+            error_detail = "認証基盤 設定読み込みに失敗しました。 {}".format(response.status_code)
+            raise common.UserException(error_detail)
 
-    #
-    # Do "httpd graceful" - Apacheの設定読込を行う
-    #
-    exec_stat = "認証基盤 設定読み込み"
-    response = requests.put("{}{}".format(api_url_epai, 'apply_settings'), headers=post_headers, data="{}")
-    if response.status_code != 200:
-        globals.logger.debug(response.text)
-        error_detail = "認証基盤 設定読み込みに失敗しました。 {}".format(response.status_code)
-        raise common.UserException(error_detail)
+    except common.UserException as e:
+        globals.logger.debug(e.args)
+        raise
+    except Exception as e:
+        globals.logger.debug(e.args)
+        raise
+
+def set_roles(workspace_id):
+    """role設定するjsonの内容を編集する（client毎にロールが必要だが内容は同じのため共通化）
+        Edit the content of json to set role (role is required for each client, but the content is the same, so it is common)
+
+    Args:
+        workspace_id (int): workspace id
+
+    Returns:
+        json: "roles" = [ ]
+    """
+
+    try:
+
+        json_roles = {
+            "roles" : [
+                # ロール権限をすべて定義 Define all role permissions
+                {
+                    "name": const.ROLE_WS_ROLE_WS_REFERENCE[0].format(workspace_id),
+                    "composite_roles": [],
+                    "attributes": {
+                        "display": [ const.ROLE_WS_ROLE_WS_REFERENCE[1] ],
+                        "display_default": [ const.ROLE_WS_ROLE_WS_REFERENCE[2] ],
+                    }
+                },
+                {
+                    "name": const.ROLE_WS_ROLE_WS_NAME_UPDATE[0].format(workspace_id),
+                    "composite_roles": [],
+                    "attributes": {
+                        "display": [ const.ROLE_WS_ROLE_WS_NAME_UPDATE[1] ],
+                        "display_default": [ const.ROLE_WS_ROLE_WS_NAME_UPDATE[2] ],
+                    }
+                },
+                {
+                    "name": const.ROLE_WS_ROLE_WS_CI_UPDATE[0].format(workspace_id),
+                    "composite_roles": [],
+                    "attributes": {
+                        "display": [ const.ROLE_WS_ROLE_WS_CI_UPDATE[1] ],
+                        "display_default": [ const.ROLE_WS_ROLE_WS_CI_UPDATE[2] ],
+                    }
+                },
+                {
+                    "name": const.ROLE_WS_ROLE_WS_CD_UPDATE[0].format(workspace_id),
+                    "composite_roles": [],
+                    "attributes": {
+                        "display": [ const.ROLE_WS_ROLE_WS_CD_UPDATE[1] ],
+                        "display_default": [ const.ROLE_WS_ROLE_WS_CD_UPDATE[2] ],
+                    }
+                },
+                {
+                    "name": const.ROLE_WS_ROLE_WS_DELETE[0].format(workspace_id),
+                    "composite_roles": [],
+                    "attributes": {
+                        "display": [ const.ROLE_WS_ROLE_WS_DELETE[1] ],
+                        "display_default": [ const.ROLE_WS_ROLE_WS_DELETE[2] ],
+                    }
+                },
+                {
+                    "name": const.ROLE_WS_ROLE_OWNER_ROLE_SETTING[0].format(workspace_id),
+                    "composite_roles": [],
+                    "attributes": {
+                        "display": [ const.ROLE_WS_ROLE_OWNER_ROLE_SETTING[1] ],
+                        "display_default": [ const.ROLE_WS_ROLE_OWNER_ROLE_SETTING[2] ],
+                    }
+                },
+                {
+                    "name": const.ROLE_WS_ROLE_MEMBER_ADD[0].format(workspace_id),
+                    "composite_roles": [],
+                    "attributes": {
+                        "display": [ const.ROLE_WS_ROLE_MEMBER_ADD[1] ],
+                        "display_default": [ const.ROLE_WS_ROLE_MEMBER_ADD[2] ],
+                    }
+                },
+                {
+                    "name": const.ROLE_WS_ROLE_MEMBER_ROLE_UPDATE[0].format(workspace_id),
+                    "composite_roles": [],
+                    "attributes": {
+                        "display": [ const.ROLE_WS_ROLE_MEMBER_ROLE_UPDATE[1] ],
+                        "display_default": [ const.ROLE_WS_ROLE_MEMBER_ROLE_UPDATE[2] ],
+                    }
+                },
+                {
+                    "name": const.ROLE_WS_ROLE_CI_PIPELINE_RESULT[0].format(workspace_id),
+                    "composite_roles": [],
+                    "attributes": {
+                        "display": [ const.ROLE_WS_ROLE_CI_PIPELINE_RESULT[1] ],
+                        "display_default": [ const.ROLE_WS_ROLE_CI_PIPELINE_RESULT[2] ],
+                    }
+                },
+                {
+                    "name": const.ROLE_WS_ROLE_MANIFEST_UPLOAD[0].format(workspace_id),
+                    "composite_roles": [],
+                    "attributes": {
+                        "display": [ const.ROLE_WS_ROLE_MANIFEST_UPLOAD[1] ],
+                        "display_default": [ const.ROLE_WS_ROLE_MANIFEST_UPLOAD[2] ],
+                    }
+                },
+                {
+                    "name": const.ROLE_WS_ROLE_MANIFEST_SETTING[0].format(workspace_id),
+                    "composite_roles": [],
+                    "attributes": {
+                        "display": [ const.ROLE_WS_ROLE_MANIFEST_SETTING[1] ],
+                        "display_default": [ const.ROLE_WS_ROLE_MANIFEST_SETTING[2] ],
+                    }
+                },
+                {
+                    "name": const.ROLE_WS_ROLE_CD_EXECUTE[0].format(workspace_id),
+                    "composite_roles": [],
+                    "attributes": {
+                        "display": [ const.ROLE_WS_ROLE_CD_EXECUTE[1] ],
+                        "display_default": [ const.ROLE_WS_ROLE_CD_EXECUTE[2] ],
+                    }
+                },
+                {
+                    "name": const.ROLE_WS_ROLE_CD_EXECUTE_RESULT[0].format(workspace_id),
+                    "composite_roles": [],
+                    "attributes": {
+                        "display": [ const.ROLE_WS_ROLE_CD_EXECUTE_RESULT[1] ],
+                        "display_default": [ const.ROLE_WS_ROLE_CD_EXECUTE_RESULT[2] ],
+                    }
+                },
+                # ロールをすべて定義 Define all roles
+                {
+                    "name": const.ROLE_WS_OWNER[0].format(workspace_id),
+                    "composite_roles": [ const.ROLE_WS_ROLE_WS_REFERENCE[0].format(workspace_id),
+                                        const.ROLE_WS_ROLE_WS_NAME_UPDATE[0].format(workspace_id),
+                                        const.ROLE_WS_ROLE_WS_CI_UPDATE[0].format(workspace_id),
+                                        const.ROLE_WS_ROLE_WS_CD_UPDATE[0].format(workspace_id),
+                                        const.ROLE_WS_ROLE_WS_DELETE[0].format(workspace_id),
+                                        const.ROLE_WS_ROLE_OWNER_ROLE_SETTING[0].format(workspace_id),
+                                        const.ROLE_WS_ROLE_MEMBER_ADD[0].format(workspace_id),
+                                        const.ROLE_WS_ROLE_MEMBER_ROLE_UPDATE[0].format(workspace_id),
+                                        const.ROLE_WS_ROLE_CI_PIPELINE_RESULT[0].format(workspace_id),
+                                        const.ROLE_WS_ROLE_MANIFEST_UPLOAD[0].format(workspace_id),
+                                        const.ROLE_WS_ROLE_MANIFEST_SETTING[0].format(workspace_id),
+                                        const.ROLE_WS_ROLE_CD_EXECUTE[0].format(workspace_id),
+                                        const.ROLE_WS_ROLE_CD_EXECUTE_RESULT[0].format(workspace_id),
+                    ],
+                    "attributes": {
+                        "display": [ const.ROLE_WS_OWNER[1] ],
+                        "display_default": [ const.ROLE_WS_OWNER[2] ],
+                    }
+                },
+                {
+                    "name": const.ROLE_WS_MANAGER[0].format(workspace_id),
+                    "composite_roles": [ const.ROLE_WS_ROLE_WS_REFERENCE[0].format(workspace_id),
+                                        const.ROLE_WS_ROLE_WS_NAME_UPDATE[0].format(workspace_id),
+                                        const.ROLE_WS_ROLE_WS_CI_UPDATE[0].format(workspace_id),
+                                        const.ROLE_WS_ROLE_WS_CD_UPDATE[0].format(workspace_id),
+                                        const.ROLE_WS_ROLE_MEMBER_ADD[0].format(workspace_id),
+                                        const.ROLE_WS_ROLE_MEMBER_ROLE_UPDATE[0].format(workspace_id),
+                                        const.ROLE_WS_ROLE_CI_PIPELINE_RESULT[0].format(workspace_id),
+                                        const.ROLE_WS_ROLE_MANIFEST_UPLOAD[0].format(workspace_id),
+                                        const.ROLE_WS_ROLE_MANIFEST_SETTING[0].format(workspace_id),
+                                        const.ROLE_WS_ROLE_CD_EXECUTE[0].format(workspace_id),
+                                        const.ROLE_WS_ROLE_CD_EXECUTE_RESULT[0].format(workspace_id),
+                    ],
+                    "attributes": {
+                        "display": [ const.ROLE_WS_MANAGER[1] ],
+                        "display_default": [ const.ROLE_WS_MANAGER[2] ],
+                    }
+                },
+                {
+                    "name": const.ROLE_WS_MEMBER_MG[0].format(workspace_id),
+                    "composite_roles": [ const.ROLE_WS_ROLE_WS_REFERENCE[0].format(workspace_id),
+                                        const.ROLE_WS_ROLE_MEMBER_ADD[0].format(workspace_id),
+                                        const.ROLE_WS_ROLE_MEMBER_ROLE_UPDATE[0].format(workspace_id),
+                    ],
+                    "attributes": {
+                        "display": [ const.ROLE_WS_MEMBER_MG[1] ],
+                        "display_default": [ const.ROLE_WS_MEMBER_MG[2] ],
+                    }
+                },
+                {
+                    "name": const.ROLE_WS_CI_SETTING[0].format(workspace_id),
+                    "composite_roles": [ const.ROLE_WS_ROLE_WS_REFERENCE[0].format(workspace_id),
+                                        const.ROLE_WS_ROLE_WS_CI_UPDATE[0].format(workspace_id),
+                                        const.ROLE_WS_ROLE_CI_PIPELINE_RESULT[0].format(workspace_id),
+                                        const.ROLE_WS_ROLE_MANIFEST_UPLOAD[0].format(workspace_id),
+                    ],
+                    "attributes": {
+                        "display": [ const.ROLE_WS_CI_SETTING[1] ],
+                        "display_default": [ const.ROLE_WS_CI_SETTING[2] ],
+                    }
+                },
+                {
+                    "name": const.ROLE_WS_CI_RESULT[0].format(workspace_id),
+                    "composite_roles": [ const.ROLE_WS_ROLE_WS_REFERENCE[0].format(workspace_id),
+                                        const.ROLE_WS_ROLE_CI_PIPELINE_RESULT[0].format(workspace_id),
+                    ],
+                    "attributes": {
+                        "display": [ const.ROLE_WS_CI_RESULT[1] ],
+                        "display_default": [ const.ROLE_WS_CI_RESULT[2] ],
+                    }
+                },
+                {
+                    "name": const.ROLE_WS_CD_SETTING[0].format(workspace_id),
+                    "composite_roles": [ const.ROLE_WS_ROLE_WS_REFERENCE[0].format(workspace_id),
+                                        const.ROLE_WS_ROLE_WS_CD_UPDATE[0].format(workspace_id),
+                                        const.ROLE_WS_ROLE_MANIFEST_SETTING[0].format(workspace_id),
+                                        const.ROLE_WS_ROLE_CD_EXECUTE_RESULT[0].format(workspace_id),
+                    ],
+                    "attributes": {
+                        "display": [ const.ROLE_WS_CD_SETTING[1] ],
+                        "display_default": [ const.ROLE_WS_CD_SETTING[2] ],
+                    }
+                },
+                {
+                    "name": const.ROLE_WS_CD_EXECUTE[0].format(workspace_id),
+                    "composite_roles": [ const.ROLE_WS_ROLE_WS_REFERENCE[0].format(workspace_id),
+                                        const.ROLE_WS_ROLE_CI_PIPELINE_RESULT[0].format(workspace_id),
+                                        const.ROLE_WS_ROLE_CD_EXECUTE[0].format(workspace_id),
+                                        const.ROLE_WS_ROLE_CD_EXECUTE_RESULT[0].format(workspace_id),
+                    ],
+                    "attributes": {
+                        "display": [ const.ROLE_WS_CD_EXECUTE[1] ],
+                        "display_default": [ const.ROLE_WS_CD_EXECUTE[2] ],
+                    }
+                },
+                {
+                    "name": const.ROLE_WS_CD_RESULT[0].format(workspace_id),
+                    "composite_roles": [ const.ROLE_WS_ROLE_WS_REFERENCE[0].format(workspace_id),
+                                        const.ROLE_WS_ROLE_CD_EXECUTE_RESULT[0].format(workspace_id),
+                    ],
+                    "attributes": {
+                        "display": [ const.ROLE_WS_CD_RESULT[1] ],
+                        "display_default": [ const.ROLE_WS_CD_RESULT[2] ],
+                    }
+                },
+            ]
+        }
+
+        return json_roles
+
+    except common.UserException as e:
+        globals.logger.debug(e.args)
+        raise
+    except Exception as e:
+        globals.logger.debug(e.args)
+        raise
 
 
 def get_workspace_list():
