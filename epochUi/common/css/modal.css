@@ -24,6 +24,7 @@ padding: 16px;
 background-color: rgba(0,0,0,.5);
 }
 #sub-modal-container {
+padding: 32px;
 z-index: 19999;
 }
 .modal {
@@ -92,9 +93,16 @@ max-height: calc( 100% - 96px );
 border-top: 1px solid #DDD;
 overflow: auto;
 }
+.modal[data-type="progress"] .modal-main {
+max-height: calc( 100% - 48px );
+border-radius: 0 0 4px 4px;
+}
 .modal-body {
 padding: 24px;
 background-color: #F8F8F8;
+}
+.modal[data-type="progress"] .modal-body {
+padding: 0;
 }
 .modal-footer {
 height: 48px;
@@ -512,7 +520,7 @@ z-index: -1;
 opacity: 0;
 }
 .item-radio-label {
-display: block;
+display: inline-block;
 margin-right: 4px; padding: 6px 12px 6px 32px;
 background-color: #F2F2F2;
 border: 1px solid transparent;
@@ -902,8 +910,65 @@ border: 2px solid #94D5F1;
 border-radius: 4px;
 color: #333;
 }
-
-
+.item-list-select-button-area {
+margin-top: 8px;
+}
+.item-list-select-button-list {
+display: inline-flex;
+flex-wrap: wrap;
+vertical-align: top;
+}
+.item-list-select-button-item {
+margin: 0 8px 0 0;
+}
+.item-list-select-button-item:last-child {
+margin-right: 0;
+}
+.epoch-button.item-list-select-button {
+height: 30px;
+vertical-align: top;
+padding: 0 8px;
+}
+.item-list-select-name {
+overflow: auto;
+max-height: 160px;
+min-height: 48px;
+margin-top: 8px; padding: 4px;
+background-color: #F8F8F8;
+border: 1px solid #DDD;
+}
+.item-list-select-empty {
+width: 100%;
+text-align: center;
+line-height: 48px;
+color: #CCC;
+}
+.item-list-select-name-list {
+display: flex;
+flex-wrap: wrap;
+}
+.item-list-select-name-list.select-on {
+background-color: #FFF;
+border-color: #EEE;
+}
+.item-list-select-name-item {
+margin: 4px; padding: 4px 8px;
+background-color: #F8F8F8;
+border: 1px solid #EEE;
+border-radius: 4px;
+line-height: 1.5;
+font-size: 12px;
+color: #CCC;
+}
+.select-on .item-list-select-name-item {
+background-color: #EFF9E7;
+border-color: #60C60D;
+color: #111;
+}
+.role-list.select-on .item-list-select-name-item {
+background-color: #60C60D;
+color: #FFF;
+}
 
 .modal-loading-inner {
 overflow: hidden;
@@ -913,6 +978,7 @@ justify-content: center;
 position: relative;
 z-index: 1;
 width: 100%; height: 100%;
+min-height: 80px;
 }
 .modal-loading-inner::after {
 content: '';
@@ -935,6 +1001,9 @@ to { background-position: 32px 0; }
 
 
 /* 固定用レイアウト */
+.layout-padding-0 .modal-body {
+padding: 0;
+}
 .layout-tab-fixed.modal,
 .layout-tab-fixed .modal-main,
 .layout-tab-fixed .modal-body,

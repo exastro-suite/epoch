@@ -634,7 +634,11 @@ background-color: #F7931E;
 .content-menu-button .button-plus::after {
 transform: translate(-50%,-50%) rotate(90deg);
 }
-  
+.content-menu-button:disabled .content-menu-button-svg {
+fill: #DDD!important;
+cursor: default!important;
+}
+
 .content-body {
 height: calc( 100% - 84px );
 }
