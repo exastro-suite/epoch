@@ -1,6 +1,13 @@
 // JavaScript Document
 
-function epochTable() {}
+function epochTable() {
+  const newUniqueID = function() {
+    const strong = 9999,
+          uniqueID = 'ta' + new Date().getTime().toString(16) + Math.floor( strong * Math.random()).toString(16);
+    return uniqueID;
+  }
+  this.tableID = newUniqueID();
+}
 epochTable.prototype = {
   'setup': function( target, thArray, tbArray, option ){
       
@@ -9,21 +16,32 @@ epochTable.prototype = {
       et.fn = new epochCommon();
       et.ws = new webStorage();
       
+      // Modal
+      et.modal = new modalFunction();
+      
       et.target = target;
 
       // Option set
       et.option = {};
       if ( option === undefined ) option = {};
       if ( option.filter !== undefined ) et.option.filter = option.filter;
+      if ( option.paging !== undefined ) et.option.filter = option.paging;
       if ( option.bodyHead !== undefined ) et.option.bodyHead = option.bodyHead;
       if ( option.callback !== undefined ) et.option.callback = option.callback;
+      if ( option.output !== undefined ) et.option.output = option.output;
 
       // Table main
       et.$table = $('<div/>', {
-        'class': 'epoch-table-container'
+        'class': 'epoch-table-container',
+        'id': et.tableID
       });
 
       if ( et.option.bodyHead === 'on') et.$table.addClass('et-bh');
+
+      et.$target = $( target );
+      et.th = $.extend( true, [], thArray ); // thead
+      et.tb = tbArray.concat(); // tbody
+      et.tbCopy = tbArray.concat(); // 初期値として使う
 
       // Filter
       if ( option.filter !== 'off') {
@@ -72,7 +90,7 @@ epochTable.prototype = {
       }
 
       // Body
-      const etBodyHTML= ''
+      const etBodyHTML = ''
       + '<div class="etb">'
         + '<table class="et">'
           + '<thead class="et-h">'
@@ -83,67 +101,88 @@ epochTable.prototype = {
       + '</div>';
       et.$table.append( etBodyHTML );
 
+      // チェックボックスがある場合はinputを追加する
+      et.$checkedList = {};
+      et.checkedList = {};
+      const thLength = et.th.length;
+      for ( let i = 0; i < thLength; i++ ) {
+        if ( et.th[i].type === 'checkbox' || et.th[i].type === 'rowCheck') {
+          const inputID = et.tableID + '-' + et.th[i].id;
+          et.$checkedList[inputID] = $('<input>', {
+            'class': 'et-cb-i', 'type': 'hidden', 'name': inputID
+          });
+          // 初期値があるか
+          if ( option.checked && option.checked[inputID] ) {
+            et.$checkedList[inputID].val(option.checked[inputID].join(','));
+          }
+          et.checkedList[ inputID ] = [];
+          et.$table.append( et.$checkedList[inputID] );
+        }
+      }
+
       // Footer(paging)
       const pagingID = 'etp-s-r-' + et.target,
             pagingRowsPattern = [ 200, 100, 50, 25, 10 ],
             pagingRowsPatternLength = pagingRowsPattern.length;
       
-      let   pagingRowsHTML = '';
+      let pagingRowsHTML = '';
       for ( let i = 0; i < pagingRowsPatternLength; i++ ) {
         const n = String( pagingRowsPattern[i] );
         pagingRowsHTML += ''
         + '<li class="etp-si">'
-          + '<input type="radio" name="' + pagingID + '" id="' + pagingID + n + '" class="etp-sr" value="' + n + '">'
-          + '<label for="' + pagingID + n + '" class="etp-sb">' + n + '</label>'
+          + '<input type="radio" name="' + pagingID + '" id="' + et.tableID + '-' + pagingID + n + '" class="etp-sr" value="' + n + '">'
+          + '<label for="' + et.tableID + '-' + pagingID + n + '" class="etp-sb">' + n + '</label>'
         + '</li>';
       }
       
-      const etFooterHTML = ''
-      + '<div class="ett">'
-        + '<div class="etp">'
-          + '<div class="etp-w">'
-            + '<div class="etp-ih">表示する行数</div>'
-            + '<div class="etp-ib">'
-              + '<div class="etp-s">'
-                + '<div class="etp-sn"></div>'
-                + '<ul class="etp-sl">'
-                  + pagingRowsHTML
-                + '</ul>'
-              + '</div>'
-            + '</div>'
-            + '<div class="etp-if">行</div>'
-          + '</div>'
-          + '<div class="etp-w">'
-            + '<div class="etp-ib etp-ns"></div>'
-            + '<div class="etp-ib">-</div>'
-            + '<div class="etp-ib etp-ne"></div>'
-            + '<div class="etp-ib">/</div>'
-            + '<div class="etp-ib etp-na"></div>'
-            + '<div class="etp-if">件</div>'
-          + '</div>'
-          + '<div class="etp-w">'
-            + '<div class="etp-ib etp-pc">'
-              + '<div class="etp-pc-t">'
-                + '<div class="etp-pc-c">'
-                  + '<input type="number" class="etp-pc-i">'
-                  + '<div class="etp-pc-w"></div>'
+      if ( option.paging !== 'off') {
+        const etFooterHTML = ''
+        + '<div class="ett">'
+          + '<div class="etp">'
+            + '<div class="etp-w">'
+              + '<div class="etp-ih">行数</div>'
+              + '<div class="etp-ib">'
+                + '<div class="etp-s">'
+                  + '<div class="etp-sn"></div>'
+                  + '<ul class="etp-sl">'
+                    + pagingRowsHTML
+                  + '</ul>'
                 + '</div>'
               + '</div>'
+              + '<div class="etp-if">行</div>'
             + '</div>'
-            + '<div class="etp-ib">/</div>'
-            + '<div class="etp-ib etp-pa"></div>'
-            + '<div class="etp-if">頁</div>'
+            + '<div class="etp-w">'
+              + '<div class="etp-ib etp-ns"></div>'
+              + '<div class="etp-ib">-</div>'
+              + '<div class="etp-ib etp-ne"></div>'
+              + '<div class="etp-ib">/</div>'
+              + '<div class="etp-ib etp-na"></div>'
+              + '<div class="etp-if">件</div>'
+            + '</div>'
+            + '<div class="etp-w">'
+              + '<div class="etp-ib etp-pc">'
+                + '<div class="etp-pc-t">'
+                  + '<div class="etp-pc-c">'
+                    + '<input type="number" class="etp-pc-i">'
+                    + '<div class="etp-pc-w"></div>'
+                  + '</div>'
+                + '</div>'
+              + '</div>'
+              + '<div class="etp-ib">/</div>'
+              + '<div class="etp-ib etp-pa"></div>'
+              + '<div class="etp-if">頁</div>'
+            + '</div>'
+            + '<div class="etp-w">'
+              + '<div class="etp-ib"><button class="etp-b" data-button="start"></button></div>'
+              + '<div class="etp-ib"><button class="etp-b" data-button="prev"></button></div>'
+              + '<div class="etp-ib"><button class="etp-b" data-button="next"></button></div>'
+              + '<div class="etp-ib"><button class="etp-b" data-button="end"></button></div>'
+            + '</div>'
           + '</div>'
-          + '<div class="etp-w">'
-            + '<div class="etp-ib"><button class="etp-b" data-button="start"></button></div>'
-            + '<div class="etp-ib"><button class="etp-b" data-button="prev"></button></div>'
-            + '<div class="etp-ib"><button class="etp-b" data-button="next"></button></div>'
-            + '<div class="etp-ib"><button class="etp-b" data-button="end"></button></div>'
-          + '</div>'
-        + '</div>'
-        + '<div class="etd"></div>'
-      + '</div>';
-      et.$table.append( etFooterHTML );
+          + '<div class="etd"></div>'
+        + '</div>';
+        et.$table.append( etFooterHTML );
+      }
 
       // Style
       const etStyleHTML = ''
@@ -180,11 +219,6 @@ epochTable.prototype = {
 
       et.$filterBlock = et.$table.find('.etf-ab');
 
-      et.$target = $( target );
-      et.th = $.extend( true, [], thArray ); // thead
-      et.tb = tbArray.concat(); // tbody
-      et.tbCopy = tbArray.concat(); // 初期値として使う
-
       et.pagingTotalPage = 0;
 
       et.$target.html( et.$table );
@@ -197,7 +231,6 @@ epochTable.prototype = {
 
       et.setting( option );
 
-      et.setBodyHTML();
       // et.datalistHTML();
 
       // フィルタイベント
@@ -269,56 +302,146 @@ epochTable.prototype = {
       }
 
       // ページング
-      et.$footer.find('.etp-b').on('click', function(){
-        const $button = $( this ),
-              type = $button.attr('data-button');
-        switch( type ) {
-          case 'start':
-            et.pageChange( 1 );
-            break;
-          case 'prev':
-            et.pageChange( et.pagingPage - 1 );
-            break;
-          case 'next':
-            et.pageChange( et.pagingPage + 1 );
-            break;
-          case 'end':
-            et.pageChange( et.pagingTotalPage );
-            break;
-        }
-        et.pagingCheck();
-      });
-      et.$currentPageNum.on({
-        'input': function(){
-          et.$currentPageWidth.text( $( this ).val() );
-        },
-        'change': function(){
-          et.pageChange( $( this ).val() );
-        }
-      });
-      
-
-      // 行数変更
-      et.$rowNumber.text( et.pagingNumber ).on('click', function(){
-        et.$rowSelectList.show();
-        $( window ).on('click.pagingNumber', function(e){
-          if ( !$( e.target ).closest('.etp-s').length ) {
-            $( this ).off('click.pagingNumber');
-            et.$rowSelectList.hide();
+      if ( option.paging !== 'off') {
+        et.$footer.find('.etp-b').on('click', function(){
+          const $button = $( this ),
+                type = $button.attr('data-button');
+          switch( type ) {
+            case 'start':
+              et.pageChange( 1 );
+              break;
+            case 'prev':
+              et.pageChange( et.pagingPage - 1 );
+              break;
+            case 'next':
+              et.pageChange( et.pagingPage + 1 );
+              break;
+            case 'end':
+              et.pageChange( et.pagingTotalPage );
+              break;
+          }
+          et.pagingCheck();
+        });
+        et.$currentPageNum.on({
+          'input': function(){
+            et.$currentPageWidth.text( $( this ).val() );
+            et.footerSizeCheck();
+          },
+          'change': function(){
+            et.pageChange( $( this ).val() );
           }
         });
-      });
-      et.$rowSelectRadio.val([et.pagingNumber]).on('change', function(){
-        et.pagingNumber = Number( $( this ).val() );
-        et.pagingPage = 1;
-        et.$rowNumber.text( et.pagingNumber );
-        et.$rowSelectList.hide();
-        et.setBodyHTML();
-      });
+        
+        // 行数変更
+        et.$rowNumber.text( et.pagingNumber ).on('click', function(){
+          et.$rowSelectList.show();
+          $( window ).on('click.pagingNumber', function(e){
+            if ( !$( e.target ).closest('.etp-s').length ) {
+              $( this ).off('click.pagingNumber');
+              et.$rowSelectList.hide();
+            }
+          });
+        });
+        et.$rowSelectRadio.val([et.pagingNumber]).on('change', function(){
+          et.pagingNumber = Number( $( this ).val() );
+          et.pagingPage = 1;
+          et.$rowNumber.text( et.pagingNumber );
+          et.$rowSelectList.hide();
+          et.setBodyHTML();
+          et.footerSizeCheck();
+        });
+      }
+      
+      // チェックボックス
+      et.$tbody.on({
+        'change': function(){
+          const $cb = $( this ),
+                c = $cb.prop('checked'),
+                v = $cb.val(),
+                t = $cb.attr('data-target');
+          if ( c ) {
+            if ( et.checkedList[t].indexOf( v ) === -1 ) {
+              et.checkedList[t].push( v );
+            }
+          } else {
+            const index = et.checkedList[t].indexOf( v );
+            $cb.closest('.et-r').removeClass('et-r-c');
+            if ( index !== -1 ) {
+              et.checkedList[t].splice( index, 1 );
+            }
+          }
+          et.$checkedList[t].val( et.checkedList[t].join(',') ).trigger('change');
 
+        },
+        'input': function(){
+          const $cb = $( this ),
+                col = $cb.attr('data-col'),
+                row = $cb.attr('data-row');
+          et.colCheckboxCheck(col);
+          if ( !$cb.is('.et-cb-rc') ) {
+            et.rowCheckboxCheck(row);
+          }
+        }
+      }, '.et-cb');
+      
+      // すべて選択
+      const rowAllCheck = function($target){
+          $target.each(function(){
+            et.colCheckboxCheck($(this).attr('data-col'));
+          });
+      };
+      const colAllCheck = function($target){
+          $target.each(function(){
+            et.rowCheckboxCheck($(this).attr('data-row'));
+          });
+      };
+      
+      et.$tbody.on({
+        'click': function(){
+          const $allBtn = $( this ),
+                $row = $allBtn.closest('.et-r'),
+                type = $allBtn.attr('data-type');
+          if ( type === 'all-check' || type === 'some-check') {
+            const $target = $row.find('.et-cb:checked').not('.et-cb-rc');
+            $target.prop('checked', false ).removeClass('uncheck-target').change();
+            rowAllCheck( $target );
+          } else {
+            const $target = $row.find('.et-cb').not('.et-cb-rc');
+            $target.prop('checked', true ).removeClass('check-target').change();
+            rowAllCheck( $target );
+          }
+          et.rowCheckboxCheck($row.attr('data-rows'));
+          $allBtn.trigger('mouseenter');
+        }
+      }, '.et-cb-ra');
+      
+      et.$thead.on({
+        'click': function(){
+          const $allBtn = $( this ),
+                col = $allBtn.attr('data-col'),
+                $col = et.$tbody.find('.cn' + col ),
+                type = $allBtn.attr('data-type');
+          if ( type === 'all-check' || type === 'some-check') {
+            const $target = $col.find('.et-cb:checked');
+            $target.prop('checked', false ).removeClass('uncheck-target').change();
+            colAllCheck( $target );
+          } else {
+            const $target = $col.find('.et-cb');
+            $target.prop('checked', true ).removeClass('check-target').change();
+            colAllCheck( $target );
+          }
+          et.colCheckboxCheck( col );
+          $allBtn.trigger('mouseenter');
+        }
+      }, '.et-cb-ca');
+      
+      et.setBodyHTML();
+      
+      if ( option.paging !== 'off') {
+        et.footerSizeCheck();
+      }
       return et.$table;
   },
-
   // ページングボタンDisabled制御
   'pagingCheck': function(){
       const et = this,
@@ -334,6 +457,53 @@ epochTable.prototype = {
         $button.filter('[data-button="end"],[data-button="next"]').prop('disabled', false );
       }
   },
+  'colCheckboxCheck': function( col ){
+    const et = this,
+          $allColCheck = et.$thead.find('.cn' + col ).find('.et-cb-ca'),
+          $colCheckbox = et.$tbody.find('.cn' + col ).find('.et-cb'),
+          colCheckLength = $colCheckbox.length,
+          colCheckedLength = $colCheckbox.filter(':checked').length;
+    if ( colCheckLength === colCheckedLength ) {
+      $allColCheck.attr('data-type', 'all-check');
+    } else if ( colCheckedLength >= 1 ) {
+      $allColCheck.attr('data-type', 'some-check');
+    } else {
+      $allColCheck.removeAttr('data-type');
+    }
+},
+'rowCheckboxCheck': function( row ){
+    const et = this,
+          $allRowCheck = et.$tbody.find('.rn' + row ).find('.et-cb-ra'),
+          $rowCheckbox = et.$tbody.find('.rn' + row ).find('.et-cb').not('.et-cb-rc'),
+          rowCheckLength = $rowCheckbox.length,
+          rowCheckedLength = $rowCheckbox.filter(':checked').length;
+    if ( rowCheckLength === rowCheckedLength ) {
+      $allRowCheck.attr('data-type', 'all-check');
+    } else if ( rowCheckedLength >= 1 ) {
+      $allRowCheck.attr('data-type', 'some-check');
+    } else {
+      $allRowCheck.removeAttr('data-type');
+    }
+  },
+  'setCheckboxCheck': function(){
+      const et = this,
+            thLength = et.th.length;
+      for ( let i = 0; i < thLength; i++ ) {
+        if ( et.th[i].type === 'checkbox' || et.th[i].type === 'rowCheck') {
+          et.colCheckboxCheck(i);
+        }
+        if ( et.th[i].type === 'allCheck') {
+          const cp = et.pagingPage,
+                pn = et.pagingNumber,
+                na = et.tb.length,
+                ns = 1 + pn * ( cp - 1 ),
+                ne = ( na > ns + pn - 1 )? ns + pn - 1: na;
+          for( let j = ns - 1; j < ne; j++ ) {
+            et.rowCheckboxCheck(j);
+          }
+        }
+      }      
+  },  
   // thead and style
   'setHeaderHTML': function(){
       const et = this,
@@ -346,20 +516,26 @@ epochTable.prototype = {
       thHTML += '<tr class="et-r">';
       for( let i = 0; i < thLength; i++ ) {
           // HTML
-          const exclusionType = ['hoveMenu', 'class', 'attr']; // 表示しないタイプ
+          const exclusionType = ['hoverMenu', 'class', 'attr']; // 表示しないタイプ
           if ( exclusionType.indexOf( th[i].type ) === -1 ) {
               thHTML += ''
-              + '<th class="et-c cn' + i + '">'
+              + '<th class="et-c et-c-' + th[i].type + ' cn' + i + '">'
                 + '<div class="et-ci';
-              if ( th[i].sort === 'on') thHTML += ' et-cs'; // Srot
-              thHTML += '" data-column-index="' + i + '">' + th[i].title + '</div>';
-              if ( th[i].resize === 'on') thHTML += '<div class="et-cr"></div>'; // Resize
+              if ( th[i].type === 'checkbox') {
+                thHTML += '"><div class="et-cb-t">' + th[i].title + '</div><div class="et-cbw"><div class="et-cb-ca" data-col="' + i + '"><span></span></div></div></div>';
+              } else if ( th[i].type === 'rowCheck') {
+                thHTML += '"><div class="et-cbw"><div class="et-cb-ca" data-col="' + i + '"><span></span></div></div></div>';
+              } else {
+                if ( th[i].sort === 'on') thHTML += ' et-cs'; // Srot
+                thHTML += '" data-column-index="' + i + '"><div class="et-ht">' + th[i].title + '</div></div>';
+                if ( th[i].resize === 'on') thHTML += '<div class="et-cr"></div>'; // Resize
+              }
               thHTML += '</th>';
           }
           // Style
           const width = th[i].width,
                 align = th[i].align;
-          tStyle += '.et-c.cn' + i + '{';
+          tStyle += '#' + et.tableID + ' .et-c.cn' + i + '{';
           if ( width ) {
               if ( width === 'auto') {
                   tStyle += ''
@@ -374,8 +550,9 @@ epochTable.prototype = {
           tStyle += 'z-index:' + ( thLength - i ) + ';'
           tStyle += '}';
           if ( align ) {
-              tStyle += '.et-b .et-c.cn' + i + '{'
+              tStyle += '#' + et.tableID + ' .et-b .et-c.cn' + i + ' .et-ci{'
               + 'text-align:' + align + ';'
+              + 'justify-content:' + align + ';'
               + '}'
           }
       }
@@ -431,7 +608,7 @@ epochTable.prototype = {
                   const thd = th[j],
                         tbd = tb[i][j];
 
-                  // id, class, attr
+                  // Type = [ id, class, attr ]
                   if ( ['id','class','attr'].indexOf( thd.type ) !== -1 ) {
                       if ( tbd !== null ) {
                           switch( thd.type ){
@@ -482,6 +659,21 @@ epochTable.prototype = {
                               case 'button':
                                   trHTML += et.buttonHTML( thd.title, thd.buttonClass );
                                   break;
+                              case 'checkbox':
+                              case 'rowCheck': {
+                                  const inputID = et.tableID + '-' + thd.id,
+                                        checked = ( et.checkedList[inputID].indexOf( String( tbd )) !== -1  )? true: false;
+                                  trHTML += et.checkboxHTML( thd.id, tbd, checked, i, j, thd.type );
+                                  } break;
+                              case 'div':
+                                  trHTML += '<div class="' + thd.divClass + '"><span></span></div>'
+                                  break;
+                              case 'itemList': {
+                                  trHTML += et.itemListHTML( tbd, thd.item );
+                                  } break;
+                              case 'allCheck':
+                                  trHTML += '<div class="et-cbw"><div class="et-cb-ra"><span></span></div></div></div>';
+                                  break;                                  
                               default:
                           }
                       }
@@ -490,10 +682,9 @@ epochTable.prototype = {
                       + '</td>';
                   }
               }
-              tbHTML += '<tr id="' + idName + '" class="' + rowClassName.join(' ') + '" ' + attr.join(' ') + '>' + trHTML + '</tr>';
+              tbHTML += '<tr id="' + idName + '" class="' + rowClassName.join(' ') + ' rn' + i + '" ' + attr.join(' ') + '>' + trHTML + '</tr>';
           }
           et.$tbody.html( tbHTML );
-          et.pagingStatus();
       } else {
           const noDataHTML = ''
           + '<div class="et-nd"><div class="et-ndi">データがありません。</div></div>';
@@ -503,6 +694,7 @@ epochTable.prototype = {
       }
       
       et.pagingStatus();
+      et.setCheckboxCheck();
       if ( et.option.callback !== undefined ) et.option.callback();
   },
   /* ------------------------------ *\
@@ -589,6 +781,37 @@ epochTable.prototype = {
         + '<span class="et-bui"></span>'
       + '</button>';
   },
+  /* ------------------------------ *\
+     Checkbox HTML
+  \* ------------------------------ */  
+  'checkboxHTML': function( thid, id, checked, row, col, type ) {
+    const c = ( checked )? ' checked': '',
+          et = this,
+          name = et.tableID + '-' + thid + '-et-cb',
+          forID = name + '-' + row + '-' + col + '-' + id,
+          classNmae = ( type === 'rowCheck')? ' et-cb-rc': '';
+    const checkboxHTML = '<div class="et-cbw">'
+        + '<input data-col="' + col + '" data-row="' + row + '" data-type="' + thid + '" data-target="' + et.tableID + '-' + thid + '" class="et-cb' + classNmae + '" name="' + name + '" id="' + forID + '" type="checkbox" value="' + id + '"' + c + '>'
+        + '<label class="et-cbl" for="' + forID + '"></label';
+    + '</div>';
+    return checkboxHTML;
+  },
+  /* ------------------------------ *\
+     Item list HTML
+  \* ------------------------------ */  
+  'itemListHTML': function( value, list ) {
+    const a = value.split(','),
+          l = a.length;
+    let h = '<ul class="et-il-l">'
+    for ( let i = 0; i < l; i++ ) {
+      const d = list.filter(function(v){
+        if ( v[0] === a[i] ) return v;
+      })[0];
+      h += '<li class="et-il-i">' + d[1] + '</li>';
+    }
+    h += '</ul>';
+    return h;
+  },
   /* ------------------------------ *\  
      ソート
   \* ------------------------------ */
@@ -601,7 +824,7 @@ epochTable.prototype = {
       
       if ( et.$thead !== undefined ) {
         et.$thead.find('.et-ci').removeAttr('data-sort');
-        et.$thead.find('.et-ci').eq( index ).attr('data-sort', order );
+        et.$thead.find('.et-ci[data-column-index="' + index + '"]').attr('data-sort', order );
     }
           
       tb.sort(function( a, b ){
@@ -659,22 +882,23 @@ epochTable.prototype = {
           + '<div class="etf-fb">';
         switch( th[i].type ) {
         case 'url':
+        case 'number':
         case 'text':
           filterHTML += ''
             + '<div class="etf-fb-iwf"><input type="text" class="etf-fb-i etf-fb-it" list="list' + i + '"></div>'
             + '<div class="etf-fb-iwf">'
               + '<ul class="etf-fb-fol">'
                 + '<li class="etf-fb-foi">'
-                + '<div class="etf-fb-foc"><input type="checkbox" value="r" class="etf-fb-fob" id="etf-fb-r' + nameID + '"><label for="etf-fb-r' + nameID + '" class="etf-fb-fot">正規表現</label></div>'
+                  + '<div class="etf-fb-foc"><input type="checkbox" value="r" class="etf-fb-fob" id="' + et.tableID + '-etf-fb-r' + nameID + '"><label for="' + et.tableID + '-etf-fb-r' + nameID + '" class="etf-fb-fot">正規表現</label></div>'
                 + '</li>'
                 + '<li class="etf-fb-foi">'
-                  + '<div class="etf-fb-foc"><input type="checkbox" value="l" class="etf-fb-fob" id="etf-fb-l' + nameID + '"><label for="etf-fb-l' + nameID + '" class="etf-fb-fot">大文字小文字を区別</label></div>'
+                  + '<div class="etf-fb-foc"><input type="checkbox" value="l" class="etf-fb-fob" id="' + et.tableID + '-etf-fb-l' + nameID + '"><label for="' + et.tableID + '-etf-fb-l' + nameID + '" class="etf-fb-fot">大文字小文字を区別</label></div>'
                 + '</li>'
                 + '<li class="etf-fb-foi">'
-                  + '<div class="etf-fb-foc"><input type="checkbox" value="m" class="etf-fb-fob" id="etf-fb-m' + nameID + '"><label for="etf-fb-m' + nameID + '" class="etf-fb-fot">完全一致</label></div>'
+                  + '<div class="etf-fb-foc"><input type="checkbox" value="m" class="etf-fb-fob" id="' + et.tableID + '-etf-fb-m' + nameID + '"><label for="' + et.tableID + '-etf-fb-m' + nameID + '" class="etf-fb-fot">完全一致</label></div>'
                 + '</li>'
                 + '<li class="etf-fb-foi">'
-                  + '<div class="etf-fb-foc"><input type="checkbox" value="n" class="etf-fb-fob" id="etf-fb-n' + nameID + '"><label for="etf-fb-n' + nameID + '" class="etf-fb-fot">否定</label></div>'
+                  + '<div class="etf-fb-foc"><input type="checkbox" value="n" class="etf-fb-fob" id="' + et.tableID + '-etf-fb-n' + nameID + '"><label for="' + et.tableID + '-etf-fb-n' + nameID + '" class="etf-fb-fot">否定</label></div>'
                 + '</li>'
               + '</ul>'
             + '</div>';
@@ -701,8 +925,8 @@ epochTable.prototype = {
             filterHTML += ''
             + '<li class="etf-fb-si">'
               + '<div class="etf-fb-sc">'
-                + '<input id="etf-fb-scb-' + nameID + '-' + j + '" type="checkbox" class="etf-fb-scb" value="' + tbList[j] + '">'
-                + '<label for="etf-fb-scb-' + nameID + '-' + j + '" class="etf-fb-scl">'
+                + '<input name="etf-fb-scb-' + nameID + '" id="' + et.tableID + '-etf-fb-scb-' + nameID + '-' + j + '" type="checkbox" class="etf-fb-scb" value="' + tbList[j] + '">'
+                + '<label for="' + et.tableID + '-etf-fb-scb-' + nameID + '-' + j + '" class="etf-fb-scl">'
                   + '<span class="etf-fb-st">' + tbList[j] + '</span>'
                 + '</label>'
               + '</div>'
@@ -716,8 +940,8 @@ epochTable.prototype = {
             filterHTML += ''
             + '<li class="etf-fb-si">'
               + '<div class="etf-fb-sc">'
-                + '<input id="etf-fb-scb-' + nameID + '-' + key + '" type="checkbox" class="etf-fb-scb" value="' + key + '">'
-                + '<label for="etf-fb-scb-' + nameID + '-' + key + '" class="etf-fb-scl">'
+                + '<input name="etf-fb-scb-' + nameID + '" id="' + et.tableID + '-etf-fb-scb-' + nameID + '-' + key + '" type="checkbox" class="etf-fb-scb" value="' + key + '">'
+                + '<label for="' + et.tableID + '-etf-fb-scb-' + nameID + '-' + key + '" class="etf-fb-scl">'
                   + et.statusHTML( th[i].list[key], key, false ) + '<span class="etf-fb-st">' + th[i].list[key] + '</span>'
                 + '</label>'
               + '</div>'
@@ -725,6 +949,26 @@ epochTable.prototype = {
           }
           filterHTML += '</ul>'
           } break;
+        case 'checkbox': {
+          filterHTML += '<ul class="etf-fb-cl">';
+          th[i].list = {
+            'all': '全て',
+            'checked': '選択済み',
+            'unchecked': '未選択'
+          }
+          for ( const key in th[i].list ) {
+            filterHTML += ''
+            + '<li class="etf-fb-ci">'
+              + '<div class="etf-fb-cc">'
+                + '<input name="etf-fb-ccb-' + nameID + '" id="' + et.tableID + '-etf-fb-ccb-' + nameID + '-' + key + '" type="radio" class="etf-fb-ccb" value="' + key + '">'
+                + '<label for="' + et.tableID + '-etf-fb-ccb-' + nameID + '-' + key + '" class="etf-fb-ccl">'
+                  + th[i].list [key]
+                + '</label>'
+              + '</div>'
+            + '</li>'
+          }
+          filterHTML += '</ul>';
+          } break;          
         default:
         }
         filterHTML += '</div></div>';
@@ -762,6 +1006,7 @@ epochTable.prototype = {
             });
             } break;
           case 'url':
+          case 'number':
           case 'text': {
             let value = '',
                 option = [];
@@ -827,6 +1072,7 @@ epochTable.prototype = {
             }
             } break;
           case 'url':
+          case 'number':
           case 'text': {
             const option = [];
             $filterArea.find('.etf-fb-fob:checked').each(function(){
@@ -885,6 +1131,7 @@ epochTable.prototype = {
             }
             } break;
           case 'url':
+          case 'number':
           case 'text':
             if ( filter.value !== undefined && filter.value !== '') {
               filterStatusHTML += et.statusBarHTML( title, filter.value, i );
@@ -941,6 +1188,7 @@ epochTable.prototype = {
               }
               break;
             case 'url': 
+            case 'number':
             case 'text': { 
               const option = thfl.option,
                     leterFlg = ( option.indexOf('l') !== -1 )? true: false,
@@ -1020,6 +1268,10 @@ epochTable.prototype = {
         et.pagingNumber = option.pagingNumber;
       }
     }
+    // チェックボックス
+    if ( option.checked !== undefined ) {
+      et.checkedList = option.checked;
+    }
     // ソート
     if ( option.sortCol !== undefined && option.sortType !== undefined ) {
       et.sort( option.sortCol, option.sortType );
@@ -1043,6 +1295,20 @@ epochTable.prototype = {
     et.setBodyHTML();
   },
   /* ------------------------------ *\
+     フッターバーのサイズを調整する
+  \* ------------------------------ */  
+  'footerSizeCheck': function(){
+    const et = this,
+          $footerBar = et.$footer.find('.etp'),
+          sWidth = $footerBar.get(0).scrollWidth,
+          cWidth = $footerBar.get(0).offsetWidth;
+    if ( cWidth < sWidth ) {
+      $footerBar.css('transform', 'scale(' + ( cWidth / sWidth ) + ')')
+    } else {
+      $footerBar.removeAttr('style');
+    }
+  },
+  /* ------------------------------ *\
      Loading start
   \* ------------------------------ */
   'loadingStart': function(){
@@ -1055,5 +1321,44 @@ epochTable.prototype = {
   'loadingEnd': function(){
     this.$table.removeClass('et-wait');
     this.$table.find('.et-wt').remove();
+  },
+  /* ------------------------------ *\
+     Output Excel(xlsx)
+  \* ------------------------------ */
+  'excel': function(){
+    const et = this;
+    
+    // header
+    const header = [[]],
+          thLength = et.th.length;
+    for ( let i = 0; i < thLength; i++ ) {
+        const title = ( et.th[i].title !== undefined )? et.th[i].title: '';
+        header[0].push(title);
+    }
+    
+    // WebWorker
+    const js = './common/js/ww_tablejs_sheetjs.js',
+          ww = new Worker( js );
+    
+    ww.onmessage = function( e ){
+        const result = e.data;
+        if ( result.status === 200 ) {
+            if ( result.data.constructor.name === 'Blob') {
+                const url = window.URL.createObjectURL( result.data ),
+                      a = document.createElement('a');
+                document.body.appendChild( a );
+                a.href = url;
+                a.download = "out.xlsx";
+                a.click();
+                window.URL.revokeObjectURL( url );
+                document.body.removeChild( a );
+            } else {
+                window.console.error('"XlSX Blob" convert error.');
+            }
+        } else {
+            window.console.error( result.message );
+        }
+    }
+    ww.postMessage( header.concat( et.tb ));
   }
 };

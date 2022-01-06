@@ -512,7 +512,51 @@ const wsModalJSON = {
               'name': 'environment-certificate',
               'class': 'input-pickup input-pickup-external',
               'placeholder': '実行環境のBase64 encoded certificateを入力してください'
+            },
+            'environmentDeployMember': {
+              'type': 'listSelect',
+              'title': 'Deploy権限',
+              'name': 'environment-deploy-member',
+              'button': {
+                'select': 'ユーザを選択する',
+                'clear': 'クリア'
+              },
+              'item': {
+                'all': 'CD実行が可能なユーザ全員',
+                'select': '下記の選択したユーザのみ'
+              },
+              'list': [],
+              'col': 2
             }
+          }
+        }
+      }
+    }
+  },
+  /* -------------------------------------------------- *\
+     Argo CD Deploy権限 メンバー選択
+  \* -------------------------------------------------- */
+  'pipelineArgoDeployMember': {
+    'id': 'pipeline-argo-deploy-member',
+    'title': 'Argo CD Deploy権限',
+    'class': 'layout-tab-fixed',
+    'footer': {
+      'ok': {
+        'text': '決定',
+        'type': 'positive'
+      },
+      'cancel': {
+        'text': 'キャンセル',
+        'type': 'negative'
+      },
+    },
+    'block': {
+      'pipelineArgoDeployMemberSelect': {
+        'title': 'メンバー選択',
+        'item': {
+          'pipelineArgoDeployMemberSelectBody': {
+            'id': 'pipeline-argo-deploy-member-select',
+            'type': 'loading'
           }
         }
       }
@@ -1268,11 +1312,11 @@ $('#side').on('transitionend', function(e){
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // モーダル内の入力データを wsDataJSON に入れる
-const setInputData = function( $modal, tabTarget, commonTarget ){
-  const inputTarget = 'input[type="text"], input[type="password"], input[type="radio"]:checked, textarea';
+const setInputData = function( tabTarget, commonTarget ){
+  const inputTarget = 'input[type="text"], input[type="password"], input[type="radio"]:checked, textarea, input[type="hidden"]';
   
   // タブリストの作成
-  $modal.find('.modal-tab-item').each( function(){
+  modal.$modal.find('.modal-tab-item').each( function(){
     const $tab = $( this ),
           tabID = $tab.attr('data-id'),
           tabText = $tab.text();
@@ -1280,7 +1324,7 @@ const setInputData = function( $modal, tabTarget, commonTarget ){
     if ( wsDataJSON[ tabTarget ][ tabID ] === undefined ) wsDataJSON[ tabTarget ][ tabID ] = new Object();
     wsDataJSON[ tabTarget ][ tabID ]['text'] = tabText;
   });
-  $modal.find( inputTarget ).each( function(){
+  modal.$modal.find( inputTarget ).each( function(){
     const $input = $( this ),
           name = $input.attr('name');
     // タブの中か調べる
@@ -1306,8 +1350,8 @@ const setInputData = function( $modal, tabTarget, commonTarget ){
 };
 
 // 削除されたタブに合わせてデータも削除する
-const deleteTabData = function( $modal, target ){
-  const deleteData = $modal.attr('data-tab-delete');
+const deleteTabData = function( target ){
+  const deleteData = modal.$modal.attr('data-tab-delete');
   if ( deleteData !== undefined ) {
     const deleteArray = deleteData.split(','),
           deleteLength = deleteArray.length;
@@ -1322,10 +1366,10 @@ const deleteTabData = function( $modal, target ){
 };
 
 // 入力されたパラメータを wsDataJSON に入れる
-const setParameterData = function( $modal ){
-  const inputTarget = 'input[type="text"], input[type="password"], input[type="radio"]:checked, textarea';
+const setParameterData = function(){
+  const inputTarget = 'input[type="text"], input[type="password"], input[type="radio"]:checked, textarea, input[type="hidden"]';
   
-  $modal.find( inputTarget ).each( function(){
+  modal.$modal.find( inputTarget ).each( function(){
     const $input = $( this ),
           fileID = $input.attr('data-file'),
           enviromentID =  $input.attr('data-enviroment'),
@@ -1503,9 +1547,10 @@ const templateFileList = function(){
   
   $moveButton.on('click', function(){
     modal.change('manifestParametar', {
-      'ok': function( $modal ){
-        setParameterData( $modal );
+      'ok': function(){
+        setParameterData();
         apply_manifest();
+        modal.close();
       },
       'callback': inputParameter
     }, 1160 );
@@ -2204,6 +2249,77 @@ const itaStatusList = function(){
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
+//   Argo CD Deploy可能メンバー代入
+// 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+const deployMembers = wsModalJSON.pipelineArgo.block.environmentList.tab.item.environmentDeployMember;
+
+// ダミーデータ作成
+for ( let i = 1; i <= 1000; i++ ) {
+  deployMembers.list.push([
+    i,
+    i,
+    '山田 ' + i + '号',
+    'no' + i + '-yamada@example.com',
+  ]);
+}
+
+const argoCdAddDeployMembersModal = function(){
+  const $argoModal = $('#pipeline-argo');
+
+  $argoModal.on('click', '.item-list-select-button', function(){
+      const $select = $( this ).closest('.item-block'),
+            value = $select.find('.item-list-select-id').val(),
+            ids = ( value === '')? []: value.split(','),
+            subModal = new modalFunction( wsModalJSON, wsDataJSON );
+      
+      subModal.open('pipelineArgoDeployMember', {
+        'ok': function(){
+          const id = subModal.$modal.find('.et-cl').val();
+          subModal.createListSelectSetList( $select, id, deployMembers.list, deployMembers.col );
+        },
+        'callback': function(){
+          const et = new epochTable();
+          et.setup('#pipeline-argo-deploy-member-select', [
+            {
+              'title': 'チェックボックス',
+              'type': 'checkbox',
+              'filter': 'on',
+            },
+            {
+              'title': 'ID',
+              'type': 'number',
+              'width': '10%',
+              'align': 'right',
+              'sort': 'on',
+              'filter': 'on',
+            },
+            {
+              'title': '名前',
+              'type': 'text',
+              'width': '40%',
+              'align': 'left',
+              'sort': 'on',
+              'filter': 'on',
+            },
+            {
+              'title': 'メールアドレス',
+              'type': 'text',
+              'align': 'left',
+              'sort': 'on',
+              'filter': 'on',
+            }
+          ], deployMembers.list, {
+            'checked' : ids
+          } );
+        }
+      }, 720,'sub');
+  });
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
 //   Argo CD 実行結果一覧
 // 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2316,47 +2432,54 @@ $content.find('.modal-open, .workspace-status-item').not('[data-button="pipeline
   switch( target ) {
     // Workspace
     case 'workspace': {
-      ok = function( $modal ){
-        setInputData( $modal, '', 'workspace');
+      ok = function(){
+        setInputData('', 'workspace');
         workspaceImageUpdate();
+        modal.close();
       };   
       } break;
     // Gitサービス
     case 'gitService': {
-      ok = function( $modal ){
-        setInputData( $modal, 'application-code', 'git-service');
-        deleteTabData( $modal, 'application-code');
+      ok = function(){
+        setInputData('application-code', 'git-service');
+        deleteTabData('application-code');
         workspaceImageUpdate();
+        modal.close();
       };   
       } break;
     // レジストリサービス
     case 'registryService': {
-      ok = function( $modal ){
-        setInputData( $modal, 'application-code', 'registry-service');
+      ok = function(){
+        setInputData('application-code', 'registry-service');
         workspaceImageUpdate();
+        modal.close();
       };      
       callback = registryServiceInput;
     } break;
     // Argo CD
     case 'pipelineArgo': {
-      ok = function( $modal ){
-        setInputData( $modal, 'environment', '');
-        deleteTabData( $modal, 'environment');
+      ok = function(){
+        setInputData('environment', '');
+        deleteTabData('environment');
         workspaceImageUpdate();
-      };      
+        modal.close();
+      };
+      callback = argoCdAddDeployMembersModal;
       } break;
     // Tekton
     case 'pipelineTekton': {
-      ok = function( $modal ){
-        setInputData( $modal, 'application-code', '');
+      ok = function(){
+        setInputData('application-code', '');
         workspaceImageUpdate();
+        modal.close();
       };      
       } break;
     // Argo CD Gitサービス
     case 'gitServiceArgo': {
-      ok = function( $modal ){
-        setInputData( $modal, 'environment', 'git-service-argo');
+      ok = function(){
+        setInputData('environment', 'git-service-argo');
         workspaceImageUpdate();
+        modal.close();
       };
     } break;
     
@@ -2382,9 +2505,10 @@ $content.find('.modal-open, .workspace-status-item').not('[data-button="pipeline
     } break;
     // Manifestパラメータ
     case 'manifestParametar': {
-      ok = function( $modal ){
-        setParameterData( $modal );
+      ok = function(){
+        setParameterData();
         apply_manifest();
+        modal.close();
       };
       callback = inputParameter;
       width = 1160;
@@ -3390,7 +3514,11 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         delete wsModalJSON.pipelineArgo.footer.ok;
       }
 
-      // Set buttons for IaC repository modal dialog - IaCリポジトリモーダルダイアログのボタンを設定する
+      // Set the Deploy permission item for the ArgoCD modal dialog - ArgoCDモーダルダイアログのDeploy権限項目を設定する
+      if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-member-role-update".replace('{ws_id}',ws_id)) == -1) {
+        delete wsModalJSON.pipelineArgo.block.environmentList.tab.item.environmentDeployMember;
+      }
+            // Set buttons for IaC repository modal dialog - IaCリポジトリモーダルダイアログのボタンを設定する
       if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ws-cd-update".replace('{ws_id}',ws_id)) == -1) {
         delete wsModalJSON.gitServiceArgo.footer.ok;
       }

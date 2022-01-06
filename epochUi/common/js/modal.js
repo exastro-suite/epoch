@@ -9,6 +9,8 @@ function modalFunction( modalJSON, valueJSON ){
     this.modalJSON = modalJSON;
     this.valueJSON = valueJSON;
     
+    this.fn = new epochCommon();
+
     this.focusElements = 'input, button, textarea, a';
     /* -------------------------------------------------- *\
        モーダル用div
@@ -79,33 +81,30 @@ modalFunction.prototype = {
        モーダルを開く
     \* -------------------------------------------------- */
     'open': function( target, funcs, width, type ){
-        const modal = this,
-              $modal = modal.createMain( modal.modalJSON[target], width );
-        modal.$modal = $modal;
+        const modal = this;
         
         if ( type === undefined ) type = 'main';
+        modal.type = type;
+        
+        const $modal = modal.createMain( modal.modalJSON[target], width );
+        if ( modal.$modal !== undefined ) {
+            alert('modal error');
+            return;
+        }
+        modal.$modal = $modal;
         
         if ( type === 'main') {
+
           $('body').addClass('modal-open');
           $('#modal-container').html( $modal ).css('display','flex');
           
           // ボタン
           $modal.find('.modal-menu-button, .modal-close-button').on('click', function(){
             const type = $( this ).attr('data-button');
-            switch( type ) {
-              case 'cancel':
-                if ( funcs.cancel !== undefined ) {
-                  funcs.cancel();
-                } else {
-                  modal.close();
-                }
-                break;
-              case 'ok':
-                if ( funcs.ok !== undefined ) {
-                  funcs.ok( $modal );
-                  modal.close();
-                }
-                break;
+            if ( funcs[type] !== undefined && modal.typeJudgment(funcs[type]) === 'function') {
+              funcs[type]();
+            } else {
+              modal.close();
             }
           });
 
@@ -156,28 +155,31 @@ modalFunction.prototype = {
           
           modal.focusOn('#modal-container', '#container');
           
-        } else if ( type === 'sub') {
+        } else if ( type === 'sub' || type == 'progress') {
           $('#container').off('focusin.modal');
           $('body').addClass('sub-modal-open');
           $('#sub-modal-container').html( $modal ).css('display','flex');
           
           modal.focusOn('#sub-modal-container', '#container, #modal-container');
           
-          $modal.find('.modal-menu-button, .modal-close-button').on('click', function(){
-            modal.focusOff('#container, #modal-container');
-            modal.focusOn('#modal-container', '#container');
-            $('#sub-modal-container').empty().css('display','none');
-            $('body').removeClass('sub-modal-open');
-          });
+          if ( type === 'sub') {
+            $modal.find('.modal-menu-button, .modal-close-button').on('click', function(){
+              modal.subClose();
+              const type = $( this ).attr('data-button');
+              if ( funcs[type] !== undefined && modal.typeJudgment(funcs[type]) === 'function') {
+                funcs[type]();
+              }
+            });
+          }
         }
-               
-        if ( funcs.callback !== undefined ) {
-          funcs.callback();
-        }
-        
         // 入力チェック
         modal.inputErrorCheck();
         
+        if ( funcs.callback !== undefined ) {
+          funcs.callback();
+        }
+
+
         // モーダルを開いた際、.modal-bodyの最初の要素をフォーカスする
         const $modalBodyInput = $modal.find('.modal-body').find( modal.focusElements );
         if ( $modalBodyInput.length ) {
@@ -216,14 +218,27 @@ modalFunction.prototype = {
     \* -------------------------------------------------- */
     'close': function(){
       this.focusOff('#container');
+      this.$modal = undefined;
       $('#modal-container').empty().css('display','none');
       $('body').removeClass('modal-open');
+    },
+    /* -------------------------------------------------- *\
+       サブモーダルを閉じる
+    \* -------------------------------------------------- */
+    'subClose': function(){
+      const modal = this;
+      modal.focusOff('#container, #modal-container');
+      modal.focusOn('#modal-container', '#container');
+      $('#sub-modal-container').empty().css('display','none');
+      $('body').removeClass('sub-modal-open');
+      modal.$modal = undefined;
     },
     /* -------------------------------------------------- *\
        モーダルを切り替える
     \* -------------------------------------------------- */
     'change': function( type, funcs, width ){
       this.focusOff('#container');
+      this.$modal = undefined;
       $('#modal-container').empty();
       this.open( type, funcs, width );
     },
@@ -232,7 +247,7 @@ modalFunction.prototype = {
     \* -------------------------------------------------- */
     'setParameter': function( parentKey ){
       const modal = this,
-            inputTarget = 'input[type="text"], input[type="number"], input[type="password"], input[type="radio"]:checked, textarea';
+            inputTarget = 'input[type="text"], input[type="number"], input[type="password"], input[type="radio"]:checked, textarea, input[type="hidden"]';
       
       const setValue = function( key, value ){
         if ( parentKey === undefined ) {
@@ -270,17 +285,25 @@ modalFunction.prototype = {
        main
     \* -------------------------------------------------- */
     'createMain': function createModal( main, width ){
+      const modal = this;
       if ( width === undefined ) width = 800;
       if ( main.class === undefined ) main.class = '';
       const $modal = $('<div/>', {
         'id': main.id,
-        'data-modal': 'modal-' + this.getUniqueID(),
+        'data-modal': 'modal-' + modal.getUniqueID(),
+        'data-type': modal.type,
         'class': 'modal ' + main.class,
-        'style': 'max-width:' + width + 'px'
+        'style': ( width === 'none')? 'max-width: none': 'max-width:' + width + 'px'
       });
+      
       $modal.append(
         $('<div/>', {'class': 'modal-header'}).append(
-          $('<div/>', {'class': 'modal-title', 'text': main.title }),
+          $('<div/>', {'class': 'modal-title', 'text': main.title })
+        ),
+        $('<div/>', {'class': 'modal-main'}).append( modal.createBody( main.block ) )
+      );
+      if ( modal.type !== 'progress') {
+        $modal.find('.modal-header').append(
           $('<div/>', {'class': 'modal-close'}).append(
             $('<button/>', {
               'class': 'modal-close-button',
@@ -288,10 +311,12 @@ modalFunction.prototype = {
               'data-button': 'cancel'
             })
           )
-        ),
-        $('<div/>', {'class': 'modal-main'}).append( this.createBody( main.block ) ),
-        $('<div/>', {'class': 'modal-footer'}).append( this.createFooter( main.footer ) )
-      );
+        )
+        $modal.append(
+          $('<div/>', {'class': 'modal-footer'}).append( modal.createFooter( main.footer ) )
+        );
+      }
+      
       return $modal;
     },
     /* -------------------------------------------------- *\
@@ -640,6 +665,7 @@ modalFunction.prototype = {
               case 'textarea': return modal.createTextarea( data, tabNumber );
               case 'password': return modal.createPassword( data, tabNumber );
               case 'radio': return modal.createRadio( data, tabNumber );
+              case 'listSelect': return modal.createListSelect( data, tabNumber );
               case 'loading': return modal.createLoadingBlock( data, tabNumber );
               case 'reference': return modal.createReference( data, tabNumber );
               case 'freeitem': return modal.createFreeItem( data, tabNumber );
@@ -734,6 +760,8 @@ modalFunction.prototype = {
           break;
         case 'radio':
           $inputDD.append('<ul class="item-radio-list"></ul');
+          break;
+        default:
       }
       $dl.append( $inputDD );
       
@@ -1311,6 +1339,129 @@ modalFunction.prototype = {
         }
       });
       return $item;
+    },
+    /* -------------------------------------------------- *\
+       リスト選択
+    \* -------------------------------------------------- */
+    'createListSelect': function( select, tabNumber ){
+      const modal = this,
+            $item = modal.createCommonItem('list-select', select, tabNumber );
+            
+      const name = ( tabNumber !== undefined )? tabNumber + '-' + select.name: select.name,
+            checkedValue = modal.searchValue( modal.valueJSON, name ),
+            checkedIdValue = modal.searchValue( modal.valueJSON, name + '-id'),
+            checked = ( checkedValue !== undefined )? name + '-' + checkedValue: undefined,
+            checkedID = ( checkedIdValue !== undefined )? checkedIdValue: '',
+            className = ( select.class !== undefined )? ' ' + select.class: '';
+      
+      // 選択リスト
+      const $selectInfo = $('<dd/>', {
+        'class': 'item-list-select select-on' + className
+      }).append(
+        $('<div/>', {
+          'class': 'item-list-select-name'
+        })
+      ).append(
+        $('<input>', {
+          'type': 'hidden',
+          'class': 'item-list-select-id',
+          'name': name + '-id'
+        })
+      );
+      modal.createListSelectSetList( $selectInfo, checkedID, select.list, select.col );
+      $item.append( $selectInfo );    
+      
+      if ( select.button ) {
+        // 選択ボタン
+        let buttonHTML = ''
+        + '<ul class="item-list-select-button-list">';
+        for ( const key in select.button ) {
+          buttonHTML += ''
+          + '<li class="item-list-select-button-item">'
+            + '<button class="epoch-button modal-block-button item-list-select-button" data-button="' + key + '">' + modal.fn.textEntities( select.button[key] ) + '</button>'
+          + '</li>';
+        }
+        buttonHTML += '</ul>';
+
+        if ( select.item ) {
+          $item.find('.item-list-select-area').append('<ul class="item-radio-list"></ul>')
+          for ( const key in select.item ) {
+            $item.find('.item-radio-list').append(
+              $('<li/>', {'class': 'item-radio-item'}).append(
+                $('<input>', {
+                  'class': 'item-radio item-radio-' + key + className,
+                  'type': 'radio',
+                  'id': name + '-' + key,
+                  'value': key,
+                  'name': name
+                }),
+                $('<label/>', {
+                  'class': 'item-radio-label',
+                  'for': name + '-' + key,
+                  'text': select.item[key]
+                })
+              )
+            );
+          }
+          $item.find('.item-radio-item:last-child').append( buttonHTML );
+
+          // ボタンの有効・無効切り替え
+          const $checkbox = $item.find('.item-radio'),
+                $button = $item.find('.item-list-select-button'),
+                $selectName = $item.find('.item-list-select');
+          $button.prop('disabled', true );
+          $selectName.removeClass('select-on');
+          $checkbox.on('change', function(){
+            if ( $( this ).is('.item-radio-select') ) {
+              $button.prop('disabled', false );
+              $selectName.addClass('select-on');
+            } else {
+              $button.prop('disabled', true );
+              $selectName.removeClass('select-on');
+            }
+          });
+          if ( checked !== undefined ) {
+            $checkbox.filter('#' + checked ).prop('checked', true );
+            if ( $checkbox.filter('#' + checked ).is('.item-radio-select') ) {
+              $button.prop('disabled', false );
+              $selectName.addClass('select-on');
+            }
+          } else {
+            $checkbox.eq(0).prop('checked', true );
+          }
+
+        } else {
+          $item.append( $('<dd>', {
+            'class': 'item-list-select-button-area',
+            'html': buttonHTML
+          }));
+        }
+      }
+        
+      return $item;
+    },
+    'createListSelectSetList': function( $target, id, list, col ){
+      const modal = this,
+            idArray = id.split(',');
+
+      const n = list.filter( function(f) {
+        if ( idArray.indexOf( String( f[0] )) !== -1 ) {
+          return f;
+        }
+      });
+      const nL = n.length;
+      let listHTML = '';
+      if ( nL !== 0 ) {
+        listHTML += '<ul class="item-list-select-name-list">';
+        for ( let i = 0; i < nL; i++ ) {
+          listHTML += '<li class="item-list-select-name-item">' + modal.fn.textEntities( n[i][col] )+ '</li>';
+        }
+        listHTML += '</ul>';
+      } else {
+        listHTML += '<p class="item-list-select-empty">No data</p>';
+      }
+      $target.find('.item-list-select-name').html( listHTML );
+      $target.find('.item-list-select-id').val( id );
     },
     /* -------------------------------------------------- *\
        メッセージ
