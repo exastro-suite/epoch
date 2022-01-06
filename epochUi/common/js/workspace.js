@@ -1484,18 +1484,18 @@ const templateFileList = function(){
       + '<td class="template-note c-table-col"><div class="c-table-ci"></div></td>'
       + '<td class="template-menu c-table-col"><div class="c-table-ci">'
           + '<ul class="c-table-menu-list">'
-            + '<li class="c-table-menu-item">'
-              + '<button class="c-table-menu-button epoch-popup-m" title="プレビュー" data-key="' + i + '" data-button="preview">'
-                + '<svg viewBox="0 0 64 64" class="c-table-menu-svg"><use xlink:href="#icon-preview" /></svg></button></li>'
-            + '<li class="c-table-menu-item">'
-              + '<button class="c-table-menu-button epoch-popup-m" title="ダウンロード" data-key="' + i + '" data-button="download">'
-                + '<svg viewBox="0 0 64 64" class="c-table-menu-svg"><use xlink:href="#icon-download" /></svg></button></li>'
-            + '<li class="c-table-menu-item">'
-              + '<button class="c-table-menu-button epoch-popup-m" title="備考" data-key="' + i + '" data-button="note">'
-                + '<svg viewBox="0 0 64 64" class="c-table-menu-svg"><use xlink:href="#icon-edit" /></svg></button></li>'
-            + '<li class="c-table-menu-item">'
-              + '<button class="c-table-menu-button epoch-popup-m" title="更新" data-key="' + i + '" data-button="update">'
-                + '<svg viewBox="0 0 64 64" class="c-table-menu-svg"><use xlink:href="#icon-update" /></svg></button></li>'
+            // + '<li class="c-table-menu-item">'
+            //   + '<button class="c-table-menu-button epoch-popup-m" title="プレビュー" data-key="' + i + '" data-button="preview">'
+            //     + '<svg viewBox="0 0 64 64" class="c-table-menu-svg"><use xlink:href="#icon-preview" /></svg></button></li>'
+            // + '<li class="c-table-menu-item">'
+            //   + '<button class="c-table-menu-button epoch-popup-m" title="ダウンロード" data-key="' + i + '" data-button="download">'
+            //     + '<svg viewBox="0 0 64 64" class="c-table-menu-svg"><use xlink:href="#icon-download" /></svg></button></li>'
+            // + '<li class="c-table-menu-item">'
+            //   + '<button class="c-table-menu-button epoch-popup-m" title="備考" data-key="' + i + '" data-button="note">'
+            //     + '<svg viewBox="0 0 64 64" class="c-table-menu-svg"><use xlink:href="#icon-edit" /></svg></button></li>'
+            // + '<li class="c-table-menu-item">'
+            //   + '<button class="c-table-menu-button epoch-popup-m" title="更新" data-key="' + i + '" data-button="update">'
+            //     + '<svg viewBox="0 0 64 64" class="c-table-menu-svg"><use xlink:href="#icon-update" /></svg></button></li>'
             + '<li class="c-table-menu-item">'
               + '<button class="c-table-menu-button epoch-popup-m" title="削除" data-key="' + i + '" data-button="delete">'
                 + '<svg viewBox="0 0 64 64" class="c-table-menu-svg"><use xlink:href="#icon-trash" /></svg></button></li>'
@@ -3548,10 +3548,8 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       }
       
       // Set the manifest upload button - マニフェストアップロードのボタンを設定する
-      if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-manifest-upload".replace('{ws_id}',ws_id)) == -1) {
-        delete wsModalJSON.kubernetesManifestTemplate.block.templateFileList.button;
-        delete wsModalJSON.kubernetesManifestTemplateUpload.footer.ok;
-        delete wsModalJSON.kubernetesManifestTemplateUpload.footer.reselect;
+      if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-manifest-upload".replace('{ws_id}',ws_id)) != -1) {
+        $('#ManifestTemplateButtonArea').css("display","");
       }
 
       // Set the manifest parameter button - マニフェストパラメータのボタンを設定する
