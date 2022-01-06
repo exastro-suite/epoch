@@ -198,6 +198,7 @@ def create_workspace_setting_auth_infra(workspace_id, user_id):
                 "client_protocol" : "https",
                 "conf_template" : "epoch-ws-ita-template.conf",
                 "backend_url" : "http://it-automation.{}.svc:8084/".format(namespace),
+                "require_claim" : const.ROLE_WS_ROLE_CD_EXECUTE_RESULT[0].format(workspace_id),
             },
             {
                 "client_id" :   'epoch-ws-{}-argocd'.format(workspace_id),
@@ -205,6 +206,7 @@ def create_workspace_setting_auth_infra(workspace_id, user_id):
                 "client_protocol" : "https",
                 "conf_template" : "epoch-ws-argocd-template.conf",
                 "backend_url" : "https://argocd-server.{}.svc/".format(namespace),
+                "require_claim" : const.ROLE_WS_ROLE_CD_EXECUTE_RESULT[0].format(workspace_id),
             },
             {
                 "client_id" :   'epoch-ws-{}-sonarqube'.format(workspace_id),
@@ -212,9 +214,10 @@ def create_workspace_setting_auth_infra(workspace_id, user_id):
                 "client_protocol" : "https",
                 "conf_template" : "epoch-ws-sonarqube-template.conf",
                 "backend_url" : "http://sonarqube.{}.svc:9000/".format(pipeline_name),
+                "require_claim" : const.ROLE_WS_ROLE_CI_PIPELINE_RESULT[0].format(workspace_id),
             },
         ]
-
+        
         # post送信（アクセス情報生成）
         exec_stat = "認証基盤 client設定"
         for client in clients:

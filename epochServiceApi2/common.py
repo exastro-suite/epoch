@@ -84,7 +84,7 @@ def server_error(e):
         }
     ), 500
 
-def server_error_to_message(e, error_statement, error_detail):
+def server_error_to_message(e, error_statement, error_detail, rows = None):
     """サーバーエラーレスポンス(メッセージ付き) server error response with message
 
     Args:
@@ -99,16 +99,19 @@ def server_error_to_message(e, error_statement, error_detail):
 
     globals.logger.error(''.join(list(traceback.TracebackException.from_exception(e).format())))
 
-    return jsonify(
-        {
-            'result':       '500',
+    ret_json = {
+            'result': '500',
             'errorStatement': error_statement,
-            'errorDetail':  error_detail,
-            'exception':    ''.join(list(traceback.TracebackException.from_exception(e).format())),
-        }
-    ), 500
+            'errorDetail': error_detail,
+            'exception': ''.join(list(traceback.TracebackException.from_exception(e).format())),
+    }
+    # 返す情報がある場合は情報を設定 Set information if there is information to return
+    if rows is not None:
+        ret_json["rows"] = rows
 
-def user_error_to_message(e, error_statement, error_detail, return_code):
+    return jsonify(ret_json), 500
+
+def user_error_to_message(e, error_statement, error_detail, return_code, rows = None):
     """ユーザー型サーバーエラーレスポンス(メッセージ付き) user server error response with message
 
     Args:
@@ -124,14 +127,17 @@ def user_error_to_message(e, error_statement, error_detail, return_code):
 
     globals.logger.error(''.join(list(traceback.TracebackException.from_exception(e).format())))
 
-    return jsonify(
-        {
-            'result':       return_code,
+    ret_json = {
+            'result': '500',
             'errorStatement': error_statement,
-            'errorDetail':  error_detail,
-            'exception':    ''.join(list(traceback.TracebackException.from_exception(e).format())),
-        }
-    ), return_code
+            'errorDetail': error_detail,
+            'exception': ''.join(list(traceback.TracebackException.from_exception(e).format())),
+    }
+    # 返す情報がある場合は情報を設定 Set information if there is information to return
+    if rows is not None:
+        ret_json["rows"] = rows
+
+    return jsonify(ret_json), return_code
 
 
 def is_json_format(str):
