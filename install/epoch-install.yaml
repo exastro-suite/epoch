@@ -1657,7 +1657,7 @@ data:
         </LimitExcept>
       </Location>
 
-      <Location /api/workspace/{{ param.workspace_id }}/manifest>
+      <Location /api/workspace/{{ param.workspace_id }}/manifest/template>
         ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/manifest retry=0 timeout=600
         ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/manifest
         AuthType openid-connect
@@ -1665,9 +1665,21 @@ data:
             Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-reference"
         </Limit>
         <Limit POST PUT DELETE>
-            Require claim "epoch-role:ws-{{ param.workspace_id }}-manifest-setting"
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-manifest-upload"
         </Limit>
         <LimitExcept GET POST PUT DELETE>
+            Require all denied
+        </LimitExcept>
+      </Location>
+
+      <Location /api/workspace/{{ param.workspace_id }}/manifest/parameter>
+        ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/manifest retry=0 timeout=600
+        ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/manifest
+        AuthType openid-connect
+        <Limit POST>
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-manifest-setting"
+        </Limit>
+        <LimitExcept POST>
             Require all denied
         </LimitExcept>
       </Location>
@@ -1771,8 +1783,8 @@ data:
     }}:{{ client_port }}/oidc-redirect/\n  OIDCClientID {{ client_id }}\n  OIDCClientSecret
     {{ client_secret }}\n  <Location />\n    ProxyPass        {{ backend_url }} retry=0\n
     \   ProxyPassReverse {{ backend_url }}\n    AuthType openid-connect\n    Require
-    claim \"epoch-role:epoch-user\"\n  </Location>\n  <Location /favicon.ico>\n    Require
-    all granted\n  </Location>\n</VirtualHost>\n"
+    claim \"epoch-role:{{ require_claim }}\"\n  </Location>\n  <Location /favicon.ico>\n
+    \   Require all granted\n  </Location>\n</VirtualHost>\n"
   epoch-ws-ita-template.conf: "Listen {{ client_port }}\n<VirtualHost *:{{ client_port
     }}>\n  SSLEngine on\n  SSLCertificateFile /etc/pki/tls/certs/exastro-platform-authentication-infra.pem\n
     \ SSLCertificateKeyFile /etc/pki/tls/private/exastro-platform-authentication-infra.key\n
@@ -1784,8 +1796,8 @@ data:
     }}:{{ client_port }}/oidc-redirect/\n  OIDCClientID {{ client_id }}\n  OIDCClientSecret
     {{ client_secret }}\n  <Location />\n    ProxyPass        {{ backend_url }} retry=0\n
     \   ProxyPassReverse {{ backend_url }}\n    AuthType openid-connect\n    Require
-    claim \"epoch-role:epoch-user\"\n  </Location>\n  <Location /favicon.ico>\n    Require
-    all granted\n  </Location>\n</VirtualHost>\n"
+    claim \"epoch-role:{{ require_claim }}\"\n  </Location>\n  <Location /favicon.ico>\n
+    \   Require all granted\n  </Location>\n</VirtualHost>\n"
   epoch-ws-sonarqube-template.conf: "Listen {{ client_port }}\n<VirtualHost *:{{ client_port
     }}>\n  SSLEngine on\n  SSLCertificateFile /etc/pki/tls/certs/exastro-platform-authentication-infra.pem\n
     \ SSLCertificateKeyFile /etc/pki/tls/private/exastro-platform-authentication-infra.key\n
@@ -1797,8 +1809,8 @@ data:
     }}:{{ client_port }}/oidc-redirect/\n  OIDCClientID {{ client_id }}\n  OIDCClientSecret
     {{ client_secret }}\n  <Location />\n    ProxyPass        {{ backend_url }} retry=0\n
     \   ProxyPassReverse {{ backend_url }}\n    AuthType openid-connect\n    Require
-    claim \"epoch-role:epoch-user\"\n  </Location>\n  <Location /favicon.ico>\n    Require
-    all granted\n  </Location>\n</VirtualHost>\n"
+    claim \"epoch-role:{{ require_claim }}\"\n  </Location>\n  <Location /favicon.ico>\n
+    \   Require all granted\n  </Location>\n</VirtualHost>\n"
 kind: ConfigMap
 metadata:
   creationTimestamp: null
