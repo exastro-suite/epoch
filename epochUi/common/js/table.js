@@ -17,7 +17,91 @@ epochTable.prototype = {
       et.ws = new webStorage();
       
       // Modal
-      et.modal = new modalFunction();
+      et.modal = {};
+      et.modal.c = {
+        'download': {
+          'title': 'ダウンロード',
+          'footer': {
+            'ok': {'text': 'ダウンロード', 'type': 'positive'},
+            'cancel': {'text': 'キャンセル', 'type': 'negative'}
+          },
+          'block': {
+            'block1': {
+              'item': {
+                'radio': {
+                  'type': 'radio',
+                  'title': 'ファイル形式',
+                  'name': 'downloadType',
+                  'item': {
+                    'xlsx': 'xlsx',
+                    'csv': 'csv',
+                    'html': 'html'
+                  }
+                },
+                'downloadName': {
+                  'type': 'input',
+                  'title': 'ファイル名',
+                  'required': 'on',
+                  'min': 1,
+                  'max': 64,
+                  'name': 'downloadName',
+                  'placeholder': 'ダウンロードするファイルの名前を入力してください'
+                }
+              }
+            }
+          }
+        },
+        'downloadProgress': {
+          'title': '変換中',
+          'footer': {
+            'stop': {'text': '中止', 'type': 'danger'}
+          },
+          'block': {
+            'block1': {
+              'item': {
+                'item1': {
+                  'type': 'loading',
+                  'id': 'progressMessage',
+                  'text': ''
+                }
+              }
+            }
+          }
+        },
+        'error': {
+          'title': 'エラー',
+          'footer': {
+            'close': {'text': '閉じる', 'type': 'negative'},
+          },
+          'block': {
+            'block1': {
+              'item': {
+                'item1': {
+                  'type': 'message',
+                  'text': 'Get Ready.',
+                  'color': 'FF0000'
+                }
+              }
+            }
+          }
+        },
+      };
+      et.modal.d = {
+        'downloadType': 'xlsx',
+        'downloadName': et.tableID
+      };
+      et.modal.m = new modalFunction( et.modal.c, et.modal.d );
+      et.modal.s = new modalFunction( et.modal.c, et.modal.d );
+      
+      // エラーモーダル
+      et.modal.error = function( message ){
+        et.modal.c.error.block.block1.item.item1.text = message;
+        et.modal.s.open('error',{
+          'close': function(){
+            et.modal.s.subClose();
+          }
+        },'320','sub');
+      };
       
       et.target = target;
 
@@ -28,7 +112,7 @@ epochTable.prototype = {
       if ( option.paging !== undefined ) et.option.filter = option.paging;
       if ( option.bodyHead !== undefined ) et.option.bodyHead = option.bodyHead;
       if ( option.callback !== undefined ) et.option.callback = option.callback;
-      if ( option.output !== undefined ) et.option.output = option.output;
+      if ( option.download !== undefined ) et.option.download = option.download;
 
       // Table main
       et.$table = $('<div/>', {
@@ -136,9 +220,17 @@ epochTable.prototype = {
       }
       
       if ( option.paging !== 'off') {
-        const etFooterHTML = ''
+        let etFooterHTML = ''
         + '<div class="ett">'
-          + '<div class="etp">'
+          + '<div class="etp">';
+          if ( option.download === 'on') {
+            etFooterHTML += ''
+             + '<div class="etp-w">'
+               + '<div class="etp-ib"><button class="etp-b epoch-popup-m" data-button="download" title="ダウンロード"></button></div>'
+             + '</div>';
+         }
+         
+         etFooterHTML += ''
             + '<div class="etp-w">'
               + '<div class="etp-ih">行数</div>'
               + '<div class="etp-ib">'
@@ -318,6 +410,9 @@ epochTable.prototype = {
               break;
             case 'end':
               et.pageChange( et.pagingTotalPage );
+              break;
+            case 'download':
+              et.downloadModal();
               break;
           }
           et.pagingCheck();
@@ -522,12 +617,16 @@ epochTable.prototype = {
               + '<th class="et-c et-c-' + th[i].type + ' cn' + i + '">'
                 + '<div class="et-ci';
               if ( th[i].type === 'checkbox') {
-                thHTML += '"><div class="et-cb-t">' + th[i].title + '</div><div class="et-cbw"><div class="et-cb-ca" data-col="' + i + '"><span></span></div></div></div>';
+                thHTML += '"><div class="et-cb-t">' + th[i].title;
+                if ( th[i].q !== undefined ) thHTML += '<span class="et-ht-q epoch-popup" title="' + th[i].q + '"><svg viewBox="0 0 64 64" class="et-ht-svg"><use href="#icon-header-question"></use></svg></span>';
+                thHTML += '</div><div class="et-cbw"><div class="et-cb-ca" data-col="' + i + '"><span></span></div></div></div>';
               } else if ( th[i].type === 'rowCheck') {
                 thHTML += '"><div class="et-cbw"><div class="et-cb-ca" data-col="' + i + '"><span></span></div></div></div>';
               } else {
-                if ( th[i].sort === 'on') thHTML += ' et-cs'; // Srot
-                thHTML += '" data-column-index="' + i + '"><div class="et-ht">' + th[i].title + '</div></div>';
+                if ( th[i].sort === 'on') thHTML += ' et-cs'; // Sort
+                thHTML += '" data-column-index="' + i + '"><div class="et-ht">' + th[i].title;
+                if ( th[i].q !== undefined ) thHTML += '<span class="et-ht-q epoch-popup" title="' + th[i].q + '"><svg viewBox="0 0 64 64" class="et-ht-svg"><use href="#icon-header-question"></use></svg></span>';
+                thHTML += '</div></div>';
                 if ( th[i].resize === 'on') thHTML += '<div class="et-cr"></div>'; // Resize
               }
               thHTML += '</th>';
@@ -1325,43 +1424,85 @@ epochTable.prototype = {
     this.$table.removeClass('et-wait');
     this.$table.find('.et-wt').remove();
   },
-  /* ------------------------------ *\
-     Output Excel(xlsx)
-  \* ------------------------------ */
-  'excel': function(){
+  'downloadModal': function(){
     const et = this;
+    et.modal.m.open('download', {
+      'ok': function(){
+        et.modal.m.setParameter();
+        const name = ( et.modal.d.downloadName !== undefined )? et.modal.d.downloadName: 'noname',
+              type = ( et.modal.d.downloadType !== undefined )? et.modal.d.downloadType: 'xlsx';
+        et.download( name, type );
+      }
+    });
+  },
+  /* ------------------------------ *\
+     Download table
+  \* ------------------------------ */
+  'download': function( name, type ){
+    const et = this,
+          filename = name + '.' + type;
     
-    // header
-    const header = [[]],
-          thLength = et.th.length;
-    for ( let i = 0; i < thLength; i++ ) {
-        const title = ( et.th[i].title !== undefined )? et.th[i].title: '';
-        header[0].push(title);
-    }
-    
-    // WebWorker
-    const js = './common/js/ww_tablejs_sheetjs.js',
-          ww = new Worker( js );
-    
-    ww.onmessage = function( e ){
-        const result = e.data;
-        if ( result.status === 200 ) {
-            if ( result.data.constructor.name === 'Blob') {
-                const url = window.URL.createObjectURL( result.data ),
-                      a = document.createElement('a');
-                document.body.appendChild( a );
-                a.href = url;
-                a.download = "out.xlsx";
-                a.click();
-                window.URL.revokeObjectURL( url );
-                document.body.removeChild( a );
-            } else {
-                window.console.error('"XlSX Blob" convert error.');
-            }
-        } else {
-            window.console.error( result.message );
+    try {
+        // Header
+        const header = [[]],
+              thLength = et.th.length;
+        for ( let i = 0; i < thLength; i++ ) {
+            const title = ( et.th[i].title !== undefined )? et.th[i].title: '';
+            header[0].push(title);
         }
+        
+        // WebWorker
+        const js = './common/js/ww_tablejs_sheetjs.js',
+              ww = new Worker( js );
+        
+        et.modal.s.open('downloadProgress',{
+            'stop': function(){
+                // WebWorker stop
+                ww.terminate();
+                et.modal.s.subClose();
+            },
+            'callback': function(){
+                // Progress message area
+                const $message = et.modal.s.$modal.find('.modal-progress-message');
+                
+                ww.onmessage = function( e ){
+                    const result = e.data;
+                    if ( result.status === 200 ) {
+                        if ( result.data.constructor.name === 'Blob') {
+                            const url = window.URL.createObjectURL( result.data ),
+                                  a = document.createElement('a');
+                            document.body.appendChild( a );
+                            a.href = url;
+                            a.download = filename;
+                            a.click();
+                            window.URL.revokeObjectURL( url );
+                            document.body.removeChild( a );
+                            et.modal.s.subClose();
+                            et.modal.m.close();
+                        } else {
+                            et.modal.s.subClose();
+                            et.modal.error('Blob error.');
+                        }
+                        ww.terminate();
+                    } else if ( result.status === 400 ) {
+                        et.modal.s.subClose();
+                        et.modal.error( result.message );
+                        ww.terminate();
+                    } else if ( result.status === 0 ) {
+                        $message.text( result.message );
+                    }
+                };
+                
+                // Start
+                ww.postMessage({
+                  'type': type,
+                  'data': header.concat( et.tb )
+                });
+            }
+        }, '320', 'progress');
+        
+    } catch( e ) {
+        et.modal.error( e );
     }
-    ww.postMessage( header.concat( et.tb ));
   }
 };

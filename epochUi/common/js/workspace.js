@@ -527,7 +527,7 @@ const wsModalJSON = {
                 'select': '下記の選択したユーザのみ'
               },
               'list': [],
-              'col': 2
+              'col': 1
             }
           }
         }
@@ -1136,6 +1136,7 @@ const setWorkspacePosition = function(){
     startCD.h = $startCD.outerHeight();
     startCD.l = 0;
     startCD.t = itaF.t + itaF.h / 2 - startCD.h / 2;
+    startCD.xc = startCD.l + startCD.w / 2;
     startCD.yc = startCD.t + startCD.h / 2;
     $startCD.css({'left': startCD.l, 'top' : startCD.t });
 
@@ -1190,11 +1191,13 @@ const setWorkspacePosition = function(){
     $line4.attr({
     'd': order('M',startCI.xc,startCI.t+startCI.h,startCI.xc,kmT.yc,kmT.l,kmT.yc,'l',-a,a,a,-a,-a,-a,a,a),
     'data-type': 'ci'});
+
+    // CD --> Manifestパラメータ
     const $line5 = newSVG('path');
     $line5.attr({
-    'd': order('M',startCI.xc,startCI.t+startCI.h,startCI.xc,mp.yc,mp.l,mp.yc,'l',-a,a,a,-a,-a,-a,a,a),
-    'data-type': 'ci'});
-    
+    'd': order('M',startCD.xc,startCD.t, startCD.xc,mp.yc, mp.l,mp.yc,'l',-a,a,a,-a,-a,-a,a,a),
+    'data-type': 'cd'});
+
     // EPOCH枠の座標
     ep = {
         'y1': 0,
@@ -2284,10 +2287,12 @@ const argoCdAddDeployMembersModal = function(){
   // ArgoCDモーダル - Deploy権限項目の「ユーザ選択」ボタン押下時のイベント処理
   // ArgoCD modal - Event processing when the "Select User" button with Deploy permission item is pressed
   $argoModal.on('click', '.item-list-select-button', function(){
-      const $select = $( this ).closest('.item-block'),
-            value = $select.find('.item-list-select-id').val(),
-            ids = ( value === '')? []: value.split(','),
-            subModal = new modalFunction( wsModalJSON, wsDataJSON );
+    const $button = $( this ),
+          type = $button.attr('data-button'),
+          $select = $button.closest('.item-block'),
+          value = $select.find('.item-list-select-id').val(),
+          ids = ( value === '')? []: value.split(','),
+          subModal = new modalFunction( wsModalJSON, wsDataJSON );
 
       // CD execution user acquisition process - CD実行ユーザ取得処理
       new Promise((resolve, reject) =>{
@@ -2305,51 +2310,40 @@ const argoCdAddDeployMembersModal = function(){
               for(var useridx = 0; useridx < data['rows'].length; useridx++ ) {
                 deployMembers.list.push([
                   useridx + 1,
-                  useridx + 1,
                   data['rows'][useridx]['username']
                 ]);
               }
 
-              subModal.open('pipelineArgoDeployMember', {
-                'ok': function(){
-                  const id = subModal.$modal.find('.et-cl').val();
-                  subModal.createListSelectSetList( $select, id, deployMembers.list, deployMembers.col );
-                },
-                'callback': function(){
-                  const et = new epochTable();
-                  et.setup('#pipeline-argo-deploy-member-select', [
-                    {
-                      'title': getText('EP010-0204', 'チェックボックス'),
-                      'type': 'checkbox',
-                      'filter': 'on',
+              switch( type ) {
+                case 'select': {
+                  subModal.open('pipelineArgoDeployMember', {
+                    'ok': function(){
+                      const id = subModal.$modal.find('.et-cb-i').val();
+                      subModal.createListSelectSetList( $select, id, deployMembers.list, deployMembers.col );
+                      subModal.subClose();
                     },
-                    {
-                      'title': 'ID',
-                      'type': 'number',
-                      'width': '10%',
-                      'align': 'right',
-                      'sort': 'on',
-                      'filter': 'on',
-                    },
-                    {
-                      'title': getText('EP010-0205', '名前'),
-                      'type': 'text',
-                      'width': '40%',
-                      'align': 'left',
-                      'sort': 'on',
-                      'filter': 'on',
-                    },
-                  ], deployMembers.list, {
-                    'checked' : ids
-                  } );
-                }
-              }, 720,'sub');
+                    'callback': function(){
+                      const et = new epochTable(),
+                            checked = {};
+                      checked[et.tableID + '-row-all'] = ids;
+                      et.setup('#pipeline-argo-deploy-member-select', [
+                        {'title': '選択', 'id': 'row-all','type': 'rowCheck', 'width': '48px'},
+                        {'title': 'ユーザ名', 'type': 'text', 'width': 'auto', 'sort': 'on', 'filter': 'on'}
+                      ], deployMembers.list, {'checked': checked });
+                    }
+                  }, 720,'sub');
+                } break;
+                case 'clear':
+                  $select.find('.item-list-select-id').val('');
+                  subModal.createListSelectSetList( $select, '', [], 0 );
+              }
+    
               resolve();
           }).fail((jqXHR, textStatus, errorThrown) => {
               console.log('[FAIL] /workspace/{id}/member/cdexec');
               reject();
           });
-      }).then(() => {
+      }).then((deployMembersList, deployMembersCol) => {
           console.log(getText('EP010-0206', '[DONE] CD実行ユーザ取得'));
       }).catch(() => {
           console.log(getText('EP010-0207', '[FAIL] CD実行ユーザ取得'));
