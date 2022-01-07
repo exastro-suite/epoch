@@ -2247,74 +2247,84 @@ const itaStatusList = function(){
   $statusList.html( $itaConductor )
 };
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-//   Argo CD Deploy可能メンバー代入
-// 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-const deployMembers = wsModalJSON.pipelineArgo.block.environmentList.tab.item.environmentDeployMember;
-
-// ダミーデータ作成
-for ( let i = 1; i <= 1000; i++ ) {
-  deployMembers.list.push([
-    i,
-    i,
-    '山田 ' + i + '号',
-    'no' + i + '-yamada@example.com',
-  ]);
-}
 
 const argoCdAddDeployMembersModal = function(){
   const $argoModal = $('#pipeline-argo');
 
+  // ArgoCDモーダル - Deploy権限項目の「ユーザ選択」ボタン押下時のイベント処理
+  // ArgoCD modal - Event processing when the "Select User" button with Deploy permission item is pressed
   $argoModal.on('click', '.item-list-select-button', function(){
       const $select = $( this ).closest('.item-block'),
             value = $select.find('.item-list-select-id').val(),
             ids = ( value === '')? []: value.split(','),
             subModal = new modalFunction( wsModalJSON, wsDataJSON );
-      
-      subModal.open('pipelineArgoDeployMember', {
-        'ok': function(){
-          const id = subModal.$modal.find('.et-cl').val();
-          subModal.createListSelectSetList( $select, id, deployMembers.list, deployMembers.col );
-        },
-        'callback': function(){
-          const et = new epochTable();
-          et.setup('#pipeline-argo-deploy-member-select', [
-            {
-              'title': 'チェックボックス',
-              'type': 'checkbox',
-              'filter': 'on',
-            },
-            {
-              'title': 'ID',
-              'type': 'number',
-              'width': '10%',
-              'align': 'right',
-              'sort': 'on',
-              'filter': 'on',
-            },
-            {
-              'title': '名前',
-              'type': 'text',
-              'width': '40%',
-              'align': 'left',
-              'sort': 'on',
-              'filter': 'on',
-            },
-            {
-              'title': 'メールアドレス',
-              'type': 'text',
-              'align': 'left',
-              'sort': 'on',
-              'filter': 'on',
-            }
-          ], deployMembers.list, {
-            'checked' : ids
-          } );
-        }
-      }, 720,'sub');
+
+      // CD execution user acquisition process - CD実行ユーザ取得処理
+      new Promise((resolve, reject) =>{
+          var workspace_id = (new URLSearchParams(window.location.search)).get('workspace_id');
+          $.ajax({
+              "type": "GET",
+              "url": URL_BASE + "/api/workspace/{workspace_id}/member/cdexec".replace('{workspace_id}',workspace_id)
+          }).done(function(data) {
+              console.log('[DONE] /workspace/{id}/member/cdexec');
+
+              const deployMembers = wsModalJSON.pipelineArgo.block.environmentList.tab.item.environmentDeployMember;
+              deployMembers.list = []
+              
+              // Set the acquired member list - 取得したメンバーリストを設定
+              for(var useridx = 0; useridx < data['rows'].length; useridx++ ) {
+                deployMembers.list.push([
+                  useridx + 1,
+                  useridx + 1,
+                  data['rows'][useridx]['username']
+                ]);
+              }
+
+              subModal.open('pipelineArgoDeployMember', {
+                'ok': function(){
+                  const id = subModal.$modal.find('.et-cl').val();
+                  subModal.createListSelectSetList( $select, id, deployMembers.list, deployMembers.col );
+                },
+                'callback': function(){
+                  const et = new epochTable();
+                  et.setup('#pipeline-argo-deploy-member-select', [
+                    {
+                      'title': getText('EP010-0204', 'チェックボックス'),
+                      'type': 'checkbox',
+                      'filter': 'on',
+                    },
+                    {
+                      'title': 'ID',
+                      'type': 'number',
+                      'width': '10%',
+                      'align': 'right',
+                      'sort': 'on',
+                      'filter': 'on',
+                    },
+                    {
+                      'title': getText('EP010-0205', '名前'),
+                      'type': 'text',
+                      'width': '40%',
+                      'align': 'left',
+                      'sort': 'on',
+                      'filter': 'on',
+                    },
+                  ], deployMembers.list, {
+                    'checked' : ids
+                  } );
+                }
+              }, 720,'sub');
+              resolve();
+          }).fail((jqXHR, textStatus, errorThrown) => {
+              console.log('[FAIL] /workspace/{id}/member/cdexec');
+              reject();
+          });
+      }).then(() => {
+          console.log(getText('EP010-0206', '[DONE] CD実行ユーザ取得'));
+      }).catch(() => {
+          console.log(getText('EP010-0207', '[FAIL] CD実行ユーザ取得'));
+      });
+
   });
 };
 
@@ -3518,7 +3528,8 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-member-role-update".replace('{ws_id}',ws_id)) == -1) {
         delete wsModalJSON.pipelineArgo.block.environmentList.tab.item.environmentDeployMember;
       }
-            // Set buttons for IaC repository modal dialog - IaCリポジトリモーダルダイアログのボタンを設定する
+      
+      // Set buttons for IaC repository modal dialog - IaCリポジトリモーダルダイアログのボタンを設定する
       if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ws-cd-update".replace('{ws_id}',ws_id)) == -1) {
         delete wsModalJSON.gitServiceArgo.footer.ok;
       }
