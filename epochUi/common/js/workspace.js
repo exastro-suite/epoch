@@ -1628,6 +1628,9 @@ const templateFileSelect = function( type ){
             // ファイルリストを表示
             $file.find('.item-file-list').show().find('table').append( $fileTable );
             $file.find('.item-file-droparea').hide();
+
+            // Uploadボタン押下時にはformが無くなっているのでここに移動
+            const formData = new FormData( $('#template-files').get(0) );
             
             // アップロード、再選択ボタン
             $upload.add( $reSelect ).prop('disabled', false ).on('click', function(){
@@ -1637,7 +1640,8 @@ const templateFileSelect = function( type ){
                 case 'ok': {         
                 $button.prop('disabled', true );
                 // フォームデータ取得
-                const formData = new FormData( $('#template-files').get(0) );
+                // Uploadボタン押下時にはformが無くなっているので上に移動
+                //const formData = new FormData( $('#template-files').get(0) );
                 console.log('CALL : マニフェストテンプレートアップロード');
                 // 送信
                 $.ajax({
