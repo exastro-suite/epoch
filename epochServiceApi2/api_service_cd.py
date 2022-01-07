@@ -417,10 +417,13 @@ def cd_environment_get(workspace_id):
 
         # workspace情報のCD実行権限がある環境情報のみ返却する Only the environment information for which you have the CD execution permission for workspace information is returned.
         ret_environments = []
+
+        globals.logger.debug("cd_config:{}".format(rows[0]["cd_config"]))
+
         # 環境情報がない場合も考慮 Consider even if there is no environmental information
-        if "environments" in rows[0]:
+        if "environments" in rows[0]["cd_config"]:
             # 環境情報をすべて処理する Process all environmental information
-            for env in rows[0]["environments"]:
+            for env in rows[0]["cd_config"]["environments"]:
                 # CD実行権限ありの人すべてまたはCD実行権限有の場合に環境を返却する Return the environment to all people with CD execution permission or if you have CD execution permission
                 if env["cd_exec_users"]["user_select"] == "all" or \
                     user_id in env["cd_exec_users"]["user_id"]:

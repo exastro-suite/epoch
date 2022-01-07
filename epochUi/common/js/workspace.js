@@ -2874,6 +2874,11 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
           wsDataJSON['environment'][item][item + '-environment-authentication-token']= data_environments[i]['deploy_destination']['authentication_token'];
           wsDataJSON['environment'][item][item + '-environment-certificate']= data_environments[i]['deploy_destination']['base64_encoded_certificate'];
 
+          if(data_environments[i]['cd_exec_users']){
+            wsDataJSON['environment'][item][item + '-environment-deploy-member']= data_environments[i]['cd_exec_users']['user_select'];
+            wsDataJSON['environment'][item][item + '-environment-deploy-member-id']= data_environments[i]['cd_exec_users']['user_id'];
+          }
+
           // マニフェストgitリポジトリ情報の設定
           wsDataJSON['environment'][item][item + '-git-service-argo-repository-url']= data_environments[i]['git_repositry']['url'];
 
@@ -3352,6 +3357,10 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
           'namespace' :             (wsDataJSON['environment'][i][i + '-environment-namespace']? wsDataJSON['environment'][i][i + '-environment-namespace']: "" ),
           'authentication_token' :  (wsDataJSON['environment'][i][i + '-environment-authentication-token']? wsDataJSON['environment'][i][i + '-environment-authentication-token']: "" ),
           'base64_encoded_certificate' :  (wsDataJSON['environment'][i][i + '-environment-certificate']? wsDataJSON['environment'][i][i + '-environment-certificate']: "" ),
+        },
+        'cd_exec_users' : {
+          'user_select' : wsDataJSON['environment'][i][i + '-environment-deploy-member'],
+          'user_id' : wsDataJSON['environment'][i][i + '-environment-deploy-member-id']
         }
       }
       if( envitem['deploy_destination']['cluster_kind'] == "internal" ) {
