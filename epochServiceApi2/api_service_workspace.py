@@ -754,40 +754,102 @@ def put_workspace(workspace_id):
         # 取得した情報をもとに、画面から送信された更新情報を権限毎に設定する
         # Based on the acquired information, set the update information sent from the screen for each authority.
 
+        #
         # ワークスペース更新(名称)有の場合 If workspace update (name) is available
+        #
         if const.ROLE_WS_ROLE_WS_NAME_UPDATE[0].format(workspace_id) in roles:
             row["common"] = req_data["common"]
 
+        #
         # ワークスペース更新 (CI)有の場合 If workspace update (ci) is available
+        #
         if const.ROLE_WS_ROLE_WS_CI_UPDATE[0].format(workspace_id) in roles:
             row["ci_config"]["pipelines_common"] = req_data["ci_config"]["pipelines_common"]
             row["ci_config"]["pipelines"] = req_data["ci_config"]["pipelines"]
 
-        # ワークスペース更新 (CD)有の場合 If workspace update (cd) is available
-        if const.ROLE_WS_ROLE_WS_CD_UPDATE[0].format(workspace_id) in roles:
+        #
+        # Manifestパラメータの更新 - Update Manifest parameters
+        #
+        if const.ROLE_WS_ROLE_MANIFEST_SETTING[0].format(workspace_id) in roles:
+            # Manifestパラメータの更新権限がある場合はパラメータの内容を差し替える
+            # If you have permission to update Manifest parameters, replace the contents of the parameters.
+            row["ci_config"]["environments"] = req_data["ci_config"]["environments"] 
+
+        elif const.ROLE_WS_ROLE_WS_CD_UPDATE[0].format(workspace_id) in roles:
+            # マニフェスト更新権限が無くてワークスペース更新 (CD)有の場合、環境の増減だけ行う
+            # If you do not have the manifest update authority and have a workspace update (CD), only increase or decrease the environment.
+
             save_env = []
             # 元からあるものは一旦消去し、環境内容はIDが一致すれば元のまま、該当しない場合は新規とする
             # Delete the original one, leave the environment contents as they are if the IDs match, and make them new if they do not match.
             for src_env in row["ci_config"]["environments"]:
-                for dest_env in req_data["ci_config"]["environments"]:
-                    # IDが存在するかチェック Check if the ID exists
-                    if src_env["environment_id"] == dest_env["environment_id"]:
-                        save_env.append(src_env)
-                        break 
+                # IDが存在するかチェック Check if the ID exists
+                if common.search_array_dict(req_data["ci_config"]["environments"], "environment_id", src_env["environment_id"]) is not None:
+                    save_env.append(src_env)
 
             for dest_env in req_data["ci_config"]["environments"]:
-                found = False
-                for src_env in row["ci_config"]["environments"]:
-                    # IDが存在するかチェック Check if the ID exists
-                    if src_env["environment_id"] == dest_env["environment_id"]:
-                        found = True
-                        break 
-
+                # IDが存在するかチェック Check if the ID exists
                 # 存在しない場合は情報を追加する Add information if it does not exist
-                if not found:
+                if common.search_array_dict(row["ci_config"]["environments"], "environment_id", dest_env["environment_id"]) is not None:
                     save_env.append(dest_env)
+
             row["ci_config"]["environments"] = save_env
+
+        #
+        # CD設定の更新 - Update CD settings
+        #
+        if const.ROLE_WS_ROLE_WS_CD_UPDATE[0].format(workspace_id) in roles and const.ROLE_WS_ROLE_MEMBER_ROLE_UPDATE[0].format(workspace_id) in roles:
+            # ワークスペース更新(CD)の権限とメンバー更新の権限がある場合は全項目更新
+            # Update all items if you have workspace update (CD) permission and member update permission
             row["cd_config"] = req_data["cd_config"]
+
+        elif const.ROLE_WS_ROLE_WS_CD_UPDATE[0].format(workspace_id) in roles:
+            # ワークスペース更新(CD)の権限がありメンバー更新の権限がない場合はDeploy権限の項目以外の項目を更新
+            # If you have workspace update (CD) permission and you do not have member update permission, update items other than Deploy permission items.
+
+            # 共通部分の更新 - Update of common parts
+            row["cd_config"]["system_config"] = req_data["cd_config"]["system_config"]
+            row["cd_config"]["environments_common"] = req_data["cd_config"]["environments_common"]
+
+            # 環境毎の項目の更新 - Update items for each environment
+            environments_new =[]
+
+            for env_before in row["cd_config"]["environments"]:
+                # 更新となる環境情報を取得する - Get updated environment information
+                env_new = common.search_array_dict(req_data["cd_config"]["environments"], "environment_id", env_before["environment_id"])
+
+                if env_new is not None:
+                    # deploy_member以外の項目は更新する - Update items other than deploy_member
+                    env_new = env_new.copy()
+                    env_new["cd_exec_users"] = env_before["cd_exec_users"]
+                    environments_new.append(env_new)
+                else:
+                    # 環境が削除された場合は設定しない（消える）
+                    # Not set (disappears) when the environment is deleted
+                    pass
+
+            for env in req_data["cd_config"]["environments"]:
+                if common.search_array_dict(row["cd_config"]["environments"], "environment_id", env["environment_id"]) is None:
+                    # 新規の環境の場合、deploy_member以外の項目を設定し、deploy_memberはデフォルト値に設定
+                    # For new environment, set items other than deploy_member and set deploy_member to default value
+                    env_new = env.copy()
+                    env_new["cd_exec_users"] = {"user_select":"all", "user_id": []}
+                    environments_new.append(env_new)
+
+            row["cd_config"]["environments"] = environments_new
+
+        elif const.ROLE_WS_ROLE_MEMBER_ROLE_UPDATE[0].format(workspace_id) in roles:
+            # ワークスペース更新(CD)の権限がなくメンバー更新の権限がある場合はDeploy権限の項目だけを更新
+            # If you do not have workspace update (CD) permission and you have member update permission, update only the item of Deploy permission.
+
+            for env in row["cd_config"]["environments"]:
+                env_new = common.search_array_dict(req_data["cd_config"]["environments"], "environment_id", env["environment_id"])
+                env["cd_exec_users"] = env_new["cd_exec_users"]
+
+        else:
+            # ワークスペース更新(CD)の権限とメンバー更新の権限がない場合は更新しない
+            # Do not update if you do not have workspace update (CD) and member update permissions
+            pass
 
         post_data = row
 

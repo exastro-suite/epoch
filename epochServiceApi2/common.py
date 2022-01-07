@@ -212,6 +212,22 @@ def get_file_id(dict, fileName):
     except Exception:
         raise
 
+def search_array_dict(array, id_name, id):
+    """指定キーで配列から検索する - Search from the array with the specified key
+
+    Args:
+        array (arr): array
+        id_name (str): key
+        id (str): id
+
+    Returns:
+        dict: array item
+    """
+    for item in array:
+        if item[id_name] == id:
+            return item
+    return None
+
 def get_current_user(header):
     """ログインユーザID取得
 
