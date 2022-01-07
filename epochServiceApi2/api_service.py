@@ -412,6 +412,31 @@ def call_workspace_member(workspace_id):
     except Exception as e:
         return common.server_error(e)
 
+@app.route('/workspace/<int:workspace_id>/member/cdexec', methods=['GET'])
+def call_workspace_member_cdexec(workspace_id):
+    """workspace member cdexec Call
+
+    Args:
+        workspace_id (int): workspace ID
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'GET':
+            # cdexec members get
+            return api_service_member.get_workspace_members_cdexec(workspace_id)
+        else:
+            # Error
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
 @app.route('/workspace/<int:workspace_id>/member/current', methods=['DELETE'])
 def call_workspace_leave(workspace_id):
     """Exit from a member of the workspace - ワークスペースのメンバーから抜けます

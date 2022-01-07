@@ -207,6 +207,46 @@ def get_workspace_members(workspace_id):
     except Exception as e:
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
 
+def get_workspace_members_cdexec(workspace_id):
+    """ワークスペース CD実行メンバー情報取得 workspace cdexec members get
+
+    Returns:
+        Response: HTTP Respose
+    """
+
+    app_name = multi_lang.get_text("EP020-0003", "ワークスペース情報:")
+    exec_stat = multi_lang.get_text("EP020-xxxx", "CD実行メンバー一覧取得")
+    error_detail = ""
+
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
+        globals.logger.debug('#' * 50)
+
+
+
+        rows = [
+            {
+                "user_id":  "ac689724-1a67-40d3-9428-a3806f9528d0",
+                "username":  "yamataro",
+                "last_name": "山田",
+                "first_name": "太郎"
+            },
+            {
+                "user_id":  "ac689724-1a67-40d3-9428-a3806f9528d1",
+                "username": "suzuki",
+                "last_name": "鈴木",
+                "first_name": "花子"
+            }
+        ]
+        
+        return jsonify({"result": "200", "rows": [ rows ]}), 200
+
+    except common.UserException as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+    except Exception as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+
 def merge_workspace_members(workspace_id):
     """ワークスペース該当メンバー登録 workspace member registration
 
