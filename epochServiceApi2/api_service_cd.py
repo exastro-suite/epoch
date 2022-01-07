@@ -246,18 +246,20 @@ def cd_execute(workspace_id):
 
         # workspace情報のCD実行権限があるかチェックする Check if you have CD execution permission for workspace information
         found_user = False
-        # 選択された環境と一致するまで環境情報をすべて処理する Process all environment information until it matches the selected environment
-        for env in rows[0]["environments"]:
-            # 実行環境に該当する情報のユーザーIDを取得する Acquire the user ID of the information corresponding to the execution environment
-            if env["name"] == request_json["environmentName"]:
-                # CD実行権限ありの人すべての場合は、OKとする OK for all people with CD execution permission
-                if env["cd_exec_users"]["user_select"] == "all":
-                    found_user = True
-                    break
-                # 選択肢の場合は、該当するユーザーがあるかどうかチェックする If it's an option, check if there is a suitable user
-                elif user_id in env["cd_exec_users"]["user_id"]:
-                    found_user = True
-                    break
+        # 環境情報がない場合も考慮 Consider even if there is no environmental information
+        if "environments" in rows[0]:
+            # 選択された環境と一致するまで環境情報をすべて処理する Process all environment information until it matches the selected environment
+            for env in rows[0]["environments"]:
+                # 実行環境に該当する情報のユーザーIDを取得する Acquire the user ID of the information corresponding to the execution environment
+                if env["name"] == request_json["environmentName"]:
+                    # CD実行権限ありの人すべての場合は、OKとする OK for all people with CD execution permission
+                    if env["cd_exec_users"]["user_select"] == "all":
+                        found_user = True
+                        break
+                    # 選択肢の場合は、該当するユーザーがあるかどうかチェックする If it's an option, check if there is a suitable user
+                    elif user_id in env["cd_exec_users"]["user_id"]:
+                        found_user = True
+                        break
 
         # 最終的に実行可能かチェックする Check if it is finally feasible
         if not found_user:
@@ -394,16 +396,40 @@ def cd_environment_get(workspace_id):
 
     try:
 
-        ret_environments = [
-            {
-                "id": "xxxxxx1",
-                "name": "staging",
-            },
-            {
-                "id": "xxxxxx2",
-                "name": "prodcution",
-            }
-        ]
+        # ユーザIDの取得 get user id
+        user_id = common.get_current_user(request.headers)
+
+        # workspace GET送信 workspace get
+        api_url = "{}://{}:{}/workspace/{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+                                                    os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                    os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                    workspace_id)
+        response = requests.get(api_url)
+
+        # 取得できなかった場合は、終了する If it cannot be obtained, it will end.
+        if response.status_code != 200:
+            error_detail = multi_lang.get_text("EP020-0013", "ワークスペース情報の取得に失敗しました")
+            raise common.UserException("{} Error workspace info get status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
+
+        # 取得したJSON結果が正常でない場合、例外を返す If the JSON result obtained is not normal, an exception will be returned.
+        ret = json.loads(response.text)
+        rows = ret["rows"]
+
+        # workspace情報のCD実行権限がある環境情報のみ返却する Only the environment information for which you have the CD execution permission for workspace information is returned.
+        ret_environments = []
+        # 環境情報がない場合も考慮 Consider even if there is no environmental information
+        if "environments" in rows[0]:
+            # 環境情報をすべて処理する Process all environmental information
+            for env in rows[0]["environments"]:
+                # CD実行権限ありの人すべてまたはCD実行権限有の場合に環境を返却する Return the environment to all people with CD execution permission or if you have CD execution permission
+                if env["cd_exec_users"]["user_select"] == "all" or \
+                    user_id in env["cd_exec_users"]["user_id"]:
+
+                    environment = {
+                        "id": env["environment_id"],
+                        "name": env["name"],
+                    }
+                    ret_environments.append(environment)
 
         # 正常終了 normal return code
         ret_status = 200
