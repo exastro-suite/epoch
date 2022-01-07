@@ -187,7 +187,7 @@ def post_manifest_template(workspace_id):
             }
 
             # 同一ファイルがあるかファイルIDを取得
-            file_id = common.get_file_id(ret_manifests["rows"], manifest_file.name)
+            file_id = common.get_file_id(ret_manifests["rows"], manifest_file.filename)
             
             # 同一ファイル名が登録されている場合は、更新とする
             if not file_id:

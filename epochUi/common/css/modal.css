@@ -932,7 +932,6 @@ padding: 0 8px;
 .item-list-select-name {
 overflow: auto;
 max-height: 160px;
-min-height: 48px;
 margin-top: 8px; padding: 4px;
 background-color: #F8F8F8;
 border: 1px solid #DDD;
@@ -940,7 +939,7 @@ border: 1px solid #DDD;
 .item-list-select-empty {
 width: 100%;
 text-align: center;
-line-height: 48px;
+line-height: 36px;
 color: #CCC;
 }
 .item-list-select-name-list {
@@ -998,7 +997,27 @@ animation: modalLoadingBar .5s linear infinite;
 @keyframes modalLoadingBar {
 to { background-position: 32px 0; }
 }
-
+.modal[data-type="progress"] .modal-loading-inner::after {
+width: calc( 100% - 64px );
+}
+.modal-progress-message {
+overflow: hidden;
+transform: translateY(16px);
+margin: 0 32px; padding: 0 8px;
+background-color: #F2F2F2;
+border: 1px solid #DDD;
+border-radius: 2px;
+line-height: 32px;
+white-space: nowrap;
+text-overflow: ellipsis;
+font-size: 12px;
+font-family: Consolas, "メイリオ", Meiryo, Osaka, "ＭＳ Ｐゴシック", "MS PGothic", "sans-serif";
+color: #555;
+}
+.item-message {
+overflow: auto;
+word-break: break-all;
+}
 
 /* 固定用レイアウト */
 .layout-padding-0 .modal-body {

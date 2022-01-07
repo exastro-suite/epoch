@@ -100,9 +100,9 @@ modalFunction.prototype = {
           
           // ボタン
           $modal.find('.modal-menu-button, .modal-close-button').on('click', function(){
-            const type = $( this ).attr('data-button');
-            if ( funcs[type] !== undefined && modal.typeJudgment(funcs[type]) === 'function') {
-              funcs[type]();
+            const buttonType = $( this ).attr('data-button');
+            if ( funcs[buttonType] !== undefined && modal.typeJudgment(funcs[buttonType]) === 'function') {
+              funcs[buttonType]();            
             } else {
               modal.close();
             }
@@ -162,15 +162,14 @@ modalFunction.prototype = {
           
           modal.focusOn('#sub-modal-container', '#container, #modal-container');
           
-          if ( type === 'sub') {
-            $modal.find('.modal-menu-button, .modal-close-button').on('click', function(){
+          $modal.find('.modal-menu-button, .modal-close-button').on('click', function(){
+            const buttonType = $( this ).attr('data-button');
+            if ( funcs[buttonType] !== undefined && modal.typeJudgment(funcs[buttonType]) === 'function') {
+              funcs[buttonType]();
+            } else {
               modal.subClose();
-              const type = $( this ).attr('data-button');
-              if ( funcs[type] !== undefined && modal.typeJudgment(funcs[type]) === 'function') {
-                funcs[type]();
-              }
-            });
-          }
+            }
+          });
         }
         // 入力チェック
         modal.inputErrorCheck();
@@ -288,6 +287,7 @@ modalFunction.prototype = {
       const modal = this;
       if ( width === undefined ) width = 800;
       if ( main.class === undefined ) main.class = '';
+      if ( !main.footer ) main.class += ' no-footer'
       const $modal = $('<div/>', {
         'id': main.id,
         'data-modal': 'modal-' + modal.getUniqueID(),
@@ -312,6 +312,8 @@ modalFunction.prototype = {
             })
           )
         )
+      }
+      if ( main.footer ) {
         $modal.append(
           $('<div/>', {'class': 'modal-footer'}).append( modal.createFooter( main.footer ) )
         );
@@ -685,6 +687,7 @@ modalFunction.prototype = {
         const $loading = $('<div/>', {
           'id': ( tabNumber !== undefined )? tabNumber + '-' + loading.id: loading.id
         }).append(
+          ( loading.text !== undefined )? $('<div/>', {'class': 'modal-progress-message', 'text': loading.text }): '',
           $('<div/>', {'class': 'modal-loading-inner'})
         );
         return $loading;
@@ -1440,6 +1443,9 @@ modalFunction.prototype = {
         
       return $item;
     },
+    /* -------------------------------------------------- *\
+       セレクトリストの作成
+    \* -------------------------------------------------- */
     'createListSelectSetList': function( $target, id, list, col ){
       const modal = this,
             idArray = id.split(',');
@@ -1468,7 +1474,8 @@ modalFunction.prototype = {
     \* -------------------------------------------------- */
     'createMessage': function( message ){
       const $message = $('<dl/>', {'class': 'item-message-block item-block'}),
-            className = ( message.class !== undefined )? ' ' + message.class: '';
+            className = ( message.class !== undefined )? ' ' + message.class: '',
+            color = ( message.color === undefined )? '333333': message.color;
       if ( message.title !== undefined ) {
         $message.append( $('<dt/>', {'class': 'item-message-title item-title', 'text': message.title }) );
       }
@@ -1477,7 +1484,8 @@ modalFunction.prototype = {
           $('<dd/>', {'class': 'item-message-area'}).append(
             $('<div/>', {
               'class': 'item-message ' + className,
-              'text': message.text
+              'text': message.text,
+              'style': 'color:#' + color
             })
           )
         );
