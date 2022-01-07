@@ -479,7 +479,6 @@ def set_roles(workspace_id):
                 {
                     "name": const.ROLE_WS_CD_EXECUTE[0].format(workspace_id),
                     "composite_roles": [ const.ROLE_WS_ROLE_WS_REFERENCE[0].format(workspace_id),
-                                        const.ROLE_WS_ROLE_CI_PIPELINE_RESULT[0].format(workspace_id),
                                         const.ROLE_WS_ROLE_CD_EXECUTE[0].format(workspace_id),
                                         const.ROLE_WS_ROLE_CD_EXECUTE_RESULT[0].format(workspace_id),
                     ],

@@ -109,16 +109,7 @@ def get_workspace_members(workspace_id):
         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
         globals.logger.debug('#' * 50)
 
-        roles = [
-            const.ROLE_WS_OWNER[0],
-            const.ROLE_WS_MANAGER[0],
-            const.ROLE_WS_MEMBER_MG[0],
-            const.ROLE_WS_CI_SETTING[0],
-            const.ROLE_WS_CI_RESULT[0],
-            const.ROLE_WS_CD_SETTING[0],
-            const.ROLE_WS_CD_EXECUTE[0],
-            const.ROLE_WS_CD_RESULT[0],
-        ]
+        roles = const.ALL_ROLES
 
         stock_user_id = []  
         ret_users = []
@@ -168,7 +159,7 @@ def get_workspace_members(workspace_id):
                     raise common.UserException("{} Error user role get status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
 
                 ret_roles = json.loads(response.text)
-                globals.logger.debug(f"roles:{ret_roles}")
+                # globals.logger.debug(f"roles:{ret_roles}")
 
                 set_role_kind = []
                 # 取得したすべてのロールから絞り込む Narrow down from all acquired roles
@@ -215,7 +206,7 @@ def get_workspace_members_cdexec(workspace_id):
     """
 
     app_name = multi_lang.get_text("EP020-0003", "ワークスペース情報:")
-    exec_stat = multi_lang.get_text("EP020-xxxx", "CD実行メンバー一覧取得")
+    exec_stat = multi_lang.get_text("EP020-0018", "CD実行メンバー一覧取得")
     error_detail = ""
 
     try:
@@ -223,24 +214,96 @@ def get_workspace_members_cdexec(workspace_id):
         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
         globals.logger.debug('#' * 50)
 
+        # 子のROLEからでは、もちえているユーザーの取得ができないのですべての親ロールから該当する情報を抜き出していく
+        # Since it is not possible to acquire the user who has it from the child ROLE, the relevant information is extracted from all the parent roles.
+        roles = const.ALL_ROLES
 
+        # 抜き出す権限は以下を設定 Set the following for the extraction authority
+        pickup_role = const.ROLE_WS_ROLE_CD_EXECUTE[0].format(workspace_id)
 
-        rows = [
-            {
-                "user_id":  "ac689724-1a67-40d3-9428-a3806f9528d0",
-                "username":  "yamataro",
-                "last_name": "山田",
-                "first_name": "太郎"
-            },
-            {
-                "user_id":  "ac689724-1a67-40d3-9428-a3806f9528d1",
-                "username": "suzuki",
-                "last_name": "鈴木",
-                "first_name": "花子"
-            }
-        ]
+        stock_user_id = []  
+        ret_users = []
+        for role in roles:
+            # workspace 参照権限のあるユーザーをすべて取得する Get all users with read permission
+            # 子のロールでは取得できないので割り当てたロールで取得する
+            # Since it cannot be acquired by the child role, it is acquired by the assigned role.
+            api_url = "{}://{}:{}/{}/client/epoch-system/roles/{}/users".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
+                                                    os.environ['EPOCH_EPAI_API_HOST'],
+                                                    os.environ['EPOCH_EPAI_API_PORT'],
+                                                    os.environ["EPOCH_EPAI_REALM_NAME"],
+                                                    role.format(workspace_id)
+                                                )
+            #
+            # get users - ユーザー取得
+            #
+            response = requests.get(api_url)
+            if response.status_code != 200 and response.status_code != 404:
+                error_detail = multi_lang.get_text("EP020-0008", "ユーザー情報の取得に失敗しました")
+                raise common.UserException("{} Error user get status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
+
+            users = json.loads(response.text)
+
+            # globals.logger.debug(f"users:{users}")
+
+            for user in users["rows"]:
+                
+                # すでに同じユーザーがいた場合は処理しない If the same user already exists, it will not be processed
+                # if len(stock_user_id) > 0:
+                if user["user_id"] in stock_user_id:
+                    continue
+
+                # 取得したユーザーのロールを取得 Get the role of the acquired user
+                api_url = "{}://{}:{}/{}/user/{}/roles/epoch-system".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
+                                                                        os.environ['EPOCH_EPAI_API_HOST'],
+                                                                        os.environ['EPOCH_EPAI_API_PORT'],
+                                                                        os.environ["EPOCH_EPAI_REALM_NAME"],
+                                                                        user["user_id"]
+                                                                )
+
+                #
+                # get user role - ユーザーロール情報取得
+                #
+                response = requests.get(api_url)
+                if response.status_code != 200:
+                    error_detail = multi_lang.get_text("EP020-0009", "ユーザーロール情報の取得に失敗しました")
+                    raise common.UserException("{} Error user role get status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
+
+                ret_roles = json.loads(response.text)
+                # globals.logger.debug(f"roles:{ret_roles}")
+
+                # 取得したすべてのロールから絞り込む Narrow down from all acquired roles
+                for get_role in ret_roles["rows"]:
+                    # 該当するロールが一致したら値を設定 Set the value when the corresponding role matches
+                    if get_role["name"] == pickup_role:
+                        ret_user = {
+                            "user_id": user["user_id"],
+                            "username": user["user_name"],
+                        }
+                        ret_users.append(ret_user)
+                        stock_user_id.append(user["user_id"])
+
+        globals.logger.debug(f"users:{ret_users}")
+
+        rows = ret_users
+
+        return jsonify({"result": "200", "rows": rows}), 200
+
+        # rows = [
+        #     {
+        #         "user_id":  "ac689724-1a67-40d3-9428-a3806f9528d0",
+        #         "username":  "yamataro",
+        #         "last_name": "山田",
+        #         "first_name": "太郎"
+        #     },
+        #     {
+        #         "user_id":  "ac689724-1a67-40d3-9428-a3806f9528d1",
+        #         "username": "suzuki",
+        #         "last_name": "鈴木",
+        #         "first_name": "花子"
+        #     }
+        # ]
         
-        return jsonify({"result": "200", "rows": [ rows ]}), 200
+        # return jsonify({"result": "200", "rows": [ rows ]}), 200
 
     except common.UserException as e:
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
