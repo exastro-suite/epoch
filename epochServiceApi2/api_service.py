@@ -340,6 +340,31 @@ def call_cd_exec(workspace_id):
     except Exception as e:
         return common.server_error(e)
 
+@app.route('/workspace/<int:workspace_id>/cd/environment', methods=['GET'])
+def call_cd_environment(workspace_id):
+    """workspace/workspace_id/cd/environment Call
+
+    Args:
+        workspace_id (int): workspace ID
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'GET':
+            # cd execute (post)
+            return api_service_cd.cd_environment_get(workspace_id)
+        else:
+            # Error
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
 @app.route('/member', methods=['GET'])
 def call_members():
     """member Call

@@ -661,8 +661,11 @@ epochTable.prototype = {
                                   break;
                               case 'checkbox':
                               case 'rowCheck': {
-                                  const inputID = et.tableID + '-' + thd.id,
-                                        checked = ( et.checkedList[inputID].indexOf( String( tbd )) !== -1  )? true: false;
+                                  // thd.id有りだと、動作しないためコメントアウト
+                                  // const inputID = et.tableID + '-' + thd.id,
+                                  //       checked = ( et.checkedList[inputID].indexOf( String( tbd )) !== -1  )? true: false;
+                                  const inputID = et.tableID,
+                                        checked = ( et.checkedList[inputID] !== -1  )? true: false;
                                   trHTML += et.checkboxHTML( thd.id, tbd, checked, i, j, thd.type );
                                   } break;
                               case 'div':

@@ -60,6 +60,7 @@ const wsDataJSON = {
   },
   'cd-execution-param': {
     'operation-search-key': "",
+    'environment-name': "",
     'preserve-datetime': ""
   }
 };
@@ -2055,47 +2056,70 @@ const cdExecution = function(){
         $okButton = $modal.find('.modal-menu-button[data-button="ok"]');
         
   $okButton.prop('disabled', true );
-  
-  // 実行条件
-  let exeSettingOptionHTML = '<option value="none" selected>CD実行する環境を選択してください。</option>';
-  for ( const key in envList ) {
-    exeSettingOptionHTML += '<option value="' + key + '">' + envList[key].text + '</option>'
-  }
-  exeSettingOptionHTML += '</select>';
-  
-  const today = fn.formatDate( new Date(), 'yyyy/MM/dd HH:mm');
-  
-  const exeSettingHTML = ''
-  + '<table id="cd-execution-condition-table" class="c-table">'
-    + '<tr class="c-table-row">'
-      + '<th class="c-table-col c-table-col-header"><div class="c-table-ci">CD実行日時</div></th>'
-      + '<td class="c-table-col"><div class="c-table-ci">'
-        + '<ul class="execution-date-select item-radio-list">'
-          + '<li class="item-radio-item">'
-            + '<input class="item-radio" type="radio" id="execution-date-immediate" value="immediate" name="execution-date" checked>'
-            + '<label class="item-radio-label" for="execution-date-immediate">即実行</label>'
-          + '</li>'
-          + '<li class="item-radio-item">'
-            + '<input class="item-radio" type="radio" id="execution-date-set" value="dateset" name="execution-date">'
-            + '<label class="item-radio-label" for="execution-date-set">予約日時指定</label>'
-          + '</li>'
-        + '</ul>'
-        + '<div class="execution-date"><input type="text" class="execution-date-input item-text" placeholder="' + today + '" value="' + today + '" disabled></div>'
-      + '</div></td>'
-    + '</tr>'
-    + '<tr class="c-table-row">'
-      + '<th class="c-table-col c-table-col-header"><div class="c-table-ci">環境</div></th>'
-      + '<td class="c-table-col"><div class="c-table-ci">'
-        + '<div class="item-select-area">'
-          + '<select id="cd-execution-environment-select" class="item-select">'
-            + exeSettingOptionHTML
-          + '</select>'
-        + '</div>'
-      + '</div></td>'
-    + '</tr>'
-  + '</table>';
-  
-  $exeSetting.html( exeSettingHTML );
+  // CD execution environment information processing - CD実行環境情報処理
+  new Promise((resolve, reject) =>{
+    var workspace_id = (new URLSearchParams(window.location.search)).get('workspace_id');
+      $.ajax({
+          "type": "GET",
+          "url": URL_BASE + "/api/workspace/{workspace_id}/cd/environment".replace('{workspace_id}',workspace_id)
+      }).done(function(data) {
+          console.log('[DONE] /workspace/{id}/member/environment');
+
+          resolve(data['environments']);
+      }).fail((jqXHR, textStatus, errorThrown) => {
+          console.log('[FAIL] /workspace/{id}/cd/environment');
+          reject();
+      });
+  }).then((getEnvList) => {
+    console.log(getText('EP010-0301', '[DONE] 環境取得'));
+    console.log(getEnvList);
+
+    // 実行条件
+    let exeSettingOptionHTML = '<option value="none" selected>CD実行する環境を選択してください。</option>';
+    // for ( const key in envList ) {
+    for ( const idx in getEnvList ) {
+      // exeSettingOptionHTML += '<option value="' + key + '">' + envList[key].text + '</option>'
+      exeSettingOptionHTML += '<option value="' + getEnvList[idx]["id"] + '">' + getEnvList[idx]["name"] + '</option>'
+    }
+    exeSettingOptionHTML += '</select>';
+
+    const today = fn.formatDate( new Date(), 'yyyy/MM/dd HH:mm');
+
+    const exeSettingHTML = ''
+    + '<table id="cd-execution-condition-table" class="c-table">'
+      + '<tr class="c-table-row">'
+        + '<th class="c-table-col c-table-col-header"><div class="c-table-ci">CD実行日時</div></th>'
+        + '<td class="c-table-col"><div class="c-table-ci">'
+          + '<ul class="execution-date-select item-radio-list">'
+            + '<li class="item-radio-item">'
+              + '<input class="item-radio" type="radio" id="execution-date-immediate" value="immediate" name="execution-date" checked>'
+              + '<label class="item-radio-label" for="execution-date-immediate">即実行</label>'
+            + '</li>'
+            + '<li class="item-radio-item">'
+              + '<input class="item-radio" type="radio" id="execution-date-set" value="dateset" name="execution-date">'
+              + '<label class="item-radio-label" for="execution-date-set">予約日時指定</label>'
+            + '</li>'
+          + '</ul>'
+          + '<div class="execution-date"><input type="text" class="execution-date-input item-text" placeholder="' + today + '" value="' + today + '" disabled></div>'
+        + '</div></td>'
+      + '</tr>'
+        + '<tr class="c-table-row">'
+          + '<th class="c-table-col c-table-col-header"><div class="c-table-ci">環境</div></th>'
+          + '<td class="c-table-col"><div class="c-table-ci">'
+            + '<div class="item-select-area">'
+              + '<select id="cd-execution-environment-select" class="item-select">'
+                + exeSettingOptionHTML
+              + '</select>'
+            + '</div>'
+          + '</div></td>'
+        + '</tr>'
+      + '</table>';
+      
+      $exeSetting.html( exeSettingHTML );
+    
+    }).catch(() => {
+      console.log(getText('EP010-0302', '[FAIL] 環境取得'));
+  });
 
   const $executionDateInput = $modal.find('.execution-date-input');
   $executionDateInput.datePicker({'s': 'none'});
@@ -2177,6 +2201,7 @@ const cdExecution = function(){
         url = '';
       }
       wsDataJSON['cd-execution-param']['operation-search-key'] = repository;
+      wsDataJSON['cd-execution-param']['environment-name'] = name;
       $argo.html('<p>以下の内容でDeployします。よろしいですか？</p>'
       + tableHTML({
         '環境名': name,
@@ -2188,6 +2213,7 @@ const cdExecution = function(){
     } else {
       $argo.add(  $manifest.find('.modal-tab-body-block') ).html( notSelected() );
       wsDataJSON['cd-execution-param']['operation-search-key'] = '';
+      wsDataJSON['cd-execution-param']['environment-name'] = '';
       $okButton.prop('disabled', true );
     }
   });
@@ -2247,74 +2273,84 @@ const itaStatusList = function(){
   $statusList.html( $itaConductor )
 };
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-//   Argo CD Deploy可能メンバー代入
-// 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-const deployMembers = wsModalJSON.pipelineArgo.block.environmentList.tab.item.environmentDeployMember;
-
-// ダミーデータ作成
-for ( let i = 1; i <= 1000; i++ ) {
-  deployMembers.list.push([
-    i,
-    i,
-    '山田 ' + i + '号',
-    'no' + i + '-yamada@example.com',
-  ]);
-}
 
 const argoCdAddDeployMembersModal = function(){
   const $argoModal = $('#pipeline-argo');
 
+  // ArgoCDモーダル - Deploy権限項目の「ユーザ選択」ボタン押下時のイベント処理
+  // ArgoCD modal - Event processing when the "Select User" button with Deploy permission item is pressed
   $argoModal.on('click', '.item-list-select-button', function(){
       const $select = $( this ).closest('.item-block'),
             value = $select.find('.item-list-select-id').val(),
             ids = ( value === '')? []: value.split(','),
             subModal = new modalFunction( wsModalJSON, wsDataJSON );
-      
-      subModal.open('pipelineArgoDeployMember', {
-        'ok': function(){
-          const id = subModal.$modal.find('.et-cl').val();
-          subModal.createListSelectSetList( $select, id, deployMembers.list, deployMembers.col );
-        },
-        'callback': function(){
-          const et = new epochTable();
-          et.setup('#pipeline-argo-deploy-member-select', [
-            {
-              'title': 'チェックボックス',
-              'type': 'checkbox',
-              'filter': 'on',
-            },
-            {
-              'title': 'ID',
-              'type': 'number',
-              'width': '10%',
-              'align': 'right',
-              'sort': 'on',
-              'filter': 'on',
-            },
-            {
-              'title': '名前',
-              'type': 'text',
-              'width': '40%',
-              'align': 'left',
-              'sort': 'on',
-              'filter': 'on',
-            },
-            {
-              'title': 'メールアドレス',
-              'type': 'text',
-              'align': 'left',
-              'sort': 'on',
-              'filter': 'on',
-            }
-          ], deployMembers.list, {
-            'checked' : ids
-          } );
-        }
-      }, 720,'sub');
+
+      // CD execution user acquisition process - CD実行ユーザ取得処理
+      new Promise((resolve, reject) =>{
+          var workspace_id = (new URLSearchParams(window.location.search)).get('workspace_id');
+          $.ajax({
+              "type": "GET",
+              "url": URL_BASE + "/api/workspace/{workspace_id}/member/cdexec".replace('{workspace_id}',workspace_id)
+          }).done(function(data) {
+              console.log('[DONE] /workspace/{id}/member/cdexec');
+
+              const deployMembers = wsModalJSON.pipelineArgo.block.environmentList.tab.item.environmentDeployMember;
+              deployMembers.list = []
+              
+              // Set the acquired member list - 取得したメンバーリストを設定
+              for(var useridx = 0; useridx < data['rows'].length; useridx++ ) {
+                deployMembers.list.push([
+                  useridx + 1,
+                  useridx + 1,
+                  data['rows'][useridx]['username']
+                ]);
+              }
+
+              subModal.open('pipelineArgoDeployMember', {
+                'ok': function(){
+                  const id = subModal.$modal.find('.et-cl').val();
+                  subModal.createListSelectSetList( $select, id, deployMembers.list, deployMembers.col );
+                },
+                'callback': function(){
+                  const et = new epochTable();
+                  et.setup('#pipeline-argo-deploy-member-select', [
+                    {
+                      'title': getText('EP010-0204', 'チェックボックス'),
+                      'type': 'checkbox',
+                      'filter': 'on',
+                    },
+                    {
+                      'title': 'ID',
+                      'type': 'number',
+                      'width': '10%',
+                      'align': 'right',
+                      'sort': 'on',
+                      'filter': 'on',
+                    },
+                    {
+                      'title': getText('EP010-0205', '名前'),
+                      'type': 'text',
+                      'width': '40%',
+                      'align': 'left',
+                      'sort': 'on',
+                      'filter': 'on',
+                    },
+                  ], deployMembers.list, {
+                    'checked' : ids
+                  } );
+                }
+              }, 720,'sub');
+              resolve();
+          }).fail((jqXHR, textStatus, errorThrown) => {
+              console.log('[FAIL] /workspace/{id}/member/cdexec');
+              reject();
+          });
+      }).then(() => {
+          console.log(getText('EP010-0206', '[DONE] CD実行ユーザ取得'));
+      }).catch(() => {
+          console.log(getText('EP010-0207', '[FAIL] CD実行ユーザ取得'));
+      });
+
   });
 };
 
@@ -2381,6 +2417,7 @@ const cdRunning = function(){
     // API Body生成
     reqbody = {};
     reqbody['operationSearchKey'] = wsDataJSON['cd-execution-param']['operation-search-key'];
+    reqbody['environmentName'] = wsDataJSON['cd-execution-param']['environment-name'];
     reqbody['preserveDatetime'] = wsDataJSON['cd-execution-param']['preserve-datetime'];
 
     console.log("CALL : CD実行開始");
@@ -3518,7 +3555,8 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-member-role-update".replace('{ws_id}',ws_id)) == -1) {
         delete wsModalJSON.pipelineArgo.block.environmentList.tab.item.environmentDeployMember;
       }
-            // Set buttons for IaC repository modal dialog - IaCリポジトリモーダルダイアログのボタンを設定する
+      
+      // Set buttons for IaC repository modal dialog - IaCリポジトリモーダルダイアログのボタンを設定する
       if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ws-cd-update".replace('{ws_id}',ws_id)) == -1) {
         delete wsModalJSON.gitServiceArgo.footer.ok;
       }
