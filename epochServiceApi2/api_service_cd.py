@@ -424,10 +424,12 @@ def cd_environment_get(workspace_id):
         if "environments" in rows[0]["cd_config"]:
             # 環境情報をすべて処理する Process all environmental information
             for env in rows[0]["cd_config"]["environments"]:
+                globals.logger.debug("env:{}".format(env))
                 # CD実行権限ありの人すべてまたはCD実行権限有の場合に環境を返却する Return the environment to all people with CD execution permission or if you have CD execution permission
                 if env["cd_exec_users"]["user_select"] == "all" or \
                     user_id in env["cd_exec_users"]["user_id"]:
 
+                    globals.logger.debug("HIT!!!!")
                     environment = {
                         "id": env["environment_id"],
                         "name": env["name"],

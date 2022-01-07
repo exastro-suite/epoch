@@ -2309,7 +2309,7 @@ const argoCdAddDeployMembersModal = function(){
               // Set the acquired member list - 取得したメンバーリストを設定
               for(var useridx = 0; useridx < data['rows'].length; useridx++ ) {
                 deployMembers.list.push([
-                  useridx + 1,
+                  data['rows'][useridx]['user_id'],
                   data['rows'][useridx]['username']
                 ]);
               }
