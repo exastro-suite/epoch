@@ -377,3 +377,40 @@ def column_indexes(column_names, row_header):
     for idx in column_names:
         column_indexes[idx] = row_header.index(column_names[idx])
     return column_indexes
+
+def cd_environment_get(workspace_id):
+    """CD実行環境取得 cd execute environment get
+
+    Args:
+        workspace_id (int): workspace ID
+
+    Returns:
+        Response: HTTP Respose
+    """
+
+    app_name = multi_lang.get_text("EP020-0022", "CD実行環境取得:")
+    exec_stat = multi_lang.get_text("EP020-0017", "取得")
+    error_detail = ""
+
+    try:
+
+        ret_environments = [
+            {
+                "id": "xxxxxx1",
+                "name": "staging",
+            },
+            {
+                "id": "xxxxxx2",
+                "name": "prodcution",
+            }
+        ]
+
+        # 正常終了 normal return code
+        ret_status = 200
+
+        return jsonify({"result": ret_status, "environments": ret_environments}), ret_status
+
+    except common.UserException as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+    except Exception as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)

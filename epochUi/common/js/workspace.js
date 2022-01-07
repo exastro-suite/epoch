@@ -2056,47 +2056,70 @@ const cdExecution = function(){
         $okButton = $modal.find('.modal-menu-button[data-button="ok"]');
         
   $okButton.prop('disabled', true );
-  
-  // 実行条件
-  let exeSettingOptionHTML = '<option value="none" selected>CD実行する環境を選択してください。</option>';
-  for ( const key in envList ) {
-    exeSettingOptionHTML += '<option value="' + key + '">' + envList[key].text + '</option>'
-  }
-  exeSettingOptionHTML += '</select>';
-  
-  const today = fn.formatDate( new Date(), 'yyyy/MM/dd HH:mm');
-  
-  const exeSettingHTML = ''
-  + '<table id="cd-execution-condition-table" class="c-table">'
-    + '<tr class="c-table-row">'
-      + '<th class="c-table-col c-table-col-header"><div class="c-table-ci">CD実行日時</div></th>'
-      + '<td class="c-table-col"><div class="c-table-ci">'
-        + '<ul class="execution-date-select item-radio-list">'
-          + '<li class="item-radio-item">'
-            + '<input class="item-radio" type="radio" id="execution-date-immediate" value="immediate" name="execution-date" checked>'
-            + '<label class="item-radio-label" for="execution-date-immediate">即実行</label>'
-          + '</li>'
-          + '<li class="item-radio-item">'
-            + '<input class="item-radio" type="radio" id="execution-date-set" value="dateset" name="execution-date">'
-            + '<label class="item-radio-label" for="execution-date-set">予約日時指定</label>'
-          + '</li>'
-        + '</ul>'
-        + '<div class="execution-date"><input type="text" class="execution-date-input item-text" placeholder="' + today + '" value="' + today + '" disabled></div>'
-      + '</div></td>'
-    + '</tr>'
-    + '<tr class="c-table-row">'
-      + '<th class="c-table-col c-table-col-header"><div class="c-table-ci">環境</div></th>'
-      + '<td class="c-table-col"><div class="c-table-ci">'
-        + '<div class="item-select-area">'
-          + '<select id="cd-execution-environment-select" class="item-select">'
-            + exeSettingOptionHTML
-          + '</select>'
-        + '</div>'
-      + '</div></td>'
-    + '</tr>'
-  + '</table>';
-  
-  $exeSetting.html( exeSettingHTML );
+  // CD execution environment information processing - CD実行環境情報処理
+  new Promise((resolve, reject) =>{
+    var workspace_id = (new URLSearchParams(window.location.search)).get('workspace_id');
+      $.ajax({
+          "type": "GET",
+          "url": URL_BASE + "/api/workspace/{workspace_id}/cd/environment".replace('{workspace_id}',workspace_id)
+      }).done(function(data) {
+          console.log('[DONE] /workspace/{id}/member/environment');
+
+          resolve(data['environments']);
+      }).fail((jqXHR, textStatus, errorThrown) => {
+          console.log('[FAIL] /workspace/{id}/cd/environment');
+          reject();
+      });
+  }).then((getEnvList) => {
+    console.log(getText('EP010-0301', '[DONE] 環境取得'));
+    console.log(getEnvList);
+
+    // 実行条件
+    let exeSettingOptionHTML = '<option value="none" selected>CD実行する環境を選択してください。</option>';
+    // for ( const key in envList ) {
+    for ( const idx in getEnvList ) {
+      // exeSettingOptionHTML += '<option value="' + key + '">' + envList[key].text + '</option>'
+      exeSettingOptionHTML += '<option value="' + getEnvList[idx]["id"] + '">' + getEnvList[idx]["name"] + '</option>'
+    }
+    exeSettingOptionHTML += '</select>';
+
+    const today = fn.formatDate( new Date(), 'yyyy/MM/dd HH:mm');
+
+    const exeSettingHTML = ''
+    + '<table id="cd-execution-condition-table" class="c-table">'
+      + '<tr class="c-table-row">'
+        + '<th class="c-table-col c-table-col-header"><div class="c-table-ci">CD実行日時</div></th>'
+        + '<td class="c-table-col"><div class="c-table-ci">'
+          + '<ul class="execution-date-select item-radio-list">'
+            + '<li class="item-radio-item">'
+              + '<input class="item-radio" type="radio" id="execution-date-immediate" value="immediate" name="execution-date" checked>'
+              + '<label class="item-radio-label" for="execution-date-immediate">即実行</label>'
+            + '</li>'
+            + '<li class="item-radio-item">'
+              + '<input class="item-radio" type="radio" id="execution-date-set" value="dateset" name="execution-date">'
+              + '<label class="item-radio-label" for="execution-date-set">予約日時指定</label>'
+            + '</li>'
+          + '</ul>'
+          + '<div class="execution-date"><input type="text" class="execution-date-input item-text" placeholder="' + today + '" value="' + today + '" disabled></div>'
+        + '</div></td>'
+      + '</tr>'
+        + '<tr class="c-table-row">'
+          + '<th class="c-table-col c-table-col-header"><div class="c-table-ci">環境</div></th>'
+          + '<td class="c-table-col"><div class="c-table-ci">'
+            + '<div class="item-select-area">'
+              + '<select id="cd-execution-environment-select" class="item-select">'
+                + exeSettingOptionHTML
+              + '</select>'
+            + '</div>'
+          + '</div></td>'
+        + '</tr>'
+      + '</table>';
+      
+      $exeSetting.html( exeSettingHTML );
+    
+    }).catch(() => {
+      console.log(getText('EP010-0302', '[FAIL] 環境取得'));
+  });
 
   const $executionDateInput = $modal.find('.execution-date-input');
   $executionDateInput.datePicker({'s': 'none'});
