@@ -60,6 +60,7 @@ const wsDataJSON = {
   },
   'cd-execution-param': {
     'operation-search-key': "",
+    'environment-name': "",
     'preserve-datetime': ""
   }
 };
@@ -2177,6 +2178,7 @@ const cdExecution = function(){
         url = '';
       }
       wsDataJSON['cd-execution-param']['operation-search-key'] = repository;
+      wsDataJSON['cd-execution-param']['environment-name'] = name;
       $argo.html('<p>以下の内容でDeployします。よろしいですか？</p>'
       + tableHTML({
         '環境名': name,
@@ -2188,6 +2190,7 @@ const cdExecution = function(){
     } else {
       $argo.add(  $manifest.find('.modal-tab-body-block') ).html( notSelected() );
       wsDataJSON['cd-execution-param']['operation-search-key'] = '';
+      wsDataJSON['cd-execution-param']['environment-name'] = '';
       $okButton.prop('disabled', true );
     }
   });
@@ -2391,6 +2394,7 @@ const cdRunning = function(){
     // API Body生成
     reqbody = {};
     reqbody['operationSearchKey'] = wsDataJSON['cd-execution-param']['operation-search-key'];
+    reqbody['environmentName'] = wsDataJSON['cd-execution-param']['environment-name'];
     reqbody['preserveDatetime'] = wsDataJSON['cd-execution-param']['preserve-datetime'];
 
     console.log("CALL : CD実行開始");

@@ -32,9 +32,6 @@ import globals
 import common
 import const
 import multi_lang
-import api_service_ci
-import api_service_manifest
-import api_service_cd
 
 # 設定ファイル読み込み・globals初期化
 app = Flask(__name__)
@@ -80,7 +77,7 @@ def user_get():
         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
         globals.logger.debug('#' * 50)
 
-        user_id = get_current_user(request.headers)
+        user_id = common.get_current_user(request.headers)
 
         api_url = "{}://{}:{}/{}/user/{}".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
                                                 os.environ['EPOCH_EPAI_API_HOST'],
@@ -194,34 +191,4 @@ def user_get():
     except common.UserException as e:
         raise
     except Exception as e:
-        raise
-
-def get_current_user(header):
-    """ログインユーザID取得
-
-    Args:
-        header (dict): request header情報
-
-    Returns:
-        str: ユーザID
-    """
-    try:
-        # 該当の要素が無い場合は、confの設定に誤り
-        HEAD_REMOTE_USER = "X-REMOTE-USER"
-        if not HEAD_REMOTE_USER in request.headers:
-            raise Exception("get_current_user error not found header:{}".format(HEAD_REMOTE_USER))
-
-        remote_user = request.headers[HEAD_REMOTE_USER]
-        # globals.logger.debug('{}:{}'.format(HEAD_REMOTE_USER, remote_user))
-
-        # 最初の@があるところまでをuser_idとする
-        idx = remote_user.rfind('@')
-        user_id = remote_user[:idx]
-        # globals.logger.debug('user_id:{}'.format(user_id))
-
-        return user_id
-
-    except Exception as e:
-        globals.logger.debug(e.args)
-        globals.logger.debug(traceback.format_exc())
         raise

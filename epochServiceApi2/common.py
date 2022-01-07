@@ -21,6 +21,9 @@ import re
 import globals
 import const
 
+class AuthException(Exception):
+    pass
+
 class UserException(Exception):
     pass
 

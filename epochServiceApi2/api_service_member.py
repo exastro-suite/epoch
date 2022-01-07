@@ -390,16 +390,7 @@ def merge_workspace_members(workspace_id):
         for row in req_json["rows"]:
 
             # 登録前にすべてのroleを削除する Delete all roles before registration
-            roles = [
-                const.ROLE_WS_OWNER[0],
-                const.ROLE_WS_MANAGER[0],
-                const.ROLE_WS_MEMBER_MG[0],
-                const.ROLE_WS_CI_SETTING[0],
-                const.ROLE_WS_CI_RESULT[0],
-                const.ROLE_WS_CD_SETTING[0],
-                const.ROLE_WS_CD_EXECUTE[0],
-                const.ROLE_WS_CD_RESULT[0],
-            ]
+            roles = const.ALL_ROLES
             #
             # ロールの制御のurl role control url
             #
