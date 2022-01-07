@@ -38,3 +38,14 @@ ROLE_WS_ROLE_MANIFEST_UPLOAD = [ "ws-{}-role-manifest-upload", "EP000-0019", "Ma
 ROLE_WS_ROLE_MANIFEST_SETTING = [ "ws-{}-role-manifest-setting", "EP000-0026", "Manifestパラメータ編集" ]
 ROLE_WS_ROLE_CD_EXECUTE = [ "ws-{}-role-cd-execute", "EP000-0020", "CD実行" ]
 ROLE_WS_ROLE_CD_EXECUTE_RESULT = [ "ws-{}-role-cd-execute-result", "EP000-0021", "CD実行結果確認" ]
+
+ALL_ROLES = [
+    ROLE_WS_OWNER[0],
+    ROLE_WS_MANAGER[0],
+    ROLE_WS_MEMBER_MG[0],
+    ROLE_WS_CI_SETTING[0],
+    ROLE_WS_CI_RESULT[0],
+    ROLE_WS_CD_SETTING[0],
+    ROLE_WS_CD_EXECUTE[0],
+    ROLE_WS_CD_RESULT[0],
+]
