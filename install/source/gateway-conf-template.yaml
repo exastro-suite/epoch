@@ -50,8 +50,8 @@ data:
       </Location>
 
       <Location /api/workspace/{{ param.workspace_id }}/manifest/template>
-        ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/manifest retry=0 timeout=600
-        ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/manifest
+        ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/manifest/template retry=0 timeout=600
+        ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/manifest/template
         AuthType openid-connect
         <Limit GET>
             Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-reference"
@@ -65,8 +65,8 @@ data:
       </Location>
 
       <Location /api/workspace/{{ param.workspace_id }}/manifest/parameter>
-        ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/manifest retry=0 timeout=600
-        ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/manifest
+        ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/manifest/parameter retry=0 timeout=600
+        ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/manifest/parameter
         AuthType openid-connect
         <Limit POST>
             Require claim "epoch-role:ws-{{ param.workspace_id }}-manifest-setting"
