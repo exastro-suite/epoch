@@ -2124,107 +2124,109 @@ const cdExecution = function(){
       
       $exeSetting.html( exeSettingHTML );
     
+
+      const $executionDateInput = $modal.find('.execution-date-input');
+      $executionDateInput.datePicker({'s': 'none'});
+      
+      $modal.find('.item-radio[name="execution-date"]').on('change', function(){
+        const value = $( this ).val();
+        if ( value === 'dateset') {
+          $executionDateInput.prop('disabled', false ).focus();
+        } else {
+          $executionDateInput.prop('disabled', true );
+        }
+      });
+      
+      
+      // 選択されていません。
+      const notSelected = function(){
+        return '<div class="modal-empty-block">環境が選択されていません。</div>';
+      };
+      
+      // Manifestパラメータ
+      $manifest.find('.modal-tab-body-block').html( notSelected() );
+      
+      // テーブルHTML
+      const tableHTML = function( table ){
+        let html = '<table class="c-table">';
+        for ( const key in table ) {
+          html += ''
+          + '<tr class="c-table-row">'
+            + '<th class="c-table-col c-table-col-header"><div class="c-table-ci">' + key + '</div></th>'
+            + '<td class="c-table-col"><div class="c-table-ci">' + fn.textEntities( table[key] ) + '</div></td>'
+          + '</tr>';
+        }
+        html += '</table>';
+        return html;
+      };
+      $argo.html( notSelected() );
+      
+      // 環境選択
+      $modal.find('#cd-execution-environment-select').on('change', function(){
+        const envID = $( this ).val(),
+              deploy = envList[envID],
+              rKey = envID + '-git-service-argo-repository-url',
+              nKey = envID + '-environment-namespace',
+              sKey = envID + '-environment-deploy-select',
+              uKey = envID + '-environment-url',
+              uDefault = 'https://Kubernetes.default.svc';
+        
+        console.log('cd-execution-environment-select change');
+        if ( envID !== 'none') {
+        
+          // パラメーター
+          $manifest.find('.modal-tab-body-block').each(function(){
+            const $parameter = $( this ),
+                  fileID = $parameter.attr('id');
+            if ( deploy['parameter'] !== undefined && deploy['parameter'][fileID] !== undefined ) {
+              const envPara = deploy['parameter'][fileID],
+                    paraList = {};
+              for ( const key in envPara ) {
+                const paraReg = new RegExp('^' + envID + '-' + fileID + '-');
+                paraList[ key.replace( paraReg, '') ] = envPara[key];
+              }          
+              $parameter.html( tableHTML( paraList ) );
+            } else {
+              $parameter.html('<div class="modal-empty-block">Manifestパラメータの登録がありません。</div>')
+            }
+          });  
+        
+          // Deploy環境
+          const name = deploy['text'],
+                repository = ( deploy[rKey] !== undefined )? deploy[rKey]: '',
+                namespace  = ( deploy[nKey] !== undefined )? deploy[nKey]: '';
+          let url;
+          if ( deploy[sKey] === 'internal') {
+            // 内部
+            url = uDefault;
+          } else if ( deploy[sKey] === 'external') {
+            // 外部
+            url = ( deploy[uKey] !== undefined )? deploy[uKey]: '';
+          } else {
+            url = '';
+          }
+          wsDataJSON['cd-execution-param']['operation-search-key'] = repository;
+          wsDataJSON['cd-execution-param']['environment-name'] = name;
+          $argo.html('<p>以下の内容でDeployします。よろしいですか？</p>'
+          + tableHTML({
+            '環境名': name,
+            'Manifestリポジトリ': repository,
+            'Kubernetes API Server URL': url,
+            'Namespace': namespace
+          }) );
+          $okButton.prop('disabled', false );
+        } else {
+          $argo.add(  $manifest.find('.modal-tab-body-block') ).html( notSelected() );
+          wsDataJSON['cd-execution-param']['operation-search-key'] = '';
+          wsDataJSON['cd-execution-param']['environment-name'] = '';
+          $okButton.prop('disabled', true );
+        }
+      });
+  
     }).catch(() => {
       console.log(getText('EP010-0302', '[FAIL] 環境取得'));
   });
 
-  const $executionDateInput = $modal.find('.execution-date-input');
-  $executionDateInput.datePicker({'s': 'none'});
-  
-  $modal.find('.item-radio[name="execution-date"]').on('change', function(){
-    const value = $( this ).val();
-    if ( value === 'dateset') {
-      $executionDateInput.prop('disabled', false ).focus();
-    } else {
-      $executionDateInput.prop('disabled', true );
-    }
-  });
-  
-  
-  // 選択されていません。
-  const notSelected = function(){
-    return '<div class="modal-empty-block">環境が選択されていません。</div>';
-  };
-  
-  // Manifestパラメータ
-  $manifest.find('.modal-tab-body-block').html( notSelected() );
-  
-  // テーブルHTML
-  const tableHTML = function( table ){
-    let html = '<table class="c-table">';
-    for ( const key in table ) {
-      html += ''
-      + '<tr class="c-table-row">'
-        + '<th class="c-table-col c-table-col-header"><div class="c-table-ci">' + key + '</div></th>'
-        + '<td class="c-table-col"><div class="c-table-ci">' + fn.textEntities( table[key] ) + '</div></td>'
-      + '</tr>';
-    }
-    html += '</table>';
-    return html;
-  };
-  $argo.html( notSelected() );
-  
-  // 環境選択
-  $modal.find('#cd-execution-environment-select').on('change', function(){
-    const envID = $( this ).val(),
-          deploy = envList[envID],
-          rKey = envID + '-git-service-argo-repository-url',
-          nKey = envID + '-environment-namespace',
-          sKey = envID + '-environment-deploy-select',
-          uKey = envID + '-environment-url',
-          uDefault = 'https://Kubernetes.default.svc';
-    
-    if ( envID !== 'none') {
-    
-      // パラメーター
-      $manifest.find('.modal-tab-body-block').each(function(){
-        const $parameter = $( this ),
-              fileID = $parameter.attr('id');
-        if ( deploy['parameter'] !== undefined && deploy['parameter'][fileID] !== undefined ) {
-          const envPara = deploy['parameter'][fileID],
-                paraList = {};
-          for ( const key in envPara ) {
-            const paraReg = new RegExp('^' + envID + '-' + fileID + '-');
-            paraList[ key.replace( paraReg, '') ] = envPara[key];
-          }          
-          $parameter.html( tableHTML( paraList ) );
-        } else {
-          $parameter.html('<div class="modal-empty-block">Manifestパラメータの登録がありません。</div>')
-        }
-      });  
-    
-      // Deploy環境
-      const name = deploy['text'],
-            repository = ( deploy[rKey] !== undefined )? deploy[rKey]: '',
-            namespace  = ( deploy[nKey] !== undefined )? deploy[nKey]: '';
-      let url;
-      if ( deploy[sKey] === 'internal') {
-        // 内部
-        url = uDefault;
-      } else if ( deploy[sKey] === 'external') {
-        // 外部
-        url = ( deploy[uKey] !== undefined )? deploy[uKey]: '';
-      } else {
-        url = '';
-      }
-      wsDataJSON['cd-execution-param']['operation-search-key'] = repository;
-      wsDataJSON['cd-execution-param']['environment-name'] = name;
-      $argo.html('<p>以下の内容でDeployします。よろしいですか？</p>'
-      + tableHTML({
-        '環境名': name,
-        'Manifestリポジトリ': repository,
-        'Kubernetes API Server URL': url,
-        'Namespace': namespace
-      }) );
-      $okButton.prop('disabled', false );
-    } else {
-      $argo.add(  $manifest.find('.modal-tab-body-block') ).html( notSelected() );
-      wsDataJSON['cd-execution-param']['operation-search-key'] = '';
-      wsDataJSON['cd-execution-param']['environment-name'] = '';
-      $okButton.prop('disabled', true );
-    }
-  });
-  
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2518,11 +2520,11 @@ $content.find('.modal-open, .workspace-status-item').not('[data-button="pipeline
     // CD実行
     case 'cdExecution': {
       ok = function( $modal ){
-        if($modal.find('input:radio[name="execution-date"]:checked').val() == 'dateset') {
-          wsDataJSON['cd-execution-param']['preserve-datetime'] = $modal.find('.execution-date-input').val();
-        } else {
+        // if($modal.find('input:radio[name="execution-date"]:checked').val() == 'dateset') {
+        //   wsDataJSON['cd-execution-param']['preserve-datetime'] = $modal.find('.execution-date-input').val();
+        // } else {
           wsDataJSON['cd-execution-param']['preserve-datetime'] = '';
-        }
+        // }
 
         cdRunning();
       };
