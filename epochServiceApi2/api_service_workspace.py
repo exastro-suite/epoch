@@ -789,7 +789,7 @@ def put_workspace(workspace_id):
             for dest_env in req_data["ci_config"]["environments"]:
                 # IDが存在するかチェック Check if the ID exists
                 # 存在しない場合は情報を追加する Add information if it does not exist
-                if common.search_array_dict(row["ci_config"]["environments"], "environment_id", dest_env["environment_id"]) is not None:
+                if common.search_array_dict(row["ci_config"]["environments"], "environment_id", dest_env["environment_id"]) is None:
                     save_env.append(dest_env)
 
             row["ci_config"]["environments"] = save_env
