@@ -3554,7 +3554,10 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       }
 
       // Set the Deploy permission item for the ArgoCD modal dialog - ArgoCDモーダルダイアログのDeploy権限項目を設定する
-      if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-member-role-update".replace('{ws_id}',ws_id)) == -1) {
+      if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ws-cd-update".replace('{ws_id}',ws_id)) == -1
+      || currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-member-role-update".replace('{ws_id}',ws_id)) == -1) {
+        // Hide the "Deploy permission" item for permissions other than role update + workspace cd update
+        // ロール変更＋ワークスペース更新 (CD)以外の権限では「Deploy権限」項目を非表示にする
         delete wsModalJSON.pipelineArgo.block.environmentList.tab.item.environmentDeployMember;
       }
       
