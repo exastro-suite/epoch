@@ -797,10 +797,25 @@ def put_workspace(workspace_id):
         #
         # CD設定の更新 - Update CD settings
         #
+
+        # IaCリポジトリのユーザ,tokenを決定する - Determine user, token of IaC repository
+        if req_data["cd_config"]["environments_common"]["git_repositry"]["account_select"] == "applicationCode":
+            # アプリケーションコードと同じ - Same as application code
+            iac_git_user = row["ci_config"]["pipelines_common"]["git_repositry"]["user"]
+            iac_git_token = row["ci_config"]["pipelines_common"]["git_repositry"]["token"]
+        else:
+            # 別途入力の時は入力値を使う - Use the input value when inputting separately
+            iac_git_user = req_data["cd_config"]["environments_common"]["git_repositry"]["user"]
+            iac_git_token = req_data["cd_config"]["environments_common"]["git_repositry"]["token"]
+
         if const.ROLE_WS_ROLE_WS_CD_UPDATE[0].format(workspace_id) in roles and const.ROLE_WS_ROLE_MEMBER_ROLE_UPDATE[0].format(workspace_id) in roles:
             # ワークスペース更新(CD)の権限とメンバー更新の権限がある場合は全項目更新
             # Update all items if you have workspace update (CD) permission and member update permission
             row["cd_config"] = req_data["cd_config"]
+
+            row["cd_config"]["environments_common"]["git_repositry"]["user"] = iac_git_user
+            row["cd_config"]["environments_common"]["git_repositry"]["password"] = iac_git_token
+            row["cd_config"]["environments_common"]["git_repositry"]["token"] = iac_git_token
 
         elif const.ROLE_WS_ROLE_WS_CD_UPDATE[0].format(workspace_id) in roles:
             # ワークスペース更新(CD)の権限がありメンバー更新の権限がない場合はDeploy権限の項目以外の項目を更新
@@ -809,6 +824,10 @@ def put_workspace(workspace_id):
             # 共通部分の更新 - Update of common parts
             row["cd_config"]["system_config"] = req_data["cd_config"]["system_config"]
             row["cd_config"]["environments_common"] = req_data["cd_config"]["environments_common"]
+
+            row["cd_config"]["environments_common"]["git_repositry"]["user"] = iac_git_user
+            row["cd_config"]["environments_common"]["git_repositry"]["password"] = iac_git_token
+            row["cd_config"]["environments_common"]["git_repositry"]["token"] = iac_git_token
 
             # 環境毎の項目の更新 - Update items for each environment
             environments_new =[]
@@ -832,7 +851,7 @@ def put_workspace(workspace_id):
                     # 新規の環境の場合、deploy_member以外の項目を設定し、deploy_memberはデフォルト値に設定
                     # For new environment, set items other than deploy_member and set deploy_member to default value
                     env_new = env.copy()
-                    env_new["cd_exec_users"] = {"user_select":"all", "user_id": []}
+                    env_new["cd_exec_users"] = {"user_select":"all", "user_id": ""}
                     environments_new.append(env_new)
 
             row["cd_config"]["environments"] = environments_new
