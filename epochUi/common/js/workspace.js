@@ -2280,6 +2280,33 @@ const itaStatusList = function(){
   $statusList.html( $itaConductor )
 };
 
+// CD実行可能メンバーの取得 - Get a CD executable member
+const deployMembers = wsModalJSON.pipelineArgo.block.environmentList.tab.item.environmentDeployMember;
+
+const get_cdexec_member = function() {
+  var workspace_id = (new URLSearchParams(window.location.search)).get('workspace_id');
+  if(workspace_id == null) {
+    return;
+  }
+  $.ajax({
+    "type": "GET",
+    "url": URL_BASE + "/api/workspace/{workspace_id}/member/cdexec".replace('{workspace_id}',workspace_id)
+  }).done(function(data) {
+    console.log('[DONE] /workspace/{id}/member/cdexec');
+
+    deployMembers.list = []
+    
+    // Set the acquired member list - 取得したメンバーリストを設定
+    for(var useridx = 0; useridx < data['rows'].length; useridx++ ) {
+      deployMembers.list.push([
+        data['rows'][useridx]['user_id'],
+        data['rows'][useridx]['username']
+      ]);
+    }
+  });
+}
+
+$(document).ready(() => { get_cdexec_member(); });
 
 const argoCdAddDeployMembersModal = function(){
   const $argoModal = $('#pipeline-argo');
@@ -2294,61 +2321,29 @@ const argoCdAddDeployMembersModal = function(){
           ids = ( value === '')? []: value.split(','),
           subModal = new modalFunction( wsModalJSON, wsDataJSON );
 
-      // CD execution user acquisition process - CD実行ユーザ取得処理
-      new Promise((resolve, reject) =>{
-          var workspace_id = (new URLSearchParams(window.location.search)).get('workspace_id');
-          $.ajax({
-              "type": "GET",
-              "url": URL_BASE + "/api/workspace/{workspace_id}/member/cdexec".replace('{workspace_id}',workspace_id)
-          }).done(function(data) {
-              console.log('[DONE] /workspace/{id}/member/cdexec');
-
-              const deployMembers = wsModalJSON.pipelineArgo.block.environmentList.tab.item.environmentDeployMember;
-              deployMembers.list = []
-              
-              // Set the acquired member list - 取得したメンバーリストを設定
-              for(var useridx = 0; useridx < data['rows'].length; useridx++ ) {
-                deployMembers.list.push([
-                  data['rows'][useridx]['user_id'],
-                  data['rows'][useridx]['username']
-                ]);
-              }
-
-              switch( type ) {
-                case 'select': {
-                  subModal.open('pipelineArgoDeployMember', {
-                    'ok': function(){
-                      const id = subModal.$modal.find('.et-cb-i').val();
-                      subModal.createListSelectSetList( $select, id, deployMembers.list, deployMembers.col );
-                      subModal.subClose();
-                    },
-                    'callback': function(){
-                      const et = new epochTable(),
-                            checked = {};
-                      checked[et.tableID + '-row-all'] = ids;
-                      et.setup('#pipeline-argo-deploy-member-select', [
-                        {'title': '選択', 'id': 'row-all','type': 'rowCheck', 'width': '48px'},
-                        {'title': 'ユーザ名', 'type': 'text', 'width': 'auto', 'sort': 'on', 'filter': 'on'}
-                      ], deployMembers.list, {'checked': checked });
-                    }
-                  }, 720,'sub');
-                } break;
-                case 'clear':
-                  $select.find('.item-list-select-id').val('');
-                  subModal.createListSelectSetList( $select, '', [], 0 );
-              }
-    
-              resolve();
-          }).fail((jqXHR, textStatus, errorThrown) => {
-              console.log('[FAIL] /workspace/{id}/member/cdexec');
-              reject();
-          });
-      }).then((deployMembersList, deployMembersCol) => {
-          console.log(getText('EP010-0206', '[DONE] CD実行ユーザ取得'));
-      }).catch(() => {
-          console.log(getText('EP010-0207', '[FAIL] CD実行ユーザ取得'));
-      });
-
+    switch( type ) {
+      case 'select': {
+        subModal.open('pipelineArgoDeployMember', {
+          'ok': function(){
+            const id = subModal.$modal.find('.et-cb-i').val();
+            subModal.createListSelectSetList( $select, id, deployMembers.list, deployMembers.col );
+            subModal.subClose();
+          },
+          'callback': function(){
+            const et = new epochTable(),
+                  checked = {};
+            checked[et.tableID + '-row-all'] = ids;
+            et.setup('#pipeline-argo-deploy-member-select', [
+              {'title': '選択', 'id': 'row-all','type': 'rowCheck', 'width': '48px'},
+              {'title': 'ユーザ名', 'type': 'text', 'width': 'auto', 'sort': 'on', 'filter': 'on'}
+            ], deployMembers.list, {'checked': checked });
+          }
+        }, 720,'sub');
+      } break;
+      case 'clear':
+        $select.find('.item-list-select-id').val('');
+        subModal.createListSelectSetList( $select, '', [], 0 );
+    }
   });
 };
 
