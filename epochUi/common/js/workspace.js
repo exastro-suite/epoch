@@ -2519,12 +2519,18 @@ $content.find('.modal-open, .workspace-status-item').not('[data-button="pipeline
     
     // CD実行
     case 'cdExecution': {
-      ok = function( $modal ){
-        // if($modal.find('input:radio[name="execution-date"]:checked').val() == 'dateset') {
-        //   wsDataJSON['cd-execution-param']['preserve-datetime'] = $modal.find('.execution-date-input').val();
-        // } else {
+      // ok = function( $modal ){
+      //   if($modal.find('input:radio[name="execution-date"]:checked').val() == 'dateset') {
+      //     wsDataJSON['cd-execution-param']['preserve-datetime'] = $modal.find('.execution-date-input').val();
+      //   } else {
+      //     wsDataJSON['cd-execution-param']['preserve-datetime'] = '';
+      //   }
+      ok = function(){
+        if(modal.$modal.find('input:radio[name="execution-date"]:checked').val() == 'dateset') {
+          wsDataJSON['cd-execution-param']['preserve-datetime'] = modal.$modal.find('.execution-date-input').val();
+        } else {
           wsDataJSON['cd-execution-param']['preserve-datetime'] = '';
-        // }
+        }
 
         cdRunning();
       };
