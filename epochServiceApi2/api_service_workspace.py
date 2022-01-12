@@ -988,8 +988,25 @@ def post_pod(workspace_id):
             'Content-Type': 'application/json',
         }
 
-        # 引数をJSON形式で受け取りそのまま引数に設定
-        post_data = request.json.copy()
+        # # 引数をJSON形式で受け取りそのまま引数に設定
+        # post_data = request.json.copy()
+
+        # workspace get
+        api_url = "{}://{}:{}/workspace/{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+                                                    os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                    os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                    workspace_id)
+        response = requests.get(api_url)
+
+        if response.status_code != 200:
+            error_detail = multi_lang.get_test("EP020-0013", "ワークスペース情報の取得に失敗しました")
+            globals.logger.debug(error_detail)
+            raise common.UserException(error_detail)
+
+        # 取得したワークスペース情報を退避 Save the acquired workspace information
+        ret = json.loads(response.text)
+        # 取得したworkspace情報をパラメータとして受け渡す Pass the acquired workspace information as a parameter
+        post_data = ret["rows"][0]
 
         # workspace post送信
         api_url = "{}://{}:{}/workspace/{}".format(os.environ['EPOCH_CONTROL_WORKSPACE_PROTOCOL'],
@@ -1001,6 +1018,7 @@ def post_pod(workspace_id):
         
         if response.status_code != 200:
             error_detail = 'workspace post処理に失敗しました'
+            globals.logger.debug(error_detail)
             raise common.UserException(error_detail)
 
         # argocd post送信
@@ -1013,6 +1031,7 @@ def post_pod(workspace_id):
 
         if response.status_code != 200:
             error_detail = 'argocd post処理に失敗しました'
+            globals.logger.debug(error_detail)
             raise common.UserException(error_detail)
 
         # ita post送信
