@@ -1,4 +1,4 @@
-#   Copyright 2021 NEC Corporation
+#   Copyright 2022 NEC Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -38,9 +38,6 @@ RUN echo "RUN START"  \
 &&  curl -LO -k "https://storage.googleapis.com/kubernetes-release/release/$(curl -s -k https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl" \
 &&  chmod +x ./kubectl \
 &&  mv ./kubectl /usr/local/bin/kubectl \
-&&  curl -LO https://github.com/tektoncd/cli/releases/download/v0.18.0/tkn_0.18.0_Linux_x86_64.tar.gz \
-&&  tar xvzf tkn_0.18.0_Linux_x86_64.tar.gz -C /usr/local/bin/ tkn \
-&&  ln -s /usr/local/bin/tkn /usr/local/bin/kubectl-tkn \
 &&  echo "RUN FINISH"
 
 WORKDIR /app
@@ -49,5 +46,5 @@ COPY ./ /app/
 
 RUN echo "RUN START"
 
-CMD ["python3", "/app/api_tekton.py"]
+CMD ["python3", "/app/api_logs.py"]
 

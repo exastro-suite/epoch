@@ -1,0 +1,109 @@
+#   Copyright 2022 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rs-logs-db-myconf
+  namespace: epoch-system
+data:
+  my.cnf: |
+    [mysqld]
+    character-set-server=utf8mb4
+    collation-server=utf8mb4_bin
+    secure_file_priv=/tmp
+    [client]
+    default-character-set=utf8mb4
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rs-logs-db-initdb
+  namespace: epoch-system
+data:
+  workspace.sql: |
+    create database rs_logs_db
+      CHARACTER SET utf8mb4
+      COLLATE utf8mb4_unicode_ci;
+    create user app_user IDENTIFIED WITH mysql_native_password BY 'password';
+    GRANT ALL ON rs_logs_db.* TO app_user;
+    use rs_logs_db;
+    create table logs (
+      log_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
+      workspace_id int unsigned,
+      log_kind text,
+      contents json,
+      username text,
+      create_at datetime not null DEFAULT CURRENT_TIMESTAMP
+    );
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rs-logs-db
+  namespace: epoch-system
+spec:
+  selector:
+    matchLabels:
+      name: rs-logs-db
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: rs-logs-db
+    spec:
+      volumes:
+      - name: mysqlconf-volume
+        configMap:
+          name: rs-logs-db-myconf
+      # COMMENT OUT:Persistent data retention
+      #- name: mysqldata
+      #  hostPath:
+      #    path: /var/data/epoch/rs_logs_db/mysql
+      #    type: DirectoryOrCreate
+      - name: mysqlinitdb-volume
+        configMap:
+          name: rs-logs-db-initdb
+      containers:
+      - name: mysql
+        image: mysql
+        volumeMounts:
+        # COMMENT OUT:Persistent data retention
+        #- name: mysqldata
+        #  mountPath: /var/lib/mysql
+        - name: mysqlconf-volume
+          mountPath: /etc/mysql
+        - name: mysqlinitdb-volume
+          mountPath: /docker-entrypoint-initdb.d
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: password
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rs-logs-db
+  labels:
+    name: rs-logs-db
+  namespace: epoch-system
+spec:
+  type: ClusterIP
+  ports:
+  - name: mysql
+    port: 3306
+    targetPort: 3306
+  selector:
+    name: rs-logs-db
