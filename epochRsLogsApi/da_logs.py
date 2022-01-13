@@ -50,7 +50,7 @@ def insert_logs(cursor, workspace_id, username, log_kind, contents):
                 {
                     'workspace_id' :                workspace_id,
                     'log_kind' :                    log_kind,
-                    'contents' :                    contents,
+                    'contents' :                    json.dumps(contents),
                     'username' :                    username,
                 })
 

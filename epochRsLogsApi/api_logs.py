@@ -46,11 +46,8 @@ def alive():
     return jsonify({"result": "200", "time": str(datetime.now(globals.TZ))}), 200
 
 @app.route('/logs', methods=['POST'])
-def call_logs(log_kind):
+def call_logs():
     """ログ出力処理
-
-    Args:
-        log_kind (str): log_kind
 
     Returns:
         response: HTTP Respose
@@ -112,7 +109,7 @@ def call_workspace_logs(workspace_id, log_kind):
     except Exception as e:
         return common.serverError(e, "{} error".format(inspect.currentframe().f_code.co_name))
 
-@app.route('/workspace/<int:workspace_id>/member/<string:username>/logs/<string:log_kind>', methods=['POST','PUT'])
+@app.route('/workspace/<int:workspace_id>/member/<string:username>/logs/<string:log_kind>', methods=['POST'])
 def call_workspace_member_logs(workspace_id, username, log_kind):
     """workspace情報のメンバーごとのログ出力呼び出し Log output call for each member of workspace information
 
