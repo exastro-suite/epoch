@@ -49,3 +49,8 @@ ALL_ROLES = [
     ROLE_WS_CD_EXECUTE[0],
     ROLE_WS_CD_RESULT[0],
 ]
+
+# ログの種類 Log kind
+LOG_KIND_ERROR='Error'
+LOG_KIND_INFO='Infomation'
+LOG_KIND_UPDATE='Update'
