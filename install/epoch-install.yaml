@@ -509,6 +509,137 @@ spec:
   selector:
     name: epoch-control-tekton-api
 
+#---- epoch-control-tekton-db.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tekton-pipeline-db-myconf
+  namespace: epoch-system
+data:
+  my.cnf: |
+    [mysqld]
+    character-set-server=utf8mb4
+    collation-server=utf8mb4_bin
+    secure_file_priv=/tmp
+    [client]
+    default-character-set=utf8mb4
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tekton-pipeline-db-initdb
+  namespace: epoch-system
+data:
+  tekton-pipeline.sql: |
+    create database tekton_pipeline_db
+      CHARACTER SET utf8mb4
+      COLLATE utf8mb4_unicode_ci;
+    create user app_user IDENTIFIED WITH mysql_native_password BY 'password';
+    GRANT ALL ON tekton_pipeline_db.* TO app_user;
+    use tekton_pipeline_db;
+    create table tekton_pipeline_yaml (
+      yaml_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
+      workspace_id int unsigned not null,
+      kind varchar(16),
+      filename varchar(256),
+      yamltext text,
+      index(workspace_id)
+    );
+    create table tekton_pipeline_task (
+      task_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
+      workspace_id int unsigned not null,
+      pipeline_id int unsigned not null,
+      pipeline_run_name varchar(128),
+      pipeline_run_uid  varchar(128),
+      status varchar(16) not null,
+      git_repository_url varchar(1024) not null,
+      git_branch varchar(1024),
+      container_registry_image varchar(1024),
+      container_registry_image_tag varchar(1024),
+      container_registry_image_digest varchar(1024),
+      git_webhook_header text,
+      git_webhook_body text,
+      create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
+      index(pipeline_run_name)
+    );
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tekton-pipeline-db
+  namespace: epoch-system
+spec:
+  selector:
+    matchLabels:
+      name: tekton-pipeline-db
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: tekton-pipeline-db
+    spec:
+      volumes:
+      - name: mysqlconf-volume
+        configMap:
+          name: tekton-pipeline-db-myconf
+      # COMMENT OUT:Persistent data retention
+      #- name: mysqldata
+      #  hostPath:
+      #    path: /var/data/epoch/tekton_pipeline_db/mysql
+      #    type: DirectoryOrCreate
+      - name: mysqlinitdb-volume
+        configMap:
+          name: tekton-pipeline-db-initdb
+      containers:
+      - name: mysql
+        image: mysql
+        volumeMounts:
+        # COMMENT OUT:Persistent data retention
+        #- name: mysqldata
+        #  mountPath: /var/lib/mysql
+        - name: mysqlconf-volume
+          mountPath: /etc/mysql
+        - name: mysqlinitdb-volume
+          mountPath: /docker-entrypoint-initdb.d
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: password
+        - name: TZ
+          value: "Asia/Tokyo"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tekton-pipeline-db
+  labels:
+    name: tekton-pipeline-db
+  namespace: epoch-system
+spec:
+  type: ClusterIP
+  ports:
+  - name: mysql
+    port: 3306
+    targetPort: 3306
+  selector:
+    name: tekton-pipeline-db
+
 #---- epoch-control-argocd-api.yaml
 ---
 #   Copyright 2021 NEC Corporation
@@ -777,6 +908,140 @@ spec:
   selector:
     name: epoch-rs-workspace-api
 
+#---- epoch-rs-workspace-db.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: workspace-db-myconf
+  namespace: epoch-system
+data:
+  my.cnf: |
+    [mysqld]
+    character-set-server=utf8mb4
+    collation-server=utf8mb4_bin
+    secure_file_priv=/tmp
+    [client]
+    default-character-set=utf8mb4
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: workspace-db-initdb
+  namespace: epoch-system
+data:
+  workspace.sql: |
+    create database workspace_db
+      CHARACTER SET utf8mb4
+      COLLATE utf8mb4_unicode_ci;
+    create user app_user IDENTIFIED WITH mysql_native_password BY 'password';
+    GRANT ALL ON workspace_db.* TO app_user;
+    use workspace_db;
+    create table workspace (
+      workspace_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
+      organization_id  int unsigned not null,
+      specification json,
+      create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
+      update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      role_update_at datetime not null DEFAULT CURRENT_TIMESTAMP
+    );
+    create table workspace_history (
+      history_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
+      workspace_id int unsigned not null,
+      organization_id  int unsigned not null,
+      specification json,
+      update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      role_update_at datetime not null DEFAULT CURRENT_TIMESTAMP
+    );
+    create table manifest (
+      id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
+      workspace_id int unsigned not null,
+      file_name varchar(1024) not null,
+      file_text text not null,
+      create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
+      update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    );
+    create table workspace_access (
+      workspace_id int unsigned not null PRIMARY KEY,
+      info json,
+      create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
+      update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    );
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: workspace-db
+  namespace: epoch-system
+spec:
+  selector:
+    matchLabels:
+      name: workspace-db
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: workspace-db
+    spec:
+      volumes:
+      - name: mysqlconf-volume
+        configMap:
+          name: workspace-db-myconf
+      # COMMENT OUT:Persistent data retention
+      #- name: mysqldata
+      #  hostPath:
+      #    path: /var/data/epoch/workspace_db/mysql
+      #    type: DirectoryOrCreate
+      - name: mysqlinitdb-volume
+        configMap:
+          name: workspace-db-initdb
+      containers:
+      - name: mysql
+        image: mysql
+        volumeMounts:
+        # COMMENT OUT:Persistent data retention
+        #- name: mysqldata
+        #  mountPath: /var/lib/mysql
+        - name: mysqlconf-volume
+          mountPath: /etc/mysql
+        - name: mysqlinitdb-volume
+          mountPath: /docker-entrypoint-initdb.d
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: password
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: workspace-db
+  labels:
+    name: workspace-db
+  namespace: epoch-system
+spec:
+  type: ClusterIP
+  ports:
+  - name: mysql
+    port: 3306
+    targetPort: 3306
+  selector:
+    name: workspace-db
+
 #---- epoch-rs-ci-result-api.yaml
 ---
 #   Copyright 2021 NEC Corporation
@@ -861,6 +1126,327 @@ spec:
     targetPort: 8000
   selector:
     name: epoch-rs-ci-result-api
+
+#---- epoch-rs-ci-result-db.yaml
+---
+#   Copyright 2021 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tekton-pipelinerun-db-myconf
+  namespace: epoch-system
+data:
+  my.cnf: |
+    [mysqld]
+    character-set-server=utf8mb4
+    collation-server=utf8mb4_bin
+    secure_file_priv=/tmp
+    [client]
+    default-character-set=utf8mb4
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tekton-pipelinerun-db-initdb
+  namespace: epoch-system
+data:
+  tekton-pipeline.sql: |
+    create database tekton_pipelinerun_db
+      CHARACTER SET utf8mb4
+      COLLATE utf8mb4_unicode_ci;
+    create user app_user IDENTIFIED WITH mysql_native_password BY 'password';
+    GRANT ALL ON tekton_pipelinerun_db.* TO app_user;
+    use tekton_pipelinerun_db;
+    create table tekton_pipeline_task (
+      task_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
+      workspace_id int unsigned not null,
+      pipeline_id int unsigned not null,
+      pipeline_run_name varchar(128),
+      pipeline_run_uid  varchar(128),
+      status varchar(16) not null,
+      git_repository_url varchar(1024) not null,
+      git_branch varchar(1024),
+      container_registry_image varchar(1024),
+      container_registry_image_tag varchar(1024),
+      container_registry_image_digest varchar(1024),
+      git_webhook_header text,
+      git_webhook_body text,
+      create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
+      index(pipeline_run_name)
+    );
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tekton-pipelinerun-db
+  namespace: epoch-system
+spec:
+  selector:
+    matchLabels:
+      name: tekton-pipelinerun-db
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: tekton-pipelinerun-db
+    spec:
+      volumes:
+      - name: mysqlconf-volume
+        configMap:
+          name: tekton-pipelinerun-db-myconf
+      # COMMENT OUT:Persistent data retention
+      #- name: mysqldata
+      #  hostPath:
+      #    path: /var/data/epoch/tekton_pipelinerun_db/mysql
+      #    type: DirectoryOrCreate
+      - name: mysqlinitdb-volume
+        configMap:
+          name: tekton-pipelinerun-db-initdb
+      containers:
+      - name: mysql
+        image: mysql
+        volumeMounts:
+        # COMMENT OUT:Persistent data retention
+        #- name: mysqldata
+        #  mountPath: /var/lib/mysql
+        - name: mysqlconf-volume
+          mountPath: /etc/mysql
+        - name: mysqlinitdb-volume
+          mountPath: /docker-entrypoint-initdb.d
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: password
+        - name: TZ
+          value: "Asia/Tokyo"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tekton-pipelinerun-db
+  labels:
+    name: tekton-pipelinerun-db
+  namespace: epoch-system
+spec:
+  type: ClusterIP
+  ports:
+  - name: mysql
+    port: 3306
+    targetPort: 3306
+  selector:
+    name: tekton-pipelinerun-db
+
+#---- epoch-rs-logs-api.yaml
+---
+#   Copyright 2021 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: epoch-rs-logs-conf
+  namespace: epoch-system
+data:
+  api_logs.conf: |
+    TZ='Asia/Tokyo'
+    MYSQL_HOST='rs-logs-db'
+    MYSQL_PORT='3306'
+    MYSQL_DATABASE='rs_logs_db'
+    MYSQL_USER='app_user'
+    MYSQL_PASSWORD='password'
+    RESOURCE_CREATION_WAIT=60
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: epoch-rs-logs-api
+  namespace: epoch-system
+spec:
+  selector:
+    matchLabels:
+      name: epoch-rs-logs-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: epoch-rs-logs-api
+    spec:
+      volumes:
+      - name: epoch-rs-logs-conf
+        configMap:
+          name: epoch-rs-logs-conf
+      containers:
+      - name: epoch-rs-logs-api
+        image: exastro/epoch-rs-logs-api:0.3.0_20220113_1100
+        env:
+        - name: CONFIG_API_LOGS_PATH
+          value: "/etc/epoch/epochRsLogsApi/api_logs.conf"
+        - name: FLASK_ENV
+          value: "development"
+        - name: API_LOGS_PORT
+          value: "8000"
+        - name: PYTHONIOENCODING
+          value: utf-8
+        volumeMounts:
+        - name: epoch-rs-logs-conf
+          mountPath: /etc/epoch/epochRsLogsApi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: epoch-rs-logs-api
+  labels:
+    name: epoch-rs-logs-api
+  namespace: epoch-system
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+  selector:
+    name: epoch-rs-logs-api
+
+#---- epoch-rs-logs-db.yaml
+---
+#   Copyright 2022 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rs-logs-db-myconf
+  namespace: epoch-system
+data:
+  my.cnf: |
+    [mysqld]
+    character-set-server=utf8mb4
+    collation-server=utf8mb4_bin
+    secure_file_priv=/tmp
+    [client]
+    default-character-set=utf8mb4
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rs-logs-db-initdb
+  namespace: epoch-system
+data:
+  workspace.sql: |
+    create database rs_logs_db
+      CHARACTER SET utf8mb4
+      COLLATE utf8mb4_unicode_ci;
+    create user app_user IDENTIFIED WITH mysql_native_password BY 'password';
+    GRANT ALL ON rs_logs_db.* TO app_user;
+    use rs_logs_db;
+    create table logs (
+      log_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
+      workspace_id int unsigned,
+      log_kind text,
+      contents json,
+      username text,
+      create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
+      update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    );
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rs-logs-db
+  namespace: epoch-system
+spec:
+  selector:
+    matchLabels:
+      name: rs-logs-db
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: rs-logs-db
+    spec:
+      volumes:
+      - name: mysqlconf-volume
+        configMap:
+          name: rs-logs-db-myconf
+      # COMMENT OUT:Persistent data retention
+      #- name: mysqldata
+      #  hostPath:
+      #    path: /var/data/epoch/rs_logs_db/mysql
+      #    type: DirectoryOrCreate
+      - name: mysqlinitdb-volume
+        configMap:
+          name: rs-logs-db-initdb
+      containers:
+      - name: mysql
+        image: mysql
+        volumeMounts:
+        # COMMENT OUT:Persistent data retention
+        #- name: mysqldata
+        #  mountPath: /var/lib/mysql
+        - name: mysqlconf-volume
+          mountPath: /etc/mysql
+        - name: mysqlinitdb-volume
+          mountPath: /docker-entrypoint-initdb.d
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: password
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rs-logs-db
+  labels:
+    name: rs-logs-db
+  namespace: epoch-system
+spec:
+  type: ClusterIP
+  ports:
+  - name: mysql
+    port: 3306
+    targetPort: 3306
+  selector:
+    name: rs-logs-db
 
 #---- epoch-service-api-config.yaml
 ---
@@ -1059,394 +1645,6 @@ spec:
   #  targetPort: 4430
   selector:
     name: epoch-ui
-
-#---- workspace-db.yaml
----
-#   Copyright 2019 NEC Corporation
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: workspace-db-myconf
-  namespace: epoch-system
-data:
-  my.cnf: |
-    [mysqld]
-    character-set-server=utf8mb4
-    collation-server=utf8mb4_bin
-    secure_file_priv=/tmp
-    [client]
-    default-character-set=utf8mb4
-
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: workspace-db-initdb
-  namespace: epoch-system
-data:
-  workspace.sql: |
-    create database workspace_db
-      CHARACTER SET utf8mb4
-      COLLATE utf8mb4_unicode_ci;
-    create user app_user IDENTIFIED WITH mysql_native_password BY 'password';
-    GRANT ALL ON workspace_db.* TO app_user;
-    use workspace_db;
-    create table workspace (
-      workspace_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
-      organization_id  int unsigned not null,
-      specification json,
-      create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
-      update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-      role_update_at datetime not null DEFAULT CURRENT_TIMESTAMP
-    );
-    create table workspace_history (
-      history_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
-      workspace_id int unsigned not null,
-      organization_id  int unsigned not null,
-      specification json,
-      update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-      role_update_at datetime not null DEFAULT CURRENT_TIMESTAMP
-    );
-    create table manifest (
-      id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
-      workspace_id int unsigned not null,
-      file_name varchar(1024) not null,
-      file_text text not null,
-      create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
-      update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    );
-    create table workspace_access (
-      workspace_id int unsigned not null PRIMARY KEY,
-      info json,
-      create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
-      update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    );
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: workspace-db
-  namespace: epoch-system
-spec:
-  selector:
-    matchLabels:
-      name: workspace-db
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        name: workspace-db
-    spec:
-      volumes:
-      - name: mysqlconf-volume
-        configMap:
-          name: workspace-db-myconf
-      # COMMENT OUT:Persistent data retention
-      #- name: mysqldata
-      #  hostPath:
-      #    path: /var/data/epoch/workspace_db/mysql
-      #    type: DirectoryOrCreate
-      - name: mysqlinitdb-volume
-        configMap:
-          name: workspace-db-initdb
-      containers:
-      - name: mysql
-        image: mysql
-        volumeMounts:
-        # COMMENT OUT:Persistent data retention
-        #- name: mysqldata
-        #  mountPath: /var/lib/mysql
-        - name: mysqlconf-volume
-          mountPath: /etc/mysql
-        - name: mysqlinitdb-volume
-          mountPath: /docker-entrypoint-initdb.d
-        env:
-        - name: MYSQL_ROOT_PASSWORD
-          value: password
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: workspace-db
-  labels:
-    name: workspace-db
-  namespace: epoch-system
-spec:
-  type: ClusterIP
-  ports:
-  - name: mysql
-    port: 3306
-    targetPort: 3306
-  selector:
-    name: workspace-db
-
-#---- tekton-pipeline-db.yaml
----
-#   Copyright 2019 NEC Corporation
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: tekton-pipeline-db-myconf
-  namespace: epoch-system
-data:
-  my.cnf: |
-    [mysqld]
-    character-set-server=utf8mb4
-    collation-server=utf8mb4_bin
-    secure_file_priv=/tmp
-    [client]
-    default-character-set=utf8mb4
-
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: tekton-pipeline-db-initdb
-  namespace: epoch-system
-data:
-  tekton-pipeline.sql: |
-    create database tekton_pipeline_db
-      CHARACTER SET utf8mb4
-      COLLATE utf8mb4_unicode_ci;
-    create user app_user IDENTIFIED WITH mysql_native_password BY 'password';
-    GRANT ALL ON tekton_pipeline_db.* TO app_user;
-    use tekton_pipeline_db;
-    create table tekton_pipeline_yaml (
-      yaml_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
-      workspace_id int unsigned not null,
-      kind varchar(16),
-      filename varchar(256),
-      yamltext text,
-      index(workspace_id)
-    );
-    create table tekton_pipeline_task (
-      task_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
-      workspace_id int unsigned not null,
-      pipeline_id int unsigned not null,
-      pipeline_run_name varchar(128),
-      pipeline_run_uid  varchar(128),
-      status varchar(16) not null,
-      git_repository_url varchar(1024) not null,
-      git_branch varchar(1024),
-      container_registry_image varchar(1024),
-      container_registry_image_tag varchar(1024),
-      container_registry_image_digest varchar(1024),
-      git_webhook_header text,
-      git_webhook_body text,
-      create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
-      index(pipeline_run_name)
-    );
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: tekton-pipeline-db
-  namespace: epoch-system
-spec:
-  selector:
-    matchLabels:
-      name: tekton-pipeline-db
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        name: tekton-pipeline-db
-    spec:
-      volumes:
-      - name: mysqlconf-volume
-        configMap:
-          name: tekton-pipeline-db-myconf
-      # COMMENT OUT:Persistent data retention
-      #- name: mysqldata
-      #  hostPath:
-      #    path: /var/data/epoch/tekton_pipeline_db/mysql
-      #    type: DirectoryOrCreate
-      - name: mysqlinitdb-volume
-        configMap:
-          name: tekton-pipeline-db-initdb
-      containers:
-      - name: mysql
-        image: mysql
-        volumeMounts:
-        # COMMENT OUT:Persistent data retention
-        #- name: mysqldata
-        #  mountPath: /var/lib/mysql
-        - name: mysqlconf-volume
-          mountPath: /etc/mysql
-        - name: mysqlinitdb-volume
-          mountPath: /docker-entrypoint-initdb.d
-        env:
-        - name: MYSQL_ROOT_PASSWORD
-          value: password
-        - name: TZ
-          value: "Asia/Tokyo"
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: tekton-pipeline-db
-  labels:
-    name: tekton-pipeline-db
-  namespace: epoch-system
-spec:
-  type: ClusterIP
-  ports:
-  - name: mysql
-    port: 3306
-    targetPort: 3306
-  selector:
-    name: tekton-pipeline-db
-
-#---- tekton-pipelinerun-db.yaml
----
-#   Copyright 2021 NEC Corporation
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: tekton-pipelinerun-db-myconf
-  namespace: epoch-system
-data:
-  my.cnf: |
-    [mysqld]
-    character-set-server=utf8mb4
-    collation-server=utf8mb4_bin
-    secure_file_priv=/tmp
-    [client]
-    default-character-set=utf8mb4
-
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: tekton-pipelinerun-db-initdb
-  namespace: epoch-system
-data:
-  tekton-pipeline.sql: |
-    create database tekton_pipelinerun_db
-      CHARACTER SET utf8mb4
-      COLLATE utf8mb4_unicode_ci;
-    create user app_user IDENTIFIED WITH mysql_native_password BY 'password';
-    GRANT ALL ON tekton_pipelinerun_db.* TO app_user;
-    use tekton_pipelinerun_db;
-    create table tekton_pipeline_task (
-      task_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
-      workspace_id int unsigned not null,
-      pipeline_id int unsigned not null,
-      pipeline_run_name varchar(128),
-      pipeline_run_uid  varchar(128),
-      status varchar(16) not null,
-      git_repository_url varchar(1024) not null,
-      git_branch varchar(1024),
-      container_registry_image varchar(1024),
-      container_registry_image_tag varchar(1024),
-      container_registry_image_digest varchar(1024),
-      git_webhook_header text,
-      git_webhook_body text,
-      create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
-      index(pipeline_run_name)
-    );
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: tekton-pipelinerun-db
-  namespace: epoch-system
-spec:
-  selector:
-    matchLabels:
-      name: tekton-pipelinerun-db
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        name: tekton-pipelinerun-db
-    spec:
-      volumes:
-      - name: mysqlconf-volume
-        configMap:
-          name: tekton-pipelinerun-db-myconf
-      # COMMENT OUT:Persistent data retention
-      #- name: mysqldata
-      #  hostPath:
-      #    path: /var/data/epoch/tekton_pipelinerun_db/mysql
-      #    type: DirectoryOrCreate
-      - name: mysqlinitdb-volume
-        configMap:
-          name: tekton-pipelinerun-db-initdb
-      containers:
-      - name: mysql
-        image: mysql
-        volumeMounts:
-        # COMMENT OUT:Persistent data retention
-        #- name: mysqldata
-        #  mountPath: /var/lib/mysql
-        - name: mysqlconf-volume
-          mountPath: /etc/mysql
-        - name: mysqlinitdb-volume
-          mountPath: /docker-entrypoint-initdb.d
-        env:
-        - name: MYSQL_ROOT_PASSWORD
-          value: password
-        - name: TZ
-          value: "Asia/Tokyo"
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: tekton-pipelinerun-db
-  labels:
-    name: tekton-pipelinerun-db
-  namespace: epoch-system
-spec:
-  type: ClusterIP
-  ports:
-  - name: mysql
-    port: 3306
-    targetPort: 3306
-  selector:
-    name: tekton-pipelinerun-db
 
 #---- exastro-platform-authentication-infra-role.yaml
 ---
