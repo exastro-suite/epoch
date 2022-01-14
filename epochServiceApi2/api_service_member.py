@@ -33,6 +33,7 @@ import globals
 import common
 import const
 import multi_lang
+import api_service_common
 
 # 設定ファイル読み込み・globals初期化
 app = Flask(__name__)
@@ -390,12 +391,127 @@ def merge_workspace_members(workspace_id):
         users = json.loads(response.text)
         globals.logger.debug(f"users:{users}")
 
+        # 取得したユーザーのロールを取得 
+        # Get the role of the acquired user
+        api_url = "{}://{}:{}/{}/user/{}/roles/epoch-system".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
+                                                                os.environ['EPOCH_EPAI_API_HOST'],
+                                                                os.environ['EPOCH_EPAI_API_PORT'],
+                                                                os.environ["EPOCH_EPAI_REALM_NAME"],
+                                                                user_id
+                                                        )
+
+        #
+        # get user role - ユーザーロール情報取得
+        #
+        response = requests.get(api_url)
+        if response.status_code != 200:
+            error_detail = multi_lang.get_text("EP020-0009", "ユーザーロール情報の取得に失敗しました")
+            globals.logger.debug(error_detail)
+            raise common.UserException("{} Error user role get status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
+
+        ret_roles = json.loads(response.text)
+        # globals.logger.debug(f"roles:{ret_roles}")
+
+        bool_owener_role = False
+        # オーナーロール設定可能権限かどうかチェックする 
+        # Check if the owner role can be set
+        for get_role in ret_roles["rows"]:
+            # globals.logger.debug('role:{}'.format(get_role["name"]))
+            # ロールがあればチェックOK
+            # Check OK if there is a roll
+            if get_role["name"] == const.ROLE_WS_ROLE_OWNER_ROLE_SETTING[0].format(workspace_id):
+                bool_owener_role = True
+                break
+
+        # 権限「オーナー変更」保有しているユーザーを抽出する 
+        # Extract users who have the authority "change owner"
+        owener_users = api_service_common.get_workspace_members_by_role(workspace_id, const.ROLE_WS_ROLE_OWNER_ROLE_SETTING[0].format(workspace_id))
+        # globals.logger.debug(f"owener_users{owener_users}")
+        owener_users_id_array = []
+        # チェック用に配列化
+        # Arranged for checking
+        for user in owener_users:
+            owener_users_id_array.append(user["user_id"])
+
+        # オーナーロール変更以外がオーナーロールありに変更したかチェック
+        # Check if other than the owner role change has changed to have an owner role
+        if not bool_owener_role:
+            bool_auth_error = False
+            for row in req_json["rows"]:
+                globals.logger.debug(f"req_row:{row}")
+                bool_owner_update = False
+                for role in row["roles"]:
+                    # オーナー更新ありのフラグをONにする 
+                    # Turn on the flag with owner update
+                    globals.logger.debug("owener_check({}):({})".format(common.get_role_name(role["kind"]), const.ROLE_WS_OWNER[0]))
+                    if common.get_role_name(role["kind"]) == const.ROLE_WS_OWNER[0]:
+                        bool_owner_update = True
+
+                    # オーナーロールの変更がある場合、権限がないのでエラーとする
+                    # If there is a change in the owner role, it will be an error because you do not have the authority.
+                    if common.get_role_name(role["kind"]) == const.ROLE_WS_OWNER[0] and \
+                        row["user_id"] not in owener_users_id_array:
+                        bool_auth_error = True
+                        break
+
+                # オーナーありのユーザーからオーナー権限を削除した際は権限がないのでエラーとする
+                # If you delete the owner authority from a user who has an owner, you will get an error because you do not have the authority.
+                if not bool_owner_update and row["user_id"] in owener_users_id_array:
+                    bool_auth_error = True
+                    break
+
+                # 権限エラーの場合は、処理を抜ける 
+                # In case of permission error, exit the process
+                if bool_auth_error:
+                    break
+
+            # 権限エラー
+            # Permission error
+            if bool_auth_error:
+                # ログイン者が唯一のオーナーの時は退去できない 
+                # Can't move out when the login person is the only owner
+                error_detail = multi_lang.get_text("EP020-0024", "オーナー権限を変更することはできません")
+                raise common.AuthException(error_detail)
+
+        else:
+            # オーナーロール変更ありのユーザーが、オーナーロール変更した際、オーナーロールのユーザーが残るかどうか
+            # Check if a user with an owner role change has a user change with an owner role change
+            owner_add_cnt = 0
+            owner_del_cnt = 0
+            for row in req_json["rows"]:
+                bool_owner_update = False
+                for role in row["roles"]:
+                    # オーナー更新ありのフラグをONにする 
+                    # Turn on the flag with owner update
+                    if common.get_role_name(role["kind"]) == const.ROLE_WS_OWNER[0]:
+                        bool_owner_update = True
+                        break
+
+                # オーナーありのユーザーからオーナー権限を削除した件数をカウント
+                # Count the number of cases where the owner authority is deleted from the owner-owned user
+                if not bool_owner_update and row["user_id"] in owener_users_id_array:
+                    owner_del_cnt += 1
+                # 新規オーナーかチェックする
+                # Check if you are a new owner
+                elif bool_owner_update and row["user_id"] not in owener_users_id_array:
+                    owner_add_cnt += 1
+
+            # オーナーが0人となる場合はエラーとする
+            # If the number of owners is 0, an error will occur.
+            if (len(owener_users) - owner_del_cnt) == 0 and owner_add_cnt == 0:
+                # ログイン者が唯一のオーナーの時は退去できない
+                # Can't move out when the login person is the only owner
+                error_detail = multi_lang.get_text("EP020-0025", "最低1人以上のオーナーは必要です")
+                raise common.AuthException(error_detail)
+
+
         for row in req_json["rows"]:
 
-            # 登録前にすべてのroleを削除する Delete all roles before registration
+            # 登録前にすべてのroleを削除する 
+            # Delete all roles before registration
             roles = const.ALL_ROLES
             #
-            # ロールの制御のurl role control url
+            # ロールの制御のurl - role control url
             #
             api_url = "{}://{}:{}/{}/user/{}/roles/epoch-system".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
                                                                     os.environ['EPOCH_EPAI_API_HOST'],
@@ -423,7 +539,8 @@ def merge_workspace_members(workspace_id):
                 error_detail = multi_lang.get_text("EP020-0006", "ロールの削除に失敗しました")
                 raise common.UserException("{} Error user role delete status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
 
-            # 登録するroleの情報を編集 Edit the information of the role to be registered
+            # 登録するroleの情報を編集 
+            # Edit the information of the role to be registered
             add_roles = []
             for role in row["roles"]:
                 add_role = {
@@ -491,6 +608,8 @@ def merge_workspace_members(workspace_id):
 
         return jsonify({"result": "200"}), 200
 
+    except common.AuthException as e:
+        return jsonify({"result": 400, "errorDetail": error_detail}), 400
     except common.UserException as e:
         return common.user_error_to_message(e, app_name + exec_stat, error_detail, return_code)
     except Exception as e:
