@@ -487,7 +487,7 @@ function workspaceMemberList( memberList ) {
                 }
               }
             ) == 0 ) {
-              alert("オーナーは最低１人必要です");
+              alert(getText("EP010-0414", "最低1人以上のオーナーは必要です"));
               return;
             }              
           }
@@ -528,7 +528,7 @@ function workspaceMemberList( memberList ) {
                   }).fail((jqXHR, textStatus, errorThrown) => {
                     console.log('[FAIL] POST /workspace/{id}/member');
                     if(jqXHR.status == 401) {
-                      reject("ロールを変更する権限がありません");
+                      reject(getText("EP010-0415", "ロールを変更する権限がありません"));
                     } else {
                       try {
                         reject(JSON.parse(jqXHR.responseText).errorDetail);
@@ -555,7 +555,7 @@ function workspaceMemberList( memberList ) {
           }
         },'none','sub');
       } else {
-        alert('ロールの変更がありません。');
+        alert(getText("EP010-0416", "ロールの変更がありません。"));
       }
     };
     /* -------------------------------------------------- *
@@ -669,7 +669,7 @@ function workspaceMemberList( memberList ) {
         },'none','sub');
         
       } else {
-        alert('メンバーが選択されていません');
+        alert(getText("EP010-0418", "メンバーが選択されていません"));
       }
     };
         
@@ -698,7 +698,7 @@ function workspaceMemberList( memberList ) {
       // オーナーの設定権限が無くて、オーナーを解除しようとしたときはエラーにする
       if(!canOwnerRoleSetting()) {
         if( data.removeMemberList.findIndex(member => (member.roles.findIndex(role => role.kind == "owner") != -1)) != -1 ) {
-          alert("オーナーを解除する権限がありません");
+          alert(getText("EP010-0417", "オーナーを解除する権限がありません"));
           modal.close();
           return;
         }
@@ -707,7 +707,7 @@ function workspaceMemberList( memberList ) {
       // An error will occur if all owners try to be released
       // オーナーが全員解除されてようとしたらエラーにする
       if(g_owners.filter(owner => data.removeMemberList.findIndex(rmMember => owner == rmMember.user_id) == -1 ).length == 0) {
-        alert("オーナーは最低１人必要です");
+        alert(getText("EP010-0414", "最低1人以上のオーナーは必要です"));
         modal.close();
         return;
       }
@@ -839,7 +839,7 @@ $(function() {
       $(".content-note-inner").text(data.rows[0].common.name + "のメンバー一覧です。");
   }).fail((jqXHR, textStatus, errorThrown) => {
     console.log('[FAIL] /workspace/{id}');
-    alert("この画面を表示する権限がありません");
+    alert(getText("EP010-0001", "この画面を表示する権限がありません"));
     window.location = "/";
   });
 })
