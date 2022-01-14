@@ -495,7 +495,7 @@ function workspaceMemberList( memberList ) {
 
         // Restores the owner's settings to the initial state when there is no owner setting authority
         // オーナー設定権限が無いとき、オーナーの設定を初期状態に復元する
-        if(!canOwnerRoleSetting()) 
+        if(!canOwnerRoleSetting()) {
           roleChangeMembers.forEach((chMember) => {
             if(g_owners.indexOf(chMember.user_id) != -1 && chMember.roles.findIndex(chRole => chRole.kind == "owner") == -1) {
               chMember.roles.push({"kind":"owner"});
