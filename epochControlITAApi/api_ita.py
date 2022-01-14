@@ -35,7 +35,7 @@ import api_access_info
 import api_ita_manifests
 import api_ita_cd
 
-WAIT_SEC_ITA_POD_UP = 120 # ITA Pod 起動待ち時間(sec) ready check wait time
+WAIT_SEC_ITA_POD_UP = 600 # ITA Pod 起動待ち時間(sec) ready check wait time
 WAIT_SEC_ITA_IMPORT = 60 # ITA Import最大待ち時間(sec) import wait time
 EPOCH_ITA_HOST = "it-automation"
 EPOCH_ITA_PORT = "8084"
