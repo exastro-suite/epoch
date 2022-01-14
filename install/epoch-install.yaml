@@ -1469,9 +1469,6 @@ metadata:
   name: epoch-service-api-config
   namespace: epoch-system
 data:
-  EPOCH_CICD_PROTOCOL: "http"
-  EPOCH_CICD_HOST: "epoch-cicd-api"
-  EPOCH_CICD_PORT: "8000"
   EPOCH_CONTROL_WORKSPACE_PROTOCOL: "http"
   EPOCH_CONTROL_WORKSPACE_HOST: "epoch-control-workspace-api"
   EPOCH_CONTROL_WORKSPACE_PORT: "8000"
@@ -1493,9 +1490,9 @@ data:
   EPOCH_RS_WORKSPACE_PROTOCOL: "http"
   EPOCH_RS_WORKSPACE_HOST: "epoch-rs-workspace-api"
   EPOCH_RS_WORKSPACE_PORT: "8000"
-  EPOCH_RS_ORGANIZATION_PROTOCOL: "http"
-  EPOCH_RS_ORGANIZATION_HOST: "epoch-rs-organization-api"
-  EPOCH_RS_ORGANIZATION_PORT: "8000"
+  EPOCH_RS_LOGS_PROTOCOL: "http"
+  EPOCH_RS_LOGS_HOST: "epoch-rs-logs-api"
+  EPOCH_RS_LOGS_PORT: "8000"
   EPOCH_EPAI_PROTOCOL: "https"
   EPOCH_EPAI_HOST: ""
   EPOCH_EPAI_PORT: "31182"
