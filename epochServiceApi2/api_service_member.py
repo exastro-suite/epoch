@@ -288,23 +288,6 @@ def get_workspace_members_cdexec(workspace_id):
 
         return jsonify({"result": "200", "rows": rows}), 200
 
-        # rows = [
-        #     {
-        #         "user_id":  "ac689724-1a67-40d3-9428-a3806f9528d0",
-        #         "username":  "yamataro",
-        #         "last_name": "山田",
-        #         "first_name": "太郎"
-        #     },
-        #     {
-        #         "user_id":  "ac689724-1a67-40d3-9428-a3806f9528d1",
-        #         "username": "suzuki",
-        #         "last_name": "鈴木",
-        #         "first_name": "花子"
-        #     }
-        # ]
-        
-        # return jsonify({"result": "200", "rows": [ rows ]}), 200
-
     except common.UserException as e:
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
     except Exception as e:
@@ -387,6 +370,26 @@ def merge_workspace_members(workspace_id):
 
         ret_status = response.status_code
 
+        # ログインユーザーの情報取得 Get login user information
+        user_id = common.get_current_user(request.headers)
+
+        api_url = "{}://{}:{}/{}/user/{}".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
+                                                os.environ['EPOCH_EPAI_API_HOST'],
+                                                os.environ['EPOCH_EPAI_API_PORT'],
+                                                os.environ["EPOCH_EPAI_REALM_NAME"],
+                                                user_id
+                                            )
+        #
+        # get users - ユーザー取得
+        #
+        response = requests.get(api_url)
+        if response.status_code != 200 and response.status_code != 404:
+            error_detail = multi_lang.get_text("EP020-0008", "ユーザー情報の取得に失敗しました")
+            raise common.UserException("{} Error user get status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
+
+        users = json.loads(response.text)
+        globals.logger.debug(f"users:{users}")
+
         for row in req_json["rows"]:
 
             # 登録前にすべてのroleを削除する Delete all roles before registration
@@ -439,7 +442,32 @@ def merge_workspace_members(workspace_id):
             response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
             if response.status_code != 200:
                 error_detail = multi_lang.get_text("EP020-0007", "ロールの登録に失敗しました")
+                globals.logger.debug(error_detail)
                 raise common.UserException("{} Error user role add status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
+
+
+            #
+            # logs output - ログ出力
+            #
+            post_data = {
+                "action" : "role update",
+                "role_update_user_id" : row["user_id"],
+                "role_update_user_roles" : add_roles,
+            }
+
+            api_url = "{}://{}:{}/workspace/{}/member/{}/logs/{}".format(os.environ['EPOCH_RS_LOGS_PROTOCOL'],
+                                                        os.environ['EPOCH_RS_LOGS_HOST'],
+                                                        os.environ['EPOCH_RS_LOGS_PORT'],
+                                                        workspace_id,
+                                                        users["info"]["username"],
+                                                        const.LOG_KIND_UPDATE
+                                                        )
+
+            response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
+            if response.status_code != 200:
+                error_detail = multi_lang.get_text("EP020-0023", "ログ出力に失敗しました")
+                globals.logger.debug(error_detail)
+                raise common.UserException("{} Error log output status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
 
             #
             # workspace info. Roll update date update - ワークスペース情報 ロール更新日の更新
@@ -456,6 +484,7 @@ def merge_workspace_members(workspace_id):
             response = requests.patch(api_url, headers=post_headers, data=json.dumps(post_data))
             if response.status_code != 200:
                 error_detail = multi_lang.get_text("EP000-0024", "対象の情報({})を更新できませんでした", "workspace")
+                globals.logger.debug(error_detail)
                 raise common.UserException("{} Error workspace-db update status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
 
             globals.logger.debug("role datetime update Succeed!")
