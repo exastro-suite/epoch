@@ -21,7 +21,7 @@ var role_update_at = null;
 function workspaceMemberList( memberList ) {    
     
     // ロールリスト
-    const g_roleList = [
+    var g_roleList = [
         {'role_id': 'owner', 'name': 'オーナー', 'note': '説明分1'},
         {'role_id': 'manager', 'name': '管理者', 'note': '説明分2'},
         {'role_id': 'member-mg', 'name': 'メンバー管理', 'note': '説明分3'},
@@ -31,7 +31,7 @@ function workspaceMemberList( memberList ) {
         {'role_id': 'cd-execute', 'name': 'CD実行', 'note': '説明分7'},
         {'role_id': 'cd-result', 'name': 'CD確認', 'note': '説明分8'}
     ];
-    const g_roleLength = g_roleList.length;
+    var g_roleLength = g_roleList.length;
     
     // 可能な操作
     const roleOperationList = [
@@ -272,13 +272,15 @@ function workspaceMemberList( memberList ) {
       if ( type === 'add') tableHeader.push({'title': '選択', 'id': 'row-all','type': 'rowCheck', 'width': '48px'});
       tableHeader.push({'title': 'ユーザ名', 'type': 'text', 'width': 'auto', 'align': 'left', 'sort': 'on', 'filter': 'on'});
       for ( let i = 0; i < g_roleLength; i++ ) {
+          if(!canOwnerRoleSetting() && g_roleList[i].role_id == "owner") continue;
+
           if ( type === 'remove') {
               tableHeader.push({
                   'title': g_roleList[i].name, 'id': g_roleList[i].role_id, 'type': 'status', 'width': '8%', 'align': 'center', 'sort': 'on', 'filter': 'on', 'q': g_roleList[i].note
               });
           } else {
               tableHeader.push({
-                  'title': g_roleList[i].name, 'id': g_roleList[i].role_id, 'type': 'checkbox', 'width': '8%', 'align': 'center', 'q': g_roleList[i].note
+                'title': g_roleList[i].name, 'id': g_roleList[i].role_id, 'type': 'checkbox', 'width': '8%', 'align': 'center', 'q': g_roleList[i].note
               });
           }
       }
@@ -304,11 +306,21 @@ function workspaceMemberList( memberList ) {
                     memberRoleLength = rows[i].roles.length;
 
               for ( let j = 0; j < memberRoleLength; j++ ) {
+
+                  // If you do not have the owner change authority, the owner setting is excluded.
+                  // オーナー変更権限が無いときは、オーナの設定は除外する
+                  if(!canOwnerRoleSetting() && rows[i].roles[j].kind == "owner") continue;
+
                   memberRole.push( rows[i].roles[j].kind );
               }
               rolesInit[rows[i].user_id] = memberRole.join(',');
               
               for ( let j = 0; j < g_roleLength; j++ ) {
+
+                  // If you do not have the owner change authority, the owner setting is excluded.
+                  // オーナー変更権限が無いときは、オーナの設定は除外する
+                  if(!canOwnerRoleSetting() && g_roleList[j].role_id == "owner") continue;
+
                   const tableRoleID = data.table.tableID + '-' + g_roleList[j].role_id;
                   if ( modalRoleList[tableRoleID] === undefined ) {
                       modalRoleList[tableRoleID] = [];
@@ -323,7 +335,12 @@ function workspaceMemberList( memberList ) {
           if ( type === 'add') rowsList.push( rows[i].user_id );
           rowsList.push( rows[i].username );
           for ( let j = 0; j < g_roleLength; j++ ) {
-              rowsList.push( rows[i].user_id );
+
+            // If you do not have the owner change authority, the owner setting is excluded.
+            // オーナー変更権限が無いときは、オーナの設定は除外する
+            if(!canOwnerRoleSetting() && g_roleList[j].role_id == "owner") continue;
+
+            rowsList.push( rows[i].user_id );
           }
           rowsList.push('');
           modalMemberList.push(rowsList);
@@ -448,6 +465,44 @@ function workspaceMemberList( memberList ) {
             }
           }
         }
+
+        if(canOwnerRoleSetting()) {
+          // Check if there is at least one member who will eventually become the owner when you have the authority to set the owner
+          // オーナーの設定権限があるとき、最終的にオーナーとなるメンバーが一人以上いるかチェックする
+
+          if(roleChangeMembers.findIndex(chMember => chMember.roles.findIndex(chRole => chRole.kind == "owner") != -1 ) == -1) {
+            // When the change member does not have an owner
+            // 変更メンバーにオーナーがいないとき
+
+            // If the owner authority of all registered owners is released, an error will occur.
+            // 登録済みのオーナー全員のオーナー権限が解除されていたら、エラーとする
+            if(g_owners.filter(
+              (owner) => {
+                if(roleChangeMembers.findIndex((cgMember) => {
+                  return ((cgMember.user_id == owner) && (cgMember.roles.findIndex(chRole => chRole.kind == "owner") == -1));
+                 } ) != -1 ) {
+                  return false;
+                } else {
+                  return true;
+                }
+              }
+            ) == 0 ) {
+              alert("オーナーは最低１人必要です");
+              return;
+            }              
+          }
+        }
+
+        // Restores the owner's settings to the initial state when there is no owner setting authority
+        // オーナー設定権限が無いとき、オーナーの設定を初期状態に復元する
+        if(!canOwnerRoleSetting()) 
+          roleChangeMembers.forEach((chMember) => {
+            if(g_owners.indexOf(chMember.user_id) != -1 && chMember.roles.findIndex(chRole => chRole.kind == "owner") == -1) {
+              chMember.roles.push({"kind":"owner"});
+            }
+          });
+        }
+
         // 確認モーダル
         subModal.open('roleChangeCheck',{
           'ok': function(){
@@ -512,6 +567,7 @@ function workspaceMemberList( memberList ) {
       const tableID = data.table.tableID,
             role = {};
       for ( let i = 0; i < g_roleLength; i++ ) {
+        if(!canOwnerRoleSetting() && g_roleList[i].role_id == "owner") continue;
         const roleVal = data.table.$table.find('.et-cb-i[name="' + tableID + '-' + g_roleList[i].role_id + '"]').val();
         if ( roleVal !== '' ) role[g_roleList[i].role_id] = roleVal.split(',');
       }
@@ -637,9 +693,27 @@ function workspaceMemberList( memberList ) {
       data.removeMemberList = memberList.rows.filter(function(v){
         if ( selectedMemberID.indexOf( v.user_id ) !== -1 ) return true;
       });
-      
+
+      // If you do not have the owner setting authority and try to cancel the owner, an error will occur.
+      // オーナーの設定権限が無くて、オーナーを解除しようとしたときはエラーにする
+      if(!canOwnerRoleSetting()) {
+        if( data.removeMemberList.findIndex(member => (member.roles.findIndex(role => role.kind == "owner") != -1)) != -1 ) {
+          alert("オーナーを解除する権限がありません");
+          modal.close();
+          return;
+        }
+      }
+
+      // An error will occur if all owners try to be released
+      // オーナーが全員解除されてようとしたらエラーにする
+      if(g_owners.filter(owner => data.removeMemberList.findIndex(rmMember => owner == rmMember.user_id) == -1 ).length == 0) {
+        alert("オーナーは最低１人必要です");
+        modal.close();
+        return;
+      }
+
       data.table.setup('#modalMemberTable', modalRemoveMemberHeader, data.modalRemoveMemberList, {'filter': 'off'} );
-      
+
     };
     /* -------------------------------------------------- *
 
@@ -765,10 +839,13 @@ $(function() {
       $(".content-note-inner").text(data.rows[0].common.name + "のメンバー一覧です。");
   }).fail((jqXHR, textStatus, errorThrown) => {
     console.log('[FAIL] /workspace/{id}');
+    alert("この画面を表示する権限がありません");
+    window.location = "/";
   });
 })
 
 var g_memberList = {"rows":[]};
+var g_owners = [];
 
 function getMemberList(type) {
   return new Promise((resolve, reject) => {
@@ -785,9 +862,7 @@ function getMemberList(type) {
         member = data.rows.filter((user) => {
           return g_memberList.rows.filter(member => {return (member.user_id == user.user_id)}).length == 0;
         });
-
         resolve({"rows":member});
-
       }).fail((jqXHR, textStatus, errorThrown) => {
           console.log('[FAIL] /api/member');
           reject();
@@ -801,6 +876,8 @@ function getMemberList(type) {
       }).done(function(data) {
           console.log('[DONE] /workspace/{id}/member');
           g_memberList = data;
+          g_owners = g_memberList.rows.filter((member) => member.roles.findIndex(role => (role.kind == "owner")) != -1).map(member => member.user_id);
+          console.log(g_owners);
           resolve(g_memberList);
       }).fail((jqXHR, textStatus, errorThrown) => {
           console.log('[FAIL] /workspace/{id}/member');
@@ -810,66 +887,37 @@ function getMemberList(type) {
   });
 }
 
-$(function () {
+function show_buttons_by_role() {
+  // Waiting for API data acquisition - APIのデータ取得待ち
+  if(currentUser == null) { setTimeout(show_buttons_by_role, 100); return; }
+  if(!currentUser.data)   { setTimeout(show_buttons_by_role, 100); return; }
+
+  styleElement = document.createElement('style');
+  document.head.appendChild(styleElement);
+
+  if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-member-add".replace('{ws_id}',workspace_id)) != -1) {
+    $('#button_add_member').css("display","");
+  }
+  if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-member-role-update".replace('{ws_id}',workspace_id)) != -1) {
+    $('#button_role_change').css("display","");
+  }
+  if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-member-add".replace('{ws_id}',workspace_id)) != -1) {
+    $('#button_remove_member').css("display","");
+  } else {
+    // Hide the checkbox to select a member if you do not have permission to add a member
+    // メンバーの追加権限が無いときはメンバーを選択するチェックボックスを非表示にする
+    styleElement.sheet.insertRule("div.et-cbw { visibility: hidden; }");
+  }
+
+  // List display after setting the role - ロールの設定が終わってからリスト表示
   getMemberList().then((memberList) => {
     workspaceMemberList(memberList);
   })
-})
+}
+$(function () {show_buttons_by_role()})
 
-// ダミー用メンバーリストの作成
-// function dummyMemberList( type ){
-//     console.log("dummyMemberList type:" +type);
-//     const getRandomInt = function( min, max ) {
-//       min = Math.ceil(min);
-//       max = Math.floor(max);
-//       return Math.floor(Math.random() * (max - min + 1) + min);
-//     };
-//     const roleList = [
-//       {'kind': 'owner'},
-//       {'kind': 'manager'},
-//       {'kind': 'member-mg'},
-//       {'kind': 'ci-setting'},
-//       {'kind': 'ci-result'},
-//       {'kind': 'cd-setting'},
-//       {'kind': 'cd-execute'},
-//       {'kind': 'cd-result'}
-//     ];
-//     const roleListLength = roleList.length;
-
-//     const memberList = {"rows":[]};
-    
-//     if ( type === 'add') {
-//       for ( let i = 1; i <= 100; i++ ) {
-//         memberList.rows.push({
-//           'user_id': String(i),
-//           'username': 'hanako' + i,
-//           'roles': []
-//         });
-//       }
-//     } else {
-//       for ( let i = 1; i <= 10; i++ ) {
-//         const roles = [];
-//         for ( let i = 0; i < roleListLength; i++ ) {
-//           if ( getRandomInt(0,1) === 0 ) {
-//             roles.push( roleList[i] );
-//           }
-//         }
-//         memberList.rows.push({
-//           'user_id': String(i),
-//           'username': 'taro' + i,
-//           'roles': roles
-//         });
-//       }
-//     }
-//     console.log("memberList:\n"+JSON.stringify(memberList,null,"  "));
-//     return memberList;
-// }
-
-
-
-// $(function(){
-
-//     // リストが用意できたら
-//     workspaceMemberList( dummyMemberList() );
-
-// });
+// Does the login person have owner setting authority?
+// ログイン者がオーナー設定権限を持っているか
+function canOwnerRoleSetting() {
+  return (currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-owner-role-setting".replace('{ws_id}',workspace_id)) != -1);
+}
