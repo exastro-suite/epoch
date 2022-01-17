@@ -25,11 +25,7 @@
 1. 次のコマンドを実行して、EPOCHの初期設定を行います:
 
     ```bash
-<<<<<<< HEAD
     kubectl run -i --rm set-host -n epoch-system --restart=Never --image=exastro/epoch-setting:0.3_3 --pod-running-timeout=30m -- set-host [your-host]
-=======
-    kubectl run -i --rm set-host -n epoch-system --restart=Never --image=exastro/epoch-setting:0.3_2 --pod-running-timeout=30m -- set-host [your-host]
->>>>>>> 21b00bce5b8f065041387f11927f12cd494ebd78
     ```
     **注:** [your-host]には、ご自身のホストに接続するためのサーバー名またはIPアドレスを指定してください。
 
