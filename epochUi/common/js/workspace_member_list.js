@@ -22,14 +22,14 @@ function workspaceMemberList( memberList ) {
     
     // ロールリスト
     var g_roleList = [
-        {'role_id': 'owner', 'name': 'オーナー', 'note': '説明分1'},
-        {'role_id': 'manager', 'name': '管理者', 'note': '説明分2'},
-        {'role_id': 'member-mg', 'name': 'メンバー管理', 'note': '説明分3'},
-        {'role_id': 'ci-setting', 'name': 'CI設定', 'note': '説明分4'},
-        {'role_id': 'ci-result', 'name': 'CI確認', 'note': '説明分5'},
-        {'role_id': 'cd-setting', 'name': 'CD設定', 'note': '説明分6'},
-        {'role_id': 'cd-execute', 'name': 'CD実行', 'note': '説明分7'},
-        {'role_id': 'cd-result', 'name': 'CD確認', 'note': '説明分8'}
+        {'role_id': 'owner', 'name': getText('EP000-0001', 'オーナー'), 'note': getText('EP010-0419', '・ワークスペースの作成者\n ・ワークスペース操作の全権限を持つ')},
+        {'role_id': 'manager', 'name': getText('EP000-0002', '管理者'), 'note': getText('EP010-0420', '・ワークスペース削除以外の操作が可能な権限')},
+        {'role_id': 'member-mg', 'name': getText('EP000-0003', 'メンバー管理'), 'note': getText('EP010-0421', '・メンバーの追加・解除、ロール変更のみの操作が可能な権限')},
+        {'role_id': 'ci-setting', 'name': getText('EP000-0004', 'CI設定'), 'note': getText('EP010-0422', '・アプリケーションの開発者用のアカウント\n ・CIパイプライン(ビルドパラメータ等)の変更が可能\n ・Manifestテンプレートのアップロードも可能')},
+        {'role_id': 'ci-result', 'name': getText('EP000-0005', 'CI確認'), 'note': getText('EP010-0423', '・アプリケーションの開発者用のアカウント\n ・CIパイプライン(ビルドパラメータ等)の変更は不可')},
+        {'role_id': 'cd-setting', 'name': getText('EP000-0006', 'CD設定'), 'note': getText('EP010-0424', '・ワークスペースのCDパイプラインの設定値の変更が可能\n ・Manifestパラメータの編集も可能')},
+        {'role_id': 'cd-execute', 'name': getText('EP000-0007', 'CD実行'), 'note': getText('EP010-0425', '・CD実行可能なロール\n ・CD実行の結果の参照も可能')},
+        {'role_id': 'cd-result', 'name': getText('EP000-0008', 'CD確認'), 'note': getText('EP010-0426', '・CD実行の結果のみ参照可能なロール\n ・CD実行時のトラブル解析用に特化したロール')}
     ];
     var g_roleLength = g_roleList.length;
     
@@ -43,10 +43,11 @@ function workspaceMemberList( memberList ) {
         {'role_operation_id': '6', 'name': 'オーナーロール設定', 'roles': ['owner'], },
         {'role_operation_id': '7', 'name': 'メンバー追加', 'roles': ['owner','manager','member-mg'], },
         {'role_operation_id': '8', 'name': 'ロール変更', 'roles': ['owner','manager','member-mg'], },
-        {'role_operation_id': '9', 'name': 'CIパイプライン結果確認', 'roles': ['owner','manager','ci-setting','ci-result','cd-execute'], },
-        {'role_operation_id': '10', 'name': 'Manifestテンプレート・パラメータ編集', 'roles': ['owner','manager','cd-execute'], },
-        {'role_operation_id': '11', 'name': 'CD実行', 'roles': ['owner','manager','cd-execute'], },
-        {'role_operation_id': '12', 'name': 'CD実行結果確認', 'roles': ['owner','manager','cd-setting','cd-execute','cd-result'], }
+        {'role_operation_id': '9', 'name': 'CIパイプライン結果確認', 'roles': ['owner','manager','ci-setting','ci-result'], },
+        {'role_operation_id': '10', 'name': 'Manifestテンプレートアップロード', 'roles': ['owner','manager','ci-setting'], },
+        {'role_operation_id': '11', 'name': 'Manifestパラメータ編集', 'roles': ['owner','manager','cd-setting'], },
+        {'role_operation_id': '12', 'name': 'CD実行', 'roles': ['owner','manager','cd-execute'], },
+        {'role_operation_id': '13', 'name': 'CD実行結果確認', 'roles': ['owner','manager','cd-setting','cd-execute','cd-result'], }
     ];
     const roleOperationLength = roleOperationList.length;
     
@@ -555,7 +556,7 @@ function workspaceMemberList( memberList ) {
           }
         },'none','sub');
       } else {
-        alert(getText("EP010-0416", "ロールの変更がありません。"));
+        alert(getText("EP010-0416", "ロールの変更がありません"));
       }
     };
     /* -------------------------------------------------- *

@@ -252,10 +252,11 @@ $(function(){
       console.log(JSON.stringify(data));
 
       workspaceListData = [];
-      roleIdList = [];
+      
       for(var i=0; i<data.rows.length; ++i) {
         // Workspace for each row - ワークスペース各行ごとの処理
-
+        roleIdList = [];
+        
         for(var roleIdx=0; roleIdx < data.rows[i].roles.length; roleIdx++) {
           for(var itemIdx=0; itemIdx < tableHeader[1].item.length; itemIdx++) {
 
