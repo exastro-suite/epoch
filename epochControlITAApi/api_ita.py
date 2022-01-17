@@ -365,7 +365,7 @@ def settings_ita(workspace_id):
             # timeout
             current_time = time.time()
             if (current_time - start_time) > WAIT_SEC_ITA_POD_UP:
-                globals.logger.debug("ITA pod start Time out")
+                globals.logger.debug("ITA pod start Time out S:{} sec:{}".format(start_time, (current_time - start_time)))
                 error_detail = "IT-Automation 初期設定でタイムアウトしました。再度、実行してください。"
                 raise common.UserException(error_detail)
 
@@ -382,7 +382,7 @@ def settings_ita(workspace_id):
             # timeout
             current_time = time.time()
             if (current_time - start_time) > WAIT_SEC_ITA_POD_UP:
-                globals.logger.debug("ITA mariaDB start Time out")
+                globals.logger.debug("ITA mariaDB start Time out S:{} sec:{}".format(start_time, (current_time - start_time)))
                 error_detail = "IT-Automation 初期設定でタイムアウトしました。再度、実行してください。"
                 raise common.UserException(error_detail)
 
