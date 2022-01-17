@@ -2315,7 +2315,6 @@ data:
       name: exastro-authentication-infra-sc
     provisioner: kubernetes.io/no-provisioner
     volumeBindingMode: WaitForFirstConsumer
-
     ---
     apiVersion: v1
     kind: PersistentVolume
@@ -2331,6 +2330,7 @@ data:
         storage: 500Mi
       accessModes:
         - ReadWriteMany
+      persistentVolumeReclaimPolicy: Recycle
       hostPath:
         path: /var/data/epoch/authc-httpd/conf
         type: DirectoryOrCreate
