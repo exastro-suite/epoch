@@ -52,7 +52,7 @@
 - ワークスペース作成後に、次のコマンドを実行してツールのユーザ・パスワードを表示します:
 
     ```bash
-    kubectl exec -it -n epoch-system deploy/workspace-db -- mysql -N -B -u root -ppassword workspace_db -e'select info from workspace_access;'
+    kubectl exec -it -n epoch-system deploy/workspace-db -- mysql -N -B -u root -ppassword workspace_db -e'select workspace_id, info from workspace_access\G;'
     ```
 
 - SonarQubeのユーザ・パスワード:  
