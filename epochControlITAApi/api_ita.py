@@ -35,7 +35,7 @@ import api_access_info
 import api_ita_manifests
 import api_ita_cd
 
-WAIT_SEC_ITA_POD_UP = 120 # ITA Pod 起動待ち時間(sec) ready check wait time
+WAIT_SEC_ITA_POD_UP = 600 # ITA Pod 起動待ち時間(sec) ready check wait time
 WAIT_SEC_ITA_IMPORT = 60 # ITA Import最大待ち時間(sec) import wait time
 EPOCH_ITA_HOST = "it-automation"
 EPOCH_ITA_PORT = "8084"
@@ -365,7 +365,7 @@ def settings_ita(workspace_id):
             # timeout
             current_time = time.time()
             if (current_time - start_time) > WAIT_SEC_ITA_POD_UP:
-                globals.logger.debug("ITA pod start Time out")
+                globals.logger.debug("ITA pod start Time out S:{} sec:{}".format(start_time, (current_time - start_time)))
                 error_detail = "IT-Automation 初期設定でタイムアウトしました。再度、実行してください。"
                 raise common.UserException(error_detail)
 
@@ -382,7 +382,7 @@ def settings_ita(workspace_id):
             # timeout
             current_time = time.time()
             if (current_time - start_time) > WAIT_SEC_ITA_POD_UP:
-                globals.logger.debug("ITA mariaDB start Time out")
+                globals.logger.debug("ITA mariaDB start Time out S:{} sec:{}".format(start_time, (current_time - start_time)))
                 error_detail = "IT-Automation 初期設定でタイムアウトしました。再度、実行してください。"
                 raise common.UserException(error_detail)
 

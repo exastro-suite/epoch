@@ -535,7 +535,7 @@ def get_workspace_list():
         api_url = "{}://{}:{}/workspace".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
                                                 os.environ['EPOCH_RS_WORKSPACE_HOST'],
                                                 os.environ['EPOCH_RS_WORKSPACE_PORT'])
-        response = requests.get(api_url, headers=post_headers)
+        users_response = requests.get(api_url, headers=post_headers)
 
         # user_idの取得 get user id
         user_id = common.get_current_user(request.headers)
@@ -550,18 +550,18 @@ def get_workspace_list():
         
         rows = []
         
-        if response.status_code == 200 and common.is_json_format(response.text) \
+        if users_response.status_code == 200 and common.is_json_format(users_response.text) \
         and epai_resp_user_role.status_code == 200 and common.is_json_format(epai_resp_user_role.text):
             user_roles = json.loads(epai_resp_user_role.text)
             # 取得した情報で必要な部分のみを編集して返却する Edit and return only the necessary part of the acquired information
-            ret = json.loads(response.text)
+            ret = json.loads(users_response.text)
             for data_row in ret["rows"]:
                 # ログインユーザーのロールが該当するワークスペースの参照権限があるかチェックする
                 # Check if the logged-in user's role has read permission for the applicable workspace
                 find = False
                 roles = []
-                for user_role in user_roles["rows"]:
-                    if user_role["name"] == const.ROLE_WS_ROLE_WS_REFERENCE[0].format(data_row["workspace_id"]):
+                for role in user_roles["rows"]:
+                    if role["name"] == const.ROLE_WS_ROLE_WS_REFERENCE[0].format(data_row["workspace_id"]):
                         find = True
 
                         # クライアントロール表示名取得 get client role display name
@@ -569,14 +569,14 @@ def get_workspace_list():
                                                                                         os.environ['EPOCH_EPAI_API_HOST'],
                                                                                         os.environ['EPOCH_EPAI_API_PORT'],
                                                                                         os.environ["EPOCH_EPAI_REALM_NAME"],
-                                                                                        user_role["name"])
+                                                                                        role["name"])
 
                         epai_resp_role_disp_name = requests.get(epai_api_url, headers=post_headers)
                         role_info = json.loads(epai_resp_role_disp_name.text)["rows"]
                         globals.logger.debug("role_info:{}".format(role_info))
                         
                         disp_row = {
-                            "id": user_role["name"],
+                            "id": role["name"],
                             "name": "",
                         }
                         # 表示する項目が存在した際は、多言語変換を実施して値を設定
@@ -589,31 +589,91 @@ def get_workspace_list():
 
                         break
                 
-                # 参照ロールありで一覧に表示する Display in list with reference role
+                # Display in list with reference role - 参照ロールありで一覧に表示する
                 if find:
-                    # メンバー数取得 get the number of members
-                    epai_api_url = "{}://{}:{}/{}/client/epoch-system/roles/{}/users".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
-                                                                                            os.environ['EPOCH_EPAI_API_HOST'],
-                                                                                            os.environ['EPOCH_EPAI_API_PORT'],
-                                                                                            os.environ["EPOCH_EPAI_REALM_NAME"],
-                                                                                            const.ROLE_WS_ROLE_WS_REFERENCE[0].format(data_row["workspace_id"]))
-                    epai_resp_role_users = requests.get(epai_api_url, headers=post_headers)
-                    role_users = json.loads(epai_resp_role_users.text)
+                    all_roles = const.ALL_ROLES
+                    stock_user_id = []
+                    set_role_kind = []
+
+                    #
+                    # Processing for all roles - 全てのロールに対する処理
+                    #
+                    for role in all_roles:
+                        # Get a list of users associated with the specified workspace - 指定したワークスペースに紐づくユーザ一覧を取得
+                        epai_api_url = "{}://{}:{}/{}/client/epoch-system/roles/{}/users".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
+                                                                                                os.environ['EPOCH_EPAI_API_HOST'],
+                                                                                                os.environ['EPOCH_EPAI_API_PORT'],
+                                                                                                os.environ["EPOCH_EPAI_REALM_NAME"],
+                                                                                                role.format(data_row["workspace_id"]))
+                        # get a list of users - ユーザー一覧取得
+                        users_response = requests.get(epai_api_url)
+                        if users_response.status_code != 200 and users_response.status_code != 404:
+                            error_detail = multi_lang.get_text("EP020-0008", "ユーザー情報の取得に失敗しました")
+                            raise common.UserException("{} Error user get status:{}".format(inspect.currentframe().f_code.co_name, users_response.status_code))
+
+                        users = json.loads(users_response.text)
+
+                        #
+                        # Processing for the acquired user list - 取得したユーザ一覧に対する処理
+                        #
+                        for user in users["rows"]:
+                            # Do not handle duplicate users - 重複したユーザーの場合は処理しない
+                            if user["user_id"] in stock_user_id:
+                                continue
+                            # Unique user ID is stocked to get the number of members
+                            # メンバー数取得のために、一意のユーザIDはストックする
+                            stock_user_id.append(user["user_id"])
+
+                    #
+                    # ログインユーザに対する処理
+                    #
+                    # Get role info - ロール情報を取得
+                    epai_api_url = "{}://{}:{}/{}/user/{}/roles/epoch-system".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
+                                                                                    os.environ['EPOCH_EPAI_API_HOST'],
+                                                                                    os.environ['EPOCH_EPAI_API_PORT'],
+                                                                                    os.environ["EPOCH_EPAI_REALM_NAME"],
+                                                                                    user_id)
+                    user_role_response = requests.get(epai_api_url)
+                    if user_role_response.status_code != 200:
+                        error_detail = multi_lang.get_text("EP020-0009", "ユーザーロール情報の取得に失敗しました")
+                        raise common.UserException("{} Error user role get status:{}".format(inspect.currentframe().f_code.co_name, users_response.status_code))
+
+                    user_roles = json.loads(user_role_response.text)
+                    globals.logger.debug("user_roles: {}".format(user_roles["rows"])) 
                     
-                    # 返り値 JSON整形 Return value JSON formatting
+                    #
+                    # Processing for all roles of the acquired login user - 取得したログインユーザの全ロールに対しての処理
+                    #
+                    for get_role in user_roles["rows"]:
+                        kind = common.get_role_kind(get_role["name"])
+                        
+                        # Check only the corresponding role - 該当のロールのみチェック 
+                        if kind is not None:
+                            ex_role = re.match("ws-({}|\d+)-(.+)", get_role["name"])
+                            globals.logger.debug("role_workspace_id:{} kind:{}".format(ex_role[1], ex_role[2]))
+                            
+                            # Narrow down only the applicable workspace - 該当のワークスペースのみの絞り込み 
+                            if ex_role[1] == str(data_row["workspace_id"]):
+                                set_role_kind.append(
+                                    {
+                                        "kind" : kind
+                                    }
+                                )
+
+                    # Return value JSON formatting - 返り値 JSON整形 
                     row = {
                         "workspace_id": data_row["workspace_id"],
                         "workspace_name": data_row["common"]["name"],
-                        "roles": roles,
-                        "members": len(role_users["rows"]),
+                        "roles": set_role_kind,
+                        "members": len(stock_user_id),
                         "workspace_remarks": data_row["common"]["note"],
                         "update_at": data_row["update_at"],
                     }
                     rows.append(row)
 
-        elif not response.status_code == 404:
+        elif not users_response.status_code == 404:
             # 404以外の場合は、エラー、404はレコードなしで返却（エラーにはならない） If it is other than 404, it is an error, and 404 is returned without a record (it does not become an error)
-            raise Exception('{} Error:{}'.format(inspect.currentframe().f_code.co_name, response.status_code))
+            raise Exception('{} Error:{}'.format(inspect.currentframe().f_code.co_name, users_response.status_code))
 
         return jsonify({"result": "200", "rows": rows}), 200
 
@@ -988,8 +1048,25 @@ def post_pod(workspace_id):
             'Content-Type': 'application/json',
         }
 
-        # 引数をJSON形式で受け取りそのまま引数に設定
-        post_data = request.json.copy()
+        # # 引数をJSON形式で受け取りそのまま引数に設定
+        # post_data = request.json.copy()
+
+        # workspace get
+        api_url = "{}://{}:{}/workspace/{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+                                                    os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                    os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                    workspace_id)
+        response = requests.get(api_url)
+
+        if response.status_code != 200:
+            error_detail = multi_lang.get_test("EP020-0013", "ワークスペース情報の取得に失敗しました")
+            globals.logger.debug(error_detail)
+            raise common.UserException(error_detail)
+
+        # 取得したワークスペース情報を退避 Save the acquired workspace information
+        ret = json.loads(response.text)
+        # 取得したworkspace情報をパラメータとして受け渡す Pass the acquired workspace information as a parameter
+        post_data = ret["rows"][0]
 
         # workspace post送信
         api_url = "{}://{}:{}/workspace/{}".format(os.environ['EPOCH_CONTROL_WORKSPACE_PROTOCOL'],
@@ -1001,6 +1078,7 @@ def post_pod(workspace_id):
         
         if response.status_code != 200:
             error_detail = 'workspace post処理に失敗しました'
+            globals.logger.debug(error_detail)
             raise common.UserException(error_detail)
 
         # argocd post送信
@@ -1013,6 +1091,7 @@ def post_pod(workspace_id):
 
         if response.status_code != 200:
             error_detail = 'argocd post処理に失敗しました'
+            globals.logger.debug(error_detail)
             raise common.UserException(error_detail)
 
         # ita post送信

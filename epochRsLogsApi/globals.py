@@ -1,4 +1,4 @@
-#   Copyright 2021 NEC Corporation
+#   Copyright 2022 NEC Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -11,16 +11,21 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-FROM	nginx
 
-RUN	apt-get	update	\
-&&	apt-get -y install	git
+from pytz import timezone
 
-WORKDIR /app
+config = None
+TZ = None
+logger = None
 
-COPY ./ /app/
+def init(app):
+    """共通変数初期化
+    """
+    global config
+    global TZ
+    global logger
 
-RUN     chmod +x /app/nginx-start.sh \
-&&      cp /app/epochui.conf /etc/nginx/conf.d/.
+    config = app.config
+    TZ = timezone(config['TZ'])
+    logger = app.logger
 
-CMD ["/bin/sh","/app/nginx-start.sh"]

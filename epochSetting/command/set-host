@@ -146,12 +146,26 @@ if [ $? -ne 0 ]; then
     exit 2
 fi
 
+while true; do
+    sleep 5;
+    RESTART_BERFORE_API_POD=$(kubectl get pod --selector "name=authentication-infra-api" -n exastro-platform-authentication-infra -o jsonpath="{range .items[*]}{@.metadata.name}{\"\n\"}{end}" 2> /dev/null)
+    if [ $? -eq 0 ]; then
+        break;
+    fi
+done
 kubectl rollout restart deploy -n exastro-platform-authentication-infra authentication-infra-api
 if [ $? -ne 0 ]; then
     echo "ERROR : rollout restart authentication-infra-api"
     exit 2
 fi
 
+while true; do
+    sleep 5;
+    RESTART_BERFORE_KEYCLOAK_POD=$(kubectl get pod --selector "app=keycloak" -n exastro-platform-authentication-infra -o jsonpath="{range .items[*]}{@.metadata.name}{\"\n\"}{end}" 2> /dev/null)
+    if [ $? -eq 0 ]; then
+        break;
+    fi
+done
 kubectl rollout restart deploy -n exastro-platform-authentication-infra keycloak
 if [ $? -ne 0 ]; then
     echo "ERROR : rollout restart keycloak"
@@ -168,9 +182,31 @@ echo -n "waiting ..."
 while true; do
     sleep 5;
     echo -n ".";
-    if [ $(kubectl get pod -n exastro-platform-authentication-infra -o json | jq -r ".items[].status.containerStatuses[].ready" | sed -e "/true/d" | wc -l) -ne 0 ]; then
+    NOT_READY_COUNT=$(kubectl get pod -n exastro-platform-authentication-infra -o json 2> /dev/null | \
+                        jq -r ".items[].status.containerStatuses[].ready" 2> /dev/null | sed -e "/true/d" | wc -l)
+    if [ $? -ne 0 ]; then
+        continue
+    fi
+    if [ ${NOT_READY_COUNT} -ne 0 ]; then
         continue;
     fi
+
+    RESTART_AFTER_API_POD=$(kubectl get pod --selector "name=authentication-infra-api" -n exastro-platform-authentication-infra -o jsonpath="{range .items[*]}{@.metadata.name}{\"\n\"}{end}" 2> /dev/null)
+    if [ $? -ne 0 ]; then
+        continue
+    fi
+    if [ "${RESTART_BERFORE_API_POD}" == "${RESTART_AFTER_API_POD}" ]; then
+        continue;
+    fi
+
+    RESTART_AFTER_KEYCLOAK_POD=$(kubectl get pod --selector "app=keycloak" -n exastro-platform-authentication-infra -o jsonpath="{range .items[*]}{@.metadata.name}{\"\n\"}{end}" 2> /dev/null)
+    if [ $? -ne 0 ]; then
+        continue
+    fi
+    if [ "${RESTART_BERFORE_KEYCLOAK_POD}" == "${RESTART_AFTER_KEYCLOAK_POD}" ]; then
+        continue;
+    fi
+
     echo "";
     break;
 done;

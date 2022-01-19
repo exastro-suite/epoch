@@ -140,7 +140,7 @@ def user_get():
                 # ただし、1回目は設定しない However, do not set the first time
                 if ex_role[1] not in stock_workspace_id and workspace_name is not None:
                     # workspace_id が 変わった際にレコード化 Record when workspace_id changes
-                    ret_role = ',"{}":["{}"]'.format(workspace_name, '","'.join(set_role_display))
+                    ret_role = ret_role + ',"{}":["{}"]'.format(workspace_name, '","'.join(set_role_display))
                     set_role_display = []
 
                 # 取得したロール名を配列にする Make the acquired role name into an array

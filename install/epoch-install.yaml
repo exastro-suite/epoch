@@ -177,7 +177,7 @@ spec:
           name: epoch-control-workspace-conf
       containers:
       - name: epoch-control-workspace-api
-        image: exastro/epoch-control-workspace-api:0.3.0_20211206_1030
+        image: exastro/epoch-control-workspace-api:0.3.0_20220114_1530
         env:
         - name: CONFIG_API_WORKSPACE_PATH
           value: "/etc/epoch/epochControlWorkspaceApi/api_workspace.conf"
@@ -267,7 +267,7 @@ spec:
           name: epoch-control-github-conf
       containers:
       - name: epoch-control-github-api
-        image: exastro/epoch-control-github-api:0.3.0_20211206_1030
+        image: exastro/epoch-control-github-api:0.3.0_20220114_1530
         env:
         - name: HTTP_PROXY
           valueFrom:
@@ -359,7 +359,7 @@ spec:
           name: epoch-control-inside-gitlab-conf
       containers:
       - name: epoch-control-inside-gitlab-api
-        image: exastro/epoch-control-inside-gitlab-api:0.3.0_20211228_1100
+        image: exastro/epoch-control-inside-gitlab-api:0.3.0_20220114_1530
         env:
         - name: CONFIG_API_INSIDE_GITLAB_PATH
           value: "/etc/epoch/epochControlInsideGitLabApi/api_inside_gitlab.conf"
@@ -459,7 +459,7 @@ spec:
           name: epoch-control-tekton-conf
       containers:
       - name: epoch-control-tekton-api
-        image: exastro/epoch-control-tekton-api:0.3.0_20211206_1030
+        image: exastro/epoch-control-tekton-api:0.3.0_20220114_1530
         env:
         - name: CONFIG_API_TEKTON_PATH
           value: "/etc/epoch/epochControlTektonApi/api_tekton.conf"
@@ -509,6 +509,137 @@ spec:
   selector:
     name: epoch-control-tekton-api
 
+#---- epoch-control-tekton-db.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tekton-pipeline-db-myconf
+  namespace: epoch-system
+data:
+  my.cnf: |
+    [mysqld]
+    character-set-server=utf8mb4
+    collation-server=utf8mb4_bin
+    secure_file_priv=/tmp
+    [client]
+    default-character-set=utf8mb4
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tekton-pipeline-db-initdb
+  namespace: epoch-system
+data:
+  tekton-pipeline.sql: |
+    create database tekton_pipeline_db
+      CHARACTER SET utf8mb4
+      COLLATE utf8mb4_unicode_ci;
+    create user app_user IDENTIFIED WITH mysql_native_password BY 'password';
+    GRANT ALL ON tekton_pipeline_db.* TO app_user;
+    use tekton_pipeline_db;
+    create table tekton_pipeline_yaml (
+      yaml_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
+      workspace_id int unsigned not null,
+      kind varchar(16),
+      filename varchar(256),
+      yamltext text,
+      index(workspace_id)
+    );
+    create table tekton_pipeline_task (
+      task_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
+      workspace_id int unsigned not null,
+      pipeline_id int unsigned not null,
+      pipeline_run_name varchar(128),
+      pipeline_run_uid  varchar(128),
+      status varchar(16) not null,
+      git_repository_url varchar(1024) not null,
+      git_branch varchar(1024),
+      container_registry_image varchar(1024),
+      container_registry_image_tag varchar(1024),
+      container_registry_image_digest varchar(1024),
+      git_webhook_header text,
+      git_webhook_body text,
+      create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
+      index(pipeline_run_name)
+    );
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tekton-pipeline-db
+  namespace: epoch-system
+spec:
+  selector:
+    matchLabels:
+      name: tekton-pipeline-db
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: tekton-pipeline-db
+    spec:
+      volumes:
+      - name: mysqlconf-volume
+        configMap:
+          name: tekton-pipeline-db-myconf
+      # COMMENT OUT:Persistent data retention
+      #- name: mysqldata
+      #  hostPath:
+      #    path: /var/data/epoch/tekton_pipeline_db/mysql
+      #    type: DirectoryOrCreate
+      - name: mysqlinitdb-volume
+        configMap:
+          name: tekton-pipeline-db-initdb
+      containers:
+      - name: mysql
+        image: mysql
+        volumeMounts:
+        # COMMENT OUT:Persistent data retention
+        #- name: mysqldata
+        #  mountPath: /var/lib/mysql
+        - name: mysqlconf-volume
+          mountPath: /etc/mysql
+        - name: mysqlinitdb-volume
+          mountPath: /docker-entrypoint-initdb.d
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: password
+        - name: TZ
+          value: "Asia/Tokyo"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tekton-pipeline-db
+  labels:
+    name: tekton-pipeline-db
+  namespace: epoch-system
+spec:
+  type: ClusterIP
+  ports:
+  - name: mysql
+    port: 3306
+    targetPort: 3306
+  selector:
+    name: tekton-pipeline-db
+
 #---- epoch-control-argocd-api.yaml
 ---
 #   Copyright 2021 NEC Corporation
@@ -554,7 +685,7 @@ spec:
           name: epoch-control-argocd-conf
       containers:
       - name: epoch-control-argocd-api
-        image: exastro/epoch-control-argocd-api:0.3.0_20211228_1100
+        image: exastro/epoch-control-argocd-api:0.3.0_20220114_1530
         env:
         - name: CONFIG_API_ARGOCD_PATH
           value: "/etc/epoch/epochControlArgoCDApi/api_argocd.conf"
@@ -633,7 +764,7 @@ spec:
           name: epoch-control-ita-conf
       containers:
       - name: epoch-control-ita-api
-        image: exastro/epoch-control-ita-api:0.3.0_20211228_1530
+        image: exastro/epoch-control-ita-api:0.3.0_20220117_1530
         env:
         - name: CONFIG_API_ITA_PATH
           value: "/etc/epoch/epochControlITAApi/api_ita.conf"
@@ -745,7 +876,7 @@ spec:
           name: epoch-rs-workspace-conf
       containers:
       - name: epoch-rs-workspace-api
-        image: exastro/epoch-rs-workspace-api:0.3.0_20211228_1530
+        image: exastro/epoch-rs-workspace-api:0.3.0_20220114_1530
         env:
         - name: CONFIG_API_WORKSPACE_PATH
           value: "/etc/epoch/epochRsWorkspaceApi/api_workspace.conf"
@@ -777,290 +908,7 @@ spec:
   selector:
     name: epoch-rs-workspace-api
 
-#---- epoch-rs-ci-result-api.yaml
----
-#   Copyright 2021 NEC Corporation
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: epoch-rs-ci-result-conf
-  namespace: epoch-system
-data:
-  api_ci_result.conf: |
-    TZ='Asia/Tokyo'
-    MYSQL_HOST='tekton-pipelinerun-db'
-    MYSQL_PORT='3306'
-    MYSQL_DATABASE='tekton_pipelinerun_db'
-    MYSQL_USER='app_user'
-    MYSQL_PASSWORD='password'
-    RESOURCE_CREATION_WAIT=60
-
----
-
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: epoch-rs-ci-result-api
-  namespace: epoch-system
-spec:
-  selector:
-    matchLabels:
-      name: epoch-rs-ci-result-api
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        name: epoch-rs-ci-result-api
-    spec:
-      volumes:
-      - name: epoch-rs-ci-result-conf
-        configMap:
-          name: epoch-rs-ci-result-conf
-      containers:
-      - name: epoch-rs-ci-result-api
-        image: exastro/epoch-rs-ci-result-api:0.3.0_20211206_1030
-        env:
-        - name: CONFIG_API_CI_RESULT_PATH
-          value: "/etc/epoch/epochRsCiResultApi/api_ci_result.conf"
-        - name: FLASK_ENV
-          value: "development"
-        - name: API_CI_RESULT_PORT
-          value: "8000"
-        - name: PYTHONIOENCODING
-          value: utf-8
-        volumeMounts:
-        - name: epoch-rs-ci-result-conf
-          mountPath: /etc/epoch/epochRsCiResultApi
-
----
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: epoch-rs-ci-result-api
-  labels:
-    name: epoch-rs-ci-result-api
-  namespace: epoch-system
-spec:
-  type: ClusterIP
-  ports:
-  - name: http
-    port: 8000
-    targetPort: 8000
-  selector:
-    name: epoch-rs-ci-result-api
-
-#---- epoch-service-api-config.yaml
----
-#   Copyright 2019 NEC Corporation
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
-
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: epoch-service-api-config
-  namespace: epoch-system
-data:
-  EPOCH_CICD_PROTOCOL: "http"
-  EPOCH_CICD_HOST: "epoch-cicd-api"
-  EPOCH_CICD_PORT: "8000"
-  EPOCH_CONTROL_WORKSPACE_PROTOCOL: "http"
-  EPOCH_CONTROL_WORKSPACE_HOST: "epoch-control-workspace-api"
-  EPOCH_CONTROL_WORKSPACE_PORT: "8000"
-  EPOCH_CONTROL_ARGOCD_PROTOCOL: "http"
-  EPOCH_CONTROL_ARGOCD_HOST: "epoch-control-argocd-api"
-  EPOCH_CONTROL_ARGOCD_PORT: "8000"
-  EPOCH_CONTROL_ITA_PROTOCOL: "http"
-  EPOCH_CONTROL_ITA_HOST: "epoch-control-ita-api"
-  EPOCH_CONTROL_ITA_PORT: "8000"
-  EPOCH_CONTROL_TEKTON_PROTOCOL: "http"
-  EPOCH_CONTROL_TEKTON_HOST: "epoch-control-tekton-api"
-  EPOCH_CONTROL_TEKTON_PORT: "8000"
-  EPOCH_CONTROL_GITHUB_PROTOCOL: "http"
-  EPOCH_CONTROL_GITHUB_HOST: "epoch-control-github-api"
-  EPOCH_CONTROL_GITHUB_PORT: "8000"
-  EPOCH_CONTROL_INSIDE_GITLAB_PROTOCOL: "http"
-  EPOCH_CONTROL_INSIDE_GITLAB_HOST: "epoch-control-inside-gitlab-api"
-  EPOCH_CONTROL_INSIDE_GITLAB_PORT: "8000"
-  EPOCH_RS_WORKSPACE_PROTOCOL: "http"
-  EPOCH_RS_WORKSPACE_HOST: "epoch-rs-workspace-api"
-  EPOCH_RS_WORKSPACE_PORT: "8000"
-  EPOCH_RS_ORGANIZATION_PROTOCOL: "http"
-  EPOCH_RS_ORGANIZATION_HOST: "epoch-rs-organization-api"
-  EPOCH_RS_ORGANIZATION_PORT: "8000"
-  EPOCH_EPAI_PROTOCOL: "https"
-  EPOCH_EPAI_HOST: ""
-  EPOCH_EPAI_PORT: "31182"
-  EPOCH_EPAI_API_PROTOCOL: "http"
-  EPOCH_EPAI_API_HOST: "authentication-infra-api.exastro-platform-authentication-infra.svc"
-  EPOCH_EPAI_API_PORT: "8000"
-  EPOCH_EPAI_REALM_NAME: "exastroplatform"
-  PYTHONIOENCODING: utf-8
-
-#---- epoch-service-api2.yaml
----
-#   Copyright 2021 NEC Corporation
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: epoch-service-api2-conf
-  namespace: epoch-system
-data:
-  api_service.conf: |
-    TZ='Asia/Tokyo'
----
-
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: epoch-service-api2
-  namespace: epoch-system
-spec:
-  selector:
-    matchLabels:
-      name: epoch-service-api2
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        name: epoch-service-api2
-    spec:
-      volumes:
-      - name: epoch-service-api2-conf
-        configMap:
-          name: epoch-service-api2-conf
-      containers:
-      - name: epoch-service-api2
-        image: exastro/epoch-service-api2:0.3.0_20211228_1100
-        env:
-        - name: CONFIG_API_SERVICE_PATH
-          value: "/etc/epoch/epochServiceApi/api_service.conf"
-        - name: FLASK_ENV
-          value: "development"
-        - name: API_SERVICE_PORT
-          value: "8000"
-        - name: PYTHONIOENCODING
-          value: utf-8
-        envFrom:
-          - configMapRef:
-              name: epoch-service-api-config
-          # - configMapRef:
-          #     name: epoch-service-api-epai-config
-          # - prefix: EPOCH_
-          #   secretRef:
-          #     name: epoch-service-api-secret
-        volumeMounts:
-        - name: epoch-service-api2-conf
-          mountPath: /etc/epoch/epochServiceApi
-
----
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: epoch-service-api2
-  labels:
-    name: epoch-service-api2
-  namespace: epoch-system
-spec:
-  type: ClusterIP
-  ports:
-  - name: http
-    port: 8000
-    targetPort: 8000
-  selector:
-    name: epoch-service-api2
-
-#---- epoch-ui.yaml
----
-#   Copyright 2019 NEC Corporation
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: epoch-ui
-  namespace: epoch-system
-spec:
-  selector:
-    matchLabels:
-      name: epoch-ui
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        name: epoch-ui
-    spec:
-      containers:
-      - name: epoch-ui
-        image: exastro/epoch-ui:0.3.0_20211228_1100
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: epoch-ui
-  labels:
-    name: epoch-ui
-  namespace: epoch-system
-spec:
-  type: ClusterIP
-  ports:
-  - name: http
-    port: 8000
-    targetPort: 8000
-  #- name: https
-  #  port: 4430
-  #  targetPort: 4430
-  selector:
-    name: epoch-ui
-
-#---- workspace-db.yaml
+#---- epoch-rs-workspace-db.yaml
 ---
 #   Copyright 2019 NEC Corporation
 #
@@ -1194,9 +1042,9 @@ spec:
   selector:
     name: workspace-db
 
-#---- tekton-pipeline-db.yaml
+#---- epoch-rs-ci-result-api.yaml
 ---
-#   Copyright 2019 NEC Corporation
+#   Copyright 2021 NEC Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -1212,120 +1060,74 @@ spec:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: tekton-pipeline-db-myconf
+  name: epoch-rs-ci-result-conf
   namespace: epoch-system
 data:
-  my.cnf: |
-    [mysqld]
-    character-set-server=utf8mb4
-    collation-server=utf8mb4_bin
-    secure_file_priv=/tmp
-    [client]
-    default-character-set=utf8mb4
+  api_ci_result.conf: |
+    TZ='Asia/Tokyo'
+    MYSQL_HOST='tekton-pipelinerun-db'
+    MYSQL_PORT='3306'
+    MYSQL_DATABASE='tekton_pipelinerun_db'
+    MYSQL_USER='app_user'
+    MYSQL_PASSWORD='password'
+    RESOURCE_CREATION_WAIT=60
 
 ---
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: tekton-pipeline-db-initdb
-  namespace: epoch-system
-data:
-  tekton-pipeline.sql: |
-    create database tekton_pipeline_db
-      CHARACTER SET utf8mb4
-      COLLATE utf8mb4_unicode_ci;
-    create user app_user IDENTIFIED WITH mysql_native_password BY 'password';
-    GRANT ALL ON tekton_pipeline_db.* TO app_user;
-    use tekton_pipeline_db;
-    create table tekton_pipeline_yaml (
-      yaml_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
-      workspace_id int unsigned not null,
-      kind varchar(16),
-      filename varchar(256),
-      yamltext text,
-      index(workspace_id)
-    );
-    create table tekton_pipeline_task (
-      task_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
-      workspace_id int unsigned not null,
-      pipeline_id int unsigned not null,
-      pipeline_run_name varchar(128),
-      pipeline_run_uid  varchar(128),
-      status varchar(16) not null,
-      git_repository_url varchar(1024) not null,
-      git_branch varchar(1024),
-      container_registry_image varchar(1024),
-      container_registry_image_tag varchar(1024),
-      container_registry_image_digest varchar(1024),
-      git_webhook_header text,
-      git_webhook_body text,
-      create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
-      index(pipeline_run_name)
-    );
 
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: tekton-pipeline-db
+  name: epoch-rs-ci-result-api
   namespace: epoch-system
 spec:
   selector:
     matchLabels:
-      name: tekton-pipeline-db
+      name: epoch-rs-ci-result-api
   replicas: 1
   template:
     metadata:
       labels:
-        name: tekton-pipeline-db
+        name: epoch-rs-ci-result-api
     spec:
       volumes:
-      - name: mysqlconf-volume
+      - name: epoch-rs-ci-result-conf
         configMap:
-          name: tekton-pipeline-db-myconf
-      # COMMENT OUT:Persistent data retention
-      #- name: mysqldata
-      #  hostPath:
-      #    path: /var/data/epoch/tekton_pipeline_db/mysql
-      #    type: DirectoryOrCreate
-      - name: mysqlinitdb-volume
-        configMap:
-          name: tekton-pipeline-db-initdb
+          name: epoch-rs-ci-result-conf
       containers:
-      - name: mysql
-        image: mysql
-        volumeMounts:
-        # COMMENT OUT:Persistent data retention
-        #- name: mysqldata
-        #  mountPath: /var/lib/mysql
-        - name: mysqlconf-volume
-          mountPath: /etc/mysql
-        - name: mysqlinitdb-volume
-          mountPath: /docker-entrypoint-initdb.d
+      - name: epoch-rs-ci-result-api
+        image: exastro/epoch-rs-ci-result-api:0.3.0_20220114_1530
         env:
-        - name: MYSQL_ROOT_PASSWORD
-          value: password
-        - name: TZ
-          value: "Asia/Tokyo"
+        - name: CONFIG_API_CI_RESULT_PATH
+          value: "/etc/epoch/epochRsCiResultApi/api_ci_result.conf"
+        - name: FLASK_ENV
+          value: "development"
+        - name: API_CI_RESULT_PORT
+          value: "8000"
+        - name: PYTHONIOENCODING
+          value: utf-8
+        volumeMounts:
+        - name: epoch-rs-ci-result-conf
+          mountPath: /etc/epoch/epochRsCiResultApi
 
 ---
+
 apiVersion: v1
 kind: Service
 metadata:
-  name: tekton-pipeline-db
+  name: epoch-rs-ci-result-api
   labels:
-    name: tekton-pipeline-db
+    name: epoch-rs-ci-result-api
   namespace: epoch-system
 spec:
   type: ClusterIP
   ports:
-  - name: mysql
-    port: 3306
-    targetPort: 3306
+  - name: http
+    port: 8000
+    targetPort: 8000
   selector:
-    name: tekton-pipeline-db
+    name: epoch-rs-ci-result-api
 
-#---- tekton-pipelinerun-db.yaml
+#---- epoch-rs-ci-result-db.yaml
 ---
 #   Copyright 2021 NEC Corporation
 #
@@ -1447,6 +1249,398 @@ spec:
     targetPort: 3306
   selector:
     name: tekton-pipelinerun-db
+
+#---- epoch-rs-logs-api.yaml
+---
+#   Copyright 2021 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: epoch-rs-logs-conf
+  namespace: epoch-system
+data:
+  api_logs.conf: |
+    TZ='Asia/Tokyo'
+    MYSQL_HOST='rs-logs-db'
+    MYSQL_PORT='3306'
+    MYSQL_DATABASE='rs_logs_db'
+    MYSQL_USER='app_user'
+    MYSQL_PASSWORD='password'
+    RESOURCE_CREATION_WAIT=60
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: epoch-rs-logs-api
+  namespace: epoch-system
+spec:
+  selector:
+    matchLabels:
+      name: epoch-rs-logs-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: epoch-rs-logs-api
+    spec:
+      volumes:
+      - name: epoch-rs-logs-conf
+        configMap:
+          name: epoch-rs-logs-conf
+      containers:
+      - name: epoch-rs-logs-api
+        image: exastro/epoch-rs-logs-api:0.3.0_20220114_1530
+        env:
+        - name: CONFIG_API_LOGS_PATH
+          value: "/etc/epoch/epochRsLogsApi/api_logs.conf"
+        - name: FLASK_ENV
+          value: "development"
+        - name: API_LOGS_PORT
+          value: "8000"
+        - name: PYTHONIOENCODING
+          value: utf-8
+        volumeMounts:
+        - name: epoch-rs-logs-conf
+          mountPath: /etc/epoch/epochRsLogsApi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: epoch-rs-logs-api
+  labels:
+    name: epoch-rs-logs-api
+  namespace: epoch-system
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+  selector:
+    name: epoch-rs-logs-api
+
+#---- epoch-rs-logs-db.yaml
+---
+#   Copyright 2022 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rs-logs-db-myconf
+  namespace: epoch-system
+data:
+  my.cnf: |
+    [mysqld]
+    character-set-server=utf8mb4
+    collation-server=utf8mb4_bin
+    secure_file_priv=/tmp
+    [client]
+    default-character-set=utf8mb4
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rs-logs-db-initdb
+  namespace: epoch-system
+data:
+  workspace.sql: |
+    create database rs_logs_db
+      CHARACTER SET utf8mb4
+      COLLATE utf8mb4_unicode_ci;
+    create user app_user IDENTIFIED WITH mysql_native_password BY 'password';
+    GRANT ALL ON rs_logs_db.* TO app_user;
+    use rs_logs_db;
+    create table logs (
+      log_id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
+      workspace_id int unsigned,
+      log_kind text,
+      contents json,
+      username text,
+      create_at datetime not null DEFAULT CURRENT_TIMESTAMP
+    );
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rs-logs-db
+  namespace: epoch-system
+spec:
+  selector:
+    matchLabels:
+      name: rs-logs-db
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: rs-logs-db
+    spec:
+      volumes:
+      - name: mysqlconf-volume
+        configMap:
+          name: rs-logs-db-myconf
+      # COMMENT OUT:Persistent data retention
+      #- name: mysqldata
+      #  hostPath:
+      #    path: /var/data/epoch/rs_logs_db/mysql
+      #    type: DirectoryOrCreate
+      - name: mysqlinitdb-volume
+        configMap:
+          name: rs-logs-db-initdb
+      containers:
+      - name: mysql
+        image: mysql
+        volumeMounts:
+        # COMMENT OUT:Persistent data retention
+        #- name: mysqldata
+        #  mountPath: /var/lib/mysql
+        - name: mysqlconf-volume
+          mountPath: /etc/mysql
+        - name: mysqlinitdb-volume
+          mountPath: /docker-entrypoint-initdb.d
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: password
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rs-logs-db
+  labels:
+    name: rs-logs-db
+  namespace: epoch-system
+spec:
+  type: ClusterIP
+  ports:
+  - name: mysql
+    port: 3306
+    targetPort: 3306
+  selector:
+    name: rs-logs-db
+
+#---- epoch-service-api-config.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: epoch-service-api-config
+  namespace: epoch-system
+data:
+  EPOCH_CONTROL_WORKSPACE_PROTOCOL: "http"
+  EPOCH_CONTROL_WORKSPACE_HOST: "epoch-control-workspace-api"
+  EPOCH_CONTROL_WORKSPACE_PORT: "8000"
+  EPOCH_CONTROL_ARGOCD_PROTOCOL: "http"
+  EPOCH_CONTROL_ARGOCD_HOST: "epoch-control-argocd-api"
+  EPOCH_CONTROL_ARGOCD_PORT: "8000"
+  EPOCH_CONTROL_ITA_PROTOCOL: "http"
+  EPOCH_CONTROL_ITA_HOST: "epoch-control-ita-api"
+  EPOCH_CONTROL_ITA_PORT: "8000"
+  EPOCH_CONTROL_TEKTON_PROTOCOL: "http"
+  EPOCH_CONTROL_TEKTON_HOST: "epoch-control-tekton-api"
+  EPOCH_CONTROL_TEKTON_PORT: "8000"
+  EPOCH_CONTROL_GITHUB_PROTOCOL: "http"
+  EPOCH_CONTROL_GITHUB_HOST: "epoch-control-github-api"
+  EPOCH_CONTROL_GITHUB_PORT: "8000"
+  EPOCH_CONTROL_INSIDE_GITLAB_PROTOCOL: "http"
+  EPOCH_CONTROL_INSIDE_GITLAB_HOST: "epoch-control-inside-gitlab-api"
+  EPOCH_CONTROL_INSIDE_GITLAB_PORT: "8000"
+  EPOCH_RS_WORKSPACE_PROTOCOL: "http"
+  EPOCH_RS_WORKSPACE_HOST: "epoch-rs-workspace-api"
+  EPOCH_RS_WORKSPACE_PORT: "8000"
+  EPOCH_RS_LOGS_PROTOCOL: "http"
+  EPOCH_RS_LOGS_HOST: "epoch-rs-logs-api"
+  EPOCH_RS_LOGS_PORT: "8000"
+  EPOCH_EPAI_PROTOCOL: "https"
+  EPOCH_EPAI_HOST: ""
+  EPOCH_EPAI_PORT: "31182"
+  EPOCH_EPAI_API_PROTOCOL: "http"
+  EPOCH_EPAI_API_HOST: "authentication-infra-api.exastro-platform-authentication-infra.svc"
+  EPOCH_EPAI_API_PORT: "8000"
+  EPOCH_EPAI_REALM_NAME: "exastroplatform"
+  PYTHONIOENCODING: utf-8
+
+#---- epoch-service-api2.yaml
+---
+#   Copyright 2021 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: epoch-service-api2-conf
+  namespace: epoch-system
+data:
+  api_service.conf: |
+    TZ='Asia/Tokyo'
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: epoch-service-api2
+  namespace: epoch-system
+spec:
+  selector:
+    matchLabels:
+      name: epoch-service-api2
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: epoch-service-api2
+    spec:
+      volumes:
+      - name: epoch-service-api2-conf
+        configMap:
+          name: epoch-service-api2-conf
+      containers:
+      - name: epoch-service-api2
+        image: exastro/epoch-service-api2:0.3.0_20220117_1500
+        env:
+        - name: CONFIG_API_SERVICE_PATH
+          value: "/etc/epoch/epochServiceApi/api_service.conf"
+        - name: FLASK_ENV
+          value: "development"
+        - name: API_SERVICE_PORT
+          value: "8000"
+        - name: PYTHONIOENCODING
+          value: utf-8
+        envFrom:
+          - configMapRef:
+              name: epoch-service-api-config
+          # - configMapRef:
+          #     name: epoch-service-api-epai-config
+          # - prefix: EPOCH_
+          #   secretRef:
+          #     name: epoch-service-api-secret
+        volumeMounts:
+        - name: epoch-service-api2-conf
+          mountPath: /etc/epoch/epochServiceApi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: epoch-service-api2
+  labels:
+    name: epoch-service-api2
+  namespace: epoch-system
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+  selector:
+    name: epoch-service-api2
+
+#---- epoch-ui.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: epoch-ui
+  namespace: epoch-system
+spec:
+  selector:
+    matchLabels:
+      name: epoch-ui
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: epoch-ui
+    spec:
+      containers:
+      - name: epoch-ui
+        image: exastro/epoch-ui:0.3.0_20220117_1500
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: epoch-ui
+  labels:
+    name: epoch-ui
+  namespace: epoch-system
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+  #- name: https
+  #  port: 4430
+  #  targetPort: 4430
+  selector:
+    name: epoch-ui
 
 #---- exastro-platform-authentication-infra-role.yaml
 ---
@@ -1617,19 +1811,21 @@ data:
     headers\n  \n  RewriteEngine On\n  RewriteOptions inherit\n\n  OIDCCacheType file\n
     \ \n  OIDCAuthNHeader X-Remote-User\n  #OIDCClaimPrefix OIDC-CLAIM-\n\n  OIDCRedirectURI
     \ https://{{ server }}:{{ epoch_port }}/oidc-redirect/\n  OIDCClientID epoch-system\n
-    \ OIDCClientSecret {{ epoch_system_client_secret }}\n  <Location />\n    ProxyPass
-    \       http://epoch-ui.epoch-system.svc:8000/ retry=0\n    ProxyPassReverse http://epoch-ui.epoch-system.svc:8000/\n
-    \   AuthType openid-connect\n    Require claim \"epoch-role:epoch-user\"\n  </Location>\n
+    \ OIDCClientSecret {{ epoch_system_client_secret }}\n  <Location ~ /(?!api)>\n
+    \   ProxyPass        http://epoch-ui.epoch-system.svc:8000/ retry=0\n    ProxyPassReverse
+    http://epoch-ui.epoch-system.svc:8000/\n    AuthType openid-connect\n    <Limit
+    GET>\n      Require claim \"epoch-role:epoch-user\"\n    </Limit>\n  </Location>\n
     \ <Location /api/>\n    ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/
     retry=0 timeout=600\n    ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/\n
-    \   AuthType openid-connect\n    Require claim \"epoch-role:epoch-user\"\n  </Location>\n
-    \ <Location /api/member>\n    ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/member
-    retry=0 timeout=600\n    ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/member\n
-    \   AuthType openid-connect\n    Require claim \"epoch-role:epoch-user\"\n  </Location>\n\n
-    \ IncludeOptional conf.d/exastroSettings/epoch-system/*.conf\n\n  <Location /api/user/>\n
-    \   ProxyPass        http://authentication-infra-api:8000/user/ retry=0\n    ProxyPassReverse
-    http://authentication-infra-api:8000/user/\n    AuthType openid-connect\n    Require
-    valid-user\n  </Location>\n  <Location /api/user/current>\n    ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/user/current
+    \   AuthType openid-connect\n    <Limit GET>\n      Require claim \"epoch-role:epoch-user\"\n
+    \   </Limit>\n  </Location>\n  <Location /api/workspace>\n    ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace
+    retry=0 timeout=600\n    ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace\n
+    \   AuthType openid-connect\n    <Limit GET POST>\n      Require claim \"epoch-role:epoch-user\"\n
+    \   </Limit>\n  </Location>\n\n  IncludeOptional conf.d/exastroSettings/epoch-system/*.conf\n\n
+    \ <Location /api/user/>\n    ProxyPass        http://authentication-infra-api:8000/user/
+    retry=0\n    ProxyPassReverse http://authentication-infra-api:8000/user/\n    AuthType
+    openid-connect\n    Require valid-user\n  </Location>\n  <Location /api/user/current>\n
+    \   ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/user/current
     retry=0 timeout=600\n    ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/user/current\n
     \   AuthType openid-connect\n    Require claim \"epoch-role:epoch-user\"\n  </Location>\n
     \ <Location /api/client/>\n    ProxyPass        http://authentication-infra-api:8000/client/
@@ -1640,112 +1836,7 @@ data:
     retry=0\n    ProxyPassReverse http://epoch-control-tekton-api.epoch-system.svc:8000/listener/\n
     \   Require all granted\n  </Location>\n  <Location /favicon.ico>\n    Require
     all granted\n  </Location>\n</VirtualHost>\n"
-  epoch-system-ws-template.conf: |2
-
-      <Location /api/workspace/{{ param.workspace_id }}/ci>
-        ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/ci retry=0 timeout=600
-        ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/ci
-        AuthType openid-connect
-        <Limit POST PUT>
-            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-ci-update"
-        </Limit>
-        <Limit DELETE>
-            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-delete"
-        </Limit>
-        <LimitExcept POST PUT DELETE>
-            Require all denied
-        </LimitExcept>
-      </Location>
-
-      <Location /api/workspace/{{ param.workspace_id }}/manifest/template>
-        ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/manifest/template retry=0 timeout=600
-        ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/manifest/template
-        AuthType openid-connect
-        <Limit GET>
-            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-reference"
-        </Limit>
-        <Limit POST PUT DELETE>
-            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-manifest-upload"
-        </Limit>
-        <LimitExcept GET POST PUT DELETE>
-            Require all denied
-        </LimitExcept>
-      </Location>
-
-      <Location /api/workspace/{{ param.workspace_id }}/manifest/parameter>
-        ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/manifest/parameter retry=0 timeout=600
-        ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/manifest/parameter
-        AuthType openid-connect
-        <Limit POST>
-            Require claim "epoch-role:ws-{{ param.workspace_id }}-manifest-setting"
-        </Limit>
-        <LimitExcept POST>
-            Require all denied
-        </LimitExcept>
-      </Location>
-
-      <Location /api/workspace/{{ param.workspace_id }}/cd/pipeline>
-        ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/cd/pipeline retry=0 timeout=600
-        ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/cd/pipeline
-        AuthType openid-connect
-        <Limit POST PUT>
-            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-cd-update"
-        </Limit>
-        <Limit DELETE>
-            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-delete"
-        </Limit>
-        <LimitExcept POST PUT DELETE>
-            Require all denied
-        </LimitExcept>
-      </Location>
-
-      <Location /api/workspace/{{ param.workspace_id }}/cd/exec>
-        ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/cd/exec retry=0 timeout=600
-        ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/cd/exec
-        AuthType openid-connect
-        <Limit POST>
-            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-cd-execute"
-        </Limit>
-        <LimitExcept POST>
-            Require all denied
-        </LimitExcept>
-      </Location>
-
-      <Location /api/workspace/{{ param.workspace_id }}/pod>
-        ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/pod retry=0 timeout=600
-        ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/pod
-        AuthType openid-connect
-        <Limit GET>
-            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-reference"
-        </Limit>
-        <Limit POST PUT>
-            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-name-update"
-            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-ci-update"
-            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-cd-update"
-        </Limit>
-        <Limit DELETE>
-            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-delete"
-        </Limit>
-        <LimitExcept GET POST PUT DELETE>
-            Require all denied
-        </LimitExcept>
-      </Location>
-
-      <Location /api/workspace/{{ param.workspace_id }}/member/current>
-        ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/member/current retry=0 timeout=600
-        ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/member/current
-        AuthType openid-connect
-        Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-reference"
-      </Location>
-
-      <Location /api/workspace/{{ param.workspace_id }}/members>
-        ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/members retry=0 timeout=600
-        ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/members
-        AuthType openid-connect
-        Require claim "epoch-role:ws-{{ param.workspace_id }}-role-member-add"
-        Require claim "epoch-role:ws-{{ param.workspace_id }}-role-member-role-update"
-      </Location>
-
+  epoch-system-ws-template.conf: |2+
       <Location /api/workspace/{{ param.workspace_id }}>
         ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }} retry=0 timeout=600
         ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}
@@ -1772,6 +1863,116 @@ data:
             Require all denied
         </LimitExcept>
       </Location>
+
+      <Location /api/workspace/{{ param.workspace_id }}/pod>
+        ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/pod retry=0 timeout=600
+        ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/pod
+        AuthType openid-connect
+        <Limit POST PUT>
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-name-update"
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-ci-update"
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-cd-update"
+        </Limit>
+        <Limit DELETE>
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-delete"
+        </Limit>
+        <LimitExcept GET POST PUT DELETE>
+            Require all denied
+        </LimitExcept>
+      </Location>
+
+      <Location /api/workspace/{{ param.workspace_id }}/ci>
+        ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/ci retry=0 timeout=600
+        ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/ci
+        AuthType openid-connect
+        <Limit POST PUT>
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-ci-update"
+        </Limit>
+        <Limit DELETE>
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-delete"
+        </Limit>
+        <LimitExcept GET POST PUT DELETE>
+            Require all denied
+        </LimitExcept>
+      </Location>
+
+      <Location /api/workspace/{{ param.workspace_id }}/manifest/template>
+        ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/manifest/template retry=0 timeout=600
+        ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/manifest/template
+        AuthType openid-connect
+        <Limit POST PUT DELETE>
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-manifest-upload"
+        </Limit>
+        <LimitExcept GET POST PUT DELETE>
+            Require all denied
+        </LimitExcept>
+      </Location>
+
+      <Location /api/workspace/{{ param.workspace_id }}/manifest/parameter>
+        ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/manifest/parameter retry=0 timeout=600
+        ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/manifest/parameter
+        AuthType openid-connect
+        <Limit POST>
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-manifest-setting"
+        </Limit>
+        <LimitExcept GET POST>
+            Require all denied
+        </LimitExcept>
+      </Location>
+
+      <Location /api/workspace/{{ param.workspace_id }}/cd/pipeline>
+        ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/cd/pipeline retry=0 timeout=600
+        ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/cd/pipeline
+        AuthType openid-connect
+        <Limit POST PUT>
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-cd-update"
+        </Limit>
+        <Limit DELETE>
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-delete"
+        </Limit>
+        <LimitExcept GET POST PUT DELETE>
+            Require all denied
+        </LimitExcept>
+      </Location>
+
+      <Location /api/workspace/{{ param.workspace_id }}/cd/exec>
+        ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/cd/exec retry=0 timeout=600
+        ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/cd/exec
+        AuthType openid-connect
+        <Limit POST>
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-cd-execute"
+        </Limit>
+        <LimitExcept GET POST>
+            Require all denied
+        </LimitExcept>
+      </Location>
+
+      <Location /api/workspace/{{ param.workspace_id }}/member>
+        ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/member retry=0 timeout=600
+        ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/member
+        AuthType openid-connect
+        <Limit POST>
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-owner-role-setting"
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-member-add"
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-member-role-update"
+        </Limit>
+        <LimitExcept GET POST>
+            Require all denied
+        </LimitExcept>
+      </Location>
+
+      <Location /api/workspace/{{ param.workspace_id }}/member/current>
+        ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/member/current retry=0 timeout=600
+        ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/member/current
+        AuthType openid-connect
+        <Limit DELETE>
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-reference"
+        </Limit>
+        <LimitExcept GET DELETE>
+            Require all denied
+        </LimitExcept>
+      </Location>
+
   epoch-ws-argocd-template.conf: "Listen {{ client_port }}\n<VirtualHost *:{{ client_port
     }}>\n  SSLProxyEngine On\n  SSLEngine on\n  SSLCertificateFile /etc/pki/tls/certs/exastro-platform-authentication-infra.pem\n
     \ SSLCertificateKeyFile /etc/pki/tls/private/exastro-platform-authentication-infra.key\n
@@ -1901,7 +2102,7 @@ spec:
           claimName: exastro-authentication-infra-httpd-conf
       containers:
       - name: authentication-infra-api
-        image: exastro/authentication-infra-api:0.3.0_20211228_1530
+        image: exastro/authentication-infra-api:0.3.0_20220114_1530
         env:
         - name: CONFIG_API_AUTHC_INFRA_PATH
           value: "/etc/exastro-authentication-infra/authentication-infra-api/api_authc_infra.conf"
@@ -2051,7 +2252,7 @@ spec:
           claimName: exastro-authentication-infra-httpd-conf
       containers:
       - name: gateway-httpd
-        image: exastro/gateway-httpd:0.3.0_20211206_1030
+        image: exastro/gateway-httpd:0.3.0_20220114_1530
         volumeMounts:
         - name: gateway-httpd-conf
           mountPath: /etc/httpd/conf.d/exastroSettings
@@ -2114,7 +2315,6 @@ data:
       name: exastro-authentication-infra-sc
     provisioner: kubernetes.io/no-provisioner
     volumeBindingMode: WaitForFirstConsumer
-
     ---
     apiVersion: v1
     kind: PersistentVolume
@@ -2130,6 +2330,7 @@ data:
         storage: 500Mi
       accessModes:
         - ReadWriteMany
+      persistentVolumeReclaimPolicy: Recycle
       hostPath:
         path: /var/data/epoch/authc-httpd/conf
         type: DirectoryOrCreate
