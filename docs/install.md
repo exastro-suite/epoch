@@ -22,45 +22,18 @@
     kubectl apply -f https://github.com/exastro-suite/epoch/releases/latest/download/epoch-install.yaml
     ```
 
-1. すべてのコンポーネントがRunningステータスを表示するまで、次のコマンドを使用してインストールを監視します:
-
-    - epoch-systemの監視
-        ```bash
-        kubectl get pods -n epoch-system --watch
-        ```
-        **注:** 監視を停止するには、CTRL+C を押します。
-
-
-    - exastro-platform-authentication-infraの監視
-        ```bash
-        kubectl get pods -n exastro-platform-authentication-infra --watch
-        ```
-
-        **注:** 監視を停止するには、CTRL+C を押します。
-
-1. パイプライン設定用の永続ボリュームを設定します:
-
-    - 以下のマニフェストを我々のGitHubから取得してください。
-
-        ```bash
-        curl -OL https://github.com/exastro-suite/epoch/releases/latest/download/epoch-pv.yaml
-        ```
-
-    - `# Please specify the host name of the worker node #` の部分をご自身のホスト名に変換してください。
-
-    - 以下のコマンドでkubernetes環境へ反映してください。
-
-        ```bash
-        kubectl apply -f epoch-pv.yaml
-        ```
-
 1. 次のコマンドを実行して、EPOCHの初期設定を行います:
 
     ```bash
-    kubectl exec -it deploy/authentication-infra-setting -n epoch-system -- bash /app/setting-script.sh [your-host]
+    kubectl run -i --rm set-host -n epoch-system --restart=Never --image=exastro/epoch-setting:0.3_4 --pod-running-timeout=30m -- set-host [your-host]
     ```
     **注:** [your-host]には、ご自身のホストに接続するためのサーバー名またはIPアドレスを指定してください。
 
+    **注:** EPOCHがインストール中の場合、以下のエラーとなることがあります。その際は再度コマンドを実行してください。
+
+    ```
+    error: timed out waiting for the condition
+    ```
 
 これでEPOCHを使用する準備が整いました。
 
