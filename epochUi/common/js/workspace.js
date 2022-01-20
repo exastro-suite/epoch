@@ -3047,7 +3047,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       $.ajax({
         type:"POST",
         url: workspace_api_conf.api.workspace.post.replace('{workspace_id}', workspace_id),
-        data:JSON.stringify(reqbody),
+        // data:JSON.stringify(reqbody),
         contentType: "application/json",
         dataType: "json",
       }).done((data) => {
@@ -3089,7 +3089,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       $.ajax({
         type:"POST",
         url: workspace_api_conf.api.ci_pipeline.post.replace('{workspace_id}', workspace_id),
-        data:JSON.stringify(reqbody),
+        // data:JSON.stringify(reqbody),
         contentType: "application/json",
         dataType: "json",
       }).done(function(data) {
@@ -3130,7 +3130,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       $.ajax({
         type:"POST",
         url: workspace_api_conf.api.cd_pipeline.post.replace('{workspace_id}', workspace_id),
-        data:JSON.stringify(reqbody),
+        // data:JSON.stringify(reqbody),
         contentType: "application/json",
         dataType: "json",
       }).done(function(data) {
