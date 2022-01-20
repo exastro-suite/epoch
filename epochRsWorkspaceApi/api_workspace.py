@@ -139,6 +139,36 @@ def get_workspace(workspace_id):
     except Exception as e:
         return common.serverError(e)
 
+@app.route('/workspace/<int:workspace_id>/before', methods=['GET'])
+def get_workspace_before(workspace_id):
+    """更新前のワークスペース履歴 - Workspace history before update
+
+    Args:
+        workspace_id (int): workspace id
+
+    Returns:
+        response: HTTP Respose
+    """
+    globals.logger.debug('CALL get_workspace_before:{}'.format(workspace_id))
+
+    try:
+        with dbconnector() as db, dbcursor(db) as cursor:
+            # get workspace history - workspace履歴取得
+            fetch_rows = da_workspace.select_history(cursor, workspace_id)
+
+        if len(fetch_rows) > 0:
+            # Convert to json for Response - Response用のjsonに変換
+            response_rows = convert_workspace_response(fetch_rows)
+
+            return jsonify({"result": "200", "rows": response_rows, "time": str(datetime.now(globals.TZ))}), 200
+
+        else:
+            # 404 response when 0 - 0件のときは404応答
+            return jsonify({"result": "404" }), 404
+
+    except Exception as e:
+        return common.serverError(e)
+
 @app.route('/workspace/<int:workspace_id>', methods=['PUT', 'PATCH'])
 def update_workspace(workspace_id):
     """ワークスペース変更
@@ -506,7 +536,8 @@ def convert_workspace_response(fetch_rows):
     for fetch_row in fetch_rows:
         result_row = json.loads(fetch_row['specification'])
         result_row['workspace_id'] = fetch_row['workspace_id']
-        result_row['create_at'] = fetch_row['create_at']
+        if 'create_at' in fetch_row:
+            result_row['create_at'] = fetch_row['create_at']
         result_row['update_at'] = fetch_row['update_at']
         result_row['role_update_at'] = fetch_row['role_update_at']
         result.append(result_row)
