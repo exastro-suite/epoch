@@ -2991,6 +2991,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       $('#progress_message').html('STEP 1/4 : ワークスペース情報を登録しています');
       $('#error_statement').html('');
       $('#error_detail').html('');
+      $('#progress-complete').val('');
 
       update_mode = "";
       console.log("CALL : ワークスペース情報登録");
@@ -3152,6 +3153,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       });
     })}).then(() => {
       // 実行中ダイアログ表示
+      $('#progress-complete').val('1');
       $('#progress_message').html('【COMPLETE】 ワークスペースを' + update_mode + 'しました（ワークスペースID:'+created_workspace_id+'）');
       $('#progress-message-ok').prop("disabled", false);
       // CI/CD実行タブを表示
