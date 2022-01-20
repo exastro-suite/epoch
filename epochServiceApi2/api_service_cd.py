@@ -102,75 +102,115 @@ def post_cd_pipeline(workspace_id):
         # 取得したworkspace情報をパラメータとして受け渡す Pass the acquired workspace information as a parameter
         post_data = ret["rows"][0]
 
-        # Automatic generation of IaC repository - IaCリポジトリの自動生成
-        exec_stat = "CDパイプライン情報設定(IaCリポジトリ生成)"
 
-        # epoch-control-inside-gitlab-api の呼び先設定
-        api_url_gitlab = "{}://{}:{}/workspace/{}/gitlab".format(os.environ["EPOCH_CONTROL_INSIDE_GITLAB_PROTOCOL"], 
-                                                                 os.environ["EPOCH_CONTROL_INSIDE_GITLAB_HOST"], 
-                                                                 os.environ["EPOCH_CONTROL_INSIDE_GITLAB_PORT"],
-                                                                 workspace_id)
-
-        git_projects = []
-        if post_data['cd_config']['environments_common']['git_repositry']['housing'] == 'inner':
-            for pipeline_iac in post_data['cd_config']['environments']:
-                ap_data = {
-                    'git_repositry': {
-                        'user': post_data['cd_config']['environments_common']['git_repositry']['user'],
-                        'token': post_data['cd_config']['environments_common']['git_repositry']['token'],
-                        'url': pipeline_iac['git_repositry']['url'],
-                    }
-                }
-                git_projects.append(ap_data)
-
-        for proj_data in git_projects:
-            # gitlab/repos post送信
-            response = requests.post('{}/repos'.format(api_url_gitlab), headers=post_headers, data=json.dumps(proj_data))
-            globals.logger.debug("post gitlab/repos response:{}".format(response.text))
-
-            if response.status_code != 200 and response.status_code != 201:
-                error_detail = 'gitlab/repos post処理に失敗しました'
-                raise common.UserException(error_detail)
-
-
-        exec_stat = "CDパイプライン情報設定(ITA - Git環境情報設定)"
-
-        # epoch-control-ita-api の呼び先設定
-        api_url = "{}://{}:{}/workspace/{}/it-automation/manifest/git".format(os.environ['EPOCH_CONTROL_ITA_PROTOCOL'],
-                                                                            os.environ['EPOCH_CONTROL_ITA_HOST'],
-                                                                            os.environ['EPOCH_CONTROL_ITA_PORT'],
-                                                                            workspace_id)
-
-        # パイプライン設定(ITA - Git環境情報設定)
-        response = requests.post( api_url, headers=post_headers, data=json.dumps(post_data))
-        globals.logger.debug("it-automation/manifest/git:response:" + response.text)
-        if response.status_code != 200 and response.status_code != 201:
-            if common.is_json_format(response.text):
-                ret = json.loads(response.text)
-                globals.logger.debug(ret["result"])
-                if "errorDetail" in ret:
-                    exec_detail = ret["errorDetail"]
-                else:
-                    exec_detail = ""
-                raise common.UserException(exec_detail)
-            else:
-                globals.logger.debug(response.text)
-                error_detail = 'it-automation/manifest/git post処理に失敗しました'
-                raise common.UserException(error_detail)
-
-        exec_stat = "CDパイプライン情報設定(ArgoCD設定)"
-        # epoch-control-argocd-api の呼び先設定
-        api_url = "{}://{}:{}/workspace/{}/argocd/settings".format(os.environ['EPOCH_CONTROL_ARGOCD_PROTOCOL'],
-                                                                    os.environ['EPOCH_CONTROL_ARGOCD_HOST'],
-                                                                    os.environ['EPOCH_CONTROL_ARGOCD_PORT'],
-                                                                    workspace_id)
-        # argocd/settings post送信
-        response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
-        globals.logger.debug("post argocd/settings response:{}".format(response.text))
+        # 更新前ワークスペース情報取得 Get workspace before update
+        api_url = "{}://{}:{}/workspace/{}/before".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+                                                    os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                    os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                    workspace_id)
+        response = requests.get(api_url)
 
         if response.status_code != 200:
-            error_detail = 'argocd/settings post処理に失敗しました'
+            error_detail = multi_lang.get_test("EP020-0013", "ワークスペース情報の取得に失敗しました")
+            globals.logger.debug(error_detail)
             raise common.UserException(error_detail)
+
+        # 取得したワークスペース情報を退避 Save the acquired workspace information
+        ret = json.loads(response.text)
+        # 取得したworkspace情報をパラメータとして受け渡す Pass the acquired workspace information as a parameter
+        before_data = ret["rows"][0]
+
+        cd_config_json_after = post_data["cd_config"].copy()
+        cd_config_json_before = before_data["cd_config"].copy()
+        # cd_exec_usersの情報は比較に必要ないのでJsonから削除（環境毎）
+        # Since the information of cd_exec_users is not necessary for comparison, it is deleted from Json (for each environment)
+        for (env_idx, env) in enumerate(cd_config_json_after["environments"]):
+            # 要素があれば削除
+            if "cd_exec_users" in env:
+                cd_config_json_after["environments"][env_idx].pop("cd_exec_users")
+
+        for (env_idx, env) in enumerate(cd_config_json_before["environments"]):
+            # 要素があれば削除
+            if "cd_exec_users" in env:
+                cd_config_json_before["environments"][env_idx].pop("cd_exec_users")
+
+        cd_config_str_after = json.dumps(cd_config_json_after)
+        cd_config_str_before = json.dumps(cd_config_json_before)
+
+        # 更新前、更新後が一致しない場合にCIパイプラインの設定を行なう
+        # Set up the CI pipeline when the pre-update and post-update do not match
+        if cd_config_str_after != cd_config_str_before:
+            globals.logger.debug("changed cd_config parameter!")
+
+            # Automatic generation of IaC repository - IaCリポジトリの自動生成
+            exec_stat = "CDパイプライン情報設定(IaCリポジトリ生成)"
+
+            # epoch-control-inside-gitlab-api の呼び先設定
+            api_url_gitlab = "{}://{}:{}/workspace/{}/gitlab".format(os.environ["EPOCH_CONTROL_INSIDE_GITLAB_PROTOCOL"], 
+                                                                    os.environ["EPOCH_CONTROL_INSIDE_GITLAB_HOST"], 
+                                                                    os.environ["EPOCH_CONTROL_INSIDE_GITLAB_PORT"],
+                                                                    workspace_id)
+
+            git_projects = []
+            if post_data['cd_config']['environments_common']['git_repositry']['housing'] == 'inner':
+                for pipeline_iac in post_data['cd_config']['environments']:
+                    ap_data = {
+                        'git_repositry': {
+                            'user': post_data['cd_config']['environments_common']['git_repositry']['user'],
+                            'token': post_data['cd_config']['environments_common']['git_repositry']['token'],
+                            'url': pipeline_iac['git_repositry']['url'],
+                        }
+                    }
+                    git_projects.append(ap_data)
+
+            for proj_data in git_projects:
+                # gitlab/repos post送信
+                response = requests.post('{}/repos'.format(api_url_gitlab), headers=post_headers, data=json.dumps(proj_data))
+                globals.logger.debug("post gitlab/repos response:{}".format(response.text))
+
+                if response.status_code != 200 and response.status_code != 201:
+                    error_detail = 'gitlab/repos post処理に失敗しました'
+                    raise common.UserException(error_detail)
+
+
+            exec_stat = "CDパイプライン情報設定(ITA - Git環境情報設定)"
+
+            # epoch-control-ita-api の呼び先設定
+            api_url = "{}://{}:{}/workspace/{}/it-automation/manifest/git".format(os.environ['EPOCH_CONTROL_ITA_PROTOCOL'],
+                                                                                os.environ['EPOCH_CONTROL_ITA_HOST'],
+                                                                                os.environ['EPOCH_CONTROL_ITA_PORT'],
+                                                                                workspace_id)
+
+            # パイプライン設定(ITA - Git環境情報設定)
+            response = requests.post( api_url, headers=post_headers, data=json.dumps(post_data))
+            globals.logger.debug("it-automation/manifest/git:response:" + response.text)
+            if response.status_code != 200 and response.status_code != 201:
+                if common.is_json_format(response.text):
+                    ret = json.loads(response.text)
+                    globals.logger.debug(ret["result"])
+                    if "errorDetail" in ret:
+                        exec_detail = ret["errorDetail"]
+                    else:
+                        exec_detail = ""
+                    raise common.UserException(exec_detail)
+                else:
+                    globals.logger.debug(response.text)
+                    error_detail = 'it-automation/manifest/git post処理に失敗しました'
+                    raise common.UserException(error_detail)
+
+            exec_stat = "CDパイプライン情報設定(ArgoCD設定)"
+            # epoch-control-argocd-api の呼び先設定
+            api_url = "{}://{}:{}/workspace/{}/argocd/settings".format(os.environ['EPOCH_CONTROL_ARGOCD_PROTOCOL'],
+                                                                        os.environ['EPOCH_CONTROL_ARGOCD_HOST'],
+                                                                        os.environ['EPOCH_CONTROL_ARGOCD_PORT'],
+                                                                        workspace_id)
+            # argocd/settings post送信
+            response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
+            globals.logger.debug("post argocd/settings response:{}".format(response.text))
+
+            if response.status_code != 200:
+                error_detail = 'argocd/settings post処理に失敗しました'
+                raise common.UserException(error_detail)
 
         ret_status = 200
 

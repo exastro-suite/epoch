@@ -77,98 +77,133 @@ def post_ci_pipeline(workspace_id):
 
         # 取得したワークスペース情報を退避 Save the acquired workspace information
         ret = json.loads(response.text)
-         # 取得したworkspace情報をパラメータとして受け渡す Pass the acquired workspace information as a parameter
+        # 取得したworkspace情報をパラメータとして受け渡す Pass the acquired workspace information as a parameter
         post_data = ret["rows"][0]
 
-        # epoch-control-inside-gitlab-api の呼び先設定
-        api_url_gitlab = "{}://{}:{}/workspace/{}/gitlab".format(os.environ["EPOCH_CONTROL_INSIDE_GITLAB_PROTOCOL"], 
-                                                                 os.environ["EPOCH_CONTROL_INSIDE_GITLAB_HOST"], 
-                                                                 os.environ["EPOCH_CONTROL_INSIDE_GITLAB_PORT"],
-                                                                 workspace_id)
-
-        # epoch-control-github-api の呼び先設定
-        api_url_github = "{}://{}:{}/workspace/{}/github/webhooks".format(os.environ["EPOCH_CONTROL_GITHUB_PROTOCOL"], 
-                                                                          os.environ["EPOCH_CONTROL_GITHUB_HOST"], 
-                                                                          os.environ["EPOCH_CONTROL_GITHUB_PORT"],
-                                                                          workspace_id)
-
-        # epoch-control-tekton-api の呼び先設定
-        api_url_tekton = "{}://{}:{}/workspace/{}/tekton/pipeline".format(os.environ["EPOCH_CONTROL_TEKTON_PROTOCOL"], 
-                                                                          os.environ["EPOCH_CONTROL_TEKTON_HOST"], 
-                                                                          os.environ["EPOCH_CONTROL_TEKTON_PORT"],
-                                                                          workspace_id)
-
-        # パイプライン設定(GitLab Create Project)
-        request_body = json.loads(request.data)
-        git_projects = []
-
-        # アプリケーションコード
-        if request_body['ci_config']['pipelines_common']['git_repositry']['housing'] == 'inner':
-            for pipeline_ap in request_body['ci_config']['pipelines']:
-                ap_data = {
-                    'git_repositry': {
-                        'user': request_body['ci_config']['pipelines_common']['git_repositry']['user'],
-                        'token': request_body['ci_config']['pipelines_common']['git_repositry']['token'],
-                        'url': pipeline_ap['git_repositry']['url'],
-                    }
-                }
-                git_projects.append(ap_data)
-        # IaC
-        # if request_body['cd_config']['environments_common']['git_repositry']['housing'] == 'inner':
-        #     for pipeline_iac in request_body['cd_config']['environments']:
-        #         ap_data = {
-        #             'git_repositry': {
-        #                 'user': request_body['cd_config']['environments_common']['git_repositry']['user'],
-        #                 'token': request_body['cd_config']['environments_common']['git_repositry']['token'],
-        #                 'url': pipeline_iac['git_repositry']['url'],
-        #             }
-        #         }
-        #         git_projects.append(ap_data)
-
-
-        for proj_data in git_projects:
-            # gitlab/repos post送信
-            response = requests.post('{}/repos'.format(api_url_gitlab), headers=post_headers, data=json.dumps(proj_data))
-            globals.logger.debug("post gitlab/repos response:{}".format(response.text))
-
-            if response.status_code != 200 and response.status_code != 201:
-                error_detail = 'gitlab/repos post処理に失敗しました'
-                raise common.UserException(error_detail)
-
-        if request_body['ci_config']['pipelines_common']['git_repositry']['housing'] == 'outer':
-            # github/webhooks post送信
-            response = requests.post( api_url_github, headers=post_headers, data=json.dumps(post_data))
-            globals.logger.debug("post github/webhooks response:{}".format(response.text))
-
-            if response.status_code != 200:
-                error_detail = 'github/webhooks post処理に失敗しました'
-                raise common.UserException(error_detail)
-        else:
-            # パイプライン設定(GitLab webhooks)
-            for pipeline_ap in request_body['ci_config']['pipelines']:
-                ap_data = {
-                    'git_repositry': {
-                        'user': request_body['ci_config']['pipelines_common']['git_repositry']['user'],
-                        'token': request_body['ci_config']['pipelines_common']['git_repositry']['token'],
-                        'url': pipeline_ap['git_repositry']['url'],
-                    },
-                    'webhooks_url': pipeline_ap['webhooks_url'],
-                }
-
-                response = requests.post('{}/webhooks'.format(api_url_gitlab), headers=post_headers, data=json.dumps(ap_data))
-                globals.logger.debug("post gitlab/webhooks response:{}".format(response.text))
-
-                if response.status_code != 200:
-                    error_detail = 'gitlab/webhooks post処理に失敗しました'
-                    raise common.UserException(error_detail)
-
-        # listener post送信
-        response = requests.post(api_url_tekton, headers=post_headers, data=json.dumps(post_data))
-        globals.logger.debug("post tekton/pipeline response:{}".format(response.text))
+        # 更新前ワークスペース情報取得 Get workspace before update
+        api_url = "{}://{}:{}/workspace/{}/before".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+                                                    os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                    os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                    workspace_id)
+        response = requests.get(api_url)
 
         if response.status_code != 200:
-            error_detail = 'tekton/pipeline post処理に失敗しました'
+            error_detail = multi_lang.get_test("EP020-0013", "ワークスペース情報の取得に失敗しました")
+            globals.logger.debug(error_detail)
             raise common.UserException(error_detail)
+
+        # 取得したワークスペース情報を退避 Save the acquired workspace information
+        ret = json.loads(response.text)
+        # 取得したworkspace情報をパラメータとして受け渡す Pass the acquired workspace information as a parameter
+        before_data = ret["rows"][0]
+
+        ci_config_json_after = post_data["ci_config"].copy()
+        ci_config_json_before = before_data["ci_config"].copy()
+        # environmentsの情報は比較に必要ないのでJsonから削除
+        # The environment information is not needed for comparison, so delete it from Json
+        if "environments" in ci_config_json_after:
+            ci_config_json_after.pop("environments")
+        if "environments" in ci_config_json_before:
+            ci_config_json_before.pop("environments")
+
+        ci_config_str_after = json.dumps(ci_config_json_after)
+        ci_config_str_before = json.dumps(ci_config_json_before)
+
+        # 更新前、更新後が一致しない場合にCIパイプラインの設定を行なう
+        # Set up the CI pipeline when the pre-update and post-update do not match
+        if ci_config_str_after != ci_config_str_before:
+            globals.logger.debug("changed ci_config parameter!")
+
+            # epoch-control-inside-gitlab-api の呼び先設定
+            api_url_gitlab = "{}://{}:{}/workspace/{}/gitlab".format(os.environ["EPOCH_CONTROL_INSIDE_GITLAB_PROTOCOL"], 
+                                                                    os.environ["EPOCH_CONTROL_INSIDE_GITLAB_HOST"], 
+                                                                    os.environ["EPOCH_CONTROL_INSIDE_GITLAB_PORT"],
+                                                                    workspace_id)
+
+            # epoch-control-github-api の呼び先設定
+            api_url_github = "{}://{}:{}/workspace/{}/github/webhooks".format(os.environ["EPOCH_CONTROL_GITHUB_PROTOCOL"], 
+                                                                            os.environ["EPOCH_CONTROL_GITHUB_HOST"], 
+                                                                            os.environ["EPOCH_CONTROL_GITHUB_PORT"],
+                                                                            workspace_id)
+
+            # epoch-control-tekton-api の呼び先設定
+            api_url_tekton = "{}://{}:{}/workspace/{}/tekton/pipeline".format(os.environ["EPOCH_CONTROL_TEKTON_PROTOCOL"], 
+                                                                            os.environ["EPOCH_CONTROL_TEKTON_HOST"], 
+                                                                            os.environ["EPOCH_CONTROL_TEKTON_PORT"],
+                                                                            workspace_id)
+
+            # パイプライン設定(GitLab Create Project)
+            # request_body = json.loads(request.data)
+            request_body = post_data
+            git_projects = []
+
+            # アプリケーションコード
+            if request_body['ci_config']['pipelines_common']['git_repositry']['housing'] == 'inner':
+                for pipeline_ap in request_body['ci_config']['pipelines']:
+                    ap_data = {
+                        'git_repositry': {
+                            'user': request_body['ci_config']['pipelines_common']['git_repositry']['user'],
+                            'token': request_body['ci_config']['pipelines_common']['git_repositry']['token'],
+                            'url': pipeline_ap['git_repositry']['url'],
+                        }
+                    }
+                    git_projects.append(ap_data)
+            # IaC
+            # if request_body['cd_config']['environments_common']['git_repositry']['housing'] == 'inner':
+            #     for pipeline_iac in request_body['cd_config']['environments']:
+            #         ap_data = {
+            #             'git_repositry': {
+            #                 'user': request_body['cd_config']['environments_common']['git_repositry']['user'],
+            #                 'token': request_body['cd_config']['environments_common']['git_repositry']['token'],
+            #                 'url': pipeline_iac['git_repositry']['url'],
+            #             }
+            #         }
+            #         git_projects.append(ap_data)
+
+
+            for proj_data in git_projects:
+                # gitlab/repos post送信
+                response = requests.post('{}/repos'.format(api_url_gitlab), headers=post_headers, data=json.dumps(proj_data))
+                globals.logger.debug("post gitlab/repos response:{}".format(response.text))
+
+                if response.status_code != 200 and response.status_code != 201:
+                    error_detail = 'gitlab/repos post処理に失敗しました'
+                    raise common.UserException(error_detail)
+
+            if request_body['ci_config']['pipelines_common']['git_repositry']['housing'] == 'outer':
+                # github/webhooks post送信
+                response = requests.post( api_url_github, headers=post_headers, data=json.dumps(post_data))
+                globals.logger.debug("post github/webhooks response:{}".format(response.text))
+
+                if response.status_code != 200:
+                    error_detail = 'github/webhooks post処理に失敗しました'
+                    raise common.UserException(error_detail)
+            else:
+                # パイプライン設定(GitLab webhooks)
+                for pipeline_ap in request_body['ci_config']['pipelines']:
+                    ap_data = {
+                        'git_repositry': {
+                            'user': request_body['ci_config']['pipelines_common']['git_repositry']['user'],
+                            'token': request_body['ci_config']['pipelines_common']['git_repositry']['token'],
+                            'url': pipeline_ap['git_repositry']['url'],
+                        },
+                        'webhooks_url': pipeline_ap['webhooks_url'],
+                    }
+
+                    response = requests.post('{}/webhooks'.format(api_url_gitlab), headers=post_headers, data=json.dumps(ap_data))
+                    globals.logger.debug("post gitlab/webhooks response:{}".format(response.text))
+
+                    if response.status_code != 200:
+                        error_detail = 'gitlab/webhooks post処理に失敗しました'
+                        raise common.UserException(error_detail)
+
+            # listener post送信
+            response = requests.post(api_url_tekton, headers=post_headers, data=json.dumps(post_data))
+            globals.logger.debug("post tekton/pipeline response:{}".format(response.text))
+
+            if response.status_code != 200:
+                error_detail = 'tekton/pipeline post処理に失敗しました'
+                raise common.UserException(error_detail)
 
         ret_status = 200
 
