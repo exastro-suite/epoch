@@ -102,26 +102,55 @@ def post_cd_pipeline(workspace_id):
         # 取得したworkspace情報をパラメータとして受け渡す Pass the acquired workspace information as a parameter
         post_data = ret["rows"][0]
 
-
-        # 更新前ワークスペース情報取得 Get workspace before update
-        api_url = "{}://{}:{}/workspace/{}/before".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+        # ワークスペース状態の取得 Get workspace status
+        api_url = "{}://{}:{}/workspace/{}/status".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
                                                     os.environ['EPOCH_RS_WORKSPACE_HOST'],
                                                     os.environ['EPOCH_RS_WORKSPACE_PORT'],
                                                     workspace_id)
         response = requests.get(api_url)
 
         if response.status_code != 200:
-            error_detail = multi_lang.get_test("EP020-0013", "ワークスペース情報の取得に失敗しました")
+            error_detail = multi_lang.get_test("EP020-0026", "ワークスペース状態情報の取得に失敗しました")
             globals.logger.debug(error_detail)
             raise common.UserException(error_detail)
 
-        # 取得したワークスペース情報を退避 Save the acquired workspace information
-        ret = json.loads(response.text)
-        # 取得したworkspace情報をパラメータとして受け渡す Pass the acquired workspace information as a parameter
-        before_data = ret["rows"][0]
+        # 取得したワークスペース状態を退避 Save the acquired workspace status
+        get_workspace_status = json.loads(response.text)
+        # 更新で使用する項目のみを展開する Expand only the items used in the update
+        workspace_status = {
+            const.STATUS_CD_SETTING : get_workspace_status[const.STATUS_CD_SETTING] 
+        }
+
+        # 前回の結果が正常終了しているかチェックする
+        # Be sure to execute CD settings except OK
+        if workspace_status[const.STATUS_CD_SETTING] == const.STATUS_OK:
+
+            # 更新前ワークスペース情報取得 Get workspace before update
+            api_url = "{}://{}:{}/workspace/{}/before".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+                                                        os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                        os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                        workspace_id)
+            response = requests.get(api_url)
+
+            if response.status_code == 200:
+                # 取得したワークスペース情報を退避 Save the acquired workspace information
+                ret = json.loads(response.text)
+                # 取得したworkspace情報をパラメータとして受け渡す Pass the acquired workspace information as a parameter
+                before_data = ret["rows"][0]
+            elif response.status_code == 404:
+                before_data = None
+            elif response.status_code != 200:
+                error_detail = multi_lang.get_test("EP020-0013", "ワークスペース情報の取得に失敗しました")
+                globals.logger.debug(error_detail)
+                raise common.UserException(error_detail)
+        else:
+            # OK以外は、必ずCD設定を実行
+            # Be sure to execute CD settings except OK
+            before_data = None
 
         cd_config_json_after = post_data["cd_config"].copy()
-        cd_config_json_before = before_data["cd_config"].copy()
+        if before_data is not None:
+            cd_config_json_before = before_data["cd_config"].copy()
         # cd_exec_usersの情報は比較に必要ないのでJsonから削除（環境毎）
         # Since the information of cd_exec_users is not necessary for comparison, it is deleted from Json (for each environment)
         for (env_idx, env) in enumerate(cd_config_json_after["environments"]):
@@ -129,18 +158,37 @@ def post_cd_pipeline(workspace_id):
             if "cd_exec_users" in env:
                 cd_config_json_after["environments"][env_idx].pop("cd_exec_users")
 
-        for (env_idx, env) in enumerate(cd_config_json_before["environments"]):
-            # 要素があれば削除
-            if "cd_exec_users" in env:
-                cd_config_json_before["environments"][env_idx].pop("cd_exec_users")
+        if before_data is not None:
+            for (env_idx, env) in enumerate(cd_config_json_before["environments"]):
+                # 要素があれば削除
+                if "cd_exec_users" in env:
+                    cd_config_json_before["environments"][env_idx].pop("cd_exec_users")
 
         cd_config_str_after = json.dumps(cd_config_json_after)
-        cd_config_str_before = json.dumps(cd_config_json_before)
+        if before_data is not None:
+            cd_config_str_before = json.dumps(cd_config_json_before)
+        else:
+            cd_config_str_before = None
 
         # 更新前、更新後が一致しない場合にCIパイプラインの設定を行なう
         # Set up the CI pipeline when the pre-update and post-update do not match
         if cd_config_str_after != cd_config_str_before:
             globals.logger.debug("changed cd_config parameter!")
+
+            # 実行前はNGで更新 Update with NG before execution
+            workspace_status[const.STATUS_CD_SETTING] = const.STATUS_NG
+            # workspace 状態更新 workspace status update
+            api_url = "{}://{}:{}/workspace/{}/status".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+                                                                os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                                os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                                workspace_id)
+
+            response = requests.put(api_url, headers=post_headers, data=json.dumps(workspace_status))
+
+            if response.status_code != 200:
+                error_detail = multi_lang.get_test("EP020-0027", "ワークスペース状態情報の更新に失敗しました")
+                globals.logger.debug(error_detail)
+                raise common.UserException(error_detail)
 
             # Automatic generation of IaC repository - IaCリポジトリの自動生成
             exec_stat = "CDパイプライン情報設定(IaCリポジトリ生成)"
@@ -210,6 +258,22 @@ def post_cd_pipeline(workspace_id):
 
             if response.status_code != 200:
                 error_detail = 'argocd/settings post処理に失敗しました'
+                raise common.UserException(error_detail)
+
+            # 実行後はOKで更新 Update with OK after execution
+            workspace_status[const.STATUS_CD_SETTING] = const.STATUS_OK
+            globals.logger.debug("workspace_status:{}".format(workspace_status))
+            # workspace 状態更新 workspace status update
+            api_url = "{}://{}:{}/workspace/{}/status".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+                                                                os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                                os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                                workspace_id)
+
+            response = requests.put(api_url, headers=post_headers, data=json.dumps(workspace_status))
+
+            if response.status_code != 200:
+                error_detail = multi_lang.get_test("EP020-0027", "ワークスペース状態情報の更新に失敗しました")
+                globals.logger.debug(error_detail)
                 raise common.UserException(error_detail)
 
         ret_status = 200

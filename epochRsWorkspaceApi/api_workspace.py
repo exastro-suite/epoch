@@ -15,6 +15,7 @@
 from flask import Flask, request, abort, jsonify
 from datetime import datetime
 from dateutil import parser
+import inspect
 import os
 import json
 
@@ -25,6 +26,7 @@ from dbconnector import dbcursor
 import da_workspace
 import da_manifest
 import da_workspace_access
+import da_workspace_status
 
 # 設定ファイル読み込み・globals初期化
 app = Flask(__name__)
@@ -660,7 +662,7 @@ def workspace_access_update(workspace_id):
 
 @app.route('/workspace/<int:workspace_id>/access', methods=['GET'])
 def workspace_access_get(workspace_id):
-    """ワークスペースアクセス情報登録
+    """ワークスペースアクセス情報取得
 
     Args:
         workspace_id (int): ワークスペースID
@@ -674,7 +676,7 @@ def workspace_access_get(workspace_id):
         # 登録内容は基本的に、引数のJsonの値を使用する(追加項目があればここで記載)
         with dbconnector() as db, dbcursor(db) as cursor:
             
-            # ワークスペースアクセス情報 insert実行
+            # ワークスペースアクセス情報 select実行
             fetch_rows = da_workspace_access.select_workspace_access(cursor, workspace_id)
 
             if len(fetch_rows) == 0:
@@ -711,6 +713,131 @@ def workspace_access_delete(workspace_id, id):
             upd_cnt = da_workspace_access.delete_workspace_access(cursor, workspace_id)
     
             globals.logger.debug("workspace_access:ret:{}".format(upd_cnt))
+
+            if upd_cnt == 0:
+                # データがないときは404応答
+                db.rollback()
+                return jsonify({"result": "404" }), 404
+
+        return jsonify({"result": "200"}), 200
+
+    except Exception as e:
+        return common.serverError(e)
+
+
+
+@app.route('/workspace/<int:workspace_id>/status', methods=['POST'])
+def workspace_status_registration(workspace_id):
+    """ワークスペース状態状態登録 workspace status registration
+
+    Args:
+        workspace_id (int): ワークスペースID worksapce id
+
+    Returns:
+        response: HTTP Respose
+    """
+    globals.logger.debug("CALL workspace_access_registration:{}".format(workspace_id))
+
+    try:
+        # 登録内容は基本的に、引数のJsonの値を使用する(追加項目があればここで記載)
+        info = request.json
+        with dbconnector() as db, dbcursor(db) as cursor:
+            
+            # ワークスペース状態情報 insert実行 worksapce status info. insert
+            da_workspace_status.insert_workspace_status(cursor, workspace_id, info)
+
+            globals.logger.debug('insert workspace_id:{}'.format(workspace_id))
+
+        return jsonify({"result": "200"}), 200
+
+    except Exception as e:
+        return common.serverError(e)
+
+@app.route('/workspace/<int:workspace_id>/status', methods=['PUT'])
+def workspace_status_update(workspace_id):
+    """ワークスペース状態情報更新 worksapce status info. update
+
+    Args:
+        workspace_id (int): ワークスペースID
+
+    Returns:
+        response: HTTP Respose
+    """
+    globals.logger.debug("CALL workspace_status_update:{}".format(workspace_id))
+
+    try:
+        # 登録内容は基本的に、引数のJsonの値を使用する(追加項目があればここで記載)
+        info_upadate_colums = request.json
+        with dbconnector() as db, dbcursor(db) as cursor:
+            
+            # ワークスペース状態情報 update実行 worksapce status info. update
+            upd_cnt = da_workspace_status.update_workspace_status(cursor, workspace_id, info_upadate_colums)
+
+            globals.logger.debug('update workspace_id:{}'.format(workspace_id))
+
+            if upd_cnt == 0:
+                # データがないときは404応答
+                db.rollback()
+                return jsonify({"result": "404" }), 404
+
+        return jsonify({"result": "200"}), 200
+
+    except Exception as e:
+        return common.serverError(e)
+
+@app.route('/workspace/<int:workspace_id>/status', methods=['GET'])
+def workspace_status_get(workspace_id):
+    """ワークスペース状態情報取得 worksapce status info. get
+
+    Args:
+        workspace_id (int): ワークスペースID
+
+    Returns:
+        response: HTTP Respose
+    """
+    globals.logger.debug("CALL workspace_status_get:{}".format(workspace_id))
+
+    try:
+        # 登録内容は基本的に、引数のJsonの値を使用する(追加項目があればここで記載)
+        with dbconnector() as db, dbcursor(db) as cursor:
+            
+            # ワークスペース状態情報 select実行 worksapce status info. select
+            fetch_rows = da_workspace_status.select_workspace_status(cursor, workspace_id)
+
+            if len(fetch_rows) == 0:
+                # データがないときは404応答
+                db.rollback()
+                return jsonify({"result": "404" }), 404
+
+        # Response用のjsonに変換[変換が必要な場合は関数化する]
+        response_row = json.loads(fetch_rows[0]["info"])
+
+        return jsonify(response_row), 200
+
+    except Exception as e:
+        return common.serverError(e)
+
+
+
+@app.route('/workspace/<int:workspace_id>/status', methods=['DELETE'])
+def workspace_status_delete(workspace_id, id):
+    """ワークスペース状態情報削除 worksapce status info. delete
+
+    Args:
+        workspace_id (int): ワークスペースID
+        id (int): ワークスペース状態情報ID
+
+    Returns:
+        response: HTTP Respose
+    """
+    globals.logger.debug("CALL workspace_status_delete:workspace_id:{}".format(workspace_id))
+
+    try:
+        with dbconnector() as db, dbcursor(db) as cursor:
+            # ワークスペース状態情報 delete実行 worksapce status info. delete
+            upd_cnt = da_workspace_status.delete_workspace_status(cursor, workspace_id)
+    
+            globals.logger.debug("workspace_status:ret:{}".format(upd_cnt))
 
             if upd_cnt == 0:
                 # データがないときは404応答

@@ -30,6 +30,7 @@ from datetime import timedelta, timezone
 
 import globals
 import common
+import const
 import multi_lang
 
 # 設定ファイル読み込み・globals初期化
@@ -80,39 +81,87 @@ def post_ci_pipeline(workspace_id):
         # 取得したworkspace情報をパラメータとして受け渡す Pass the acquired workspace information as a parameter
         post_data = ret["rows"][0]
 
-        # 更新前ワークスペース情報取得 Get workspace before update
-        api_url = "{}://{}:{}/workspace/{}/before".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+        # ワークスペース状態の取得 Get workspace status
+        api_url = "{}://{}:{}/workspace/{}/status".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
                                                     os.environ['EPOCH_RS_WORKSPACE_HOST'],
                                                     os.environ['EPOCH_RS_WORKSPACE_PORT'],
                                                     workspace_id)
         response = requests.get(api_url)
 
         if response.status_code != 200:
-            error_detail = multi_lang.get_test("EP020-0013", "ワークスペース情報の取得に失敗しました")
+            error_detail = multi_lang.get_test("EP020-0026", "ワークスペース状態情報の取得に失敗しました")
             globals.logger.debug(error_detail)
             raise common.UserException(error_detail)
 
-        # 取得したワークスペース情報を退避 Save the acquired workspace information
-        ret = json.loads(response.text)
-        # 取得したworkspace情報をパラメータとして受け渡す Pass the acquired workspace information as a parameter
-        before_data = ret["rows"][0]
+        # 取得したワークスペース状態を退避 Save the acquired workspace status
+        get_workspace_status = json.loads(response.text)
+        # 更新で使用する項目のみを展開する Expand only the items used in the update
+        workspace_status = {
+            const.STATUS_CI_SETTING : get_workspace_status[const.STATUS_CI_SETTING] 
+        }
+
+        # 前回の結果が正常終了しているかチェックする
+        # Be sure to execute CI settings except OK
+        if workspace_status[const.STATUS_CI_SETTING] == const.STATUS_OK:
+            # 更新前ワークスペース情報取得 Get workspace before update
+            api_url = "{}://{}:{}/workspace/{}/before".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+                                                        os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                        os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                        workspace_id)
+            response = requests.get(api_url)
+
+            if response.status_code == 200:
+                # 取得したワークスペース情報を退避 Save the acquired workspace information
+                ret = json.loads(response.text)
+                # 取得したworkspace情報をパラメータとして受け渡す Pass the acquired workspace information as a parameter
+                before_data = ret["rows"][0]
+            elif response.status_code == 404:
+                before_data = None
+            elif response.status_code != 200:
+                error_detail = multi_lang.get_test("EP020-0013", "ワークスペース情報の取得に失敗しました")
+                globals.logger.debug(error_detail)
+                raise common.UserException(error_detail)
+        else:
+            # OK以外は、必ずCI設定を実行
+            # Be sure to execute CI settings except OK
+            before_data = None
 
         ci_config_json_after = post_data["ci_config"].copy()
-        ci_config_json_before = before_data["ci_config"].copy()
+        if before_data is not None:
+            ci_config_json_before = before_data["ci_config"].copy()
         # environmentsの情報は比較に必要ないのでJsonから削除
         # The environment information is not needed for comparison, so delete it from Json
         if "environments" in ci_config_json_after:
             ci_config_json_after.pop("environments")
-        if "environments" in ci_config_json_before:
-            ci_config_json_before.pop("environments")
+        if before_data is not None:
+            if "environments" in ci_config_json_before:
+                ci_config_json_before.pop("environments")
 
         ci_config_str_after = json.dumps(ci_config_json_after)
-        ci_config_str_before = json.dumps(ci_config_json_before)
+        if before_data is not None:
+            ci_config_str_before = json.dumps(ci_config_json_before)
+        else:
+            ci_config_str_before = None
 
         # 更新前、更新後が一致しない場合にCIパイプラインの設定を行なう
         # Set up the CI pipeline when the pre-update and post-update do not match
         if ci_config_str_after != ci_config_str_before:
             globals.logger.debug("changed ci_config parameter!")
+
+            # 実行前はNGで更新 Update with NG before execution
+            workspace_status[const.STATUS_CI_SETTING] = const.STATUS_NG
+            # workspace 状態更新 workspace status update
+            api_url = "{}://{}:{}/workspace/{}/status".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+                                                                os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                                os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                                workspace_id)
+
+            response = requests.put(api_url, headers=post_headers, data=json.dumps(workspace_status))
+
+            if response.status_code != 200:
+                error_detail = multi_lang.get_test("EP020-0027", "ワークスペース状態情報の更新に失敗しました")
+                globals.logger.debug(error_detail)
+                raise common.UserException(error_detail)
 
             # epoch-control-inside-gitlab-api の呼び先設定
             api_url_gitlab = "{}://{}:{}/workspace/{}/gitlab".format(os.environ["EPOCH_CONTROL_INSIDE_GITLAB_PROTOCOL"], 
@@ -203,6 +252,21 @@ def post_ci_pipeline(workspace_id):
 
             if response.status_code != 200:
                 error_detail = 'tekton/pipeline post処理に失敗しました'
+                raise common.UserException(error_detail)
+
+            # 実行後はOKで更新 Update with OK after execution
+            workspace_status[const.STATUS_CI_SETTING] = const.STATUS_OK
+            # workspace 状態更新 workspace status update
+            api_url = "{}://{}:{}/workspace/{}/status".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+                                                                os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                                os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                                workspace_id)
+
+            response = requests.put(api_url, headers=post_headers, data=json.dumps(workspace_status))
+
+            if response.status_code != 200:
+                error_detail = multi_lang.get_test("EP020-0027", "ワークスペース状態情報の更新に失敗しました")
+                globals.logger.debug(error_detail)
                 raise common.UserException(error_detail)
 
         ret_status = 200

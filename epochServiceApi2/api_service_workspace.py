@@ -89,14 +89,57 @@ def create_workspace():
         # Get the workspace ID - ワークスペースIDを取得する
         workspace_id=rows[0]["workspace_id"]
 
-
         # Set workspace roles - ワークスペースのロールを設定する
         create_workspace_setting_roles(workspace_id, user_id)
 
         # exastro-authentication-infra setting - 認証基盤の設定
         create_workspace_setting_auth_infra(workspace_id, user_id)
 
-        ret_status = response.status_code
+        # workspace 状態取得 workspace status get
+        api_url = "{}://{}:{}/workspace/{}/status".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+                                                            os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                            os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                            workspace_id)
+
+        response = requests.get(api_url)
+
+        if response.status_code == 200:
+            # 取得したワークスペース状態を退避 Save the acquired workspace status
+            get_workspace_status = json.loads(response.text)
+            # 更新で使用する項目のみを展開する Expand only the items used in the update
+            workspace_status = {
+                const.STATUS_INITIALIZE : const.STATUS_OK
+            }
+        else:
+            # 存在しない場合は、初期設定する If it does not exist, initialize it
+            workspace_status = const.WORKSPACE_STATUS
+            workspace_status[const.STATUS_INITIALIZE] = const.STATUS_OK
+
+        # 状態が無ければ初回登録する
+        if response.status_code == 404:
+            # workspace 状態登録 workspace status registration
+            api_url = "{}://{}:{}/workspace/{}/status".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+                                                                os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                                os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                                workspace_id)
+
+            response = requests.post(api_url, headers=post_headers, data=json.dumps(workspace_status))
+
+            if response.status_code != 200:
+                raise common.UserException("{} Error post workspace status db status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
+        else:
+            # workspace 状態更新 workspace status update
+            api_url = "{}://{}:{}/workspace/{}/status".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+                                                                os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                                os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                                workspace_id)
+
+            response = requests.put(api_url, headers=post_headers, data=json.dumps(workspace_status))
+
+            if response.status_code != 200:
+                raise common.UserException("{} Error put workspace status db status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
+
+        ret_status = 200
 
         # 戻り値をそのまま返却        
         return jsonify({"result": ret_status, "rows": rows}), ret_status
@@ -955,7 +998,51 @@ def put_workspace(workspace_id):
 
             raise common.UserException("{} Error put workspace db status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
 
-        ret_status = response.status_code
+        # workspace 状態取得 workspace status get
+        api_url = "{}://{}:{}/workspace/{}/status".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+                                                            os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                            os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                            workspace_id)
+
+        response = requests.get(api_url)
+
+        if response.status_code == 200:
+            # 取得したワークスペース状態を退避 Save the acquired workspace status
+            get_workspace_status = json.loads(response.text)
+            # 更新で使用する項目のみを展開する Expand only the items used in the update
+            workspace_status = {
+                const.STATUS_INITIALIZE : const.STATUS_OK
+            }
+        else:
+            # 存在しない場合は、初期設定する If it does not exist, initialize it
+            workspace_status = const.WORKSPACE_STATUS
+            workspace_status[const.STATUS_INITIALIZE] = const.STATUS_OK
+
+        # 状態が無ければ初回登録する
+        if response.status_code == 404:
+            # workspace 状態登録 workspace status registration
+            api_url = "{}://{}:{}/workspace/{}/status".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+                                                                os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                                os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                                workspace_id)
+
+            response = requests.post(api_url, headers=post_headers, data=json.dumps(workspace_status))
+
+            if response.status_code != 200:
+                raise common.UserException("{} Error post workspace status db status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
+        else:
+            # workspace 状態更新 workspace status update
+            api_url = "{}://{}:{}/workspace/{}/status".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+                                                                os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                                os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                                workspace_id)
+
+            response = requests.put(api_url, headers=post_headers, data=json.dumps(workspace_status))
+
+            if response.status_code != 200:
+                raise common.UserException("{} Error put workspace status db status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
+
+        ret_status = 200
 
         # 戻り値をそのまま返却        
         return jsonify({"result": ret_status}), ret_status
@@ -1043,7 +1130,7 @@ def post_pod(workspace_id):
         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
         globals.logger.debug('#' * 50)
 
-        # ヘッダ情報
+        # ヘッダ情報 header info
         post_headers = {
             'Content-Type': 'application/json',
         }
@@ -1068,11 +1155,29 @@ def post_pod(workspace_id):
         # 取得したworkspace情報をパラメータとして受け渡す Pass the acquired workspace information as a parameter
         post_data = ret["rows"][0]
 
+        # 実行前はNGで更新 Update with NG before execution
+        workspace_status = {
+            const.STATUS_POD : const.STATUS_NG
+        }
+
+        # workspace 状態更新 workspace status update
+        api_url = "{}://{}:{}/workspace/{}/status".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+                                                            os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                            os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                            workspace_id)
+
+        response = requests.put(api_url, headers=post_headers, data=json.dumps(workspace_status))
+
+        if response.status_code != 200:
+            error_detail = multi_lang.get_test("EP020-0027", "ワークスペース状態情報の更新に失敗しました")
+            globals.logger.debug(error_detail)
+            raise common.UserException(error_detail)
+
         # workspace post送信
         api_url = "{}://{}:{}/workspace/{}".format(os.environ['EPOCH_CONTROL_WORKSPACE_PROTOCOL'],
-                                                   os.environ['EPOCH_CONTROL_WORKSPACE_HOST'],
-                                                   os.environ['EPOCH_CONTROL_WORKSPACE_PORT'],
-                                                   workspace_id)
+                                                    os.environ['EPOCH_CONTROL_WORKSPACE_HOST'],
+                                                    os.environ['EPOCH_CONTROL_WORKSPACE_PORT'],
+                                                    workspace_id)
         response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
         globals.logger.debug("post workspace response:{}".format(response.text))
         
@@ -1083,9 +1188,9 @@ def post_pod(workspace_id):
 
         # argocd post送信
         api_url = "{}://{}:{}/workspace/{}/argocd".format(os.environ['EPOCH_CONTROL_ARGOCD_PROTOCOL'],
-                                                          os.environ['EPOCH_CONTROL_ARGOCD_HOST'],
-                                                          os.environ['EPOCH_CONTROL_ARGOCD_PORT'],
-                                                          workspace_id)
+                                                            os.environ['EPOCH_CONTROL_ARGOCD_HOST'],
+                                                            os.environ['EPOCH_CONTROL_ARGOCD_PORT'],
+                                                            workspace_id)
         response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
         globals.logger.debug("post argocd response:{}".format(response.text))
 
@@ -1096,9 +1201,9 @@ def post_pod(workspace_id):
 
         # ita post送信
         api_url = "{}://{}:{}/workspace/{}/it-automation".format(os.environ['EPOCH_CONTROL_ITA_PROTOCOL'],
-                                                                 os.environ['EPOCH_CONTROL_ITA_HOST'],
-                                                                 os.environ['EPOCH_CONTROL_ITA_PORT'],
-                                                                 workspace_id)
+                                                                    os.environ['EPOCH_CONTROL_ITA_HOST'],
+                                                                    os.environ['EPOCH_CONTROL_ITA_PORT'],
+                                                                    workspace_id)
         response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
         globals.logger.debug("post it-automation response:{}".format(response.text))
 
@@ -1118,6 +1223,21 @@ def post_pod(workspace_id):
 
         if response.status_code != 200:
             error_detail = 'it-automation/settings post処理に失敗しました'
+            raise common.UserException(error_detail)
+
+        # 実行後はOKで更新 Update with OK after execution
+        workspace_status[const.STATUS_POD] = const.STATUS_OK
+        # workspace 状態更新 workspace status update
+        api_url = "{}://{}:{}/workspace/{}/status".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+                                                            os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                            os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                            workspace_id)
+
+        response = requests.put(api_url, headers=post_headers, data=json.dumps(workspace_status))
+
+        if response.status_code != 200:
+            error_detail = multi_lang.get_test("EP020-0027", "ワークスペース状態情報の更新に失敗しました")
+            globals.logger.debug(error_detail)
             raise common.UserException(error_detail)
 
         ret_status = 200
