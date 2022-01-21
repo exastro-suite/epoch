@@ -766,7 +766,7 @@ def workspace_status_update(workspace_id):
     globals.logger.debug("CALL workspace_status_update:{}".format(workspace_id))
 
     try:
-        # 登録内容は基本的に、引数のJsonの値を使用する(追加項目があればここで記載)
+        # 更新対象のJson値をパラメータとして受け取る Receive the Json value to be updated as a parameter
         info_upadate_colums = request.json
         with dbconnector() as db, dbcursor(db) as cursor:
             
