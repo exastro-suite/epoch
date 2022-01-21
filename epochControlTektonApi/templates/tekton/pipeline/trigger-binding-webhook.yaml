@@ -26,6 +26,8 @@ spec:
     value: $(body.ref)
   - name: git_repository_name
     value: $(body.repository.name)
+  - name: git_sender_user
+    value: $(body.user_username)
 
 ---
 apiVersion: triggers.tekton.dev/v1alpha1
@@ -43,6 +45,6 @@ spec:
     value: $(body.ref)
   - name: git_repository_name
     value: $(body.repository.name)
-
-
+  - name: git_sender_user
+    value: $(body.sender.login)
 

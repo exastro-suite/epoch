@@ -29,6 +29,7 @@ spec:
     - name: git_repositry_interface
     - name: git_repository_url
     - name: git_branch
+    - name: git_sender_user
     - name: container_registry_image
     - name: git_webhook_header
     - name: git_webhook_body
@@ -66,6 +67,7 @@ spec:
           'git_repositry_interface' : '$(params.git_repositry_interface)',
           'git_repository_url' :      '$(params.git_repository_url)',
           'git_branch' :              '$(params.git_branch)',
+          'git_sender_user' :         '$(params.git_sender_user)',
           'container_registry_image' :'$(params.container_registry_image)',
           'git_webhook_header' :      '$(params.git_webhook_header)',
           'git_webhook_body' :        '$(params.git_webhook_body)',
