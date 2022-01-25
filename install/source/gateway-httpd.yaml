@@ -61,10 +61,14 @@ metadata:
   namespace: exastro-platform-authentication-infra
 spec:
   ports:
-  - name: http
+  - name: epoch
     port: 30443
     targetPort: 30443
     nodePort: 30443
+  - name: gitlab
+    port: 31183
+    targetPort: 31183
+    nodePort: 31183
   selector:
     name: gateway-httpd
   type: NodePort
