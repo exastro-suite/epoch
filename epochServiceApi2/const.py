@@ -54,3 +54,19 @@ ALL_ROLES = [
 LOG_KIND_ERROR='Error'
 LOG_KIND_INFO='Infomation'
 LOG_KIND_UPDATE='Update'
+
+# 状態の種類 Log kind
+STATUS_INITIALIZE='initialize'
+STATUS_POD='pod'
+STATUS_CI_SETTING='ci_setting'
+STATUS_CD_SETTING='cd_setting'
+
+STATUS_OK="OK"
+STATUS_NG="NG"
+
+WORKSPACE_STATUS = {
+    STATUS_INITIALIZE : "",
+    STATUS_POD : "",
+    STATUS_CI_SETTING : "",
+    STATUS_CD_SETTING : "",
+}

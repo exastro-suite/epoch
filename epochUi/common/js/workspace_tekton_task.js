@@ -123,7 +123,8 @@ $(function(){
             'filter': 'on'
           },
           {
-            'title': '開始日時',
+            //'title': '開始日時',
+            'title': '開始日時・コードPushユーザ',
             'type': 'date',
             'filter': 'on',
             'sort': 'on'
@@ -175,7 +176,8 @@ $(function(){
               list[i].task_id,
               list[i].repository_url,
               list[i].container_image,
-              list[i].start_time,
+              //list[i].start_time,
+              list[i].start_time  + "　　　" + list[i].git_sender_user,
               list[i].build_branch,
               '',
               '',

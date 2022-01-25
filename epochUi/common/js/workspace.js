@@ -2811,14 +2811,14 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
     }
 
     new Promise((resolve, reject) => {
-  
+
+      console.log("[CALL] GET " + workspace_api_conf.api.resource.get);
+ 
       $.ajax({
         "type": "GET",
         "url": workspace_api_conf.api.resource.get.replace('{workspace_id}', workspace_id),
       }).done(function(data) {
-        console.log("DONE : ワークスペース情報取得");
-        console.log(typeof(data));
-        console.log(JSON.stringify(data));
+        console.log("[DONE] GET " + workspace_api_conf.api.resource.get + " response\n" + JSON.stringify(data));
   
         workspace_id = data['rows'][0]['workspace_id'];
   
@@ -2913,10 +2913,14 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
 
     }).then(() => {return new Promise((resolve, reject) => {
 
+      console.log("[CALL] GET " + workspace_api_conf.api.manifestTemplate.get);
+
       $.ajax({
         "type": "GET",
         "url": workspace_api_conf.api.manifestTemplate.get.replace('{workspace_id}', workspace_id),
       }).done(function(data) {
+        console.log("[DONE] GET " + workspace_api_conf.api.manifestTemplate.get);
+
         wsDataJSON['manifests'] = [];
         for(var fileidx = 0; fileidx < data['rows'].length; fileidx++ ) {
           wsDataJSON['manifests'][wsDataJSON['manifests'].length] = {
@@ -2944,7 +2948,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       // CI/CD実行タブを表示
       $('#cicd-tab-item').css('visibility','visible');
       // alert("ワークスペース情報を読み込みました");
-      console.log('Complete !!');
+      console.log('[DONE] getWorksapce');
     }).catch((info) => {
         // CI/CD実行タブを表示
       $('#cicd-tab-item').css('visibility','hidden');
@@ -2961,7 +2965,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
             break;
         }
       }
-      console.log('Fail !!');
+      console.log('[FAIL] getWorksapce');
     });
   }
 
@@ -2988,9 +2992,10 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       //
       // ワークスペース情報登録API
       //
-      $('#progress_message').html('STEP 1/4 : ワークスペース情報を登録しています');
+      $('#progress_message').html('STEP 1/3 : ワークスペース情報を登録しています');
       $('#error_statement').html('');
       $('#error_detail').html('');
+      $('#progress-complete').val('');
 
       update_mode = "";
       console.log("CALL : ワークスペース情報登録");
@@ -3041,13 +3046,13 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       //
       //  ワークスペース作成API
       //
-      $('#progress_message').html('STEP 2/4 : ワークスペースを' + update_mode + 'しています');
+      $('#progress_message').html('STEP 2/3 : ワークスペースを' + update_mode + 'しています');
       console.log("CALL : ワークスペース作成");
   
       $.ajax({
         type:"POST",
         url: workspace_api_conf.api.workspace.post.replace('{workspace_id}', workspace_id),
-        data:JSON.stringify(reqbody),
+        // data:JSON.stringify(reqbody),
         contentType: "application/json",
         dataType: "json",
       }).done((data) => {
@@ -3069,98 +3074,98 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         // 失敗
         try { reject({"error_statement" : jqXHR.responseJSON.result.errorStatement, "error_detail": jqXHR.responseJSON.result.errorDetail}); } catch { reject(); }
       });
-  
-    })}).then(() => { return new Promise((resolve, reject) => {
-
-      if((new URLSearchParams(window.location.search)).get('workspace_id') != null
-      && currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ws-ci-update".replace('{ws_id}',workspace_id)) == -1) {
-        // If you do not have permission to update the CI pipeline, proceed to the next without calling the API
-        // CIパイプラインの更新権限が無いときはAPIを呼ばずに次に進む
-        resolve();
-        return;
-      }
-
-      //
-      // パイプライン作成API
-      //
-      $('#progress_message').html('STEP 3/4 :   ＣＩパイプラインを' + update_mode + 'しています');
-      console.log("CALL : CIパイプライン作成");
-  
-      $.ajax({
-        type:"POST",
-        url: workspace_api_conf.api.ci_pipeline.post.replace('{workspace_id}', workspace_id),
-        data:JSON.stringify(reqbody),
-        contentType: "application/json",
-        dataType: "json",
-      }).done(function(data) {
-        console.log("DONE : パイプライン作成");
-        console.log("--- data ----");
-        console.log(JSON.stringify(data));
-  
-        if(data.result == '200') {
-          // 成功
-          resolve();
-        } else {
-          // 失敗
-          reject();
-        }
-      }).fail((jqXHR, textStatus, errorThrown) => {
-        console.log("FAIL : パイプライン作成");
-        console.log("RESPONSE:" + jqXHR.responseText);
-        // 失敗
-        try { reject({"error_statement" : jqXHR.responseJSON.errorStatement, "error_detail": jqXHR.responseJSON.errorDetail}); } catch { reject(); }
-      });
-  
-    })}).then(() => { return new Promise((resolve, reject) => {
-
-      if((new URLSearchParams(window.location.search)).get('workspace_id') != null
-      && currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ws-cd-update".replace('{ws_id}',workspace_id)) == -1) {
-        // If you do not have permission to update the CD pipeline, proceed to the next without calling the API
-        // CDパイプラインの更新権限が無いときはAPIを呼ばずに次に進む
-        resolve();
-        return;
-      }
-
-      //
-      // パイプラインパラメータ設定API
-      //
-      $('#progress_message').html('STEP 4/4 :   ＣＤパイプラインを' + update_mode + 'しています');
-      console.log("CALL : CDパイプライン設定");
-  
-      $.ajax({
-        type:"POST",
-        url: workspace_api_conf.api.cd_pipeline.post.replace('{workspace_id}', workspace_id),
-        data:JSON.stringify(reqbody),
-        contentType: "application/json",
-        dataType: "json",
-      }).done(function(data) {
-        console.log("DONE : CDパイプライン設定");
-        console.log("--- data ----");
-        console.log(JSON.stringify(data));
-        if(data.result == '200') {
-          // 成功
-          resolve();
-        } else {
-          // 失敗
-          try { reject({"error_statement" : data.errorStatement, "error_detail": data.errorDetail}); } catch { reject(); }
-        }
-      }).fail((jqXHR, textStatus, errorThrown) => {
-        console.log("FAIL : パイプラインパラメータ設定");
-        console.log("RESPONSE:" + jqXHR.responseText);
-        // 失敗
-        try { reject({"error_statement" : jqXHR.responseJSON.errorStatement, "error_detail": jqXHR.responseJSON.errorDetail}); } catch { reject(); }
-      });
     })}).then(() => {
+      $('#progress_message').html('STEP 3/3 :   パイプラインを' + update_mode + 'しています');
+      return Promise.all([
+        new Promise((resolve, reject) => {
+          // CI pipeline 
+          if((new URLSearchParams(window.location.search)).get('workspace_id') != null
+          && currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ws-ci-update".replace('{ws_id}',workspace_id)) == -1) {
+            // If you do not have permission to update the CI pipeline, proceed to the next without calling the API
+            // CIパイプラインの更新権限が無いときはAPIを呼ばずに次に進む
+            resolve();
+            return;
+          }
+          //
+          // パイプライン作成API
+          //
+          console.log("CALL : CIパイプライン設定");
+          $.ajax({
+            type:"POST",
+            url: workspace_api_conf.api.ci_pipeline.post.replace('{workspace_id}', workspace_id),
+            // data:JSON.stringify(reqbody),
+            contentType: "application/json",
+            dataType: "json",
+          }).done(function(data) {
+            console.log("DONE : CIパイプライン設定");
+            console.log("--- data ----");
+            console.log(JSON.stringify(data));
+      
+            if(data.result == '200') {
+              // 成功
+              resolve();
+            } else {
+              // 失敗
+              reject();
+            }
+          }).fail((jqXHR, textStatus, errorThrown) => {
+            console.log("FAIL : CIパイプライン設定");
+            console.log("RESPONSE:" + jqXHR.responseText);
+            // 失敗
+            try { reject({"error_statement" : jqXHR.responseJSON.errorStatement, "error_detail": jqXHR.responseJSON.errorDetail}); } catch { reject(); }
+          });
+        }),
+        new Promise((resolve, reject) => {
+          // CD pipeline
+          if((new URLSearchParams(window.location.search)).get('workspace_id') != null
+          && currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ws-cd-update".replace('{ws_id}',workspace_id)) == -1) {
+            // If you do not have permission to update the CD pipeline, proceed to the next without calling the API
+            // CDパイプラインの更新権限が無いときはAPIを呼ばずに次に進む
+            resolve();
+            return;
+          }
+          //
+          // CDパイプライン設定API
+          //
+          console.log("CALL : CDパイプライン設定");
+          $.ajax({
+            type:"POST",
+            url: workspace_api_conf.api.cd_pipeline.post.replace('{workspace_id}', workspace_id),
+            // data:JSON.stringify(reqbody),
+            contentType: "application/json",
+            dataType: "json",
+          }).done(function(data) {
+            console.log("DONE : CDパイプライン設定");
+            console.log("--- data ----");
+            console.log(JSON.stringify(data));
+            if(data.result == '200') {
+              // 成功
+              resolve();
+            } else {
+              // 失敗
+              try { reject({"error_statement" : data.errorStatement, "error_detail": data.errorDetail}); } catch { reject(); }
+            }
+          }).fail((jqXHR, textStatus, errorThrown) => {
+            console.log("FAIL : CDパイプライン設定");
+            console.log("RESPONSE:" + jqXHR.responseText);
+            // 失敗
+            try { reject({"error_statement" : jqXHR.responseJSON.errorStatement, "error_detail": jqXHR.responseJSON.errorDetail}); } catch { reject(); }
+          });
+        }),
+      ])
+    }).then(() => {
       // 実行中ダイアログ表示
+      $('#progress-complete').val('1');
       $('#progress_message').html('【COMPLETE】 ワークスペースを' + update_mode + 'しました（ワークスペースID:'+created_workspace_id+'）');
       $('#progress-message-ok').prop("disabled", false);
       // CI/CD実行タブを表示
       $('#cicd-tab-item').css('visibility','visible');
       $('#apply-workspace-button').html('ワークスペース更新');
       getClient();
-      console.log('Complete !!');
+      console.log('[DONE] apply_workspace');
     }).catch((errorinfo) => {
       // 実行中ダイアログ表示
+      $('#progress-complete').val('-1');
 
       if(workspace_id == null) {
         $('#progress_message').html('【ERROR】 ワークスペースの' + update_mode + 'に失敗しました');
@@ -3187,7 +3192,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       }
 
       $('#progress-message-ok').prop("disabled", false);
-      console.log('Fail !!');
+      console.log('[FAIL] apply_workspace');
     });
   }
 

@@ -48,6 +48,7 @@ data:
       status varchar(16) not null,
       git_repository_url varchar(1024) not null,
       git_branch varchar(1024),
+      git_sender_user varchar(1024),
       container_registry_image varchar(1024),
       container_registry_image_tag varchar(1024),
       container_registry_image_digest varchar(1024),

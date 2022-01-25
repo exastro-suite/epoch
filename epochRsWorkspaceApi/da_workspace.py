@@ -162,3 +162,18 @@ def insert_history(cursor, workspace_id):
         }
     )
 
+def select_history(cursor, workspace_id):
+    """workspace履歴情報取得 get workspace history
+
+    Args:
+        cursor (mysql.connector.cursor): cursor - カーソル
+        workspace_id (int): workspace id 
+    """
+    cursor.execute('SELECT * FROM workspace_history WHERE workspace_id = %(workspace_id)s ORDER BY history_id DESC LIMIT 1, 1',
+        {
+            'workspace_id' : workspace_id
+        }
+    )
+    rows = cursor.fetchall()
+    return rows
+

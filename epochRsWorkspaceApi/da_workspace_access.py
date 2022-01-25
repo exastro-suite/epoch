@@ -54,7 +54,7 @@ def update_workspace_access(cursor, workspace_id, info):
         
     """
     # ワークスペースアクセス情報 update実行
-    cursor.execute('UPDATE workspace_access' \
+    upd_cnt = cursor.execute('UPDATE workspace_access' \
                     ' SET info = %(info)s' \
                     ' WHERE workspace_id = %(workspace_id)s',
         {
@@ -62,8 +62,9 @@ def update_workspace_access(cursor, workspace_id, info):
             'info': json.dumps(info),
         }
     )
+    upd_cnt = 1
     # 更新した件数をreturn
-    return cursor.rowcount
+    return upd_cnt
 
 def delete_workspace_access(cursor, workspace_id):
     """ワークスペースアクセス情報削除

@@ -563,6 +563,7 @@ def get_responsePipelineRunItem(plRunitem):
     resPlRunitem['finish_time'] = completion_time
     resPlRunitem['status'] = status
     resPlRunitem['container_image'] = '{}:{}'.format(get_pipelineParameter(plRunitem,'container_registry_image'), get_taskResult(plRunitem, 'task-start', 'container_registry_image_tag'))
+    resPlRunitem['git_sender_user'] = get_pipelineParameter(plRunitem,'git_sender_user')
 
     # タスク情報の格納
     resPlRunitem['tasks'] = []
