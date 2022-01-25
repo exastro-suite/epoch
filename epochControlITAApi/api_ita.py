@@ -356,7 +356,6 @@ def settings_ita(workspace_id):
         start_time = time.time()
         while True:
             globals.logger.debug("waiting for ita pod up...")
-            time.sleep(3)
 
             # PodがRunningになったら終了
             if is_ita_pod_running(namespace):
@@ -369,11 +368,12 @@ def settings_ita(workspace_id):
                 error_detail = "IT-Automation 初期設定でタイムアウトしました。再度、実行してください。"
                 raise common.UserException(error_detail)
 
+            time.sleep(1)
+
         # *-*-*-* podが立ち上がるのを待つ *-*-*-*
         start_time = time.time()
         while True:
             globals.logger.debug("waiting for ita mariaDB up...")
-            time.sleep(1)
 
             # PodがRunningになったら終了
             if is_ita_mysql_running(namespace, ita_db_user, ita_db_password):
@@ -385,6 +385,8 @@ def settings_ita(workspace_id):
                 globals.logger.debug("ITA mariaDB start Time out S:{} sec:{}".format(start_time, (current_time - start_time)))
                 error_detail = "IT-Automation 初期設定でタイムアウトしました。再度、実行してください。"
                 raise common.UserException(error_detail)
+
+            time.sleep(1)
 
         # *-*-*-* パスワード更新済み判定とする *-*-*-*
         # command = "mysql -u %s -p%s %s < /app/epoch/tmp/ita_table_update.sql" % (ita_db_user, ita_db_password, ita_db_name)
