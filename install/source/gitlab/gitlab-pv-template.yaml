@@ -1,0 +1,104 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: gitlab-postgresql
+spec:
+  capacity:
+    storage: 8Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  claimRef:
+    namespace: gitlab
+    name: data-gitlab-postgresql-0
+  storageClassName: local-storage
+  hostPath:
+    path: /var/data/epoch/gitlab/postgresql
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - #NODENAME#
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: gitlab-minio
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  claimRef:
+    namespace: gitlab
+    name: gitlab-minio
+  storageClassName: local-storage
+  hostPath:
+    path: /var/data/epoch/gitlab/minio
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - #NODENAME#
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: gitlab-redis
+spec:
+  capacity:
+    storage: 8Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  claimRef:
+    namespace: gitlab
+    name: redis-data-gitlab-redis-master-0
+  storageClassName: local-storage
+  hostPath:
+    path: /var/data/epoch/gitlab/redis
+    type: DirectoryOrCreate
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - #NODENAME#
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: gitlab-gitaly
+spec:
+  capacity:
+    storage: 50Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  claimRef:
+    namespace: gitlab
+    name: repo-data-gitlab-gitaly-0
+  storageClassName: local-storage
+  hostPath:
+    path: /var/data/epoch/gitlab/gitaly
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - #NODENAME#

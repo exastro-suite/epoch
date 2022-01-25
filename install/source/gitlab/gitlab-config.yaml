@@ -1,0 +1,38 @@
+global:
+  edition: ce
+  ingress:
+    configureCertmanager: false
+  hosts:
+    domain: gitlab.svc
+    https: false
+    gitlab:
+      https: false
+    registry:
+      servicePort: 5000
+      https: false
+    minio:
+      https: false
+nginx-ingress:
+  enabled: false
+certmanager:
+  install: false
+prometheus:
+  install: false
+gitlab-runner:
+  install: false
+gitlab:
+  unicorn:
+    minReplicas: 1
+    maxReplicas: 1
+  sidekiq:
+    minReplicas: 1
+    maxReplicas: 1
+  gitlab-shell:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 1
+registry:
+  enabled: true
+  hpa:
+    minReplicas: 1
+    maxReplicas: 1

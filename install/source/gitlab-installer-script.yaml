@@ -1,0 +1,378 @@
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+data:
+  gitlab-config.yaml: |
+    global:
+      edition: ce
+      ingress:
+        configureCertmanager: false
+      hosts:
+        domain: gitlab.svc
+        https: false
+        gitlab:
+          https: false
+        registry:
+          servicePort: 5000
+          https: false
+        minio:
+          https: false
+    nginx-ingress:
+      enabled: false
+    certmanager:
+      install: false
+    prometheus:
+      install: false
+    gitlab-runner:
+      install: false
+    gitlab:
+      unicorn:
+        minReplicas: 1
+        maxReplicas: 1
+      sidekiq:
+        minReplicas: 1
+        maxReplicas: 1
+      gitlab-shell:
+        enabled: false
+        minReplicas: 1
+        maxReplicas: 1
+    registry:
+      enabled: true
+      hpa:
+        minReplicas: 1
+        maxReplicas: 1
+  gitlab-installer.sh: |
+    #!/bin/bash
+    #   Copyright 2019 NEC Corporation
+    #
+    #   Licensed under the Apache License, Version 2.0 (the "License");
+    #   you may not use this file except in compliance with the License.
+    #   You may obtain a copy of the License at
+    #
+    #       http://www.apache.org/licenses/LICENSE-2.0
+    #
+    #   Unless required by applicable law or agreed to in writing, software
+    #   distributed under the License is distributed on an "AS IS" BASIS,
+    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    #   See the License for the specific language governing permissions and
+    #   limitations under the License.
+
+    GITLAB_NAMESPACE="gitlab"
+    GITLAB_CONFIG_SETTING_RETRY=60
+
+    BASEDIR=$(dirname $0)
+
+    # version 5.6.2
+    CHART_FILE=/installer/chart/gitlab-5.6.2.tgz
+    DEPLOY_RAILS_RUNNER=gitlab-toolbox
+
+    #
+    # Create and Initialize PV Directory
+    #
+    echo "[INFO] START : Create and Initialize PV Directory"
+
+    rm -rf /gitlab-pv/*
+    mkdir -p /gitlab-pv/postgresql
+    mkdir -p /gitlab-pv/minio
+    mkdir -p /gitlab-pv/redis
+    mkdir -p /gitlab-pv/gitaly
+    chmod 777 /gitlab-pv/*
+    #
+    # Get NodeName
+    #
+    echo "[INFO] START : Get NodeName"
+    POD_NAME=${HOSTNAME}
+    echo "POD_NAME: ${POD_NAME}"
+
+    NODENAME=$(kubectl get pod -n "${GITLAB_NAMESPACE}" "${POD_NAME}" -o jsonpath='{.spec.nodeName}' )
+    if [ $? -ne 0 ]; then
+      echo "[ERROR] get nodename"
+    fi
+    echo "[INFO] NODENAME : ${NODENAME}"
+
+    #kubectl delete job gitlab-pv-initializer -n "${GITLAB_NAMESPACE}"
+
+    #
+    # Create PV
+    #
+    echo "[INFO] START : create pv"
+    sed -e  "s/#NODENAME#/${NODENAME}/g" ${BASEDIR}/gitlab-pv-template.yaml |\
+    kubectl apply -f -
+    if [ $? -ne 0 ]; then
+      echo "[ERROR] apply pv"
+      exit 1
+    fi
+
+    #
+    # install gitlab
+    #
+    echo "[INFO] START : helm install"
+    helm install gitlab ${CHART_FILE} -n "${GITLAB_NAMESPACE}" --values ${BASEDIR}/gitlab-config.yaml
+    if [ $? -ne 0 ]; then
+      echo "[ERROR] helm install"
+      exit 1
+    fi
+
+    #
+    # Waitting Runner Up
+    #
+    echo "[INFO] START : Waitting Runner Up"
+    while true; do
+        sleep 5;
+        echo -n "."
+        NOT_READY_COUNT=$(kubectl get pod -n "${GITLAB_NAMESPACE}" -o jsonpath='{range .items[*]}{@.status.phase}{"\n"}' | sed -e "/Running/d" -e "/Succeeded/d" -e "/^$/d" | wc -l)
+        if [ $? -ne 0 ]; then
+          continue;
+        fi
+        if [ ${NOT_READY_COUNT} -ne 0 ]; then
+          continue;
+        fi
+        kubectl get deploy ${DEPLOY_RAILS_RUNNER} -n "${GITLAB_NAMESPACE}" &> /dev/null
+        if [ $? -ne 0 ]; then
+          continue;
+        fi
+        kubectl get deploy gitlab-webservice-default -n "${GITLAB_NAMESPACE}" &> /dev/null
+        if [ $? -ne 0 ]; then
+          continue;
+        fi
+        echo ""
+        break;
+    done;
+
+    #
+    # Generate root token
+    #
+    echo "[INFO] START : Generate root token"
+    TOKEN_LENGTH=20
+    ROOT_TOKEN=$(cat /dev/urandom | base64 | fold -w 20 | head -n 1)
+    if [ $? -ne 0 ]; then
+      echo "[ERROR] generate ROOT_TOKEN"
+    fi
+
+    echo "[INFO] ROOT_TOKEN : ${ROOT_TOKEN}"
+    sed -e  "s|#ROOT_TOKEN#|${ROOT_TOKEN}|g" \
+        -e  "s|#NAMESPACE#|${GITLAB_NAMESPACE}|g" \
+        ${BASEDIR}/gitlab-root-token-template.yaml |\
+    kubectl apply -f -
+    if [ $? -ne 0 ]; then
+      echo "[ERROR] generate ROOT_TOKEN secret"
+      exit 1
+    fi
+
+
+    #
+    # Setting root token
+    #
+    echo "[INFO] START : Setting root token"
+    kubectl exec -i deploy/${DEPLOY_RAILS_RUNNER} -n "${GITLAB_NAMESPACE}" \
+    -- gitlab-rails runner \
+    "token = User.find_by_username('root').personal_access_tokens.create(scopes: [:api], name: 'epoch system token'); token.set_token('${ROOT_TOKEN}'); token.save!"
+    if [ $? -ne 0 ]; then
+      echo "[ERROR] Setting root token"
+      exit 1
+    fi
+
+    #
+    # configure gitlab
+    #
+    GIT_API_BASE="http://gitlab-webservice-default:8181"
+
+    EXITCODE_PUT_enabled_git_access_protocol=-1
+    EXITCODE_allow_local_requests_from_web_hooks_and_services=-1
+    EXITCODE_allow_local_requests_from_hooks_and_services=-1
+
+    for ((i=1; i<=${GITLAB_CONFIG_SETTING_RETRY}; i++)); do
+        sleep 10;
+
+        if [ ${EXITCODE_PUT_enabled_git_access_protocol} -ne 0 ]; then
+          echo -n "[INFO] Setting enabled_git_access_protocol : "
+          curl -X PUT \
+            -H 'Content-Type: application/json' \
+            -H "PRIVATE-TOKEN: ${ROOT_TOKEN}" \
+            "${GIT_API_BASE}/api/v4/application/settings?enabled_git_access_protocol=http" &> /dev/null
+
+          EXITCODE_PUT_enabled_git_access_protocol=$?
+          if [ ${EXITCODE_PUT_enabled_git_access_protocol} -eq 0 ]; then
+            echo "DONE"
+          else
+            echo "FAIL"
+            continue
+          fi
+        fi
+
+        if [ ${EXITCODE_allow_local_requests_from_web_hooks_and_services} -ne 0 ]; then
+          echo -n "[INFO] Setting allow_local_requests_from_web_hooks_and_services : "
+          curl -X PUT \
+            -H 'Content-Type: application/json' \
+            -H "PRIVATE-TOKEN: ${ROOT_TOKEN}" \
+            "${GIT_API_BASE}/api/v4/application/settings?allow_local_requests_from_web_hooks_and_services=true" &> /dev/null
+
+          EXITCODE_allow_local_requests_from_web_hooks_and_services=$?
+          if [ ${EXITCODE_allow_local_requests_from_web_hooks_and_services} -eq 0 ]; then
+            echo "DONE"
+          else
+            echo "FAIL"
+            continue
+          fi
+        fi
+
+        if [ ${EXITCODE_allow_local_requests_from_hooks_and_services} -ne 0 ]; then
+          echo -n "[INFO] Setting allow_local_requests_from_hooks_and_services : "
+          curl -X PUT \
+            -H 'Content-Type: application/json' \
+            -H "PRIVATE-TOKEN: ${ROOT_TOKEN}" \
+            "${GIT_API_BASE}/api/v4/application/settings?allow_local_requests_from_hooks_and_services=true" &> /dev/null
+          EXITCODE_allow_local_requests_from_hooks_and_services=$?
+          if [ ${EXITCODE_allow_local_requests_from_hooks_and_services} -eq 0 ]; then
+            echo "DONE"
+          else
+            echo "FAIL"
+            continue
+          fi
+        fi
+
+        break;
+    done
+
+    if [ ${EXITCODE_PUT_enabled_git_access_protocol} -ne 0 \
+      -o ${EXITCODE_allow_local_requests_from_web_hooks_and_services} -ne 0 \
+      -o ${EXITCODE_allow_local_requests_from_hooks_and_services} -ne 0 ]; then
+      echo "[ERROR] timeout configure gitlab"
+      exit 1
+    fi
+
+    echo -n "[INFO] root initial password : "
+    kubectl get secret gitlab-gitlab-initial-root-password -ojsonpath='{.data.password}' -n gitlab | base64 --decode ; echo
+
+    echo "[INFO] Installation and configuration was successful"
+    exit 0
+  gitlab-pv-template.yaml: |
+    apiVersion: v1
+    kind: PersistentVolume
+    metadata:
+      name: gitlab-postgresql
+    spec:
+      capacity:
+        storage: 8Gi
+      volumeMode: Filesystem
+      accessModes:
+        - ReadWriteOnce
+      persistentVolumeReclaimPolicy: Retain
+      claimRef:
+        namespace: gitlab
+        name: data-gitlab-postgresql-0
+      storageClassName: local-storage
+      hostPath:
+        path: /var/data/epoch/gitlab/postgresql
+      nodeAffinity:
+        required:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+              - #NODENAME#
+    ---
+    apiVersion: v1
+    kind: PersistentVolume
+    metadata:
+      name: gitlab-minio
+    spec:
+      capacity:
+        storage: 10Gi
+      volumeMode: Filesystem
+      accessModes:
+        - ReadWriteOnce
+      persistentVolumeReclaimPolicy: Retain
+      claimRef:
+        namespace: gitlab
+        name: gitlab-minio
+      storageClassName: local-storage
+      hostPath:
+        path: /var/data/epoch/gitlab/minio
+      nodeAffinity:
+        required:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+              - #NODENAME#
+    ---
+    apiVersion: v1
+    kind: PersistentVolume
+    metadata:
+      name: gitlab-redis
+    spec:
+      capacity:
+        storage: 8Gi
+      volumeMode: Filesystem
+      accessModes:
+        - ReadWriteOnce
+      persistentVolumeReclaimPolicy: Retain
+      claimRef:
+        namespace: gitlab
+        name: redis-data-gitlab-redis-master-0
+      storageClassName: local-storage
+      hostPath:
+        path: /var/data/epoch/gitlab/redis
+        type: DirectoryOrCreate
+      nodeAffinity:
+        required:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+              - #NODENAME#
+    ---
+    apiVersion: v1
+    kind: PersistentVolume
+    metadata:
+      name: gitlab-gitaly
+    spec:
+      capacity:
+        storage: 50Gi
+      volumeMode: Filesystem
+      accessModes:
+        - ReadWriteOnce
+      persistentVolumeReclaimPolicy: Retain
+      claimRef:
+        namespace: gitlab
+        name: repo-data-gitlab-gitaly-0
+      storageClassName: local-storage
+      hostPath:
+        path: /var/data/epoch/gitlab/gitaly
+      nodeAffinity:
+        required:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+              - #NODENAME#
+  gitlab-root-token-template.yaml: |
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: gitlab-root-token
+      namespace: #NAMESPACE#
+    type: Opaque
+    stringData:
+      TOKEN: "#ROOT_TOKEN#"
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: gitlab-installer-script
+  namespace: gitlab

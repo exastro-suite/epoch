@@ -19,6 +19,7 @@ ALL_MANIFESTS="${BASE_DIR}/epoch-install.yaml"
 SOURCE_MANIFEST="${BASE_DIR}/source"
 TEMPLATES_DIR="${BASE_DIR}/source/templates"
 TEKTON_MANIFEST="${BASE_DIR}/source/tekton"
+GITLAB_INSTALLER="${BASE_DIR}/source/gitlab"
 
 
 # ---- templatesフォルダ内のtemplateファイルをもとに定義用のyaml生成 ----
@@ -57,6 +58,29 @@ kubectl create cm gateway-httpd-pv-create-script -n epoch-system --dry-run=clien
     --from-file=${TEMPLATES_DIR}/epoch-pv-creator.sh \
     --from-file=${TEMPLATES_DIR}/exastro-authentication-infra-httpd-conf-pv-template.yaml \
     >   ${SOURCE_MANIFEST}/gateway-httpd-pv-create-script.yaml
+
+# ---- source/gitlabフォルダ内のファイルをもとにinstaller scriptのyaml生成 ----
+cat <<EOF > ${SOURCE_MANIFEST}/gitlab-installer-script.yaml
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+EOF
+kubectl create cm gitlab-installer-script -n gitlab --dry-run=client -o yaml \
+    --from-file=${GITLAB_INSTALLER}/gitlab-config.yaml \
+    --from-file=${GITLAB_INSTALLER}/gitlab-installer.sh \
+    --from-file=${GITLAB_INSTALLER}/gitlab-pv-template.yaml \
+    --from-file=${GITLAB_INSTALLER}/gitlab-root-token-template.yaml \
+    >>   ${SOURCE_MANIFEST}/gitlab-installer-script.yaml
 
 
 # ---- source内のyamlファイル定義 ----
