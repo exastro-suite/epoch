@@ -83,7 +83,7 @@ def call_cd_result_by_id(workspace_id, cd_result_id):
         globals.logger.debug('CALL {}:from[{}] workspace_id[{}] cd_result_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id, cd_result_id))
         globals.logger.debug('=' * 50)
 
-        if request.method == 'GET':
+        if request.method == 'PUT':
             # cd execute (get)
             return cd_result_update(workspace_id, cd_result_id)
         if request.method == 'GET':
@@ -96,13 +96,14 @@ def call_cd_result_by_id(workspace_id, cd_result_id):
     except Exception as e:
         return common.serverError(e, "{} error".format(inspect.currentframe().f_code.co_name))
 
-@app.route('/workspace/<int:workspace_id>/member/<string:username>/cd/result', methods=['POST'])
-def call_cd_result_member(workspace_id, username):
+@app.route('/workspace/<int:workspace_id>/member/<string:username>/cd/result/<int:cd_result_id>', methods=['POST','GET'])
+def call_cd_result_member(workspace_id, username, cd_result_id):
     """メンバーによるCD結果の呼び出し口 CD result call by members
 
     Args:
         workspace_id (int): workspace id
         username (str): username
+        cd_result_id (int): cd-result id
 
     Returns:
         response: HTTP Respose
@@ -110,15 +111,15 @@ def call_cd_result_member(workspace_id, username):
 
     try:
         globals.logger.debug('=' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}] member[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id, username))
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}] member[{}] cd_result_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id, username, cd_result_id))
         globals.logger.debug('=' * 50)
 
         if request.method == 'POST':
             # cd execute (post)
-            return cd_result_insert(workspace_id, username)
+            return cd_result_insert(workspace_id, cd_result_id, username)
         elif request.method == 'GET':
             # cd execute (get)
-            return cd_result_list(workspace_id=workspace_id, username=username)
+            return cd_result_list(workspace_id=workspace_id, cd_result_id=cd_result_id, username=username)
         else:
             # Error
             raise Exception("method not support!")
@@ -126,11 +127,12 @@ def call_cd_result_member(workspace_id, username):
     except Exception as e:
         return common.serverError(e, "{} error".format(inspect.currentframe().f_code.co_name))
 
-def cd_result_insert(workspace_id, username):
+def cd_result_insert(workspace_id, cd_result_id, username):
     """CD結果登録 cd result insert
 
     Args:
         workspace_id (int): workspace id
+        cd_result_id (int): cd-result id
         username (str): username
 
     Returns:
@@ -146,11 +148,11 @@ def cd_result_insert(workspace_id, username):
             contents = request.json.copy()
 
             # cd-result insert実行
-            cd_result_id = da_cd_result.insert_cd_result(cursor, workspace_id, username, contents)
+            lastrowid = da_cd_result.insert_cd_result(cursor, workspace_id, cd_result_id, username, contents)
 
-            globals.logger.debug('insert cd_result_id:{}'.format(cd_result_id))
+            globals.logger.debug('insert lastrowid:{}'.format(lastrowid))
 
-        return jsonify({"result": "200", "cd_result_id": cd_result_id}), 200
+        return jsonify({"result": "200", "lastrowid": lastrowid}), 200
 
     except Exception as e:
         return common.serverError(e, "{} error".format(inspect.currentframe().f_code.co_name))

@@ -31,6 +31,7 @@ import hashlib
 
 import globals
 import common
+import multi_lang
 import api_access_info
 
 # 設定ファイル読み込み・globals初期化 flask setting file read and globals initialize
@@ -160,16 +161,30 @@ def cd_execute(workspace_id):
         # リクエスト送信
         exec_response = requests.post(ita_restapi_endpoint + '?no=' + ite_menu_conductor_exec, headers=filter_headers, data=json_data)
 
+        if exec_response.status_code != 200:
+            globals.logger.error(exec_response.text)
+            error_detail = multi_lang.get_text("EP034-0001", "CD実行の呼び出しに失敗しました status:{0}".format(exec_response.status_code), exec_response.status_code)
+            raise common.UserException(error_detail)
+
         globals.logger.debug("-------------------------")
         globals.logger.debug("response:")
         globals.logger.debug(exec_response.text)
         globals.logger.debug("-------------------------")
 
+        resp_data = json.loads(exec_response.text)
+        if resp_data["status"] != "SUCCEED":
+            globals.logger.error("no={} status:{}".format(ite_menu_conductor_exec, resp_data["status"]))
+            error_detail = multi_lang.get_text("EP034-0002", "CD実行の呼び出しに失敗しました ita-status:{0} resultdata:{1}".format(eresp_data["status"], eresp_data["resultdata"]), eresp_data["status"], eresp_data["resultdata"])
+            raise common.UserException(error_detail)
+
+        # 作業IDを退避
+        cd_result_id = resp_data["resultdata"]["CONDUCTOR_INSTANCE_ID"]
+
         # 正常終了
         ret_status = 200
 
         # 戻り値をそのまま返却        
-        return jsonify({"result": ret_status}), ret_status
+        return jsonify({"result": ret_status, "cd_result_id": cd_result_id}), ret_status
 
     except common.UserException as e:
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
