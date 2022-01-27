@@ -46,5 +46,5 @@ COPY ./ /app/
 
 RUN echo "RUN START"
 
-CMD ["python3", "/app/api_logs.py"]
+CMD ["python3", "/app/api_cd_result.py"]
 

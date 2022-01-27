@@ -45,7 +45,7 @@ data:
       cd_status varchar(32),
       contents json,
       username text,
-      create_at datetime not null DEFAULT CURRENT_TIMESTAMP
+      create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
       update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     );
 
