@@ -16,33 +16,35 @@ from ja import text_list
 
 
 def get_text(text_id, origin_text, *args):
-    """テキスト取得
+    """テキスト取得 Get text
 
     Args:
         text_id (str): text id
-        origin_text (str): 原文
-        args: {0}, {1}..に埋め込むパラメータ
+        origin_text (str): 原文 Original text
+        args: {0}, {1}..に埋め込むパラメータ Parameters to be embedded in {0}, {1} ..
 
     Returns:
-        text: 変換後のテキスト
+        text: 変換後のテキスト Converted text
     """
     
     try:
         text = ""
         
-        # text_id存在チェック
-        if(text_id in text_list.TextList.lang_array): 
+        # text_id存在チェック text_id Existence check
+        if (text_id in text_list.TextList.lang_array): 
             text = (text_list.TextList.lang_array[text_id])
 
             i=0
             
             for arg in args:
                 # {0}, {1}..に埋め込む変数を第3引数以降（args）で指定した文字列に置き換える
+                # Replace the variable to be embedded in {0}, {1} .. with the character string specified by the third argument and after (args).
                 text = text.replace("{" + str(i) + "}", arg)
                 i += 1
                 
         else: 
-            # text_idが存在しない場合は、原文を表示
+            # text_idが存在しない場合は、原文を返却
+            # If text_id does not exist, return the original text
             text = origin_text
 
         return text
