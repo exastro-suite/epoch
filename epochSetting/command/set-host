@@ -43,7 +43,30 @@ echo "[INFO] Call set-host command"
 kubectl exec -i deploy/epoch-setting-tools -n epoch-system -- bash /scripts/set-host.sh $1
 
 echo "[INFO] Call set-host-gitlab command"
-kubectl exec -i deploy/epoch-setting-tools -n epoch-system -- bash -c "bash /scripts/set-host.sh $1 &"
+cat <<EOF | sed -e "s/#HOST#/$1/g" | kubectl apply -f -
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: set-host-gitlab
+  namespace: epoch-system
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        app: set-host-gitlab
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: set-host-gitlab
+        image: exastro/epoch-kube-command:0.1.5_20211026_1600
+        command: ["sh", "-c"]
+        args:
+          - |
+            kubectl exec -i deploy/epoch-setting-tools -n epoch-system -- bash /scripts/set-host-gitlab.sh #HOST# &&
+            kubectl delete job/set-host-gitlab -n epoch-system
+EOF
+
 
 echo "**** ${BASENAME} completed successfully ****"
 exit 0
