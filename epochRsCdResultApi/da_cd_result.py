@@ -18,17 +18,18 @@ import json
 import globals
 from dbconnector import dbcursor
 
-def insert_cd_result(cursor, workspace_id, username, contents):
+def insert_cd_result(cursor, workspace_id, cd_result_id, username, contents):
     """cd_result insert
 
     Args:
         cursor (mysql.connector.cursor): カーソル cursor
         workspace_id (int): workspace id
+        cd_result_id (int): cd-result id
         username (str): username
         contents (dict): contents (include "cd_staus")
 
     Returns:
-        int: cd_result_id
+        int: lastrowid
         
     """
     # insert実行 insert excute
@@ -36,6 +37,7 @@ def insert_cd_result(cursor, workspace_id, username, contents):
                 INSERT INTO cd_result
                     (
                         workspace_id,
+                        cd_result_id,
                         cd_status,
                         contents,
                         username
@@ -43,12 +45,14 @@ def insert_cd_result(cursor, workspace_id, username, contents):
                     values
                     (
                         %(workspace_id)s,
+                        %(cd_result_id)s,
                         %(cd_status)s,
                         %(contents)s,
                         %(username)s
                     )''',
                 {
                     'workspace_id' :                workspace_id,
+                    'cd_result_id' :                cd_result_id,
                     'cd_status' :                   contents["cd_status"],
                     'contents' :                    json.dumps(contents),
                     'username' :                    username,
@@ -58,13 +62,13 @@ def insert_cd_result(cursor, workspace_id, username, contents):
     # Return the added cd_result_id
     return cursor.lastrowid
 
-def update_cd_result(cursor, cd_result_id, workspace_id, contents):
+def update_cd_result(cursor, workspace_id, cd_result_id, contents):
     """cd_result update
 
     Args:
         cursor (mysql.connector.cursor): カーソル cursor
-        cd_result_id (int): cd-result id (update key)
-        workspace_id (int): workspace id (Pokayoke)
+        workspace_id (int): workspace id
+        cd_result_id (int): cd-result id
         contents (dict)): contents (include "cd_staus")
 
     Returns:
@@ -72,8 +76,8 @@ def update_cd_result(cursor, cd_result_id, workspace_id, contents):
         
     """
     upd_json = {
-            'cd_result_id' : cd_result_id,
             'workspace_id' : workspace_id,
+            'cd_result_id' : cd_result_id,
             'cd_staus' : contents["cd_staus"],
             'contents' : json.dumps(contents),
     }
@@ -82,8 +86,8 @@ def update_cd_result(cursor, cd_result_id, workspace_id, contents):
     sql = 'UPDATE cd_result' \
             ' SET cd_staus = %(cd_staus)s' \
             ' , contents =  %(contents)s' \
-            ' WHERE cd_result_id = %(cd_result_id)s' \
-            ' AND workspace_id = %(workspace_id)s'
+            ' WHERE workspace_id = %(workspace_id)s' \
+            ' AND cd_result_id = %(cd_result_id)s'
 
     # cursor.affected_rows()
     # CD結果情報 update実行 cd result update excute
@@ -93,13 +97,13 @@ def update_cd_result(cursor, cd_result_id, workspace_id, contents):
     # 更新した件数をreturn Return the count of updates
     return upd_cnt
 
-def delete_cd_result(cursor, cd_result_id, workspace_id):
+def delete_cd_result(cursor, workspace_id, cd_result_id):
     """cd_result delete
 
     Args:
         cursor (mysql.connector.cursor): カーソル cursor
-        cd_result_id (int): cd-result id (update key)
-        workspace_id (int): workspace id (Pokayoke)
+        workspace_id (int): workspace id
+        cd_result_id (int): cd-result id
 
     Returns:
         int: 削除件数 delete count
@@ -107,11 +111,11 @@ def delete_cd_result(cursor, cd_result_id, workspace_id):
     """
     # CD結果情報 delete実行 cd result delete execution
     cursor.execute('DELETE FROM cd_result' \
-                    ' WHERE cd_result_id = %(cd_result_id)s' \
-                    ' AND workspace_id = %(workspace_id)s',
+                    ' WHERE workspace_id = %(workspace_id)s' \
+                    ' AND cd_result_id = %(cd_result_id)s',
         {
-            'cd_result_id' : cd_result_id,
             'workspace_id' : workspace_id,
+            'cd_result_id' : cd_result_id,
         }
     )
     # 削除した件数をreturn 
