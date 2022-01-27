@@ -49,7 +49,7 @@ def insert_cd_result(cursor, workspace_id, username, contents):
                     )''',
                 {
                     'workspace_id' :                workspace_id,
-                    'cd_status' :                   contents("cd_status"),
+                    'cd_status' :                   contents["cd_status"],
                     'contents' :                    json.dumps(contents),
                     'username' :                    username,
                 })
@@ -74,7 +74,7 @@ def update_cd_result(cursor, cd_result_id, workspace_id, contents):
     upd_json = {
             'cd_result_id' : cd_result_id,
             'workspace_id' : workspace_id,
-            'cd_staus' : contents("cd_staus"),
+            'cd_staus' : contents["cd_staus"],
             'contents' : json.dumps(contents),
     }
 
@@ -134,36 +134,41 @@ def select_cd_result(cursor, workspace_id, cd_result_id=None, cd_status_in=[], u
     """
 
     sql_limit = ""
-    cond_where = ", workspace_id = %(workspace_id)s"
+    cond_where = " AND workspace_id = %(workspace_id)s"
     cond_json = {
             'workspace_id' : workspace_id,
     }
     # 条件がある場合に設定
     # Set when there are conditions
     if cd_result_id is not None:
-        cond_where += ", cd_result_id = %(cd_result_id)s"
+        cond_where += " AND cd_result_id = %(cd_result_id)s"
         cond_json["cd_result_id"] = cd_result_id
 
     if len(cd_status_in) > 0:
-        cond_where += ", cd_status in %(cd_status_in)s"
-        cond_json["cd_status_in"] = cd_status_in
+        cond_str = ""
+        for (idx, val) in enumerate(cd_status_in):
+            cond_str += f", %(cd_status_in_{idx})s"
+            cond_json[f"cd_status_in_{idx}"] = val
+        cond_where += " AND cd_status in ({})".format(cond_str[2:])
 
     if username is not None:
-        cond_where += ", username = %(username)s"
+        cond_where += " AND username = %(username)s"
         cond_json["username"] = username
 
     # 最新のみの場合
     if latest:
-        sql_limit = "LIMIT 1"
+        sql_limit = " LIMIT 1"
 
     # 常に取得は降順
-    sql_order = " ORDER BY update_at desc"
+    sql_order = " ORDER BY update_at DESC"
 
     # sql
     sql = "SELECT * FROM cd_result" \
-            " WHERE" + cond_json[2:] + \
+            " WHERE " + cond_where[4:] + \
             sql_order + \
             sql_limit
+
+    # globals.logger.debug(f'sql:{sql}')
     # select実行 select execute
     cursor.execute(sql, cond_json)
     rows = cursor.fetchall()

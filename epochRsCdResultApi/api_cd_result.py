@@ -67,7 +67,7 @@ def call_cd_result(workspace_id):
         return common.serverError(e, "{} error".format(inspect.currentframe().f_code.co_name))
 
 @app.route('/workspace/<int:workspace_id>/cd/result/<int:cd_result_id>', methods=['PUT', 'GET'])
-def call_cd_result_by_id(workspace_id):
+def call_cd_result_by_id(workspace_id, cd_result_id):
     """結果IDによるCD結果の呼び出し口 CD result call by cd_result_id
 
     Args:
@@ -97,7 +97,7 @@ def call_cd_result_by_id(workspace_id):
         return common.serverError(e, "{} error".format(inspect.currentframe().f_code.co_name))
 
 @app.route('/workspace/<int:workspace_id>/member/<string:username>/cd/result', methods=['POST'])
-def call_cd_result_member(workspace_id, username, log_kind):
+def call_cd_result_member(workspace_id, username):
     """メンバーによるCD結果の呼び出し口 CD result call by members
 
     Args:
@@ -214,7 +214,7 @@ def cd_result_list(workspace_id, cd_result_id=None, username=None, latest=False)
 
         #    latest (bool): 最新のみ
         if request.args.get('cd_status_in') is not None:
-            cd_status_in = request.args.get('cd_status_in').split("_")
+            cd_status_in = request.args.get('cd_status_in').split(".")
         else:
             cd_status_in = []
 
