@@ -17,7 +17,7 @@ metadata:
   name: epoch-rs-cd-result-conf
   namespace: epoch-system
 data:
-  api_logs.conf: |
+  api_cd_result.conf: |
     TZ='Asia/Tokyo'
     MYSQL_HOST='rs-cd-result-db'
     MYSQL_PORT='3306'
