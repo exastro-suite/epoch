@@ -366,16 +366,18 @@ def cd_execute(workspace_id):
 
         # 取得したJSON結果が正常でない場合、例外を返す If the JSON result obtained is not normal, an exception will be returned.
         ret = json.loads(response.text)
-        rows = ret["rows"]
+        workspace_info = ret["rows"][0]
 
+        dest_namespace = ""
         # workspace情報のCD実行権限があるかチェックする Check if you have CD execution permission for workspace information
         found_user = False
         # 環境情報がない場合も考慮 Consider even if there is no environmental information
-        if "environments" in rows[0]["cd_config"]:
+        if "environments" in workspace_info["cd_config"]:
             # 選択された環境と一致するまで環境情報をすべて処理する Process all environment information until it matches the selected environment
-            for env in rows[0]["cd_config"]["environments"]:
+            for env in workspace_info["cd_config"]["environments"]:
                 # 実行環境に該当する情報のユーザーIDを取得する Acquire the user ID of the information corresponding to the execution environment
                 if env["name"] == request_json["environmentName"]:
+                    dest_namespace = env["deploy_destination"]["namespace"]
                     # CD実行権限ありの人すべての場合は、OKとする OK for all people with CD execution permission
                     if env["cd_exec_users"]["user_select"] == "all":
                         found_user = True
@@ -390,6 +392,23 @@ def cd_execute(workspace_id):
             error_detail = multi_lang.get_text("EP020-0020", "CD実行権限がありません")
             globals.logger.debug(error_detail)
             raise common.AuthException(error_detail)
+
+        api_url = "{}://{}:{}/{}/user/{}".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
+                                                os.environ['EPOCH_EPAI_API_HOST'],
+                                                os.environ['EPOCH_EPAI_API_PORT'],
+                                                os.environ["EPOCH_EPAI_REALM_NAME"],
+                                                user_id
+                                            )
+        #
+        # get users - ユーザー取得
+        #
+        response = requests.get(api_url)
+        if response.status_code != 200 and response.status_code != 404:
+            error_detail = multi_lang.get_text("EP020-0008", "ユーザー情報の取得に失敗しました")
+            raise common.UserException("{} Error user get status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
+
+        users = json.loads(response.text)
+        globals.logger.debug(f"users:{users}")
 
         # ヘッダ情報 header info.
         post_headers = {
@@ -437,11 +456,66 @@ def cd_execute(workspace_id):
 
         # CD実行(ITA) cd execute ita
         response = requests.post(apiInfo + "/cd/execute", headers=post_headers, data=post_data)
-        # 戻り値がJson形式かチェックする return parameter is json?
+        # 正常終了したか確認 Check if it ended normally
         if response.status_code != 200:  
             globals.logger.debug("status error: ita/execute:response:{}".format(response.text))
-            error_detail = "CD実行に失敗しました"
+            error_detail = multi_lang.get_text("EP020-0028", "CD実行に失敗しました")
             raise common.UserException(error_detail)
+
+        # 戻り値をjson形式に変換 Convert return value to json format
+        ita_ret = json.loads(response.text)
+
+        # CD実行結果を登録する Register the CD execution result
+        trace_id = "{0:010}".format(int(ita_ret["cd_result_id"]))
+        post_data = {
+            "trace_id": trace_id,
+            "cd_status": const.CD_STATUS_START,
+            "environment_name": request_json["environmentName"],
+            "namespace": dest_namespace,
+            "workspace_info": workspace_info,
+            "ita_results": {
+            },
+            "argocd_results": {
+            },
+        }
+
+        api_url = "{}://{}:{}/workspace/{}/member/{}/cd/result/{}".format(os.environ['EPOCH_RS_CD_RESULT_PROTOCOL'],
+                                                    os.environ['EPOCH_RS_CD_RESULT_HOST'],
+                                                    os.environ['EPOCH_RS_CD_RESULT_PORT'],
+                                                    workspace_id,
+                                                    users["info"]["username"],
+                                                    trace_id
+                                                    )
+
+        response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
+        if response.status_code != 200:
+            error_detail = multi_lang.get_text("EP020-0029", "CD実行結果の登録に失敗しました")
+            globals.logger.debug(error_detail)
+            raise common.UserException("{} Error cd result registration status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
+
+
+        #
+        # logs output - ログ出力
+        #
+        post_data = {
+            "action" : "cd execute",
+            "cd_execute_contents": post_data,
+            "cd_execute_user": users["info"]["username"],
+        }
+
+        api_url = "{}://{}:{}/workspace/{}/member/{}/logs/{}".format(os.environ['EPOCH_RS_LOGS_PROTOCOL'],
+                                                    os.environ['EPOCH_RS_LOGS_HOST'],
+                                                    os.environ['EPOCH_RS_LOGS_PORT'],
+                                                    workspace_id,
+                                                    users["info"]["username"],
+                                                    const.LOG_KIND_UPDATE
+                                                    )
+
+        response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
+        if response.status_code != 200:
+            error_detail = multi_lang.get_text("EP020-0023", "ログ出力に失敗しました")
+            globals.logger.debug(error_detail)
+            raise common.UserException("{} Error log output status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
 
         # 正常終了 normal return code
         ret_status = 200
