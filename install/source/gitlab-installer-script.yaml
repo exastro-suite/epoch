@@ -120,7 +120,7 @@ data:
     # install gitlab
     #
     echo "[INFO] START : helm install"
-    helm install gitlab ${CHART_FILE} -n "${GITLAB_NAMESPACE}" --values ${BASEDIR}/gitlab-config.yaml
+    helm install gitlab ${CHART_FILE} -n "${GITLAB_NAMESPACE}" --values ${BASEDIR}/gitlab-config.yaml --timeout 120m
     if [ $? -ne 0 ]; then
       echo "[ERROR] helm install"
       exit 1
