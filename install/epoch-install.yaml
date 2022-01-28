@@ -1456,6 +1456,205 @@ spec:
   selector:
     name: rs-logs-db
 
+#---- epoch-rs-cd-result-api.yaml
+---
+#   Copyright 2022 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: epoch-rs-cd-result-conf
+  namespace: epoch-system
+data:
+  api_cd_result.conf: |
+    TZ='Asia/Tokyo'
+    MYSQL_HOST='rs-cd-result-db'
+    MYSQL_PORT='3306'
+    MYSQL_DATABASE='rs_cd_result_db'
+    MYSQL_USER='app_user'
+    MYSQL_PASSWORD='password'
+    RESOURCE_CREATION_WAIT=60
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: epoch-rs-cd-result-api
+  namespace: epoch-system
+spec:
+  selector:
+    matchLabels:
+      name: epoch-rs-cd-result-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: epoch-rs-cd-result-api
+    spec:
+      volumes:
+      - name: epoch-rs-cd-result-conf
+        configMap:
+          name: epoch-rs-cd-result-conf
+      containers:
+      - name: epoch-rs-cd-result-api
+        image: exastro/epoch-rs-cd-result-api:0.3.1_20220127_1330
+        env:
+        - name: CONFIG_API_CD_RESULT_PATH
+          value: "/etc/epoch/epochRsCdResultApi/api_cd_result.conf"
+        - name: FLASK_ENV
+          value: "development"
+        - name: API_CD_RESULT_PORT
+          value: "8000"
+        - name: PYTHONIOENCODING
+          value: utf-8
+        volumeMounts:
+        - name: epoch-rs-cd-result-conf
+          mountPath: /etc/epoch/epochRsCdResultApi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: epoch-rs-cd-result-api
+  labels:
+    name: epoch-rs-cd-result-api
+  namespace: epoch-system
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+  selector:
+    name: epoch-rs-cd-result-api
+
+#---- epoch-rs-cd-result-db.yaml
+---
+#   Copyright 2022 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rs-cd-result-db-myconf
+  namespace: epoch-system
+data:
+  my.cnf: |
+    [mysqld]
+    character-set-server=utf8mb4
+    collation-server=utf8mb4_bin
+    secure_file_priv=/tmp
+    [client]
+    default-character-set=utf8mb4
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rs-cd-result-db-initdb
+  namespace: epoch-system
+data:
+  workspace.sql: |
+    create database rs_cd_result_db
+      CHARACTER SET utf8mb4
+      COLLATE utf8mb4_unicode_ci;
+    create user app_user IDENTIFIED WITH mysql_native_password BY 'password';
+    GRANT ALL ON rs_cd_result_db.* TO app_user;
+    use rs_cd_result_db;
+    create table cd_result (
+      workspace_id int unsigned not null,
+      cd_result_id int unsigned not null,
+      cd_status varchar(32),
+      contents json,
+      username text,
+      create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
+      update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      PRIMARY KEY (workspace_id, cd_result_id)
+    );
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rs-cd-result-db
+  namespace: epoch-system
+spec:
+  selector:
+    matchLabels:
+      name: rs-cd-result-db
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: rs-cd-result-db
+    spec:
+      volumes:
+      - name: mysqlconf-volume
+        configMap:
+          name: rs-cd-result-db-myconf
+      # COMMENT OUT:Persistent data retention
+      #- name: mysqldata
+      #  hostPath:
+      #    path: /var/data/epoch/rs_cd_result_db/mysql
+      #    type: DirectoryOrCreate
+      - name: mysqlinitdb-volume
+        configMap:
+          name: rs-cd-result-db-initdb
+      containers:
+      - name: mysql
+        image: mysql
+        volumeMounts:
+        # COMMENT OUT:Persistent data retention
+        #- name: mysqldata
+        #  mountPath: /var/lib/mysql
+        - name: mysqlconf-volume
+          mountPath: /etc/mysql
+        - name: mysqlinitdb-volume
+          mountPath: /docker-entrypoint-initdb.d
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: password
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rs-cd-result-db
+  labels:
+    name: rs-cd-result-db
+  namespace: epoch-system
+spec:
+  type: ClusterIP
+  ports:
+  - name: mysql
+    port: 3306
+    targetPort: 3306
+  selector:
+    name: rs-cd-result-db
+
 #---- epoch-service-api-config.yaml
 ---
 #   Copyright 2019 NEC Corporation
@@ -1499,6 +1698,9 @@ data:
   EPOCH_RS_WORKSPACE_PROTOCOL: "http"
   EPOCH_RS_WORKSPACE_HOST: "epoch-rs-workspace-api"
   EPOCH_RS_WORKSPACE_PORT: "8000"
+  EPOCH_RS_CD_RESULT_PROTOCOL: "http"
+  EPOCH_RS_CD_RESULT_HOST: "epoch-rs-cd-result-api"
+  EPOCH_RS_CD_RESULT_PORT: "8000"
   EPOCH_RS_LOGS_PROTOCOL: "http"
   EPOCH_RS_LOGS_HOST: "epoch-rs-logs-api"
   EPOCH_RS_LOGS_PORT: "8000"
@@ -2265,7 +2467,7 @@ spec:
           claimName: exastro-authentication-infra-httpd-conf
       containers:
       - name: gateway-httpd
-        image: exastro/gateway-httpd:0.3.1_20220125_0900
+        image: exastro/gateway-httpd:0.3.1_20220126_0900
         volumeMounts:
         - name: gateway-httpd-conf
           mountPath: /etc/httpd/conf.d/exastroSettings
@@ -2280,10 +2482,14 @@ metadata:
   namespace: exastro-platform-authentication-infra
 spec:
   ports:
-  - name: http
+  - name: epoch
     port: 30443
     targetPort: 30443
     nodePort: 30443
+  - name: gitlab
+    port: 31183
+    targetPort: 31183
+    nodePort: 31183
   selector:
     name: gateway-httpd
   type: NodePort
@@ -2422,207 +2628,6 @@ spec:
         args:
           - |
             bash /job-script/epoch-pv-creator.sh
-
-#---- authentication-infra-setting.yaml
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: authentication-infra-setting-script
-  namespace: epoch-system
-data:
-  setting-script.sh: |
-    #!/bin/bash
-
-    MY_HOST="$1"
-
-    # patch configmap data
-    #echo "---- get configmap"
-    #EXASTRO_KEYCLOAK_HOST=$(kubectl get cm exastro-platform-authentication-infra-env -n exastro-platform-authentication-infra -o json | jq -r ".data.EXASTRO_KEYCLOAK_HOST")
-    #EXASTRO_KEYCLOAK_PROTOCOL=$(kubectl get cm exastro-platform-authentication-infra-env -n exastro-platform-authentication-infra -o json | jq -r ".data.EXASTRO_KEYCLOAK_PROTOCOL")
-    #EXASTRO_KEYCLOAK_PORT=$(kubectl get cm exastro-platform-authentication-infra-env -n exastro-platform-authentication-infra -o json | jq -r ".data.EXASTRO_KEYCLOAK_PORT")
-
-    PASSPHRASE=$(< /dev/urandom tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq)
-    PASSW=$(< /dev/urandom tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq)
-    PASSW_EPOCH=$(< /dev/urandom tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq)
-    PASSPHRASE_B64=$(echo -n "${PASSPHRASE}" | base64)
-    PASSW_B64=$(echo -n "${PASSW}" | base64)
-    PASSW_EPOCH_B64=$(echo -n "${PASSW_EPOCH}" | base64)
-
-    echo "---- patch configmap"
-    kubectl patch configmap -n exastro-platform-authentication-infra exastro-platform-authentication-infra-env -p "\
-    {\
-        \"data\" : {\
-            \"EXASTRO_KEYCLOAK_HOST\" : \"${MY_HOST}\"\
-        }\
-    }"
-
-    kubectl patch configmap -n epoch-system epoch-service-api-config -p "\
-    {\
-        \"data\" : {\
-            \"EPOCH_EPAI_HOST\" : \"${MY_HOST}\"\
-        }\
-    }"
-
-    kubectl patch secret -n exastro-platform-authentication-infra exastro-platform-authentication-infra-secret -p "\
-    {\
-        \"data\" : {\
-            \"GATEWAY_CRYPTO_PASSPHRASE\" : \"${PASSPHRASE_B64}\",\
-            \"KEYCLOAK_PASSWORD\" : \"${PASSW_B64}\",\
-            \"EPOCH_PASSWORD\" : \"${PASSW_EPOCH_B64}\"\
-        }\
-    }"
-
-
-    # Rollout Restart API   
-    echo "---- rollout restart"
-    kubectl rollout restart deploy -n epoch-system epoch-service-api2
-    kubectl rollout restart deploy -n exastro-platform-authentication-infra authentication-infra-api
-    kubectl rollout restart deploy -n exastro-platform-authentication-infra keycloak
-
-    #
-    # Waitting restart
-    #
-    echo "==== Waitting restart"
-    while true; do
-      sleep 5;
-      if [ $(kubectl get pod -n exastro-platform-authentication-infra -o json | jq -r ".items[].status.containerStatuses[].ready" | sed -e "/true/d" | wc -l) -ne 0 ]; then
-        continue;
-      fi
-      break;
-    done;
-
-    # init setting api call
-    echo "---- init setting api call"
-    curl -X POST \
-      -H  'content-type: application/json'    \
-      -d  @- \
-      http://authentication-infra-api.exastro-platform-authentication-infra.svc:8000/settings \
-      << EOF
-      {
-          "realm_name": "exastroplatform",
-          "realm_option": {
-              "displayName": "Exastro Platform",
-              "enabled": "True",
-              "registrationAllowed": "True"
-          },
-          "realm_roles": [
-              "epoch-user",
-              "epoch-ws-1-admin",
-              "epoch-ws-1-user",
-              "epoch-system"
-          ],
-          "groups": [
-              {
-                  "parent_group": "",
-                  "group_name": "epoch-user"
-              },
-              {
-                  "parent_group": "epoch-user",
-                  "group_name": "epoch-og-1"
-              },
-              {
-                  "parent_group": "epoch-og-1",
-                  "group_name": "epoch-ws-1"
-              },
-              {
-                  "parent_group": "epoch-ws-1",
-                  "group_name": "epoch-ws-1-admin"
-              },
-              {
-                  "parent_group": "epoch-ws-1",
-                  "group_name": "epoch-ws-1-user"
-              }
-          ],
-          "group_mappings": [
-              {
-                  "role_name": "epoch-user",
-                  "group_name": "epoch-user"
-              },
-              {
-                  "role_name": "epoch-ws-1-admin",
-                  "group_name": "epoch-ws-1-admin"
-              },
-              {
-                  "role_name": "epoch-ws-1-user",
-                  "group_name": "epoch-ws-1-user"
-              }
-          ],
-          "default_group_name": "epoch-user",
-          "users": [
-          ],
-          "admin_users": [
-              {
-                  "user_name": "epoch-admin",
-                  "user_password": "${PASSW_EPOCH}",
-                  "user_groups": [],
-                  "user_realm_roles": [],
-                  "user_option": {
-                      "enabled": "True"
-                  }
-              }
-          ],
-          "client_id": "epoch-system",
-          "client_protocol": "https",
-          "client_host": "${MY_HOST}",
-          "client_port": "30443",
-          "conf_template": "epoch-system-template.conf",
-          "token_user": "admin",
-          "token_password": "${PASSW}",
-          "token_realm_name": "master"
-      }
-    EOF
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: authentication-infra-setting
-  namespace: epoch-system
-spec:
-  # backoffLimit: 0
-  selector:
-    matchLabels:
-      name: authentication-infra-setting
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        name: authentication-infra-setting
-    spec:
-      # restartPolicy: Never
-      volumes:
-      - name: authentication-infra-setting-script
-        configMap:
-          name: authentication-infra-setting-script
-      containers:
-      - name: authentication-infra-setting
-        image: exastro/epoch-kube-command:0.1.5_20211026_1600
-        volumeMounts:
-        - mountPath: /app
-          name: authentication-infra-setting-script
-        # command: ["sh", "-c"]
-        # args:
-        #   - |
-        #     bash /authentication-infra-setting-script/setting-script.sh
-
----
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: authentication-infra-setting
-  labels:
-    name: authentication-infra-setting
-  namespace: epoch-system
-spec:
-  type: ClusterIP
-  ports:
-  - name: http
-    port: 8000
-    targetPort: 8000
-  selector:
-    name: authentication-infra-setting
 
 #---- tekton-installer-script.yaml
 ---
@@ -6537,3 +6542,1052 @@ spec:
         args:
           - |
             bash /tekton-installer-script/tekton-installer-script.sh
+
+#---- gitlab-installer.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: gitlab
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: gitlab-installer
+  namespace: gitlab
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: gitlab-installer-crole
+rules:
+ - apiGroups: [""]
+   resources: ["persistentvolumes"]
+   verbs: ["get", "list", "watch", "create", "update", "patch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+ name: gitlab-installer-crolebinding
+subjects:
+- kind: ServiceAccount
+  name: gitlab-installer
+  namespace: gitlab
+roleRef:
+  kind: ClusterRole
+  name: gitlab-installer-crole
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+ name: gitlab-installer-admin-rolebinding
+subjects:
+- kind: ServiceAccount
+  name: gitlab-installer
+  namespace: gitlab
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+ name: gitlab-installer-rolebinding
+ namespace: gitlab
+subjects:
+- kind: ServiceAccount
+  name: gitlab-installer
+  namespace: gitlab
+roleRef:
+  kind: ClusterRole
+  name: admin
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: gitlab-installer
+  namespace: gitlab
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        app: gitlab-installer
+    spec:
+      restartPolicy: Never
+      volumes:
+      - name: gitlab-pv
+        hostPath:
+          path: /var/data/epoch/gitlab
+          type: DirectoryOrCreate
+      - name: gitlab-installer-script
+        configMap:
+          name: gitlab-installer-script
+      serviceAccount: gitlab-installer
+      serviceAccountName: gitlab-installer
+      containers:
+      - name: gitlab-installer
+        image: exastro/epoch-gitlab-installer:0.3.1_20220124_1700
+        volumeMounts:
+        - mountPath: /gitlab-pv
+          name: gitlab-pv
+        - mountPath: /installer/script
+          name: gitlab-installer-script
+        command: ["sh", "-c"]
+        args:
+          - |
+            bash /installer/script/gitlab-installer.sh
+
+#---- gitlab-installer-script.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+data:
+  gitlab-config.yaml: |
+    global:
+      edition: ce
+      ingress:
+        configureCertmanager: false
+      hosts:
+        domain: gitlab.svc
+        https: true
+        gitlab:
+          https: true
+        registry:
+          servicePort: 5000
+          https: true
+        minio:
+          https: false
+    nginx-ingress:
+      enabled: false
+    certmanager:
+      install: false
+    prometheus:
+      install: false
+    gitlab-runner:
+      install: false
+    gitlab:
+      unicorn:
+        minReplicas: 1
+        maxReplicas: 1
+      sidekiq:
+        minReplicas: 1
+        maxReplicas: 1
+      gitlab-shell:
+        enabled: false
+        minReplicas: 1
+        maxReplicas: 1
+    registry:
+      enabled: true
+      hpa:
+        minReplicas: 1
+        maxReplicas: 1
+  gitlab-installer.sh: |
+    #!/bin/bash
+    #   Copyright 2019 NEC Corporation
+    #
+    #   Licensed under the Apache License, Version 2.0 (the "License");
+    #   you may not use this file except in compliance with the License.
+    #   You may obtain a copy of the License at
+    #
+    #       http://www.apache.org/licenses/LICENSE-2.0
+    #
+    #   Unless required by applicable law or agreed to in writing, software
+    #   distributed under the License is distributed on an "AS IS" BASIS,
+    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    #   See the License for the specific language governing permissions and
+    #   limitations under the License.
+
+    GITLAB_NAMESPACE="gitlab"
+    GITLAB_CONFIG_SETTING_RETRY=60
+    GIT_API_BASE="http://gitlab-webservice-default:8181"
+
+
+    BASEDIR=$(dirname $0)
+
+    # version 5.6.2
+    CHART_FILE=/installer/chart/gitlab-5.6.2.tgz
+    DEPLOY_RAILS_RUNNER=gitlab-toolbox
+
+    #
+    # Create and Initialize PV Directory
+    #
+    echo "[INFO] START : Create and Initialize PV Directory"
+
+    rm -rf /gitlab-pv/*
+    mkdir -p /gitlab-pv/postgresql
+    mkdir -p /gitlab-pv/minio
+    mkdir -p /gitlab-pv/redis
+    mkdir -p /gitlab-pv/gitaly
+    chmod 777 /gitlab-pv/*
+    #
+    # Get NodeName
+    #
+    echo "[INFO] START : Get NodeName"
+    POD_NAME=${HOSTNAME}
+    echo "POD_NAME: ${POD_NAME}"
+
+    NODENAME=$(kubectl get pod -n "${GITLAB_NAMESPACE}" "${POD_NAME}" -o jsonpath='{.spec.nodeName}' )
+    if [ $? -ne 0 ]; then
+      echo "[ERROR] get nodename"
+    fi
+    echo "[INFO] NODENAME : ${NODENAME}"
+
+    #kubectl delete job gitlab-pv-initializer -n "${GITLAB_NAMESPACE}"
+
+    #
+    # Create PV
+    #
+    echo "[INFO] START : create pv"
+    sed -e  "s/#NODENAME#/${NODENAME}/g" ${BASEDIR}/gitlab-pv-template.yaml |\
+    kubectl apply -f -
+    if [ $? -ne 0 ]; then
+      echo "[ERROR] apply pv"
+      exit 1
+    fi
+
+    #
+    # install gitlab
+    #
+    echo "[INFO] START : helm install"
+    helm install gitlab ${CHART_FILE} -n "${GITLAB_NAMESPACE}" --values ${BASEDIR}/gitlab-config.yaml
+    if [ $? -ne 0 ]; then
+      echo "[ERROR] helm install"
+      exit 1
+    fi
+
+    #
+    # Waitting Runner Up
+    #
+    echo "[INFO] START : Waitting Runner Up"
+    while true; do
+        sleep 5;
+        echo -n "."
+        NOT_READY_COUNT=$(kubectl get pod -n "${GITLAB_NAMESPACE}" -o jsonpath='{range .items[*]}{@.status.phase}{"\n"}' | sed -e "/Running/d" -e "/Succeeded/d" -e "/^$/d" | wc -l)
+        if [ $? -ne 0 ]; then
+          continue;
+        fi
+        if [ ${NOT_READY_COUNT} -ne 0 ]; then
+          continue;
+        fi
+        kubectl get deploy ${DEPLOY_RAILS_RUNNER} -n "${GITLAB_NAMESPACE}" &> /dev/null
+        if [ $? -ne 0 ]; then
+          continue;
+        fi
+        kubectl get deploy gitlab-webservice-default -n "${GITLAB_NAMESPACE}" &> /dev/null
+        if [ $? -ne 0 ]; then
+          continue;
+        fi
+        echo ""
+        break;
+    done;
+
+    #
+    # Generate root token
+    #
+    echo "[INFO] START : Generate root token"
+    TOKEN_LENGTH=20
+    ROOT_TOKEN=$(cat /dev/urandom | sed -e 's/[^A-Za-z0-9]//g' | base64 | fold -w 20 | head -n 1)
+    if [ $? -ne 0 ]; then
+      echo "[ERROR] generate ROOT_TOKEN"
+    fi
+
+    echo "[INFO] ROOT_TOKEN : ${ROOT_TOKEN}"
+    sed -e  "s|#ROOT_TOKEN#|${ROOT_TOKEN}|g" \
+        -e  "s|#NAMESPACE#|${GITLAB_NAMESPACE}|g" \
+        ${BASEDIR}/gitlab-root-token-template.yaml |\
+    kubectl apply -f -
+    if [ $? -ne 0 ]; then
+      echo "[ERROR] generate ROOT_TOKEN secret"
+      exit 1
+    fi
+
+
+    #
+    # Setting root token
+    #
+    echo "[INFO] START : Setting root token"
+    kubectl exec -i deploy/${DEPLOY_RAILS_RUNNER} -n "${GITLAB_NAMESPACE}" \
+    -- gitlab-rails runner \
+    "token = User.find_by_username('root').personal_access_tokens.create(scopes: [:api], name: 'epoch system token'); token.set_token('${ROOT_TOKEN}'); token.save!"
+    if [ $? -ne 0 ]; then
+      echo "[ERROR] Setting root token"
+      exit 1
+    fi
+
+    #
+    # configure gitlab
+    #
+    EXITCODE_PUT_enabled_git_access_protocol=-1
+    EXITCODE_allow_local_requests_from_web_hooks_and_services=-1
+    EXITCODE_allow_local_requests_from_hooks_and_services=-1
+
+    for ((i=1; i<=${GITLAB_CONFIG_SETTING_RETRY}; i++)); do
+        sleep 10;
+
+        if [ ${EXITCODE_PUT_enabled_git_access_protocol} -ne 0 ]; then
+          echo -n "[INFO] Setting enabled_git_access_protocol : "
+          STATUS_CODE=$( \
+            curl -X PUT \
+            -H 'Content-Type: application/json' \
+            -H "PRIVATE-TOKEN: ${ROOT_TOKEN}" \
+            -w '%{http_code}\n' -o /dev/null \
+            "${GIT_API_BASE}/api/v4/application/settings?enabled_git_access_protocol=http" \
+          )
+
+          if [ $? -eq 0 -a "${STATUS_CODE}" = "200" ]; then
+            EXITCODE_PUT_enabled_git_access_protocol=0
+            echo "DONE"
+          else
+            echo "FAIL"
+            continue
+          fi
+        fi
+
+        if [ ${EXITCODE_allow_local_requests_from_web_hooks_and_services} -ne 0 ]; then
+          echo -n "[INFO] Setting allow_local_requests_from_web_hooks_and_services : "
+          STATUS_CODE=$( \
+            curl -X PUT \
+              -H 'Content-Type: application/json' \
+              -H "PRIVATE-TOKEN: ${ROOT_TOKEN}" \
+              -w '%{http_code}\n' -o /dev/null \
+              "${GIT_API_BASE}/api/v4/application/settings?allow_local_requests_from_web_hooks_and_services=true" \
+          )
+
+          if [ $? -eq 0 -a "${STATUS_CODE}" = "200" ]; then
+            EXITCODE_allow_local_requests_from_web_hooks_and_services=0
+            echo "DONE"
+          else
+            echo "FAIL"
+            continue
+          fi
+        fi
+
+        EXITCODE_allow_local_requests_from_hooks_and_services=0
+        # if [ ${EXITCODE_allow_local_requests_from_hooks_and_services} -ne 0 ]; then
+        #   echo -n "[INFO] Setting allow_local_requests_from_hooks_and_services : "
+        #   STATUS_CODE=$( \
+        #     curl -X PUT \
+        #       -H 'Content-Type: application/json' \
+        #       -H "PRIVATE-TOKEN: ${ROOT_TOKEN}" \
+        #       "${GIT_API_BASE}/api/v4/application/settings?allow_local_requests_from_hooks_and_services=true" \
+        #   )
+
+        #   if [ $? -eq 0 -a "${STATUS_CODE}" = "200" ]; then
+        #     EXITCODE_allow_local_requests_from_hooks_and_services=0
+        #     echo "DONE"
+        #   else
+        #     echo "FAIL"
+        #     continue
+        #   fi
+        # fi
+
+        break;
+    done
+
+    if [ ${EXITCODE_PUT_enabled_git_access_protocol} -ne 0 \
+      -o ${EXITCODE_allow_local_requests_from_web_hooks_and_services} -ne 0 \
+      -o ${EXITCODE_allow_local_requests_from_hooks_and_services} -ne 0 ]; then
+      echo "[ERROR] timeout configure gitlab"
+      exit 1
+    fi
+
+    echo -n "[INFO] root initial password : "
+    kubectl get secret gitlab-gitlab-initial-root-password -ojsonpath='{.data.password}' -n gitlab | base64 --decode ; echo
+
+    echo "[INFO] Installation and configuration was successful"
+    exit 0
+  gitlab-pv-template.yaml: |
+    apiVersion: v1
+    kind: PersistentVolume
+    metadata:
+      name: gitlab-postgresql
+    spec:
+      capacity:
+        storage: 8Gi
+      volumeMode: Filesystem
+      accessModes:
+        - ReadWriteOnce
+      persistentVolumeReclaimPolicy: Retain
+      claimRef:
+        namespace: gitlab
+        name: data-gitlab-postgresql-0
+      storageClassName: local-storage
+      hostPath:
+        path: /var/data/epoch/gitlab/postgresql
+      nodeAffinity:
+        required:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+              - #NODENAME#
+    ---
+    apiVersion: v1
+    kind: PersistentVolume
+    metadata:
+      name: gitlab-minio
+    spec:
+      capacity:
+        storage: 10Gi
+      volumeMode: Filesystem
+      accessModes:
+        - ReadWriteOnce
+      persistentVolumeReclaimPolicy: Retain
+      claimRef:
+        namespace: gitlab
+        name: gitlab-minio
+      storageClassName: local-storage
+      hostPath:
+        path: /var/data/epoch/gitlab/minio
+      nodeAffinity:
+        required:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+              - #NODENAME#
+    ---
+    apiVersion: v1
+    kind: PersistentVolume
+    metadata:
+      name: gitlab-redis
+    spec:
+      capacity:
+        storage: 8Gi
+      volumeMode: Filesystem
+      accessModes:
+        - ReadWriteOnce
+      persistentVolumeReclaimPolicy: Retain
+      claimRef:
+        namespace: gitlab
+        name: redis-data-gitlab-redis-master-0
+      storageClassName: local-storage
+      hostPath:
+        path: /var/data/epoch/gitlab/redis
+        type: DirectoryOrCreate
+      nodeAffinity:
+        required:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+              - #NODENAME#
+    ---
+    apiVersion: v1
+    kind: PersistentVolume
+    metadata:
+      name: gitlab-gitaly
+    spec:
+      capacity:
+        storage: 50Gi
+      volumeMode: Filesystem
+      accessModes:
+        - ReadWriteOnce
+      persistentVolumeReclaimPolicy: Retain
+      claimRef:
+        namespace: gitlab
+        name: repo-data-gitlab-gitaly-0
+      storageClassName: local-storage
+      hostPath:
+        path: /var/data/epoch/gitlab/gitaly
+      nodeAffinity:
+        required:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+              - #NODENAME#
+  gitlab-root-token-template.yaml: |
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: gitlab-root-token
+      namespace: #NAMESPACE#
+    type: Opaque
+    stringData:
+      TOKEN: "#ROOT_TOKEN#"
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: gitlab-installer-script
+  namespace: gitlab
+
+#---- epoch-setting-tools-script.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+data:
+  get-gitlab-initial-root-password.sh: |+
+    #!/bin/bash
+    #   Copyright 2019 NEC Corporation
+    #
+    #   Licensed under the Apache License, Version 2.0 (the "License");
+    #   you may not use this file except in compliance with the License.
+    #   You may obtain a copy of the License at
+    #
+    #       http://www.apache.org/licenses/LICENSE-2.0
+    #
+    #   Unless required by applicable law or agreed to in writing, software
+    #   distributed under the License is distributed on an "AS IS" BASIS,
+    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    #   See the License for the specific language governing permissions and
+    #   limitations under the License.
+
+    echo -n "gitlab root initial password : "
+    kubectl get secret gitlab-gitlab-initial-root-password -ojsonpath='{.data.password}' -n gitlab | base64 --decode
+    echo ""
+
+  get-keycloak-initial-admin-password.sh: |+
+    #!/bin/bash
+    #   Copyright 2019 NEC Corporation
+    #
+    #   Licensed under the Apache License, Version 2.0 (the "License");
+    #   you may not use this file except in compliance with the License.
+    #   You may obtain a copy of the License at
+    #
+    #       http://www.apache.org/licenses/LICENSE-2.0
+    #
+    #   Unless required by applicable law or agreed to in writing, software
+    #   distributed under the License is distributed on an "AS IS" BASIS,
+    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    #   See the License for the specific language governing permissions and
+    #   limitations under the License.
+
+    echo -n "keycloak admin password : "
+    kubectl get secret  exastro-platform-authentication-infra-secret -n exastro-platform-authentication-infra -o json | jq -r ".data.KEYCLOAK_PASSWORD" | base64 -d
+    echo ""
+
+  get-workspace-tools-account.sh: |+
+    #!/bin/bash
+    #   Copyright 2019 NEC Corporation
+    #
+    #   Licensed under the Apache License, Version 2.0 (the "License");
+    #   you may not use this file except in compliance with the License.
+    #   You may obtain a copy of the License at
+    #
+    #       http://www.apache.org/licenses/LICENSE-2.0
+    #
+    #   Unless required by applicable law or agreed to in writing, software
+    #   distributed under the License is distributed on an "AS IS" BASIS,
+    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    #   See the License for the specific language governing permissions and
+    #   limitations under the License.
+
+    if [ $# -ne 1 ]; then
+        echo "Usage : `basename $0` workspace_id"
+        exit 1
+    fi
+
+    kubectl exec -i -n epoch-system deploy/workspace-db -- mysql -N -B -u root -ppassword workspace_db -e"select info from workspace_access where workspace_id=$1;"  2> /dev/null | jq
+
+  set-host-gitlab.sh: |
+    #!/bin/bash
+    #   Copyright 2019 NEC Corporation
+    #
+    #   Licensed under the Apache License, Version 2.0 (the "License");
+    #   you may not use this file except in compliance with the License.
+    #   You may obtain a copy of the License at
+    #
+    #       http://www.apache.org/licenses/LICENSE-2.0
+    #
+    #   Unless required by applicable law or agreed to in writing, software
+    #   distributed under the License is distributed on an "AS IS" BASIS,
+    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    #   See the License for the specific language governing permissions and
+    #   limitations under the License.
+
+    echo "[INFO] START : set-host-gitlab.sh"
+
+    GITLAB_NAMESPACE="gitlab"
+    GITLAB_INSTALL_CHECK_TIMES=360
+    GIT_API_BASE="http://gitlab-webservice-default.${GITLAB_NAMESPACE}.svc:8181"
+
+    #
+    # check parameter
+    #
+    if [ $# -ne 1 ]; then
+        echo "Usage : ${BASENAME} [hostname or IPaddress]"
+        echo "ERROR : Check the parameters and try again"
+        exit 1
+    fi
+
+    PRM_MY_HOST="$1"
+    GITLAB_CLONE_URL="https://${PRM_MY_HOST}:31183/"
+
+    echo "[INFO] START : Wait Gitlab Installer finished"
+    INSTALLER_STATUS=""
+    for ((i=1; i<=${GITLAB_INSTALL_CHECK_TIMES}; i++)); do
+        sleep 10;
+        INSTALLER_STATUS=$(kubectl get job/gitlab-installer -n ${GITLAB_NAMESPACE} -o "jsonpath={.status.conditions[0].type}")
+        if [ $? -ne 0 ]; then
+            continue;
+        fi
+        if [ "${INSTALLER_STATUS}" = "Complete" ]; then
+            break;
+        fi
+        if [ "${INSTALLER_STATUS}" = "Error" ]; then
+            echo "[ERROR] CANCELED : because the installation failed"
+            exit 1
+        fi
+    done
+    if [ "${INSTALLER_STATUS}" != "Complete" ]; then
+        echo "[ERROR] CANCELED : because the installation wait timeout"
+        exit 1
+    fi
+
+    echo "[INFO] START : Get TOKEN"
+    TOKEN=$(kubectl get secret gitlab-root-token -n ${GITLAB_NAMESPACE} -o jsonpath='{.data.TOKEN}' | base64 --decode)
+    if [ $? -ne 0 ]; then
+        echo "[ERROR] CANCELED : Failed to get token"
+        exit 1
+    fi
+
+    echo "[INFO] START : Encode CLONE URL"
+    GITLAB_CLONE_URL_ENC=$(echo "${GITLAB_CLONE_URL}" | perl -nle 's/([^\w ])/"%".unpack("H2",$1)/eg; s/ /\+/g; print')
+    if [ $? -ne 0 ]; then
+        echo "[ERROR] encode clone url"
+        exit 1
+    fi
+
+    echo "[INFO] START : Setting custom_http_clone_url_root "
+    SUCCEED_SETTING=0
+
+    STATUS_CODE=$(
+        curl -X PUT \
+        -H 'Content-Type: application/json' \
+        -H "PRIVATE-TOKEN: ${TOKEN}" \
+        -w '%{http_code}\n' -o /dev/null \
+        "${GIT_API_BASE}/api/v4/application/settings?custom_http_clone_url_root=${GITLAB_CLONE_URL_ENC}" \
+    )
+    echo "[INFO] Setting custom_http_clone_url_root STATUS_CODE:${STATUS_CODE}"
+
+    if [ $? -ne 0 -o "${STATUS_CODE}" != "200" ]; then
+        echo "[FAIL] configuration was failed"
+        exit 1
+    fi
+
+    echo "[INFO] configuration was successful"
+    exit 0
+  set-host.sh: |
+    #!/bin/bash
+    #   Copyright 2021 NEC Corporation
+    #
+    #   Licensed under the Apache License, Version 2.0 (the "License");
+    #   you may not use this file except in compliance with the License.
+    #   You may obtain a copy of the License at
+    #
+    #       http://www.apache.org/licenses/LICENSE-2.0
+    #
+    #   Unless required by applicable law or agreed to in writing, software
+    #   distributed under the License is distributed on an "AS IS" BASIS,
+    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    #   See the License for the specific language governing permissions and
+    #   limitations under the License.
+
+
+    echo "[INFO] START : set-host.sh"
+
+    #
+    # Initialize variables
+    #
+    BASENAME=$(basename "$0")
+    STEP=0
+    ALLSTEPS=5
+
+    #
+    # check parameter
+    #
+    if [ $# -ne 1 ]; then
+        echo "Usage : ${BASENAME} [hostname or IPaddress]"
+        echo "ERROR : Check the parameters and try again"
+        exit 1
+    fi
+
+    PRM_MY_HOST="$1"
+
+    #
+    # Initialize Setting Parameter
+    #
+    STEP=$(expr ${STEP} + 1)
+    echo "**** STEP : ${STEP} / ${ALLSTEPS} : Initialize Setting Parameter ..."
+
+    OIDC_PASSPHRASE=$(< /dev/urandom tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq)
+    if [ $? -ne 0 -o -z "${OIDC_PASSPHRASE}" ]; then
+        echo "ERROR : Generate OIDC_PASSPHRASE"
+        exit 2
+    fi
+
+    OIDC_PASSPHRASE_B64=$(echo -n "${OIDC_PASSPHRASE}" | base64)
+    if [ $? -ne 0 -o -z "${OIDC_PASSPHRASE_B64}" ]; then
+        echo "ERROR : Generate OIDC_PASSPHRASE_B64"
+        exit 2
+    fi
+
+    KEYCLOAK_ADMIN_PASSW=$(< /dev/urandom tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq)
+    if [ $? -ne 0 -o -z "${KEYCLOAK_ADMIN_PASSW}" ]; then
+        echo "ERROR : Generate KEYCLOAK_ADMIN_PASSW"
+        exit 2
+    fi
+
+    KEYCLOAK_ADMIN_PASSW_B64=$(echo -n "${KEYCLOAK_ADMIN_PASSW}" | base64)
+    if [ $? -ne 0 -o -z "${KEYCLOAK_ADMIN_PASSW_B64}" ]; then
+        echo "ERROR : Generate OIDC_PASSPHRASE_B64"
+        exit 2
+    fi
+
+    EPOCH_ADMIN_PASSWD=$(< /dev/urandom tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq)
+    if [ $? -ne 0 -o -z "${KEYCLOAK_ADMIN_PASSW}" ]; then
+        echo "ERROR : Generate EPOCH_ADMIN_PASSWD"
+        exit 2
+    fi
+
+    EPOCH_ADMIN_PASSWD_B64=$(echo -n "${EPOCH_ADMIN_PASSWD}" | base64)
+    if [ $? -ne 0 -o -z "${EPOCH_ADMIN_PASSWD_B64}" ]; then
+        echo "ERROR : Generate EPOCH_ADMIN_PASSWD_B64"
+        exit 2
+    fi
+
+    #
+    # Set parameter to configmap
+    #
+    STEP=$(expr ${STEP} + 1)
+    echo "**** STEP : ${STEP} / ${ALLSTEPS} : Set Parameter To Configmap"
+
+
+    kubectl patch configmap -n exastro-platform-authentication-infra exastro-platform-authentication-infra-env -p "\
+    {\
+        \"data\" : {\
+            \"EXASTRO_KEYCLOAK_HOST\" : \"${PRM_MY_HOST}\"\
+        }\
+    }"
+    if [ $? -ne 0 ]; then
+        echo "ERROR : patch configmap exastro-platform-authentication-infra-env"
+        exit 2
+    fi
+
+
+    kubectl patch configmap -n epoch-system epoch-service-api-config -p "\
+    {\
+        \"data\" : {\
+            \"EPOCH_EPAI_HOST\" : \"${PRM_MY_HOST}\"\
+        }\
+    }"
+    if [ $? -ne 0 ]; then
+        echo "ERROR : patch configmap epoch-service-api-config"
+        exit 2
+    fi
+
+
+    kubectl patch secret -n exastro-platform-authentication-infra exastro-platform-authentication-infra-secret -p "\
+    {\
+        \"data\" : {\
+            \"GATEWAY_CRYPTO_PASSPHRASE\" : \"${OIDC_PASSPHRASE_B64}\",\
+            \"KEYCLOAK_PASSWORD\" : \"${KEYCLOAK_ADMIN_PASSW_B64}\",\
+            \"EPOCH_PASSWORD\" : \"${EPOCH_ADMIN_PASSWD_B64}\"\
+        }\
+    }"
+    if [ $? -ne 0 ]; then
+        echo "ERROR : patch secret exastro-platform-authentication-infra-secret"
+        exit 2
+    fi
+
+    #
+    # restart to reflect the settings
+    #
+    STEP=$(expr ${STEP} + 1)
+    echo "**** STEP : ${STEP} / ${ALLSTEPS} : restart to reflect the settings ..."
+
+    # kubectl rollout restart deploy -n epoch-system epoch-service-api
+    # if [ $? -ne 0 ]; then
+    #     echo "ERROR : rollout restart epoch-service-api"
+    #     exit 2
+    # fi
+
+    kubectl rollout restart deploy -n epoch-system epoch-service-api2
+    if [ $? -ne 0 ]; then
+        echo "ERROR : rollout restart epoch-service-api2"
+        exit 2
+    fi
+
+    while true; do
+        sleep 5;
+        RESTART_BERFORE_API_POD=$(kubectl get pod --selector "name=authentication-infra-api" -n exastro-platform-authentication-infra -o jsonpath="{range .items[*]}{@.metadata.name}{\"\n\"}{end}" 2> /dev/null)
+        if [ $? -eq 0 ]; then
+            break;
+        fi
+    done
+    kubectl rollout restart deploy -n exastro-platform-authentication-infra authentication-infra-api
+    if [ $? -ne 0 ]; then
+        echo "ERROR : rollout restart authentication-infra-api"
+        exit 2
+    fi
+
+    while true; do
+        sleep 5;
+        RESTART_BERFORE_KEYCLOAK_POD=$(kubectl get pod --selector "app=keycloak" -n exastro-platform-authentication-infra -o jsonpath="{range .items[*]}{@.metadata.name}{\"\n\"}{end}" 2> /dev/null)
+        if [ $? -eq 0 ]; then
+            break;
+        fi
+    done
+    kubectl rollout restart deploy -n exastro-platform-authentication-infra keycloak
+    if [ $? -ne 0 ]; then
+        echo "ERROR : rollout restart keycloak"
+        exit 2
+    fi
+
+    #
+    # wait for restart
+    #
+    STEP=$(expr ${STEP} + 1)
+    echo "**** STEP : ${STEP} / ${ALLSTEPS} : wait for restart ..."
+
+    echo -n "waiting ..."
+    while true; do
+        sleep 5;
+        echo -n ".";
+        NOT_READY_COUNT=$(kubectl get pod -n exastro-platform-authentication-infra -o json 2> /dev/null | \
+                            jq -r ".items[].status.containerStatuses[].ready" 2> /dev/null | sed -e "/true/d" | wc -l)
+        if [ $? -ne 0 ]; then
+            continue
+        fi
+        if [ ${NOT_READY_COUNT} -ne 0 ]; then
+            continue;
+        fi
+
+        RESTART_AFTER_API_POD=$(kubectl get pod --selector "name=authentication-infra-api" -n exastro-platform-authentication-infra -o jsonpath="{range .items[*]}{@.metadata.name}{\"\n\"}{end}" 2> /dev/null)
+        if [ $? -ne 0 ]; then
+            continue
+        fi
+        if [ "${RESTART_BERFORE_API_POD}" == "${RESTART_AFTER_API_POD}" ]; then
+            continue;
+        fi
+
+        RESTART_AFTER_KEYCLOAK_POD=$(kubectl get pod --selector "app=keycloak" -n exastro-platform-authentication-infra -o jsonpath="{range .items[*]}{@.metadata.name}{\"\n\"}{end}" 2> /dev/null)
+        if [ $? -ne 0 ]; then
+            continue
+        fi
+        if [ "${RESTART_BERFORE_KEYCLOAK_POD}" == "${RESTART_AFTER_KEYCLOAK_POD}" ]; then
+            continue;
+        fi
+
+        echo "";
+        break;
+    done;
+
+    #
+    # Setting api call
+    #
+    STEP=$(expr ${STEP} + 1)
+    echo "**** STEP : ${STEP} / ${ALLSTEPS} : Setting api call ..."
+
+    API_RESPONSE="/tmp/${BASENAME}-infra-setting.$$"
+
+    curl \
+        -X POST \
+        -H  'content-type: application/json'    \
+        -d  @- \
+        -Ss \
+        -o "${API_RESPONSE}" \
+        http://authentication-infra-api.exastro-platform-authentication-infra.svc:8000/settings \
+        << EOF
+        {
+            "realm_name": "exastroplatform",
+            "realm_option": {
+                "displayName": "Exastro Platform",
+                "enabled": "True",
+                "registrationAllowed": "True"
+            },
+            "realm_roles": [
+                "epoch-user",
+                "epoch-system"
+            ],
+            "groups": [
+                {
+                    "parent_group": "",
+                    "group_name": "epoch-user"
+                }
+            ],
+            "group_mappings": [
+                {
+                    "role_name": "epoch-user",
+                    "group_name": "epoch-user"
+                }
+            ],
+            "default_group_name": "epoch-user",
+            "users": [
+            ],
+            "admin_users": [
+                {
+                    "user_name": "epoch-admin",
+                    "user_password": "${EPOCH_ADMIN_PASSWD}",
+                    "user_groups": [],
+                    "user_realm_roles": [],
+                    "user_option": {
+                        "enabled": "True"
+                    }
+                }
+            ],
+            "clients": [
+                {
+                    "id": "epoch-system",
+                    "protocol": "openid-connect",
+                    "publicClient": "false",
+                    "redirectUris": [
+                        "https://${PRM_MY_HOST}:30443/oidc-redirect/",
+                        "https://${PRM_MY_HOST}:30443/"
+                    ],
+                    "baseUrl": "https://${PRM_MY_HOST}:30443/oidc-redirect/",
+                    "webOrigins": [],
+                    "protocolMappers": [
+                        {
+                            "name": "epoch-system-client-map-role",
+                            "protocol": "openid-connect",
+                            "protocolMapper": "oidc-usermodel-client-role-mapper",
+                            "config": {
+                                "id.token.claim": "true",
+                                "access.token.claim": "true",
+                                "claim.name": "epoch-role",
+                                "multivalued": "true",
+                                "userinfo.token.claim": "true",
+                                "usermodel.clientRoleMapping.clientId": "epoch-system"
+                            }
+                        },
+                        {
+                            "name": "epoch-system-map-role",
+                            "protocol": "openid-connect",
+                            "protocolMapper": "oidc-usermodel-realm-role-mapper",
+                            "config": {
+                                "id.token.claim": "true",
+                                "access.token.claim": "true",
+                                "claim.name": "epoch-role",
+                                "multivalued": "true",
+                                "userinfo.token.claim": "true"
+                            }
+                        }
+                    ]
+                }
+            ],
+            "conf_template": "epoch-system-template.conf",
+            "token_user": "admin",
+            "token_password": "${KEYCLOAK_ADMIN_PASSW}",
+            "token_realm_name": "master"
+        }
+    EOF
+    if [ $? -ne 0 ]; then
+        echo "ERROR : Setting api call"
+        exit 2
+    fi
+
+    API_RESULT=$(cat "${API_RESPONSE}" | jq -r ".result")
+    if [ $? -ne 0 ]; then
+        echo "---- API Error Response ----"
+        cat "${API_RESPONSE}"
+        echo "ERROR : Setting api call"
+        exit 2
+    fi
+    if [ "${API_RESULT}" != "200" ]; then
+        echo "---- API Error Response ----"
+        cat "${API_RESPONSE}"
+        echo "ERROR : Setting api call"
+        exit 2
+    fi
+
+    echo "**** ${BASENAME} completed successfully ****"
+    exit 0
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: epoch-setting-tools-script
+  namespace: epoch-system
+
+#---- epoch-setting-tools.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: epoch-setting-tools
+  namespace: epoch-system
+spec:
+  selector:
+    matchLabels:
+      name: epoch-setting-tools
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: epoch-setting-tools
+    spec:
+      volumes:
+      - name: epoch-setting-tools-script
+        configMap:
+          name: epoch-setting-tools-script
+      containers:
+      - name: epoch-setting-tools
+        image: exastro/epoch-kube-command:0.1.5_20211026_1600
+        volumeMounts:
+        - mountPath: /scripts
+          name: epoch-setting-tools-script

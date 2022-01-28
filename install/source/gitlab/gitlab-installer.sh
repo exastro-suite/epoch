@@ -15,6 +15,8 @@
 
 GITLAB_NAMESPACE="gitlab"
 GITLAB_CONFIG_SETTING_RETRY=60
+GIT_API_BASE="http://gitlab-webservice-default:8181"
+
 
 BASEDIR=$(dirname $0)
 
@@ -100,7 +102,7 @@ done;
 #
 echo "[INFO] START : Generate root token"
 TOKEN_LENGTH=20
-ROOT_TOKEN=$(cat /dev/urandom | base64 | fold -w 20 | head -n 1)
+ROOT_TOKEN=$(cat /dev/urandom | sed -e 's/[^A-Za-z0-9]//g' | base64 | fold -w 20 | head -n 1)
 if [ $? -ne 0 ]; then
   echo "[ERROR] generate ROOT_TOKEN"
 fi
@@ -131,8 +133,6 @@ fi
 #
 # configure gitlab
 #
-GIT_API_BASE="http://gitlab-webservice-default:8181"
-
 EXITCODE_PUT_enabled_git_access_protocol=-1
 EXITCODE_allow_local_requests_from_web_hooks_and_services=-1
 EXITCODE_allow_local_requests_from_hooks_and_services=-1
@@ -142,13 +142,16 @@ for ((i=1; i<=${GITLAB_CONFIG_SETTING_RETRY}; i++)); do
 
     if [ ${EXITCODE_PUT_enabled_git_access_protocol} -ne 0 ]; then
       echo -n "[INFO] Setting enabled_git_access_protocol : "
-      curl -X PUT \
+      STATUS_CODE=$( \
+        curl -X PUT \
         -H 'Content-Type: application/json' \
         -H "PRIVATE-TOKEN: ${ROOT_TOKEN}" \
-        "${GIT_API_BASE}/api/v4/application/settings?enabled_git_access_protocol=http" &> /dev/null
+        -w '%{http_code}\n' -o /dev/null \
+        "${GIT_API_BASE}/api/v4/application/settings?enabled_git_access_protocol=http" \
+      )
 
-      EXITCODE_PUT_enabled_git_access_protocol=$?
-      if [ ${EXITCODE_PUT_enabled_git_access_protocol} -eq 0 ]; then
+      if [ $? -eq 0 -a "${STATUS_CODE}" = "200" ]; then
+        EXITCODE_PUT_enabled_git_access_protocol=0
         echo "DONE"
       else
         echo "FAIL"
@@ -158,13 +161,16 @@ for ((i=1; i<=${GITLAB_CONFIG_SETTING_RETRY}; i++)); do
 
     if [ ${EXITCODE_allow_local_requests_from_web_hooks_and_services} -ne 0 ]; then
       echo -n "[INFO] Setting allow_local_requests_from_web_hooks_and_services : "
-      curl -X PUT \
-        -H 'Content-Type: application/json' \
-        -H "PRIVATE-TOKEN: ${ROOT_TOKEN}" \
-        "${GIT_API_BASE}/api/v4/application/settings?allow_local_requests_from_web_hooks_and_services=true" &> /dev/null
+      STATUS_CODE=$( \
+        curl -X PUT \
+          -H 'Content-Type: application/json' \
+          -H "PRIVATE-TOKEN: ${ROOT_TOKEN}" \
+          -w '%{http_code}\n' -o /dev/null \
+          "${GIT_API_BASE}/api/v4/application/settings?allow_local_requests_from_web_hooks_and_services=true" \
+      )
 
-      EXITCODE_allow_local_requests_from_web_hooks_and_services=$?
-      if [ ${EXITCODE_allow_local_requests_from_web_hooks_and_services} -eq 0 ]; then
+      if [ $? -eq 0 -a "${STATUS_CODE}" = "200" ]; then
+        EXITCODE_allow_local_requests_from_web_hooks_and_services=0
         echo "DONE"
       else
         echo "FAIL"
@@ -172,20 +178,24 @@ for ((i=1; i<=${GITLAB_CONFIG_SETTING_RETRY}; i++)); do
       fi
     fi
 
-    if [ ${EXITCODE_allow_local_requests_from_hooks_and_services} -ne 0 ]; then
-      echo -n "[INFO] Setting allow_local_requests_from_hooks_and_services : "
-      curl -X PUT \
-        -H 'Content-Type: application/json' \
-        -H "PRIVATE-TOKEN: ${ROOT_TOKEN}" \
-        "${GIT_API_BASE}/api/v4/application/settings?allow_local_requests_from_hooks_and_services=true" &> /dev/null
-      EXITCODE_allow_local_requests_from_hooks_and_services=$?
-      if [ ${EXITCODE_allow_local_requests_from_hooks_and_services} -eq 0 ]; then
-        echo "DONE"
-      else
-        echo "FAIL"
-        continue
-      fi
-    fi
+    EXITCODE_allow_local_requests_from_hooks_and_services=0
+    # if [ ${EXITCODE_allow_local_requests_from_hooks_and_services} -ne 0 ]; then
+    #   echo -n "[INFO] Setting allow_local_requests_from_hooks_and_services : "
+    #   STATUS_CODE=$( \
+    #     curl -X PUT \
+    #       -H 'Content-Type: application/json' \
+    #       -H "PRIVATE-TOKEN: ${ROOT_TOKEN}" \
+    #       "${GIT_API_BASE}/api/v4/application/settings?allow_local_requests_from_hooks_and_services=true" \
+    #   )
+
+    #   if [ $? -eq 0 -a "${STATUS_CODE}" = "200" ]; then
+    #     EXITCODE_allow_local_requests_from_hooks_and_services=0
+    #     echo "DONE"
+    #   else
+    #     echo "FAIL"
+    #     continue
+    #   fi
+    # fi
 
     break;
 done

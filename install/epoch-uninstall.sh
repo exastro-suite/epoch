@@ -175,3 +175,9 @@ kubectl delete -f "${BASEDIR}/epoch-install.yaml" --ignore-not-found
 
 echo "-- DELETE exastro-authentication-infra-httpd-conf-pv --"
 kubectl delete -f "${BASEDIR}/source/templates/exastro-authentication-infra-httpd-conf-pv-template.yaml" --ignore-not-found
+
+echo "-- DELETE gitlab-pv --"
+kubectl delete pv gitlab-gitaly --ignore-not-found
+kubectl delete pv gitlab-minio --ignore-not-found
+kubectl delete pv gitlab-postgresql --ignore-not-found
+kubectl delete pv gitlab-redis --ignore-not-found

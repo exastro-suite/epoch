@@ -4,12 +4,12 @@ global:
     configureCertmanager: false
   hosts:
     domain: gitlab.svc
-    https: false
+    https: true
     gitlab:
-      https: false
+      https: true
     registry:
       servicePort: 5000
-      https: false
+      https: true
     minio:
       https: false
 nginx-ingress:
