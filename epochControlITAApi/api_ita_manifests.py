@@ -41,10 +41,16 @@ globals.init(app)
 EPOCH_ITA_HOST = "it-automation"
 EPOCH_ITA_PORT = "8084"
 
+#
 # メニューID
+#
+# 基本コンソール - 投入オペレーション一覧
 ite_menu_operation = '2100000304'
-ita_menu_gitenv_param = '0000000004'
-ita_menu_manifest_param = '0000000001'
+# マニフェスト変数管理 - マニフェスト環境パラメータ
+ita_menu_manifest_param = '0000000004'
+# マニフェスト変数管理 - マニフェスト登録先Git環境パラメータ
+ita_menu_gitenv_param = '0000000005'
+# Ansible共通 - テンプレート管理
 ita_menu_manifest_template = '2100040704'
 
 # 共通項目

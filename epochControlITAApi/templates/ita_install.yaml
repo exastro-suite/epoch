@@ -45,7 +45,7 @@ spec:
           name: epoch-ita-conf
       containers:
       - name: it-automation
-        image: exastro/it-automation:1.6.3-ja
+        image: exastro/it-automation:1.9.0-ja
         ports:
         - containerPort: 80
         - containerPort: 443
