@@ -41,7 +41,7 @@ data:
     use rs_cd_result_db;
     create table cd_result (
       workspace_id int unsigned not null,
-      cd_result_id int unsigned not null,
+      cd_result_id varchar(10) not null,
       cd_status varchar(32),
       contents json,
       username text,

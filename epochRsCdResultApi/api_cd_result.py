@@ -66,13 +66,13 @@ def call_cd_result(workspace_id):
     except Exception as e:
         return common.serverError(e, "{} error".format(inspect.currentframe().f_code.co_name))
 
-@app.route('/workspace/<int:workspace_id>/cd/result/<int:cd_result_id>', methods=['PUT', 'GET'])
+@app.route('/workspace/<int:workspace_id>/cd/result/<string:cd_result_id>', methods=['PUT', 'GET'])
 def call_cd_result_by_id(workspace_id, cd_result_id):
     """結果IDによるCD結果の呼び出し口 CD result call by cd_result_id
 
     Args:
         workspace_id (int): workspace id
-        cd_result_id (int): cd-result id
+        cd_result_id (str): cd-result id
 
     Returns:
         response: HTTP Respose
@@ -96,14 +96,14 @@ def call_cd_result_by_id(workspace_id, cd_result_id):
     except Exception as e:
         return common.serverError(e, "{} error".format(inspect.currentframe().f_code.co_name))
 
-@app.route('/workspace/<int:workspace_id>/member/<string:username>/cd/result/<int:cd_result_id>', methods=['POST','GET'])
+@app.route('/workspace/<int:workspace_id>/member/<string:username>/cd/result/<string:cd_result_id>', methods=['POST','GET'])
 def call_cd_result_member(workspace_id, username, cd_result_id):
     """メンバーによるCD結果の呼び出し口 CD result call by members
 
     Args:
         workspace_id (int): workspace id
         username (str): username
-        cd_result_id (int): cd-result id
+        cd_result_id (str): cd-result id
 
     Returns:
         response: HTTP Respose
@@ -196,7 +196,7 @@ def cd_result_list(workspace_id, cd_result_id=None, username=None, latest=False)
 
     Args:
         workspace_id (int): workspace id
-        cd_result_id (int): cd-result id
+        cd_result_id (string): cd-result id
         username (str): username
         latest (Bool): latest True or False
 
