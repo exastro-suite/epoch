@@ -65,6 +65,29 @@ kind: Namespace
 metadata:
   name: exastro-platform-authentication-infra
 
+#---- host-setting-config.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: host-setting-config
+  namespace: epoch-system
+data:
+  EPOCH_HOSTNAME: ""
+
 #---- proxy-setting.yaml
 ---
 #   Copyright 2019 NEC Corporation
@@ -774,6 +797,11 @@ spec:
           value: "8000"
         - name: PYTHONIOENCODING
           value: utf-8
+        - name: EPOCH_HOSTNAME
+          valueFrom:
+            configMapKeyRef:
+              name: host-setting-config
+              key: EPOCH_HOSTNAME
         - name: EPOCH_HTTP_PROXY
           valueFrom:
             configMapKeyRef:
@@ -1586,7 +1614,7 @@ data:
     use rs_cd_result_db;
     create table cd_result (
       workspace_id int unsigned not null,
-      cd_result_id int unsigned not null,
+      cd_result_id varchar(10) not null,
       cd_status varchar(32),
       contents json,
       username text,
@@ -7304,6 +7332,16 @@ data:
     STEP=$(expr ${STEP} + 1)
     echo "**** STEP : ${STEP} / ${ALLSTEPS} : Set Parameter To Configmap"
 
+    kubectl patch configmap -n epoch-system host-setting-config -p "\
+    {\
+        \"data\" : {\
+            \"EPOCH_HOSTNAME\" : \"${PRM_MY_HOST}\"\
+        }\
+    }"
+    if [ $? -ne 0 ]; then
+        echo "ERROR : patch configmap host-setting-config"
+        exit 2
+    fi
 
     kubectl patch configmap -n exastro-platform-authentication-infra exastro-platform-authentication-infra-env -p "\
     {\
@@ -7357,6 +7395,12 @@ data:
     kubectl rollout restart deploy -n epoch-system epoch-service-api2
     if [ $? -ne 0 ]; then
         echo "ERROR : rollout restart epoch-service-api2"
+        exit 2
+    fi
+
+    kubectl rollout restart deploy -n epoch-system epoch-control-ita-api
+    if [ $? -ne 0 ]; then
+        echo "ERROR : rollout restart epoch-control-ita-api"
         exit 2
     fi
 

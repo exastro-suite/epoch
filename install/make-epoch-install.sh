@@ -111,6 +111,7 @@ kubectl create cm epoch-setting-tools-script -n epoch-system --dry-run=client -o
 YAMLFILES=()
 YAMLFILES+=("epoch-system.yaml")
 YAMLFILES+=("exastro-platform-authentication-infra.yaml")   # namespace
+YAMLFILES+=("host-setting-config.yaml")
 YAMLFILES+=("proxy-setting.yaml")
 YAMLFILES+=("epoch-control-api-config.yaml")
 YAMLFILES+=("epoch-control-workspace-api.yaml")

@@ -263,7 +263,12 @@ def create_ita(workspace_id):
         # templateの展開
         with tempfile.TemporaryDirectory() as tempdir:
             file_name = 'ita_install.yaml'
-            yaml_text = render_template(file_name)
+            yaml_param={
+                "HTTP_PROXY": os.environ.get("EPOCH_HTTP_PROXY"),
+                "HTTPS_PROXY": os.environ.get("EPOCH_HTTPS_PROXY"),
+                "NO_PROXY": os.environ.get("EPOCH_HOSTNAME"),
+            }
+            yaml_text = render_template(file_name, param=yaml_param)
 
             # yaml一時ファイル生成
             path_yamlfile = '{}/{}'.format(tempdir, file_name)
@@ -283,28 +288,28 @@ def create_ita(workspace_id):
                 raise
 
         # 対象となるdeploymentを定義
-        deployments = [ "deployment/ita-worker" ]
+        # deployments = [ "deployment/ita-worker" ]
 
-        envs = [
-            "HTTP_PROXY=" + os.environ['EPOCH_HTTP_PROXY'],
-            "HTTPS_PROXY=" + os.environ['EPOCH_HTTPS_PROXY'],
-            "http_proxy=" + os.environ['EPOCH_HTTP_PROXY'],
-            "https_proxy=" + os.environ['EPOCH_HTTPS_PROXY']
-        ]
+        # envs = [
+        #     "HTTP_PROXY=" + os.environ['EPOCH_HTTP_PROXY'],
+        #     "HTTPS_PROXY=" + os.environ['EPOCH_HTTPS_PROXY'],
+        #     "http_proxy=" + os.environ['EPOCH_HTTP_PROXY'],
+        #     "https_proxy=" + os.environ['EPOCH_HTTPS_PROXY']
+        # ]
 
-        exec_detail = "環境変数[PROXY]を確認してください"
-        for deployment_name in deployments:
-            for env_name in envs:
-                # 環境変数の設定
-                try:
-                    result_kubectl = subprocess.check_output(["kubectl","set","env",deployment_name,"-n",name,env_name],stderr=subprocess.STDOUT)
-                    globals.logger.debug('COMMAAND SUCCEED: kubectl set env {}\n{}'.format(deployment_name, result_kubectl.decode('utf-8')))
-                except subprocess.CalledProcessError as e:
-                    globals.logger.error('COMMAND ERROR RETURN:{}\n{}'.format(e.returncode, e.output.decode('utf-8')))
-                    exec_detail = "{}の環境変数[PROXY]の設定ができません。環境を確認してください。".format(deployment_name)
-                    raise common.UserException(exec_detail)
-                except Exception:
-                    raise
+        # exec_detail = "環境変数[PROXY]を確認してください"
+        # for deployment_name in deployments:
+        #     for env_name in envs:
+        #         # 環境変数の設定
+        #         try:
+        #             result_kubectl = subprocess.check_output(["kubectl","set","env",deployment_name,"-n",name,env_name],stderr=subprocess.STDOUT)
+        #             globals.logger.debug('COMMAAND SUCCEED: kubectl set env {}\n{}'.format(deployment_name, result_kubectl.decode('utf-8')))
+        #         except subprocess.CalledProcessError as e:
+        #             globals.logger.error('COMMAND ERROR RETURN:{}\n{}'.format(e.returncode, e.output.decode('utf-8')))
+        #             exec_detail = "{}の環境変数[PROXY]の設定ができません。環境を確認してください。".format(deployment_name)
+        #             raise common.UserException(exec_detail)
+        #         except Exception:
+        #             raise
 
         exec_detail = ""
 
@@ -764,9 +769,12 @@ def is_ita_pod_running(namespace):
     # globals.logger.debug(stdout_pod_describe)
 
     # Keyが存在する場合のみチェック
-    if 'containerStatuses' in pod_describe['items'][0]['status']:
-        return (pod_describe['items'][0]['status']['containerStatuses'][0]['ready'] == True)
-    else:
+    try:
+        if 'containerStatuses' in pod_describe['items'][0]['status']:
+            return (pod_describe['items'][0]['status']['containerStatuses'][0]['ready'] == True)
+        else:
+            return False
+    except Exception as e:
         return False
     # return (pod_describe['items'][0]['status']['phase'] == "Running")
 

@@ -82,6 +82,16 @@ fi
 STEP=$(expr ${STEP} + 1)
 echo "**** STEP : ${STEP} / ${ALLSTEPS} : Set Parameter To Configmap"
 
+kubectl patch configmap -n epoch-system host-setting-config -p "\
+{\
+    \"data\" : {\
+        \"EPOCH_HOSTNAME\" : \"${PRM_MY_HOST}\"\
+    }\
+}"
+if [ $? -ne 0 ]; then
+    echo "ERROR : patch configmap host-setting-config"
+    exit 2
+fi
 
 kubectl patch configmap -n exastro-platform-authentication-infra exastro-platform-authentication-infra-env -p "\
 {\
@@ -135,6 +145,12 @@ echo "**** STEP : ${STEP} / ${ALLSTEPS} : restart to reflect the settings ..."
 kubectl rollout restart deploy -n epoch-system epoch-service-api2
 if [ $? -ne 0 ]; then
     echo "ERROR : rollout restart epoch-service-api2"
+    exit 2
+fi
+
+kubectl rollout restart deploy -n epoch-system epoch-control-ita-api
+if [ $? -ne 0 ]; then
+    echo "ERROR : rollout restart epoch-control-ita-api"
     exit 2
 fi
 

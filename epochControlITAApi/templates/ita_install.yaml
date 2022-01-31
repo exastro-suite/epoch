@@ -92,9 +92,20 @@ spec:
     spec:
       containers:
       - name: ita-worker
-        image: exastro/epoch-ita-worker:0.1.0_20210624_1421
+        image: exastro/epoch-ita-worker:0.3.0_20211202_1140
         ports:
         - containerPort: 22
+        env:
+          - name: "HTTP_PROXY"
+            value: "{{ param.HTTP_PROXY }}"
+          - name: "http_proxy"
+            value: "{{ param.HTTP_PROXY }}"
+          - name: "HTTPS_PROXY"
+            value: "{{ param.HTTPS_PROXY }}"
+          - name: "https_proxy"
+            value: "{{ param.HTTPS_PROXY }}"
+          - name: "NO_PROXY"
+            value: "{{ param.NO_PROXY }}"
         command: ["sh", "-c"]
         args:
         - |
@@ -102,10 +113,12 @@ spec:
           echo "export https_proxy=$https_proxy"  >> /etc/profile.d/99-proxy.sh;
           echo "export HTTP_PROXY=$HTTP_PROXY"    >> /etc/profile.d/99-proxy.sh;
           echo "export http_proxy=$http_proxy"    >> /etc/profile.d/99-proxy.sh;
+          echo "export NO_PROXY=$NO_PROXY"        >> /etc/profile.d/99-proxy.sh;
           echo "export HTTPS_PROXY=$HTTPS_PROXY"  >  /etc/environment;
           echo "export https_proxy=$https_proxy"  >> /etc/environment;
           echo "export HTTP_PROXY=$HTTP_PROXY"    >> /etc/environment;
           echo "export http_proxy=$http_proxy"    >> /etc/environment;
+          echo "export NO_PROXY=$NO_PROXY"        >> /etc/environment;
           /usr/sbin/sshd -De
 
 ---
