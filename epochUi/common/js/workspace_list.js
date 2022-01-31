@@ -167,11 +167,15 @@ function workspaceList( list ) {
           switch( type ) {
             // member list - メンバー一覧
             case 'member':
-              location.href = 'workspace_member_list.html?workspace_id=' + idKey;
+              refresh_session().then(() => {
+                location.href = 'workspace_member_list.html?workspace_id=' + idKey;
+              });
               break;
             // edit - 編集
             case 'edit':
-              location.href = 'workspace.html?workspace_id=' + idKey;
+              refresh_session().then(() => {
+                location.href = 'workspace.html?workspace_id=' + idKey;
+              });
               break;
             // leave - 退去
             case 'leave':

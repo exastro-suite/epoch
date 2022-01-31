@@ -667,8 +667,8 @@ function getText(textId, originText, ...args){
 // 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 $(document).ready(() => {
-  const keep_url="https://"+window.location.hostname+":31182/auth/realms/exastroplatform/account";
-  const interval_ms = 600000;
+  const keep_url="https://"+window.location.hostname+":31182/auth/realms/exastroplatform/account/";
+  const interval_ms = 180000;
   const ifra = document.createElement('IFRAME');
   ifra.setAttribute('src', keep_url);
   ifra.style.display = "none";
@@ -676,4 +676,16 @@ $(document).ready(() => {
   setInterval(() => {
     ifra.contentWindow.location = keep_url;
   },interval_ms);
+});
+$(document).ready(() => {
+  const keep_url=URL_BASE+"/blank.html";
+  const interval_ms = 180000;
+  const ifra = document.createElement('IFRAME');
+  ifra.style.display = "none";
+  document.body.appendChild(ifra);
+  setTimeout(() => {
+    ifra.setAttribute('src', keep_url);
+    setInterval(() => {
+    ifra.contentWindow.location.reload();
+  },interval_ms);}, 90000 );
 });
