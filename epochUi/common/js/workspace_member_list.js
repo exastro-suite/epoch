@@ -86,7 +86,7 @@ function workspaceMemberList( memberList ) {
     ];
     for ( let i = 0; i < g_roleLength; i++ ) {
         memberListHeader.push({
-            'title': g_roleList[i].name, 'type': 'status', 'width': '8%', 'align': 'center', 'sort': 'on', 'filter': 'on', 'list': {'1': 'ロールあり', '0': 'ロールなし'},
+            'title': g_roleList[i].name, 'type': 'status', 'width': '8%', 'align': 'center', 'sort': 'on', 'filter': 'on', 'list': {'1': '権限あり', '0': '権限なし'},
             'q': g_roleList[i].note
         });
     }
