@@ -2868,9 +2868,13 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
           wsDataJSON['environment'][item][item + '-environment-deploy-select'] = data_environments[i]['deploy_destination']['cluster_kind'];
           wsDataJSON['environment'][item][item + '-environment-url']      = data_environments[i]['deploy_destination']['cluster_url'];
           wsDataJSON['environment'][item][item + '-environment-namespace']= data_environments[i]['deploy_destination']['namespace'];
-          wsDataJSON['environment'][item][item + '-environment-authentication-token']= data_environments[i]['deploy_destination']['authentication_token'];
-          wsDataJSON['environment'][item][item + '-environment-certificate']= data_environments[i]['deploy_destination']['base64_encoded_certificate'];
-
+          if(data_environments[i]['deploy_destination']['cluster_kind'] == "external") {
+            wsDataJSON['environment'][item][item + '-environment-authentication-token']= data_environments[i]['deploy_destination']['authentication_token'];
+            wsDataJSON['environment'][item][item + '-environment-certificate']= data_environments[i]['deploy_destination']['base64_encoded_certificate'];
+          } else {
+            wsDataJSON['environment'][item][item + '-environment-authentication-token']= null;
+            wsDataJSON['environment'][item][item + '-environment-certificate']= null;
+          }
           if(data_environments[i]['cd_exec_users']){
             wsDataJSON['environment'][item][item + '-environment-deploy-member']= data_environments[i]['cd_exec_users']['user_select'];
             wsDataJSON['environment'][item][item + '-environment-deploy-member-id']= data_environments[i]['cd_exec_users']['user_id'];
