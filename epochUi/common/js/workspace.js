@@ -3484,7 +3484,10 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         for(let i = 0; i < current_pipelineruns.length; i++) {
           if(['Pending', 'Running'].includes(current_pipelineruns[i].status)) {
             run_status = "running";
+            $('#pipelineTektonCheckArea .workspace-block-status-text').css("display", "");
             break;
+          } else {
+            $('#pipelineTektonCheckArea .workspace-block-status-text').css("display", "none");
           }
         }
         $('#ws-pipeline-tekton .workspace-block-status').attr('data-status', run_status);
