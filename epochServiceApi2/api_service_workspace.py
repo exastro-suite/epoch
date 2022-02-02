@@ -693,21 +693,26 @@ def get_workspace_list():
                         # Check only the corresponding role - 該当のロールのみチェック 
                         if kind is not None:
                             ex_role = re.match("ws-({}|\d+)-(.+)", get_role["name"])
-                            globals.logger.debug("role_workspace_id:{} kind:{}".format(ex_role[1], ex_role[2]))
+                            # globals.logger.debug("role_workspace_id:{} kind:{}".format(ex_role[1], kind))
                             
                             # Narrow down only the applicable workspace - 該当のワークスペースのみの絞り込み 
                             if ex_role[1] == str(data_row["workspace_id"]):
+                                role_info = common.get_role_info(get_role["name"])
                                 set_role_kind.append(
                                     {
-                                        "kind" : kind
+                                        "kind" : kind,
+                                        "sort" : role_info[3]  
                                     }
                                 )
+
+                    # ロールの表示順を並び替え Sort the display order of roles
+                    set_role_kind_sorted = sorted(set_role_kind, key=lambda x:x['sort']) 
 
                     # Return value JSON formatting - 返り値 JSON整形 
                     row = {
                         "workspace_id": data_row["workspace_id"],
                         "workspace_name": data_row["common"]["name"],
-                        "roles": set_role_kind,
+                        "roles": set_role_kind_sorted,
                         "members": len(stock_user_id),
                         "workspace_remarks": data_row["common"]["note"],
                         "update_at": data_row["update_at"],

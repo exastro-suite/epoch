@@ -139,12 +139,16 @@ def user_get():
                 # ワークスペースは重複があるので、1回のみ抽出 Workspaces are duplicated, so extract only once
                 # ただし、1回目は設定しない However, do not set the first time
                 if ex_role[1] not in stock_workspace_id and workspace_name is not None:
+                    # 並んでいる要素をソート Sort the elements in a row
+                    set_role_display.sort()
+                    # ソート用の文字列カット String cut for sorting
+                    role_display = [s[3:] for s in set_role_display]
                     # workspace_id が 変わった際にレコード化 Record when workspace_id changes
-                    ret_role = ret_role + ',"{}":["{}"]'.format(workspace_name, '","'.join(set_role_display))
+                    ret_role = ret_role + ',"{}":["{}"]'.format(workspace_name, '","'.join(role_display))
                     set_role_display = []
 
                 # 取得したロール名を配列にする Make the acquired role name into an array
-                set_role_display.append(multi_lang.get_text(role_info[1], role_info[2]))
+                set_role_display.append(f"{role_info[3]:02}:" + multi_lang.get_text(role_info[1], role_info[2]))
 
                 workspace_id = ex_role[1]
                 stock_workspace_id.append(workspace_id)
@@ -169,8 +173,12 @@ def user_get():
                 if get_role["name"] not in all_composite_roles:
                     all_composite_roles.append(get_role["name"])
 
+        # 並んでいる要素をソート Sort the elements in a row
+        set_role_display.sort()
+        # ソート用の文字列カット String cut for sorting
+        role_display = [s[3:] for s in set_role_display]
         
-        ret_role = ret_role + ',"{}":["{}"]'.format(workspace_name, '","'.join(set_role_display))
+        ret_role = ret_role + ',"{}":["{}"]'.format(workspace_name, '","'.join(role_display))
         ret_role = "{" + ret_role[1:] + "}" 
 
         ret_user = {
