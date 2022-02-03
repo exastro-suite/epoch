@@ -78,13 +78,13 @@ def update_cd_result(cursor, workspace_id, cd_result_id, contents):
     upd_json = {
             'workspace_id' : workspace_id,
             'cd_result_id' : cd_result_id,
-            'cd_staus' : contents["cd_staus"],
+            'cd_status' : contents["cd_status"],
             'contents' : json.dumps(contents),
     }
 
     # 更新SQL　update SQL
     sql = 'UPDATE cd_result' \
-            ' SET cd_staus = %(cd_staus)s' \
+            ' SET cd_status = %(cd_status)s' \
             ' , contents =  %(contents)s' \
             ' WHERE workspace_id = %(workspace_id)s' \
             ' AND cd_result_id = %(cd_result_id)s'
@@ -122,7 +122,7 @@ def delete_cd_result(cursor, workspace_id, cd_result_id):
     # delete count to return
     return cursor.rowcount
 
-def select_cd_result(cursor, workspace_id, cd_result_id=None, cd_status_in=[], username=None, latest=False):
+def select_cd_result(cursor, workspace_id=None, cd_result_id=None, cd_status_in=[], username=None, latest=False):
     """CD結果情報取得 Get cd_result
 
     Args:
@@ -138,12 +138,15 @@ def select_cd_result(cursor, workspace_id, cd_result_id=None, cd_status_in=[], u
     """
 
     sql_limit = ""
-    cond_where = " AND workspace_id = %(workspace_id)s"
-    cond_json = {
-            'workspace_id' : workspace_id,
-    }
+    cond_where = ""
+    cond_json = {}
+
     # 条件がある場合に設定
     # Set when there are conditions
+    if workspace_id is not None:
+        cond_where += " AND workspace_id = %(workspace_id)s"
+        cond_json["workspace_id"] = workspace_id
+
     if cd_result_id is not None:
         cond_where += " AND cd_result_id = %(cd_result_id)s"
         cond_json["cd_result_id"] = cd_result_id
@@ -172,7 +175,7 @@ def select_cd_result(cursor, workspace_id, cd_result_id=None, cd_status_in=[], u
             sql_order + \
             sql_limit
 
-    # globals.logger.debug(f'sql:{sql}')
+    globals.logger.debug(f'sql:{sql}')
     # select実行 select execute
     cursor.execute(sql, cond_json)
     rows = cursor.fetchall()
