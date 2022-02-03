@@ -306,59 +306,36 @@ def get_cd_pipeline_argocd(workspace_id):
         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
         globals.logger.debug('#' * 50)
 
-        # ヘッダ情報
-        post_headers = {
-            'Content-Type': 'application/json',
-        }
+        # CD結果の全件を取得する
+        api_url = "{}://{}:{}/workspace/{}/cd/result".format(os.environ['EPOCH_RS_CD_RESULT_PROTOCOL'],
+                                                        os.environ['EPOCH_RS_CD_RESULT_HOST'],
+                                                        os.environ['EPOCH_RS_CD_RESULT_PORT'],
+                                                        workspace_id)
+        response = requests.get(api_url)
 
-        # api_url = "{}://{}:{}/workspace/{}/argocd".format(os.environ['EPOCH_CONTROL_ARGOCD_PROTOCOL'],
-        #                                                 os.environ['EPOCH_CONTROL_ARGOCD_HOST'],
-        #                                                 os.environ['EPOCH_CONTROL_ARGOCD_PORT'],
-        #                                                 workspace_id)
-        # response = requests.get(api_url)
+        if response.status_code != 200:
+            error_detail = multi_lang.get_text("EP020-0032", "CDパイプライン(ArgoCD)情報の取得に失敗しました")
+            globals.logger.debug(error_detail)
+            raise common.UserException(error_detail)
 
-        # if response.status_code != 200:
-        #     error_detail = multi_lang.get_text("EP020-0032", "CDパイプライン(ArgoCD)情報の取得に失敗しました")
-        #     globals.logger.debug(error_detail)
-        #     raise common.UserException(error_detail)
+        res_json = json.loads(response.text)
+        globals.logger.debug(res_json)
 
-        ret_status = 200
+        ret_status = res_json["result"]
         
         rows = []
-        rows = {
-                "trace_id": "0000000010",
-                "environment_name": "development",
-                "namespace": "argo-test",
-                "argocd_results": {
-                    "health": {
-                        "status": "Healthy"
-                    },
-                    "sync_status": {
-                        "status": "Synced",
-                        "repo_url": "https://github.com/xxxxxx/epoch-sample-staging-manifest.git",
-                        "server": "https://kubernetes.default.svc",
-                        "revision": "xxxxxxxxxxxxxxxxxxxxxxxxx"
-                    },
-                    "resource_status": [
-                        {
-                            "kind": "Rollout",
-                            "name": "api-app",
-                            "health_status": "Healty",
-                            "sync_status": "Synced",
-                            "message": "rollout.argoproj.io/api-app unchanged"
-                        },
-                        {
-                            "kind": "Rollout",
-                            "name": "ui-app",
-                            "health_status": "Healty",
-                            "status": "Synced",
-                            "message": "rollout.argoproj.io/ui-app unchanged"
-                        }
-                    ],
-                    "startedAt": "2022-01-20T08:27:39Z",
-                    "finishedAt": "2022-01-20T08:27:49Z"
+        for data_row in res_json["rows"]:
+            # Since the contents of "contents" are in string format, convert them to JSON format
+            # "contents"の内容は文字列形式なので、JSON形式に変換する
+            contents_data = json.loads(data_row["contents"])
+            rows.append(
+                {
+                    "trace_id": contents_data["trace_id"],
+                    "environment_name": contents_data["environment_name"],
+                    "namespace": contents_data["namespace"],
+                    "argocd_results": contents_data["argocd_results"]
                 }
-            }
+            )
 
         # 戻り値をそのまま返却        
         return jsonify({"result": ret_status, "rows": rows}), ret_status
