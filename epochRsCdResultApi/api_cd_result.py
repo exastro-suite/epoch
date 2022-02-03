@@ -50,7 +50,7 @@ def call_cd_result_root():
 
     try:
         globals.logger.debug('=' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
+        globals.logger.debug('CALL {}:from[{}]'.format(inspect.currentframe().f_code.co_name, request.method))
         globals.logger.debug('=' * 50)
 
         if request.method == 'GET':
@@ -214,7 +214,7 @@ def cd_result_update(workspace_id, cd_result_id):
     except Exception as e:
         return common.serverError(e, "{} error".format(inspect.currentframe().f_code.co_name))
 
-def cd_result_list(workspace_id, cd_result_id=None, username=None, latest=False):
+def cd_result_list(workspace_id=None, cd_result_id=None, username=None, latest=False):
     """CD結果取得 cd result list
 
     Args:
