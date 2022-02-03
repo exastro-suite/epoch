@@ -197,10 +197,10 @@ def cd_result_update(workspace_id, cd_result_id):
         with dbconnector() as db, dbcursor(db) as cursor:
             
             # Requestからcontentsを設定 Set contents from Request
-            contents = request.json.copy()
+            update_contents_items = request.json.copy()
 
             # cd-result update実行
-            upd_cnt = da_cd_result.update_cd_result(cursor, workspace_id, cd_result_id, contents)
+            upd_cnt = da_cd_result.update_cd_result(cursor, workspace_id, cd_result_id, update_contents_items)
 
             if upd_cnt == 0:
                 # データがないときは404応答

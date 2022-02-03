@@ -49,7 +49,7 @@ def alive():
     """
     return jsonify({"result": "200", "time": str(datetime.now(globals.TZ))}), 200
 
-@app.route('/workspace/<int:workspace_id>/argocd', methods=['POST, GET'])
+@app.route('/workspace/<int:workspace_id>/argocd', methods=['POST'])
 def call_argocd(workspace_id):
     """Call workspace/workspace_id/argocd
 
@@ -67,9 +67,6 @@ def call_argocd(workspace_id):
         if request.method == 'POST':
             # argocd pod 生成
             return create_argocd(workspace_id)
-        elif request.method == 'GET':
-            # argocd pod 生成
-            return get_argocd(workspace_id)
         else:
             # エラー
             raise Exception("method not support!")
@@ -77,12 +74,39 @@ def call_argocd(workspace_id):
     except Exception as e:
         return common.server_error(e)
 
-@app.route('/workspace/<int:workspace_id>/argocd/sync', methods=['POST'])
-def call_argocd_sync(workspace_id):
-    """Call workspace/workspace_id/argocd/sync
+@app.route('/workspace/<int:workspace_id>/argocd/app/<string:app_name>', methods=['GET'])
+def call_argocd_app(workspace_id, app_name):
+    """Call workspace/workspace_id/argocd/app
 
     Args:
         workspace_id (int): workspace id
+        app_name (str): app name (same environment name)
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}] app_name[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id, app_name))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'GET':
+            # argocd app情報取得 argocd app information get
+            return get_argocd_app(workspace_id, app_name)
+        else:
+            # エラー
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+@app.route('/workspace/<int:workspace_id>/argocd/app/<string:app_name>/sync', methods=['POST'])
+def call_argocd_app_sync(workspace_id, app_name):
+    """Call workspace/workspace_id/argocd/app/sync
+
+    Args:
+        workspace_id (int): workspace id
+        app_name (str): app name (same environment name)
 
     Returns:
         Response: HTTP Respose
@@ -94,7 +118,7 @@ def call_argocd_sync(workspace_id):
 
         if request.method == 'POST':
             # post argocd sync - ArgoCD 同期処理
-            return post_argocd_sync(workspace_id)
+            return post_argocd_sync(workspace_id, app_name)
         else:
             # エラー
             raise Exception("method not support!")
@@ -201,74 +225,103 @@ def create_argocd(workspace_id):
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
 
 
-def get_argocd(workspace_id):
+def get_argocd_app(workspace_id, app_name):
     """get argocd info - ArgoCD情報取得
 
     Args:
         workspace_id (int): workspace id
+        app_name (str): app name (same environment name)
 
     Returns:
         Response: HTTP Respose
     """
-
-    app_name = multi_lang.get_text("EP035-0001", "ワークスペース情報:")
-    exec_stat = multi_lang.get_text("EP035-0003", "ArgoCD情報取得")
-    error_detail = ""
 
     try:
         globals.logger.debug('#' * 50)
         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
         globals.logger.debug('#' * 50)
 
-        argo_app_name = "staging"
-        stdout_cd = subprocess.check_output(["argocd","app","get", argo_app_name, "-o","json"],stderr=subprocess.STDOUT)
+        # ワークスペースアクセス情報取得 Get workspace access information
+        access_data = get_access_info(workspace_id)
+
+        argo_host = 'argocd-server.epoch-ws-{}.svc'.format(workspace_id)
+        argo_id = access_data['ARGOCD_USER']
+        argo_password = access_data['ARGOCD_PASSWORD']
+        
+        #
+        # argocd login
+        #
+        globals.logger.debug("argocd login :")
+        stdout_cd = subprocess.check_output(["argocd","login",argo_host,"--insecure","--username",argo_id,"--password",argo_password],stderr=subprocess.STDOUT)
+        globals.logger.debug(stdout_cd.decode('utf-8'))
+
+        #
+        # argocd app get
+        #
+        globals.logger.debug("argocd app get :")
+        stdout_cd = subprocess.check_output(["argocd","app","get", app_name, "-o","json"],stderr=subprocess.STDOUT)
+        globals.logger.debug(stdout_cd.decode('utf-8'))
 
         globals.logger.debug(stdout_cd)
         ret_status = 200
         
-        rows = []
+        result = json.loads(stdout_cd)
         
         # 戻り値をそのまま返却        
-        return jsonify({"result": ret_status, "rows": rows}), ret_status
+        return jsonify({"result": ret_status, "result": result}), ret_status
 
     except common.UserException as e:
-        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+        return common.server_error(e)
     except Exception as e:
-        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+        return common.server_error(e)
 
 
-def post_argocd_sync(workspace_id):
+def post_argocd_sync(workspace_id, app_name):
     """post argocd sync - ArgoCD同期処理
 
     Args:
         workspace_id (int): workspace id
+        app_name (str): app name (same environment name)
 
     Returns:
         Response: HTTP Respose
     """
 
-    app_name = multi_lang.get_text("EP035-0001", "ワークスペース情報:")
-    exec_stat = multi_lang.get_text("EP035-0003", "ArgoCD情報取得")
-    error_detail = ""
-
     try:
         globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
+        globals.logger.debug('CALL {} workspace_id[{}] app_name[{}]'.format(inspect.currentframe().f_code.co_name, workspace_id, app_name))
         globals.logger.debug('#' * 50)
 
+        # ワークスペースアクセス情報取得 Get workspace access information
+        access_data = get_access_info(workspace_id)
+
+        argo_host = 'argocd-server.epoch-ws-{}.svc'.format(workspace_id)
+        argo_id = access_data['ARGOCD_USER']
+        argo_password = access_data['ARGOCD_PASSWORD']
         
+        #
+        # argocd login
+        #
+        globals.logger.debug("argocd login :")
+        stdout_cd = subprocess.check_output(["argocd","login",argo_host,"--insecure","--username",argo_id,"--password",argo_password],stderr=subprocess.STDOUT)
+        globals.logger.debug(stdout_cd.decode('utf-8'))
+
+        #
+        # app sync
+        #
+        globals.logger.debug("argocd app sync :")
+        stdout_cd = subprocess.check_output(["argocd","app","sync",app_name],stderr=subprocess.STDOUT)
+        globals.logger.debug(stdout_cd.decode('utf-8'))
 
         ret_status = 200
         
-        rows = []
-        
-        # 戻り値をそのまま返却        
-        return jsonify({"result": ret_status, "rows": rows}), ret_status
+        # 正常終了 normal end       
+        return jsonify({"result": ret_status}), ret_status
 
     except common.UserException as e:
-        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+        return common.server_error(e)
     except Exception as e:
-        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+        return common.server_error(e)
 
 
 @app.route('/workspace/<int:workspace_id>/argocd/settings', methods=['POST'])
@@ -311,22 +364,22 @@ def argocd_settings(workspace_id):
     exec_stat = multi_lang.get_text("EP035-0004", "ArgoCD設定")
     error_detail = ""
 
-    # ワークスペースアクセス情報取得
-    access_data = get_access_info(workspace_id)
-
-    argo_host = 'argocd-server.epoch-ws-{}.svc'.format(workspace_id)
-    argo_id = access_data['ARGOCD_USER']
-    argo_password = access_data['ARGOCD_PASSWORD']
-
-    # 引数で指定されたCD環境を取得
-    request_json = json.loads(request.data)
-    request_ci_env = request_json["ci_config"]["environments"]
-    request_cd_env = request_json["cd_config"]["environments"]
-    gitUsername = request_json["cd_config"]["environments_common"]["git_repositry"]["user"]
-    gitPassword = request_json["cd_config"]["environments_common"]["git_repositry"]["token"]
-    housing = request_json["cd_config"]["environments_common"]["git_repositry"]["housing"]
-
     try:
+        # ワークスペースアクセス情報取得
+        access_data = get_access_info(workspace_id)
+
+        argo_host = 'argocd-server.epoch-ws-{}.svc'.format(workspace_id)
+        argo_id = access_data['ARGOCD_USER']
+        argo_password = access_data['ARGOCD_PASSWORD']
+
+        # 引数で指定されたCD環境を取得
+        request_json = json.loads(request.data)
+        request_ci_env = request_json["ci_config"]["environments"]
+        request_cd_env = request_json["cd_config"]["environments"]
+        gitUsername = request_json["cd_config"]["environments_common"]["git_repositry"]["user"]
+        gitPassword = request_json["cd_config"]["environments_common"]["git_repositry"]["token"]
+        housing = request_json["cd_config"]["environments_common"]["git_repositry"]["housing"]
+
         #
         # argocd login
         #
