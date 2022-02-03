@@ -233,6 +233,58 @@ def call_cd_pipeline(workspace_id):
         return common.server_error(e)
 
 
+@app.route('/workspace/<int:workspace_id>/cd/pipeline/argocd', methods=['GET'])
+def call_cd_pipeline_argocd(workspace_id):
+    """workspace/workspace_id/cd/pipeline/argocd Call
+
+    Args:
+        workspace_id (int): workspace ID
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'GET':
+            # Get CD pipeline (ArgoCD) information - CDパイプライン(ArgoCD)情報取得
+            return api_service_cd.get_cd_pipeline_argocd(workspace_id)
+        else:
+            # Error
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+
+@app.route('/workspace/<int:workspace_id>/cd/pipeline/argocd/sync', methods=['POST'])
+def call_cd_pipeline_argocd_sync(workspace_id):
+    """workspace/workspace_id/cd/pipeline/argocd/sync Call
+
+    Args:
+        workspace_id (int): workspace ID
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'POST':
+            # Post CD pipeline (ArgoCD) sync - CDパイプライン(ArgoCD)同期
+            return api_service_cd.post_cd_pipeline_argocd_sync(workspace_id)
+        else:
+            # Error
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+
 @app.route('/workspace/<int:workspace_id>/manifest/parameter', methods=['POST'])
 def call_manifest_parameter(workspace_id):
     """workspace/workspace_id/manifest/parameter Call
