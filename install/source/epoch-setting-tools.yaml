@@ -30,9 +30,15 @@ spec:
       - name: epoch-setting-tools-script
         configMap:
           name: epoch-setting-tools-script
+      - name: setting-logs
+        hostPath:
+          path: /var/data/epoch/epoch-setting-tools
+          type: DirectoryOrCreate
       containers:
       - name: epoch-setting-tools
         image: exastro/epoch-kube-command:0.1.5_20211026_1600
         volumeMounts:
         - mountPath: /scripts
           name: epoch-setting-tools-script
+        - mountPath: /var/log/epoch
+          name: setting-logs
