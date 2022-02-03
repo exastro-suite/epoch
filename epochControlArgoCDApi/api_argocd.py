@@ -31,7 +31,7 @@ import bcrypt
 import pytz
 
 import globals
-import common
+import common, multi_lang
 
 # 設定ファイル読み込み・globals初期化
 app = Flask(__name__)
@@ -49,12 +49,12 @@ def alive():
     """
     return jsonify({"result": "200", "time": str(datetime.now(globals.TZ))}), 200
 
-@app.route('/workspace/<int:workspace_id>/argocd', methods=['POST'])
+@app.route('/workspace/<int:workspace_id>/argocd', methods=['POST, GET'])
 def call_argocd(workspace_id):
-    """workspace/workspace_id/argocd 呼び出し
+    """Call workspace/workspace_id/argocd
 
     Args:
-        workspace_id (int): ワークスペースID
+        workspace_id (int): workspace id
 
     Returns:
         Response: HTTP Respose
@@ -67,6 +67,34 @@ def call_argocd(workspace_id):
         if request.method == 'POST':
             # argocd pod 生成
             return create_argocd(workspace_id)
+        elif request.method == 'GET':
+            # argocd pod 生成
+            return get_argocd(workspace_id)
+        else:
+            # エラー
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+@app.route('/workspace/<int:workspace_id>/argocd/sync', methods=['POST'])
+def call_argocd_sync(workspace_id):
+    """Call workspace/workspace_id/argocd/sync
+
+    Args:
+        workspace_id (int): workspace id
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'POST':
+            # post argocd sync - ArgoCD 同期処理
+            return post_argocd_sync(workspace_id)
         else:
             # エラー
             raise Exception("method not support!")
@@ -76,17 +104,17 @@ def call_argocd(workspace_id):
 
 
 def create_argocd(workspace_id):
-    """argoCD Pod 作成
+    """ Create pod argocd - ArgoCD Pod 作成
 
     Args:
-        workspace_id (int): ワークスペースID
+        workspace_id (int): workspace id
 
     Returns:
         Response: HTTP Respose
     """
 
-    app_name = "ワークスペース情報:"
-    exec_stat = "ArgoCD環境構築"
+    app_name = multi_lang.get_text("EP035-0001", "ワークスペース情報:")
+    exec_stat = multi_lang.get_text("EP035-0002", "ArgoCD環境構築")
     error_detail = ""
 
     try:
@@ -173,12 +201,82 @@ def create_argocd(workspace_id):
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
 
 
-@app.route('/workspace/<int:workspace_id>/argocd/settings', methods=['POST'])
-def call_argocd_settings(workspace_id):
-    """workspace/workspace_id/argocd/settings 呼び出し
+def get_argocd(workspace_id):
+    """get argocd info - ArgoCD情報取得
 
     Args:
-        workspace_id (int): ワークスペースID
+        workspace_id (int): workspace id
+
+    Returns:
+        Response: HTTP Respose
+    """
+
+    app_name = multi_lang.get_text("EP035-0001", "ワークスペース情報:")
+    exec_stat = multi_lang.get_text("EP035-0003", "ArgoCD情報取得")
+    error_detail = ""
+
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
+        globals.logger.debug('#' * 50)
+
+        argo_app_name = "staging"
+        stdout_cd = subprocess.check_output(["argocd","app","get", argo_app_name, "-o","json"],stderr=subprocess.STDOUT)
+
+        globals.logger.debug(stdout_cd)
+        ret_status = 200
+        
+        rows = []
+        
+        # 戻り値をそのまま返却        
+        return jsonify({"result": ret_status, "rows": rows}), ret_status
+
+    except common.UserException as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+    except Exception as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+
+
+def post_argocd_sync(workspace_id):
+    """post argocd sync - ArgoCD同期処理
+
+    Args:
+        workspace_id (int): workspace id
+
+    Returns:
+        Response: HTTP Respose
+    """
+
+    app_name = multi_lang.get_text("EP035-0001", "ワークスペース情報:")
+    exec_stat = multi_lang.get_text("EP035-0003", "ArgoCD情報取得")
+    error_detail = ""
+
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
+        globals.logger.debug('#' * 50)
+
+        
+
+        ret_status = 200
+        
+        rows = []
+        
+        # 戻り値をそのまま返却        
+        return jsonify({"result": ret_status, "rows": rows}), ret_status
+
+    except common.UserException as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+    except Exception as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+
+
+@app.route('/workspace/<int:workspace_id>/argocd/settings', methods=['POST'])
+def call_argocd_settings(workspace_id):
+    """Call workspace/workspace_id/argocd/settings
+
+    Args:
+        workspace_id (int): workspace id
 
     Returns:
         Response: HTTP Respose
@@ -189,10 +287,10 @@ def call_argocd_settings(workspace_id):
         globals.logger.debug('#' * 50)
 
         if request.method == 'POST':
-            # argocd pod 生成
+            # settig argocd - ArgoCD設定
             return argocd_settings(workspace_id)
         else:
-            # エラー
+            # error
             raise Exception("method not support!")
 
     except Exception as e:
@@ -200,17 +298,17 @@ def call_argocd_settings(workspace_id):
 
 
 def argocd_settings(workspace_id):
-    """ArgoCD設定
+    """Setting argocd - ArgoCD設定
 
     Args:
-        workspace_id (int): ワークスペースID
+        workspace_id (int): workspace id
 
     Returns:
         Response: HTTP Respose
     """
 
-    app_name = "ワークスペース情報:"
-    exec_stat = "ArgoCD設定"
+    app_name = multi_lang.get_text("EP035-0001", "ワークスペース情報:")
+    exec_stat = multi_lang.get_text("EP035-0004", "ArgoCD設定")
     error_detail = ""
 
     # ワークスペースアクセス情報取得
@@ -257,8 +355,8 @@ def argocd_settings(workspace_id):
             env_name = env["name"]
             gitUrl = env["git_repositry"]["url"]
 
-            exec_stat = "ArgoCD設定 - リポジトリ作成"
-            error_detail = "IaCリポジトリの設定内容を確認してください"
+            exec_stat = multi_lang.get_text("EP035-0005", "ArgoCD設定 - リポジトリ作成")
+            error_detail = multi_lang.get_text("EP035-0006", "IaCリポジトリの設定内容を確認してください")
 
             # レポジトリの情報を追加
             globals.logger.debug ("argocd repo add :")
@@ -311,8 +409,8 @@ def argocd_settings(workspace_id):
                     error_detail = 'create namespace処理に失敗しました'
                     raise common.UserException(error_detail)
 
-            exec_stat = "ArgoCD設定 - アプリケーション作成"
-            error_detail = "ArgoCDの入力内容を確認してください"
+            exec_stat = multi_lang.get_text("EP035-0007", "ArgoCD設定 - アプリケーション作成")
+            error_detail = multi_lang.get_text("EP035-0008", "ArgoCDの入力内容を確認してください")
 
             # argocd app create catalogue \
             # --repo [repogitory URL] \
