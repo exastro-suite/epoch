@@ -40,6 +40,29 @@ def alive():
     """
     return jsonify({"result": "200", "time": str(datetime.now(globals.TZ))}), 200
 
+@app.route('/cd/result', methods=['GET'])
+def call_cd_result_root():
+    """CD結果の呼び出し口 条件なし CD result call not conditons
+
+    Returns:
+        response: HTTP Respose
+    """
+
+    try:
+        globals.logger.debug('=' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
+        globals.logger.debug('=' * 50)
+
+        if request.method == 'GET':
+            # cd execute (get)
+            return cd_result_list()
+        else:
+            # Error
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.serverError(e, "{} error".format(inspect.currentframe().f_code.co_name))
+
 @app.route('/workspace/<int:workspace_id>/cd/result', methods=['GET'])
 def call_cd_result(workspace_id):
     """CD結果の呼び出し口 CD result call
