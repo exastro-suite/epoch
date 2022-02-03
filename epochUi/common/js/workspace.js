@@ -19,7 +19,6 @@ var workspace_id = null;
 var workspace_update_at = null;
 var workspace_client_urls = {
   "ita" : null,
-  "argo" : null,
   "sonarqube": null
 }
 
@@ -2357,27 +2356,27 @@ const argoCdAddDeployMembersModal = function(){
 const arogCdResultList = function(){
   const $resultList = $('#result-list');
   
-  var link = "";
-  for(var env in wsDataJSON['environment']) {
-    link = wsDataJSON['environment'][env][env + '-git-service-argo-repository-url'];
-    break;
-  };
-
-  // EPOCH_LINK
-  $resultList.html('<a href="' + link + '" target="_blank" text="aaa">' + link + '</a>')
-//  $resultList.html('<button class="running-status">実行状況</button>')
+  $resultList.html('<div class="result-get">/GET ArgoCD結果')
+  $resultList.append('<textarea class="argo-text" cols="35" rows="30"></textarea>')
+  $resultList.append('</div><br>')
+  $resultList.append('<button class="sync">同期</button>')
   
-  $resultList.find('.running-status').on('click', function(){
-    modal.change('arogCdStatusCheck', {
-      'cancel': function(){
-        modal.change('arogCdResultCheck', {
-          'callback': arogCdResultList
-        });
-      },
-      'callback': arogCdStatusList
+  $resultList.find('.sync').on('click', function(){
+
+    console.log("[CALL] GET " + workspace_api_conf.api.resource.get);
+
+    // Call argoCD sync processing - ArgoCD同期処理呼び出し
+    $.ajax({
+      // TODO: サービス呼び出しは、同期処理作成後に実装
+      // "type": "POST",
+      // "url": workspace_api_conf.api.resource.get.replace('{workspace_id}', workspace_id),
+
+    }).done(function(data) {
+      // console.log("[DONE] POST " + workspace_api_conf.api.resource.get + " response\n" + JSON.stringify(data));
+    }).fail(function(data) {
+      // console.log("[FAIL] POST " + workspace_api_conf.api.resource.get + " response\n" + JSON.stringify(data));
     });
   });
-
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2597,7 +2596,6 @@ $content.find('.modal-open, .workspace-status-item').not('[data-button="pipeline
       $('.modal-block-main').html('<a href="' + workspace_api_conf.links.registry + '" target="_blank">確認</a>');
       break;
     case 'arogCdResultCheck':
-      $('.modal-block-main').html('<a href="' + workspace_client_urls.argo + '" target="_blank">確認</a>');
       break;
     case 'exastroItAutomationResultCheck':
       $('.modal-block-main').html('<a href="' + workspace_client_urls.ita + '" target="_blank">確認</a>');

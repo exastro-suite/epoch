@@ -27,7 +27,6 @@ TOOLS_SCRIPT="${BASE_DIR}/source/setting-tools"
 kubectl create cm gateway-conf-template -n exastro-platform-authentication-infra --dry-run=client -o yaml \
     --from-file=${TEMPLATES_DIR}/epoch-system-template.conf       \
     --from-file=${TEMPLATES_DIR}/epoch-system-ws-template.conf    \
-    --from-file=${TEMPLATES_DIR}/epoch-ws-argocd-template.conf    \
     --from-file=${TEMPLATES_DIR}/epoch-ws-ita-template.conf       \
     --from-file=${TEMPLATES_DIR}/epoch-ws-sonarqube-template.conf \
     >   ${SOURCE_MANIFEST}/gateway-conf-template.yaml

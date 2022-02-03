@@ -245,15 +245,6 @@ def create_workspace_setting_auth_infra(workspace_id, user_id):
                 "mapping_client_id" : "epoch-system",
             },
             {
-                "client_id" :   'epoch-ws-{}-argocd'.format(workspace_id),
-                "client_host" : os.environ["EPOCH_EPAI_HOST"],
-                "client_protocol" : "https",
-                "conf_template" : "epoch-ws-argocd-template.conf",
-                "backend_url" : "https://argocd-server.{}.svc/".format(namespace),
-                "require_claim" : const.ROLE_WS_ROLE_CD_EXECUTE_RESULT[0].format(workspace_id),
-                "mapping_client_id" : "epoch-system",
-            },
-            {
                 "client_id" :   'epoch-ws-{}-sonarqube'.format(workspace_id),
                 "client_host" : os.environ["EPOCH_EPAI_HOST"],
                 "client_protocol" : "https",
