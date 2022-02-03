@@ -14,12 +14,27 @@
 #   limitations under the License.
 
 
-echo "[INFO] START : set-host.sh"
+BASENAME=$(basename "$0")
+LOGFILE="/var/log/epoch/epoch-setting-tools.log.`date '+%Y%m%d'`"
+CMD_RESULT="/tmp/result.$$"
+LF='
+'
+function logger() {
+    LOG_LEVEL=$1
+    LOG_MESSAGE=$2
+    LOG_TEXT="[`TZ=JST-9 date '+%Y/%m/%d %H:%M:%S'`][${BASENAME}][${LOG_LEVEL}] ${LOG_MESSAGE}"
+    if [ "${LOG_LEVEL}" != "DEBUG" ]; then
+        echo "[${LOG_LEVEL}] ${LOG_MESSAGE}"
+    fi
+    echo "${LOG_TEXT}" > /proc/1/fd/1
+    echo "${LOG_TEXT}" >> "${LOGFILE}"
+}
+
+logger "INFO" "START : set-host.sh"
 
 #
 # Initialize variables
 #
-BASENAME=$(basename "$0")
 STEP=0
 ALLSTEPS=5
 
@@ -27,8 +42,8 @@ ALLSTEPS=5
 # check parameter
 #
 if [ $# -ne 1 ]; then
-    echo "Usage : ${BASENAME} [hostname or IPaddress]"
-    echo "ERROR : Check the parameters and try again"
+    logger "ERROR" "Usage : ${BASENAME} [hostname or IPaddress]"
+    logger "ERROR" "Check the parameters and try again"
     exit 1
 fi
 
@@ -38,41 +53,41 @@ PRM_MY_HOST="$1"
 # Initialize Setting Parameter
 #
 STEP=$(expr ${STEP} + 1)
-echo "**** STEP : ${STEP} / ${ALLSTEPS} : Initialize Setting Parameter ..."
+logger "INFO" "**** STEP : ${STEP} / ${ALLSTEPS} : Initialize Setting Parameter ..."
 
 OIDC_PASSPHRASE=$(< /dev/urandom tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq)
 if [ $? -ne 0 -o -z "${OIDC_PASSPHRASE}" ]; then
-    echo "ERROR : Generate OIDC_PASSPHRASE"
+    logger "ERROR" "Generate OIDC_PASSPHRASE"
     exit 2
 fi
 
 OIDC_PASSPHRASE_B64=$(echo -n "${OIDC_PASSPHRASE}" | base64)
 if [ $? -ne 0 -o -z "${OIDC_PASSPHRASE_B64}" ]; then
-    echo "ERROR : Generate OIDC_PASSPHRASE_B64"
+    logger "ERROR" "Generate OIDC_PASSPHRASE_B64"
     exit 2
 fi
 
 KEYCLOAK_ADMIN_PASSW=$(< /dev/urandom tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq)
 if [ $? -ne 0 -o -z "${KEYCLOAK_ADMIN_PASSW}" ]; then
-    echo "ERROR : Generate KEYCLOAK_ADMIN_PASSW"
+    logger "ERROR" "Generate KEYCLOAK_ADMIN_PASSW"
     exit 2
 fi
 
 KEYCLOAK_ADMIN_PASSW_B64=$(echo -n "${KEYCLOAK_ADMIN_PASSW}" | base64)
 if [ $? -ne 0 -o -z "${KEYCLOAK_ADMIN_PASSW_B64}" ]; then
-    echo "ERROR : Generate OIDC_PASSPHRASE_B64"
+    logger "ERROR" "Generate KEYCLOAK_ADMIN_PASSW_B64"
     exit 2
 fi
 
 EPOCH_ADMIN_PASSWD=$(< /dev/urandom tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq)
-if [ $? -ne 0 -o -z "${KEYCLOAK_ADMIN_PASSW}" ]; then
-    echo "ERROR : Generate EPOCH_ADMIN_PASSWD"
+if [ $? -ne 0 -o -z "${EPOCH_ADMIN_PASSWD}" ]; then
+    logger "ERROR" "Generate EPOCH_ADMIN_PASSWD"
     exit 2
 fi
 
 EPOCH_ADMIN_PASSWD_B64=$(echo -n "${EPOCH_ADMIN_PASSWD}" | base64)
 if [ $? -ne 0 -o -z "${EPOCH_ADMIN_PASSWD_B64}" ]; then
-    echo "ERROR : Generate EPOCH_ADMIN_PASSWD_B64"
+    logger "ERROR" "Generate EPOCH_ADMIN_PASSWD_B64"
     exit 2
 fi
 
@@ -80,29 +95,34 @@ fi
 # Set parameter to configmap
 #
 STEP=$(expr ${STEP} + 1)
-echo "**** STEP : ${STEP} / ${ALLSTEPS} : Set Parameter To Configmap"
+logger "INFO" "**** STEP : ${STEP} / ${ALLSTEPS} : Set Parameter To Configmap"
 
 kubectl patch configmap -n epoch-system host-setting-config -p "\
 {\
     \"data\" : {\
         \"EPOCH_HOSTNAME\" : \"${PRM_MY_HOST}\"\
     }\
-}"
+}" &> "${CMD_RESULT}"
 if [ $? -ne 0 ]; then
-    echo "ERROR : patch configmap host-setting-config"
+    logger "ERROR" "CALL : kubectl patch configmap -n epoch-system host-setting-config${LF}`cat ${CMD_RESULT}`"
+    logger "ERROR" "patch configmap host-setting-config"
     exit 2
 fi
+logger "INFO" "CALL : kubectl patch configmap -n epoch-system host-setting-config${LF}`cat ${CMD_RESULT}`"
+
 
 kubectl patch configmap -n exastro-platform-authentication-infra exastro-platform-authentication-infra-env -p "\
 {\
     \"data\" : {\
         \"EXASTRO_KEYCLOAK_HOST\" : \"${PRM_MY_HOST}\"\
     }\
-}"
+}" &> "${CMD_RESULT}"
 if [ $? -ne 0 ]; then
-    echo "ERROR : patch configmap exastro-platform-authentication-infra-env"
+    logger "ERROR" "CALL : kubectl patch configmap -n exastro-platform-authentication-infra exastro-platform-authentication-infra-env${LF}`cat ${CMD_RESULT}`"
+    logger "ERROR" "patch configmap exastro-platform-authentication-infra-env"
     exit 2
 fi
+logger "INFO" "CALL : kubectl patch configmap -n exastro-platform-authentication-infra exastro-platform-authentication-infra-env${LF}`cat ${CMD_RESULT}`"
 
 
 kubectl patch configmap -n epoch-system epoch-service-api-config -p "\
@@ -110,11 +130,13 @@ kubectl patch configmap -n epoch-system epoch-service-api-config -p "\
     \"data\" : {\
         \"EPOCH_EPAI_HOST\" : \"${PRM_MY_HOST}\"\
     }\
-}"
+}" &> "${CMD_RESULT}"
 if [ $? -ne 0 ]; then
-    echo "ERROR : patch configmap epoch-service-api-config"
+    logger "ERROR" "CALL : kubectl patch configmap -n epoch-system epoch-service-api-config${LF}`cat ${CMD_RESULT}`"
+    logger "ERROR" "patch configmap epoch-service-api-config"
     exit 2
 fi
+logger "INFO" "CALL : kubectl patch configmap -n epoch-system epoch-service-api-config${LF}`cat ${CMD_RESULT}`"
 
 
 kubectl patch secret -n exastro-platform-authentication-infra exastro-platform-authentication-infra-secret -p "\
@@ -124,67 +146,74 @@ kubectl patch secret -n exastro-platform-authentication-infra exastro-platform-a
         \"KEYCLOAK_PASSWORD\" : \"${KEYCLOAK_ADMIN_PASSW_B64}\",\
         \"EPOCH_PASSWORD\" : \"${EPOCH_ADMIN_PASSWD_B64}\"\
     }\
-}"
+}" &> "${CMD_RESULT}"
 if [ $? -ne 0 ]; then
-    echo "ERROR : patch secret exastro-platform-authentication-infra-secret"
+    logger "ERROR" "CALL : kubectl patch secret -n exastro-platform-authentication-infra exastro-platform-authentication-infra-secret${LF}`cat ${CMD_RESULT}`"
+    logger "ERROR" "patch secret exastro-platform-authentication-infra-secret"
     exit 2
 fi
+logger "INFO" "CALL : kubectl patch secret -n exastro-platform-authentication-infra exastro-platform-authentication-infra-secret${LF}`cat ${CMD_RESULT}`"
 
 #
 # restart to reflect the settings
 #
 STEP=$(expr ${STEP} + 1)
-echo "**** STEP : ${STEP} / ${ALLSTEPS} : restart to reflect the settings ..."
+logger "INFO" "**** STEP : ${STEP} / ${ALLSTEPS} : restart to reflect the settings ..."
 
-# kubectl rollout restart deploy -n epoch-system epoch-service-api
-# if [ $? -ne 0 ]; then
-#     echo "ERROR : rollout restart epoch-service-api"
-#     exit 2
-# fi
-
-kubectl rollout restart deploy -n epoch-system epoch-service-api2
+kubectl rollout restart deploy -n epoch-system epoch-service-api2 &> "${CMD_RESULT}"
 if [ $? -ne 0 ]; then
-    echo "ERROR : rollout restart epoch-service-api2"
+    logger "ERROR" "CALL : kubectl rollout restart deploy -n epoch-system epoch-service-api2${LF}`cat ${CMD_RESULT}`"
+    logger "ERROR" "rollout restart epoch-service-api2"
     exit 2
 fi
+logger "INFO" "CALL : kubectl rollout restart deploy -n epoch-system epoch-service-api2${LF}`cat ${CMD_RESULT}`"
 
-kubectl rollout restart deploy -n epoch-system epoch-control-ita-api
+kubectl rollout restart deploy -n epoch-system epoch-control-ita-api &> "${CMD_RESULT}"
 if [ $? -ne 0 ]; then
-    echo "ERROR : rollout restart epoch-control-ita-api"
+    logger "ERROR" "CALL : kubectl rollout restart deploy -n epoch-system epoch-control-ita-api${LF}`cat ${CMD_RESULT}`"
+    logger "ERROR" "rollout restart epoch-control-ita-api"
     exit 2
 fi
+logger "INFO" "CALL : kubectl rollout restart deploy -n epoch-system epoch-control-ita-api${LF}`cat ${CMD_RESULT}`"
 
 while true; do
     sleep 5;
     RESTART_BERFORE_API_POD=$(kubectl get pod --selector "name=authentication-infra-api" -n exastro-platform-authentication-infra -o jsonpath="{range .items[*]}{@.metadata.name}{\"\n\"}{end}" 2> /dev/null)
     if [ $? -eq 0 ]; then
+        logger "DEBUG" "RESTART_BERFORE_API_POD=${RESTART_BERFORE_API_POD}"
         break;
     fi
 done
-kubectl rollout restart deploy -n exastro-platform-authentication-infra authentication-infra-api
+
+kubectl rollout restart deploy -n exastro-platform-authentication-infra authentication-infra-api &> "${CMD_RESULT}"
 if [ $? -ne 0 ]; then
-    echo "ERROR : rollout restart authentication-infra-api"
+    logger "ERROR" "CALL : kubectl rollout restart deploy -n exastro-platform-authentication-infra authentication-infra-api${LF}`cat ${CMD_RESULT}`"
+    logger "ERROR" "rollout restart authentication-infra-api"
     exit 2
 fi
+logger "INFO" "CALL : kubectl rollout restart deploy -n exastro-platform-authentication-infra authentication-infra-api${LF}`cat ${CMD_RESULT}`"
 
 while true; do
     sleep 5;
     RESTART_BERFORE_KEYCLOAK_POD=$(kubectl get pod --selector "app=keycloak" -n exastro-platform-authentication-infra -o jsonpath="{range .items[*]}{@.metadata.name}{\"\n\"}{end}" 2> /dev/null)
     if [ $? -eq 0 ]; then
+        logger "DEBUG" "RESTART_BERFORE_KEYCLOAK_POD=${RESTART_BERFORE_KEYCLOAK_POD}"
         break;
     fi
 done
-kubectl rollout restart deploy -n exastro-platform-authentication-infra keycloak
+kubectl rollout restart deploy -n exastro-platform-authentication-infra keycloak &> "${CMD_RESULT}"
 if [ $? -ne 0 ]; then
-    echo "ERROR : rollout restart keycloak"
+    logger "ERROR" "CALL : kubectl rollout restart deploy -n exastro-platform-authentication-infra keycloak${LF}`cat ${CMD_RESULT}`"
+    logger "ERROR" "rollout restart keycloak"
     exit 2
 fi
+logger "INFO" "CALL : kubectl rollout restart deploy -n exastro-platform-authentication-infra keycloak${LF}`cat ${CMD_RESULT}`"
 
 #
 # wait for restart
 #
 STEP=$(expr ${STEP} + 1)
-echo "**** STEP : ${STEP} / ${ALLSTEPS} : wait for restart ..."
+logger "INFO" "**** STEP : ${STEP} / ${ALLSTEPS} : wait for restart ..."
 
 echo -n "waiting ..."
 while true; do
@@ -203,7 +232,7 @@ while true; do
     if [ $? -ne 0 ]; then
         continue
     fi
-    if [ "${RESTART_BERFORE_API_POD}" == "${RESTART_AFTER_API_POD}" ]; then
+    if [ "${RESTART_BERFORE_API_POD}" = "${RESTART_AFTER_API_POD}" ]; then
         continue;
     fi
 
@@ -211,7 +240,7 @@ while true; do
     if [ $? -ne 0 ]; then
         continue
     fi
-    if [ "${RESTART_BERFORE_KEYCLOAK_POD}" == "${RESTART_AFTER_KEYCLOAK_POD}" ]; then
+    if [ "${RESTART_BERFORE_KEYCLOAK_POD}" = "${RESTART_AFTER_KEYCLOAK_POD}" ]; then
         continue;
     fi
 
@@ -219,11 +248,14 @@ while true; do
     break;
 done;
 
+logger "DEBUG" "RESTART_AFTER_API_POD=${RESTART_AFTER_API_POD}"
+logger "DEBUG" "RESTART_AFTER_KEYCLOAK_POD=${RESTART_AFTER_KEYCLOAK_POD}"
+
 #
 # Setting api call
 #
 STEP=$(expr ${STEP} + 1)
-echo "**** STEP : ${STEP} / ${ALLSTEPS} : Setting api call ..."
+logger "INFO" "**** STEP : ${STEP} / ${ALLSTEPS} : Setting api call ..."
 
 API_RESPONSE="/tmp/${BASENAME}-infra-setting.$$"
 
@@ -319,23 +351,23 @@ curl \
     }
 EOF
 if [ $? -ne 0 ]; then
-    echo "ERROR : Setting api call"
+    logger "ERROR" "Setting api call"
     exit 2
 fi
 
 API_RESULT=$(cat "${API_RESPONSE}" | jq -r ".result")
 if [ $? -ne 0 ]; then
-    echo "---- API Error Response ----"
-    cat "${API_RESPONSE}"
-    echo "ERROR : Setting api call"
+    logger "ERROR" "Setting api response:\n`cat ${API_RESPONSE}`"
+    logger "ERROR" "Api Logs:\n`kubectl logs deploy/authentication-infra-api -n exastro-platform-authentication-infra`"
+    logger "ERROR" "Setting api"
     exit 2
 fi
 if [ "${API_RESULT}" != "200" ]; then
-    echo "---- API Error Response ----"
-    cat "${API_RESPONSE}"
-    echo "ERROR : Setting api call"
+    logger "ERROR" "Setting api response:\n`cat ${API_RESPONSE}`"
+    logger "ERROR" "Api Logs:\n`kubectl logs deploy/authentication-infra-api -n exastro-platform-authentication-infra`"
+    logger "ERROR" "Setting api"
     exit 2
 fi
 
-echo "**** ${BASENAME} completed successfully ****"
+logger "INFO" "**** ${BASENAME} completed successfully ****"
 exit 0
