@@ -31,11 +31,11 @@ RUN echo "RUN START"  \
 &&  pip install -U pip \
 &&  pip install requests \
 &&  pip install kubernetes \
-&&  pip install schedule \
 &&  python3 -m pip install Flask \
 &&  python3 -m pip install pytz \
 &&  python3 -m pip install mysql-connector-python \
 &&  python3 -m pip install markdown \
+&&  python3 -m pip install schedule \
 &&  curl -LO -k "https://storage.googleapis.com/kubernetes-release/release/$(curl -s -k https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl" \
 &&  chmod +x ./kubectl \
 &&  mv ./kubectl /usr/local/bin/kubectl \

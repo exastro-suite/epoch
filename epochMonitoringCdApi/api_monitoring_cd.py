@@ -95,6 +95,17 @@ def monitoring_argo_cd():
                 # Get the result of ArgoCD and check the status
 
 
+                # cd-result put
+                api_url = "{}://{}:{}/workspace/{}/cd/result/{}".format(os.environ['EPOCH_RS_CD_RESULT_PROTOCOL'],
+                                                        os.environ['EPOCH_RS_CD_RESULT_HOST'],
+                                                        os.environ['EPOCH_RS_CD_RESULT_PORT'],
+                                                        result_row["workspace_id"],
+                                                        result_row["cd_result_id"])
+                response = requests.put(api_url, headers=post_headers, data=json.dumps(post_data))
+
+                if response.status_code != 200:
+                    raise Exception("cd result put error:[{}]".format(response.status_cd))
+
     except Exception as e:
         return common.serverError(e)
 
