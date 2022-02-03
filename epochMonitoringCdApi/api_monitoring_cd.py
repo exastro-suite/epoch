@@ -75,11 +75,24 @@ def monitoring_argo_cd():
             # ITAの同期が完了したら、ArgoCDのSyncを呼び出す
             # Call ArgoCD Sync when ITA sync is complete
             if result_row["cd_status"] == const.CD_STATUS_ITA_COMPLETE:
+                # 状態をArgoCD同期中に変更
+                contents = json.loads(result_row["contents"])
+
                 # ArgoCD Sync call 
+                api_url = "{}://{}:{}/workspace/{}/argocd/sync/{}".format(os.environ['EPOCH_CONTROL_ARGOCD_PROTOCOL'],
+                                                        os.environ['EPOCH_CONTROL_ARGOCD_HOST'],
+                                                        os.environ['EPOCH_CONTROL_ARGOCD_PORT'],
+                                                        result_row["workspace_id"],
+                                                        contents["environment_name"])
+                response = requests.post(api_url, headers=post_headers)
+
+                if response.status_code != 200:
+                    raise Exception("argocd sync post error:[{}]".format(response.status_code))
 
                 # 状態をArgoCD同期中に変更
-                post_data = json.loads(result_row["contents"])
-                post_data["cd_status"] = const.CD_STATUS_ARGOCD_SYNC
+                post_data = {
+                    "cd_status": const.CD_STATUS_ARGOCD_SYNC,
+                }
 
                 # cd-result put
                 api_url = "{}://{}:{}/workspace/{}/cd/result/{}".format(os.environ['EPOCH_RS_CD_RESULT_PROTOCOL'],
@@ -95,7 +108,44 @@ def monitoring_argo_cd():
             else:
                 # ArgoCDの結果を取得して、状態を確認する
                 # Get the result of ArgoCD and check the status
+                contents = json.loads(result_row["contents"])
 
+                # ArgoCD app get call 
+                api_url = "{}://{}:{}/workspace/{}/argocd/app/{}".format(os.environ['EPOCH_CONTROL_ARGOCD_PROTOCOL'],
+                                                        os.environ['EPOCH_CONTROL_ARGOCD_HOST'],
+                                                        os.environ['EPOCH_CONTROL_ARGOCD_PORT'],
+                                                        result_row["workspace_id"],
+                                                        contents["environment_name"])
+                response = requests.get(api_url)
+
+                if response.status_code != 200:
+                    raise Exception("argocd app get error:[{}]".format(response.status_code))
+
+                # 戻り値を取得 Get the return value
+                ret_argocd_app = json.loads(response.text)
+                globals.logger.debug("argocd result [{}]".format(ret_argocd_app))
+
+                # ArgoCDの戻り値が正常化どうかチェックして該当のステータスを設定
+                # Check if the return value of ArgoCD is normal and set the corresponding status
+                if ret_argocd_app["result"]["status"]["health"]["status"] == const.ARGOCD_HEALTH_STATUS_HEALTHY:
+                    cd_status = const.CD_STATUS_ARGOCD_SYNCED
+                elif ret_argocd_app["result"]["status"]["health"]["status"] == ARGOCD_HEALTH_STATUS_DEGRADED:
+                    cd_status = const.CD_STATUS_ARGOCD_FAILED
+                elif ret_argocd_app["result"]["status"]["health"]["status"] == ARGOCD_HEALTH_STATUS_PROGRESSING:
+                    cd_status = const.CD_STATUS_ARGOCD_PROCESSING
+                elif ret_argocd_app["result"]["status"]["health"]["status"] == ARGOCD_HEALTH_STATUS_SUSPENDED:
+                    cd_status = const.CD_STATUS_ARGOCD_FAILED
+                elif ret_argocd_app["result"]["status"]["health"]["status"] == ARGOCD_HEALTH_STATUS_MISSING:
+                    cd_status = const.CD_STATUS_ARGOCD_FAILED
+                else:
+                    cd_status = const.CD_STATUS_ARGOCD_FAILED
+
+                # 変更したい項目のみ設定（cd_statusは必須）
+                # Set only the items you want to change (cd_status is required)
+                post_data = {
+                    "cd_status": cd_status,
+                    "argocd_results": ret_argocd_app,
+                }
 
                 # cd-result put
                 api_url = "{}://{}:{}/workspace/{}/cd/result/{}".format(os.environ['EPOCH_RS_CD_RESULT_PROTOCOL'],
@@ -153,7 +203,10 @@ def monitoring_it_automation():
             if True:
                 post_data = json.loads(result_row["contents"])
                 #globals.logger.debug(post_data)
-                post_data["cd_status"] = const.CD_STATUS_ITA_COMPLETE
+                # post_data["cd_status"] = const.CD_STATUS_ITA_COMPLETE
+                post_data = {
+                    "cd_status": const.CD_STATUS_ITA_COMPLETE
+                }
 
                 # cd-result put
                 api_url = "{}://{}:{}/workspace/{}/cd/result/{}".format(os.environ['EPOCH_RS_CD_RESULT_PROTOCOL'],
