@@ -12,8 +12,24 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+BASENAME=$(basename "$0")
+LOGFILE="/var/log/epoch/epoch-setting-tools.log.`date '+%Y%m%d'`"
+CMD_RESULT="/tmp/result.$$"
+LF='
+'
 
-echo "[INFO] START : set-host-gitlab.sh"
+function logger() {
+    LOG_LEVEL=$1
+    LOG_MESSAGE=$2
+    LOG_TEXT="[`TZ=JST-9 date '+%Y/%m/%d %H:%M:%S'`][${BASENAME}][${LOG_LEVEL}] ${LOG_MESSAGE}"
+    if [ "${LOG_LEVEL}" != "DEBUG" ]; then
+        echo "[${LOG_LEVEL}] ${LOG_MESSAGE}"
+    fi
+    echo "${LOG_TEXT}" > /proc/1/fd/1
+    echo "${LOG_TEXT}" >> "${LOGFILE}"
+}
+
+logger "INFO" "START : set-host-gitlab.sh"
 
 GITLAB_NAMESPACE="gitlab"
 GITLAB_INSTALL_CHECK_TIMES=360
@@ -23,15 +39,16 @@ GIT_API_BASE="http://gitlab-webservice-default.${GITLAB_NAMESPACE}.svc:8181"
 # check parameter
 #
 if [ $# -ne 1 ]; then
-    echo "Usage : ${BASENAME} [hostname or IPaddress]"
-    echo "ERROR : Check the parameters and try again"
+    logger "ERROR" "Usage : ${BASENAME} [hostname or IPaddress]"
+    logger "ERROR" "Check the parameters and try again"
     exit 1
 fi
 
 PRM_MY_HOST="$1"
 GITLAB_CLONE_URL="https://${PRM_MY_HOST}:31183/"
 
-echo "[INFO] START : Wait Gitlab Installer finished"
+logger "INFO" "START : Wait Gitlab Installer finished"
+
 INSTALLER_STATUS=""
 for ((i=1; i<=${GITLAB_INSTALL_CHECK_TIMES}; i++)); do
     sleep 10;
@@ -43,30 +60,30 @@ for ((i=1; i<=${GITLAB_INSTALL_CHECK_TIMES}; i++)); do
         break;
     fi
     if [ "${INSTALLER_STATUS}" = "Error" ]; then
-        echo "[ERROR] CANCELED : because the installation failed"
+        logger "ERROR" "CANCELED : because the installation failed"
         exit 1
     fi
 done
 if [ "${INSTALLER_STATUS}" != "Complete" ]; then
-    echo "[ERROR] CANCELED : because the installation wait timeout"
+    logger "ERROR" "CANCELED : because the installation wait timeout"
     exit 1
 fi
 
-echo "[INFO] START : Get TOKEN"
+logger "INFO" "START : Get TOKEN"
 TOKEN=$(kubectl get secret gitlab-root-token -n ${GITLAB_NAMESPACE} -o jsonpath='{.data.TOKEN}' | base64 --decode)
 if [ $? -ne 0 ]; then
-    echo "[ERROR] CANCELED : Failed to get token"
+    logger "ERROR" "CANCELED : Failed to get token"
     exit 1
 fi
 
-echo "[INFO] START : Encode CLONE URL"
+logger "INFO" "START : Encode CLONE URL"
 GITLAB_CLONE_URL_ENC=$(echo "${GITLAB_CLONE_URL}" | perl -nle 's/([^\w ])/"%".unpack("H2",$1)/eg; s/ /\+/g; print')
 if [ $? -ne 0 ]; then
-    echo "[ERROR] encode clone url"
+    logger "ERROR" "encode clone url"
     exit 1
 fi
 
-echo "[INFO] START : Setting custom_http_clone_url_root "
+logger "INFO" "START : Setting custom_http_clone_url_root"
 SUCCEED_SETTING=0
 
 STATUS_CODE=$(
@@ -76,12 +93,12 @@ STATUS_CODE=$(
     -w '%{http_code}\n' -o /dev/null \
     "${GIT_API_BASE}/api/v4/application/settings?custom_http_clone_url_root=${GITLAB_CLONE_URL_ENC}" \
 )
-echo "[INFO] Setting custom_http_clone_url_root STATUS_CODE:${STATUS_CODE}"
+logger "INFO" "Setting custom_http_clone_url_root STATUS_CODE:${STATUS_CODE}"
 
 if [ $? -ne 0 -o "${STATUS_CODE}" != "200" ]; then
-    echo "[FAIL] configuration was failed"
+    logger "ERROR" "configuration was failed"
     exit 1
 fi
 
-echo "[INFO] configuration was successful"
+logger "INFO" "configuration was successful"
 exit 0

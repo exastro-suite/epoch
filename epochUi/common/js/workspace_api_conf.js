@@ -16,10 +16,8 @@
 var workspace_api_conf = {
     "links" : {
         "registry"  : "https://hub.docker.com/repositories",
-        // "argo"      : location_prot + "//" + location_host + ":" + "31184" + "/",
         // "ita"       : location_prot + "//" + location_host + ":" + (location_prot == "https:"? "31183": "31183") + "/default/menu/01_browse.php?no=2100180006",
         // "sonarqube" : location_prot + "//" + location_host + ":" + (location_prot == "https:"? "31185": "31185") + "/",
-        "argo"      : "{baseurl}",
         "ita"       : "{baseurl}/default/menu/01_browse.php?no=2100180006",
         "sonarqube" : "{baseurl}",
     },
