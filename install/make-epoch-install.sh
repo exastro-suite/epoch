@@ -102,6 +102,7 @@ kubectl create cm epoch-setting-tools-script -n epoch-system --dry-run=client -o
     --from-file=${TOOLS_SCRIPT}/common-import-logger.sh \
     --from-file=${TOOLS_SCRIPT}/set-host.sh \
     --from-file=${TOOLS_SCRIPT}/set-host-gitlab.sh \
+    --from-file=${TOOLS_SCRIPT}/set-proxy.sh \
     --from-file=${TOOLS_SCRIPT}/get-gitlab-initial-root-password.sh \
     --from-file=${TOOLS_SCRIPT}/get-keycloak-initial-admin-password.sh \
     --from-file=${TOOLS_SCRIPT}/get-workspace-tools-account.sh \

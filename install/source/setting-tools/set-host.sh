@@ -210,12 +210,27 @@ echo -n "waiting ..."
 while true; do
     sleep 5;
     echo -n ".";
-    NOT_READY_COUNT=$(kubectl get pod -n exastro-platform-authentication-infra -o json 2> /dev/null | \
-                        jq -r ".items[].status.containerStatuses[].ready" 2> /dev/null | sed -e "/true/d" | wc -l)
+    NOT_READY_COUNT=$(
+        kubectl get pod -n exastro-platform-authentication-infra -o json 2> /dev/null | \
+        jq -r ".items[].status.containerStatuses[].ready" 2> /dev/null | sed -e "/true/d" | wc -l
+    )
     if [ $? -ne 0 ]; then
         continue
     fi
     if [ ${NOT_READY_COUNT} -ne 0 ]; then
+        logger "DEBUG" "STILL: containerStatuses[].ready=false"
+        continue;
+    fi
+    NOT_READY_COUNT=$(
+        kubectl get pod -n exastro-platform-authentication-infra -o jsonpath='{range .items[*]}{@.status.phase}{"\n"}' | \
+        sed -e "/Running/d" -e "/Succeeded/d" -e "/^$/d" | \
+        wc -l
+    )
+    if [ $? -ne 0 ]; then
+        continue
+    fi
+    if [ ${NOT_READY_COUNT} -ne 0 ]; then
+        logger "DEBUG" "STILL: status.phase=Not Running/Succeeded"
         continue;
     fi
 
@@ -223,7 +238,12 @@ while true; do
     if [ $? -ne 0 ]; then
         continue
     fi
+    if [ `echo "${RESTART_AFTER_API_POD}" | wc -l` -gt 1 ]; then
+        logger "DEBUG" "STILL: RESTART_AFTER_API_POD COUNT > 1"
+        continue;
+    fi
     if [ "${RESTART_BERFORE_API_POD}" = "${RESTART_AFTER_API_POD}" ]; then
+        logger "DEBUG" "STILL: NOT CHANGE API POD"
         continue;
     fi
 
@@ -231,7 +251,12 @@ while true; do
     if [ $? -ne 0 ]; then
         continue
     fi
+    if [ `echo "${RESTART_AFTER_KEYCLOAK_POD}" | wc -l` -gt 1 ]; then
+        logger "DEBUG" "STILL: RESTART_AFTER_KEYCLOAK_POD COUNT > 1"
+        continue;
+    fi
     if [ "${RESTART_BERFORE_KEYCLOAK_POD}" = "${RESTART_AFTER_KEYCLOAK_POD}" ]; then
+        logger "DEBUG" "STILL: NOT CHANGE KEYCLOAK POD"
         continue;
     fi
 
