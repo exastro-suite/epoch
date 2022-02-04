@@ -297,8 +297,8 @@ def get_cd_pipeline_argocd(workspace_id):
         Response: HTTP Respose
     """
 
-    app_name = multi_lang.get_text("EP020-0003", "ワークスペース情報:") 
-    exec_stat = multi_lang.get_text("EP020-0003", "CDパイプライン(ArgoCD)情報取得")
+    app_name = multi_lang.get_text("EP020-0034", "CD実行結果(ArgoCD):") 
+    exec_stat = multi_lang.get_text("EP020-0030", "CDパイプライン(ArgoCD)情報取得")
     error_detail = ""
 
     try:
@@ -319,7 +319,7 @@ def get_cd_pipeline_argocd(workspace_id):
             raise common.UserException(error_detail)
 
         res_json = json.loads(response.text)
-        globals.logger.debug(res_json)
+        # globals.logger.debug(res_json)
 
         ret_status = res_json["result"]
         
@@ -333,7 +333,7 @@ def get_cd_pipeline_argocd(workspace_id):
                     "trace_id": contents_data["trace_id"],
                     "environment_name": contents_data["environment_name"],
                     "namespace": contents_data["namespace"],
-                    "argocd_results": contents_data["argocd_results"]
+                    "argocd_results": json.loads(contents_data["argocd_results"])
                 }
             )
 
@@ -356,13 +356,13 @@ def post_cd_pipeline_argocd_sync(workspace_id):
         Response: HTTP Respose
     """
 
-    app_name = multi_lang.get_text("EP020-0003", "ワークスペース情報:") 
-    exec_stat = multi_lang.get_text("EP020-0003", "CDパイプライン(ArgoCD)情報取得")
+    app_name = multi_lang.get_text("EP020-0034", "CD実行結果(ArgoCD):") 
+    exec_stat = multi_lang.get_text("EP020-0031", "CDパイプライン(ArgoCD)同期実行")
     error_detail = ""
 
     try:
         globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
+        globals.logger.debug('CALL {} workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, workspace_id))
         globals.logger.debug('#' * 50)
 
         # ヘッダ情報
@@ -370,19 +370,22 @@ def post_cd_pipeline_argocd_sync(workspace_id):
             'Content-Type': 'application/json',
         }
 
-        # 引数をJSON形式で受け取りそのまま引数に設定
-        # post_data = request.json.copy()
-        # workspace get
-        # api_url = "{}://{}:{}/workspace/{}".format(os.environ['EPOCH_CONTROL_ARGOCD_PROTOCOL'],
-        #                                             os.environ['EPOCH_CONTROL_ARGOCD_HOST'],
-        #                                             os.environ['EPOCH_CONTROL_ARGOCD_PORT'],
-        #                                             workspace_id)
-        # response = requests.get(api_url)
+        # 状態をArgoCD同期中に変更
+        req_json = request.json.copy()
+        environment_name = req_json["environment_name"]
 
-        # if response.status_code != 200:
-        #     error_detail = multi_lang.get_text("EP020-0032", "CDパイプライン(ArgoCD)情報の取得に失敗しました")
-        #     globals.logger.debug(error_detail)
-        #     raise common.UserException(error_detail)
+        # ArgoCD Sync call 
+        api_url = "{}://{}:{}/workspace/{}/argocd/app/{}/sync".format(os.environ['EPOCH_CONTROL_ARGOCD_PROTOCOL'],
+                                                os.environ['EPOCH_CONTROL_ARGOCD_HOST'],
+                                                os.environ['EPOCH_CONTROL_ARGOCD_PORT'],
+                                                workspace_id,
+                                                environment_name)
+        response = requests.post(api_url, headers=post_headers)
+
+        if response.status_code != 200:
+            error_detail = multi_lang.get_text("EP020-0033", "CDパイプライン(ArgoCD)同期実行に失敗しました")
+            globals.logger.debug(error_detail)
+            raise common.UserException(error_detail)
 
         ret_status = 200
 

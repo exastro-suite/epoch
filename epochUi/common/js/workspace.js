@@ -2371,28 +2371,32 @@ const arogCdResultList = function(){
     $resultList.append('</div><br>')
 
     $resultList.append('<button class="sync">同期</button>')
+
+    
+    // Event processing when the sync button is pressed - 同期ボタン押下時のイベント処理
+    $resultList.find('.sync').on('click', function(){
+
+      console.log("[CALL] POST " + workspace_api_conf.api.cd_pipeline.argocd.sync.post.replace('{workspace_id}', workspace_id));
+      // Call argoCD sync processing - ArgoCD同期処理呼び出し
+      $.ajax({
+        // TODO: サービス呼び出しは、同期処理作成後に実装
+        "type": "POST",
+        "url": workspace_api_conf.api.cd_pipeline.argocd.sync.post.replace('{workspace_id}', workspace_id),
+        data:JSON.stringify({'environment_name':'staging'}),
+        contentType: "application/json",
+        dataType: "json",
+      }).done(function(data) {
+        console.log("[DONE] POST " + workspace_api_conf.api.cd_pipeline.argocd.sync.post + " response\n" + JSON.stringify(data));
+      }).fail(function(data) {
+        console.log("[FAIL] POST " + workspace_api_conf.api.cd_pipeline.argocd.sync.post + " response\n" + JSON.stringify(data));
+      });
+    });
+
   }).fail(function(data) {
     // Failed get - 取得失敗
     console.log("[FAIL] GET " + workspace_api_conf.api.cd_pipeline.argocd.get + " response\n" + JSON.stringify(data));
     
     $resultList.append('<button class="sync">同期</button>')
-  });
-
-  // Event processing when the sync button is pressed - 同期ボタン押下時のイベント処理
-  $resultList.find('.sync').on('click', function(){
-
-    console.log("[CALL] GET " + workspace_api_conf.api.resource.get);
-    // Call argoCD sync processing - ArgoCD同期処理呼び出し
-    // $.ajax({
-    //   // TODO: サービス呼び出しは、同期処理作成後に実装
-    //   // "type": "POST",
-    //   // "url": workspace_api_conf.api.resource.get.replace('{workspace_id}', workspace_id),
-
-    // }).done(function(data) {
-    //   // console.log("[DONE] POST " + workspace_api_conf.api.resource.get + " response\n" + JSON.stringify(data));
-    // }).fail(function(data) {
-    //   // console.log("[FAIL] POST " + workspace_api_conf.api.resource.get + " response\n" + JSON.stringify(data));
-    // });
   });
 };
 
