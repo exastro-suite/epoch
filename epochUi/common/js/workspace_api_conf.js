@@ -45,6 +45,15 @@ var workspace_api_conf = {
         },
         "ci_pipeline": {
             "post":     URL_BASE + "/api/workspace/{workspace_id}/ci/pipeline",
+
+            "git": {
+                "commits": {
+                    "get":     URL_BASE + "/api/workspace/{workspace_id}/ci/pipeline/git/commits",
+                },
+                "hooks": {
+                    "get":     URL_BASE + "/api/workspace/{workspace_id}/ci/pipeline/git/hooks",
+                },
+            },
         },
         "cd_pipeline": {
             "post":     URL_BASE + "/api/workspace/{workspace_id}/cd/pipeline",
