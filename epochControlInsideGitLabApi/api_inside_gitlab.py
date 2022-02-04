@@ -20,7 +20,7 @@ import tempfile
 import subprocess
 import time
 import re
-from urllib.parse import urlparse
+import urllib.parse 
 import base64
 import requests
 from requests.auth import HTTPBasicAuth
@@ -234,6 +234,33 @@ def post_gitlab_repos(workspace_id):
     except Exception as e:
         return common.serverError(e)
 
+
+@app.route('/commits/<string:revision>', methods=['GET'])
+def call_gitlab_commits(revision):
+    """/commits 呼び出し
+
+    Args:
+        revision (str): revision
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] revision[{}]'.format(inspect.currentframe().f_code.co_name, request.method, revision))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'GET':
+            # git commits get
+            return get_git_commits(revision)
+        else:
+            # エラー
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+
 def exists_repositry(user, token, url):
     """リポジトリの存在チェック
 
@@ -379,6 +406,49 @@ def exists_webhook(user, token, url, webhooks_url):
 
     return ret
 
+
+def get_git_commits(revision):
+    """git commits 情報の取得 Get git commits information
+
+    Args:
+        revision (str): revision
+
+    Returns:
+        Response: HTTP Respose
+    """
+
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {} revision[{}]'.format(inspect.currentframe().f_code.co_name, revision))
+        globals.logger.debug('#' * 50)
+
+        # git_url (str): 最新のみ
+        if request.args.get('git_url') is not None:
+            git_url = urllib.parse.unquote(request.args.get('git_url'))
+        else:
+            raise Exception("gir_url parameter not found")
+
+        json_url = get_url_split(git_url)
+
+        # gitlab repo commits get call 
+        api_url = "{}://{}:{}/api/v4/projects/{}%2F{}/repository/commits/{}".format(API_PROTOCOL, API_BASE_URL, API_PORT, json_url['group_name'], json_url['repos_name'], revision)
+        response = requests.get(api_url)
+
+        ret_status = response.status_code 
+        if response.status_code == 200:
+            rows = json.loads(response.text) 
+            globals.logger.debug("rows:[{}]".format(rows))
+        else:
+            rows = None
+            globals.logger.debug("git commits get error:[{}] text:[{}]".format(response.status_code, response.text))
+
+        # 戻り値をそのまま返却
+        return jsonify({"result": ret_status, "rows": rows}), ret_status
+
+    except common.UserException as e:
+        return common.server_error(e)
+    except Exception as e:
+        return common.server_error(e)
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('API_INSIDE_GITLAB_PORT', '8000')), threaded=True)

@@ -290,7 +290,7 @@ spec:
           name: epoch-control-github-conf
       containers:
       - name: epoch-control-github-api
-        image: exastro/epoch-control-github-api:0.3.1_20220201_1000
+        image: exastro/epoch-control-github-api:0.3.1_20220204_1730
         env:
         - name: HTTP_PROXY
           valueFrom:
@@ -1909,6 +1909,12 @@ data:
   EPOCH_CONTROL_ITA_PROTOCOL: "http"
   EPOCH_CONTROL_ITA_HOST: "epoch-control-ita-api"
   EPOCH_CONTROL_ITA_PORT: "8000"
+  EPOCH_CONTROL_GITHUB_PROTOCOL: "http"
+  EPOCH_CONTROL_GITHUB_HOST: "epoch-control-github-api"
+  EPOCH_CONTROL_GITHUB_PORT: "8000"
+  EPOCH_CONTROL_INSIDE_GITLAB_PROTOCOL: "http"
+  EPOCH_CONTROL_INSIDE_GITLAB_HOST: "epoch-control-inside-gitlab-api"
+  EPOCH_CONTROL_INSIDE_GITLAB_PORT: "8000"
   EPOCH_RS_CD_RESULT_PROTOCOL: "http"
   EPOCH_RS_CD_RESULT_HOST: "epoch-rs-cd-result-api"
   EPOCH_RS_CD_RESULT_PORT: "8000"
@@ -1918,8 +1924,8 @@ data:
   PYTHONIOENCODING: utf-8
   EPOCH_MONITORING_ARGOCD_INTERVAL_SEC: "5"
   EPOCH_MONITORING_ITA_INTERVAL_SEC: "5"
-  EPOCH_MONITORING_ARGOCD_ERROR_RETRY_COUNT: "5"
-  EPOCH_MONITORING_ITA_ERROR_RETRY_COUNT: "5"
+  EPOCH_MONITORING_ARGOCD_ERROR_RETRY_COUNT: "0"
+  EPOCH_MONITORING_ITA_ERROR_RETRY_COUNT: "0"
 
 #---- epoch-monitoring-cd-api.yaml
 ---
@@ -1967,7 +1973,7 @@ spec:
           name: epoch-monitoring-cd-api-conf
       containers:
       - name: epoch-monitoring-cd-api
-        image: exastro/epoch-monitoring-cd-api:0.3.1_20220204_1300
+        image: exastro/epoch-monitoring-cd-api:0.3.1_20220204_1730
         env:
         - name: CONFIG_API_MONITORING_CD_PATH
           value: "/etc/epoch/epochMonitoringCdApi/api_monitoring_cd.conf"

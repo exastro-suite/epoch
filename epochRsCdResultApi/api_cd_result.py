@@ -237,7 +237,7 @@ def cd_result_list(workspace_id=None, cd_result_id=None, username=None, latest=F
         else:
             latest = False
 
-        #    latest (bool): 最新のみ
+        #    cd_status_in (str): 最新のみ
         if request.args.get('cd_status_in') is not None:
             cd_status_in = request.args.get('cd_status_in').split(".")
         else:

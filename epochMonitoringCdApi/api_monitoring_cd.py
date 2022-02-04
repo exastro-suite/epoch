@@ -24,6 +24,7 @@ import re
 import base64
 import traceback
 from datetime import timedelta, timezone
+import urllib.parse
 import requests
 import schedule
 
@@ -31,16 +32,16 @@ import globals
 import common
 import const
 
+# エラー時のリトライ回数(0は止めない) Number of retries on error (0 does not stop)
+ARGOCD_ERROR_RETRY_COUNT = 0
+global_argocd_error_count = 0
+ITA_ERROR_RETRY_COUNT = 0
+global_ita_error_count = 0
+
 # 設定ファイル読み込み・globals初期化
 app = Flask(__name__)
 app.config.from_envvar('CONFIG_API_MONITORING_CD_PATH')
 globals.init(app)
-
-# エラー時のリトライ回数(0は止めない) Number of retries on error (0 does not stop)
-ARGOCD_ERROR_RETRY_COUNT = 0
-ARGOCD_ERROR_COUNT = 0
-ITA_ERROR_RETRY_COUNT = 0
-ITA_ERROR_COUNT = 0
 
 def monitoring_argo_cd():
     """Argo CD 監視
@@ -49,6 +50,7 @@ def monitoring_argo_cd():
         None
     """
 
+    global global_argocd_error_count
     try:
         globals.logger.debug("monitoring argo cd!")
 
@@ -129,7 +131,53 @@ def monitoring_argo_cd():
 
                 # 戻り値を取得 Get the return value
                 ret_argocd_app = json.loads(response.text)
-                globals.logger.debug("argocd result [{}]".format(ret_argocd_app))
+                # globals.logger.debug("argocd result [{}]".format(ret_argocd_app))
+
+                if "sync" not in ret_argocd_app["result"]["status"]:
+                    continue
+                if "revision" not in ret_argocd_app["result"]["status"]["sync"]:
+                    continue
+
+                # manifestのrivisionを元に該当のトレースIDの履歴かチェックする 
+                # Check if the history of the corresponding trace ID is based on the revision of the manifest
+                revision = ret_argocd_app["result"]["status"]["sync"]["revision"]
+                manifest_url = ret_argocd_app["result"]["status"]["sync"]["comparedTo"]["source"]["repoURL"]
+                if contents["workspace_info"]["cd_config"]["environments_common"]["git_repositry"]["housing"] == const.HOUSING_INNER:
+                    # EPOCH内レジストリ Registry in EPOCH
+                    api_url = "{}://{}:{}/commits/{}?git_url={}".format(os.environ['EPOCH_CONTROL_INSIDE_GITLAB_PROTOCOL'],
+                                                            os.environ['EPOCH_CONTROL_INSIDE_GITLAB_HOST'],
+                                                            os.environ['EPOCH_CONTROL_INSIDE_GITLAB_PORT'],
+                                                            revision,
+                                                            urllib.parse.quote(manifest_url))
+                    response = requests.get(api_url)
+
+                    if response.status_code != 200:
+                        raise Exception("git commit get error:[{}]".format(response.status_code))
+
+                    ret_git_commit = json.loads(response.text)
+
+                    commit_message =  ret_git_commit["rows"]["message"]
+                else:
+                    # GitHub commit get
+                    api_url = "{}://{}:{}/commits/{}?git_url={}".format(os.environ['EPOCH_CONTROL_GITHUB_PROTOCOL'],
+                                                            os.environ['EPOCH_CONTROL_GITHUB_HOST'],
+                                                            os.environ['EPOCH_CONTROL_GITHUB_PORT'],
+                                                            revision,
+                                                            urllib.parse.quote(manifest_url))
+                    response = requests.get(api_url)
+
+                    if response.status_code != 200:
+                        raise Exception("git commit get error:[{}]".format(response.status_code))
+
+                    ret_git_commit = json.loads(response.text)
+                    # globals.logger.debug("rows:[{}]".format(ret_git_commit["rows"]))
+
+                    commit_message =  ret_git_commit["rows"]["commit"]["message"]
+
+                globals.logger.debug("trace_id:[{}] vs commit_message10[{}]".format(contents["trace_id"], commit_message[:10]))
+                # 上10桁が一致している場合のみステータスのチェックを行う
+                if contents["trace_id"] != commit_message[:10]:
+                    continue 
 
                 # ArgoCDの戻り値が正常化どうかチェックして該当のステータスを設定
                 # Check if the return value of ArgoCD is normal and set the corresponding status
@@ -165,10 +213,12 @@ def monitoring_argo_cd():
                     raise Exception("cd result put error:[{}]".format(response.status_code))
 
         # 正常時はエラーをリセット Reset error when normal
-        ARGOCD_ERROR_COUNT = 0
+        global_argocd_error_count = 0
 
     except Exception as e:
-        ARGOCD_ERROR_COUNT += 1
+        global_argocd_error_count += 1
+        globals.logger.debug("argocd Exception error count [{}]".format(global_argocd_error_count))
+        globals.logger.debug("argocd Exception error args [{}]".format(e.args))
         return common.serverError(e)
 
 
@@ -180,6 +230,7 @@ def monitoring_it_automation():
         None
     """
 
+    global global_ita_error_count
     try:
         globals.logger.debug("monitoring it-automation!")
 
@@ -230,10 +281,12 @@ def monitoring_it_automation():
                     raise Exception("cd result put error:[{}]".format(response.status_code))
 
         # 正常時はエラーをリセット Reset error when normal
-        ITA_ERROR_COUNT = 0
+        global_ita_error_count = 0
 
     except Exception as e:
-        ITA_ERROR_COUNT += 1
+        global_ita_error_count += 1
+        globals.logger.debug("it-automation Exception error count [{}]".format(global_ita_error_count))
+        globals.logger.debug("it-automation Exception error args [{}]".format(e.args))
         return common.serverError(e)
 
 
@@ -242,14 +295,16 @@ def main():
     """CD結果 モニタリング CD result monitoring
     """
 
+    global global_argocd_error_count
+    global global_ita_error_count
     try:
         argocd_interval_sec = int(os.environ["EPOCH_MONITORING_ARGOCD_INTERVAL_SEC"])
         ita_interval_sec = int(os.environ["EPOCH_MONITORING_ITA_INTERVAL_SEC"])
 
         ARGOCD_ERROR_RETRY_COUNT = int(os.environ["EPOCH_MONITORING_ARGOCD_ERROR_RETRY_COUNT"])
         ITA_ERROR_RETRY_COUNT = int(os.environ["EPOCH_MONITORING_ITA_ERROR_RETRY_COUNT"]) 
-        ARGOCD_ERROR_COUNT = 0
-        ITA_ERROR_COUNT = 0
+        global_argocd_error_count = 0
+        global_ita_error_count = 0
 
         schedule.every(argocd_interval_sec).seconds.do(monitoring_argo_cd)
         schedule.every(ita_interval_sec).seconds.do(monitoring_it_automation)
@@ -259,10 +314,10 @@ def main():
 
             # エラーリトライ回数超えた場合は、終了する
             # If the number of error retries is exceeded, the process will end.
-            if ARGOCD_ERROR_RETRY_COUNT != 0 and ARGOCD_ERROR_COUNT > ARGOCD_ERROR_RETRY_COUNT:
+            if ARGOCD_ERROR_RETRY_COUNT != 0 and global_argocd_error_count > ARGOCD_ERROR_RETRY_COUNT:
                 break
 
-            if ITA_ERROR_RETRY_COUNT != 0 and ITA_ERROR_COUNT > ITA_ERROR_RETRY_COUNT:
+            if ITA_ERROR_RETRY_COUNT != 0 and global_ita_error_count > ITA_ERROR_RETRY_COUNT:
                 break
 
             time.sleep(1)
