@@ -171,7 +171,7 @@ def call_git_commits(workspace_id):
         globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
         globals.logger.debug('#' * 50)
 
-        if request.method == 'POST':
+        if request.method == 'GET':
             return api_service_ci.get_git_commits(workspace_id)
         else:
             raise Exception("method not support!")
@@ -194,7 +194,7 @@ def call_git_hooks(workspace_id):
         globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
         globals.logger.debug('#' * 50)
 
-        if request.method == 'POST':
+        if request.method == 'GET':
             return api_service_ci.get_git_hooks(workspace_id)
         else:
             raise Exception("method not support!")
