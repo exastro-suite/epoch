@@ -16,6 +16,7 @@ import os
 import json
 
 import globals
+import common
 from dbconnector import dbcursor
 
 def insert_cd_result(cursor, workspace_id, cd_result_id, username, contents):
@@ -85,7 +86,8 @@ def update_cd_result(cursor, workspace_id, cd_result_id, update_contents_items):
     # Assemble update sql for the number of items to be updated
     for key, val in update_contents_items.items():
         upd_item = upd_item + ', "$.{}", %(co_{})s'.format(key, key)
-        upd_json["co_" + key] = val
+        # upd_json["co_" + key] = json.dumps(val)
+        upd_json["co_" + key] = common.json_value(val)
 
     # 更新SQL　update SQL
     sql = 'UPDATE cd_result' \
@@ -93,7 +95,8 @@ def update_cd_result(cursor, workspace_id, cd_result_id, update_contents_items):
             ' , contents = json_replace(contents, ' + upd_item[2:] + ')' \
             ' WHERE workspace_id = %(workspace_id)s' \
             ' AND cd_result_id = %(cd_result_id)s'
-    globals.logger.debug('SQL {}'.format(sql))
+    # globals.logger.debug('SQL {}'.format(sql))
+    # globals.logger.debug('upd_json {}'.format(upd_json))
 
     # cursor.affected_rows()
     # CD結果情報 update実行 cd result update excute

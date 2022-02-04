@@ -61,7 +61,7 @@ def call_cd_result_root():
             raise Exception("method not support!")
 
     except Exception as e:
-        return common.serverError(e, "{} error".format(inspect.currentframe().f_code.co_name))
+        return common.server_error(e, "{} error".format(inspect.currentframe().f_code.co_name))
 
 @app.route('/workspace/<int:workspace_id>/cd/result', methods=['GET'])
 def call_cd_result(workspace_id):
@@ -87,7 +87,7 @@ def call_cd_result(workspace_id):
             raise Exception("method not support!")
 
     except Exception as e:
-        return common.serverError(e, "{} error".format(inspect.currentframe().f_code.co_name))
+        return common.server_error(e, "{} error".format(inspect.currentframe().f_code.co_name))
 
 @app.route('/workspace/<int:workspace_id>/cd/result/<string:cd_result_id>', methods=['PUT', 'GET'])
 def call_cd_result_by_id(workspace_id, cd_result_id):
@@ -117,7 +117,7 @@ def call_cd_result_by_id(workspace_id, cd_result_id):
             raise Exception("method not support!")
 
     except Exception as e:
-        return common.serverError(e, "{} error".format(inspect.currentframe().f_code.co_name))
+        return common.server_error(e, "{} error".format(inspect.currentframe().f_code.co_name))
 
 @app.route('/workspace/<int:workspace_id>/member/<string:username>/cd/result/<string:cd_result_id>', methods=['POST','GET'])
 def call_cd_result_member(workspace_id, username, cd_result_id):
@@ -148,7 +148,7 @@ def call_cd_result_member(workspace_id, username, cd_result_id):
             raise Exception("method not support!")
 
     except Exception as e:
-        return common.serverError(e, "{} error".format(inspect.currentframe().f_code.co_name))
+        return common.server_error(e, "{} error".format(inspect.currentframe().f_code.co_name))
 
 def cd_result_insert(workspace_id, cd_result_id, username):
     """CD結果登録 cd result insert
@@ -178,7 +178,7 @@ def cd_result_insert(workspace_id, cd_result_id, username):
         return jsonify({"result": "200", "lastrowid": lastrowid}), 200
 
     except Exception as e:
-        return common.serverError(e, "{} error".format(inspect.currentframe().f_code.co_name))
+        return common.server_error(e, "{} error".format(inspect.currentframe().f_code.co_name))
 
 def cd_result_update(workspace_id, cd_result_id):
     """CD結果更新 cd result update
@@ -212,7 +212,7 @@ def cd_result_update(workspace_id, cd_result_id):
         return jsonify({"result": "200"}), 200
 
     except Exception as e:
-        return common.serverError(e, "{} error".format(inspect.currentframe().f_code.co_name))
+        return common.server_error(e, "{} error".format(inspect.currentframe().f_code.co_name))
 
 def cd_result_list(workspace_id=None, cd_result_id=None, username=None, latest=False):
     """CD結果取得 cd result list
@@ -251,7 +251,7 @@ def cd_result_list(workspace_id=None, cd_result_id=None, username=None, latest=F
         return jsonify({"result": "200", "rows": fetch_rows })
 
     except Exception as e:
-        return common.serverError(e, "{} error".format(inspect.currentframe().f_code.co_name))
+        return common.server_error(e, "{} error".format(inspect.currentframe().f_code.co_name))
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('API_CD_RESULT_PORT', '8000')), threaded=True)

@@ -79,7 +79,7 @@ def monitoring_argo_cd():
                 contents = json.loads(result_row["contents"])
 
                 # ArgoCD Sync call 
-                api_url = "{}://{}:{}/workspace/{}/argocd/sync/{}".format(os.environ['EPOCH_CONTROL_ARGOCD_PROTOCOL'],
+                api_url = "{}://{}:{}/workspace/{}/argocd/app/{}/sync".format(os.environ['EPOCH_CONTROL_ARGOCD_PROTOCOL'],
                                                         os.environ['EPOCH_CONTROL_ARGOCD_HOST'],
                                                         os.environ['EPOCH_CONTROL_ARGOCD_PORT'],
                                                         result_row["workspace_id"],
