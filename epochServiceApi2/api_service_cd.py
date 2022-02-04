@@ -323,21 +323,16 @@ def get_cd_pipeline_argocd(workspace_id):
 
         ret_status = res_json["result"]
         
+        rows = res_json["rows"]
         rows = []
         for data_row in res_json["rows"]:
-            # Since the contents of "contents" are in string format, convert them to JSON format
-            # "contents"の内容は文字列形式なので、JSON形式に変換する
-            contents_data = json.loads(data_row["contents"])
-            rows.append(
-                {
-                    "trace_id": contents_data["trace_id"],
-                    "environment_name": contents_data["environment_name"],
-                    "namespace": contents_data["namespace"],
-                    "argocd_results": contents_data["argocd_results"],
-                }
-            )
+            row = data_row
+            # 内容はjson型なので変換して受け渡す
+            # Since the content is json type, convert and pass
+            row["contents"] = json.loads(data_row["contents"])
+            rows.append(row)
 
-        # 戻り値をそのまま返却        
+        # 戻り値をそのまま返却 Return the return value as it is       
         return jsonify({"result": ret_status, "rows": rows}), ret_status
 
     except common.UserException as e:
