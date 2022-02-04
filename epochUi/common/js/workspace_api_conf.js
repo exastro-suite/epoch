@@ -48,6 +48,14 @@ var workspace_api_conf = {
         },
         "cd_pipeline": {
             "post":     URL_BASE + "/api/workspace/{workspace_id}/cd/pipeline",
+
+            "argocd": {
+                "get":     URL_BASE + "/api/workspace/{workspace_id}/cd/pipeline/argocd",
+
+                "sync": {
+                    "post":     URL_BASE + "/api/workspace/{workspace_id}/cd/pipeline/argocd/sync",
+                },
+            },
         },
         "manifestParameter": {
             "post":     URL_BASE + "/api/workspace/{workspace_id}/manifest/parameter",

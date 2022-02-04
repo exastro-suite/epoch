@@ -40,6 +40,29 @@ def alive():
     """
     return jsonify({"result": "200", "time": str(datetime.now(globals.TZ))}), 200
 
+@app.route('/cd/result', methods=['GET'])
+def call_cd_result_root():
+    """CD結果の呼び出し口 条件なし CD result call not conditons
+
+    Returns:
+        response: HTTP Respose
+    """
+
+    try:
+        globals.logger.debug('=' * 50)
+        globals.logger.debug('CALL {}:from[{}]'.format(inspect.currentframe().f_code.co_name, request.method))
+        globals.logger.debug('=' * 50)
+
+        if request.method == 'GET':
+            # cd execute (get)
+            return cd_result_list()
+        else:
+            # Error
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e, "{} error".format(inspect.currentframe().f_code.co_name))
+
 @app.route('/workspace/<int:workspace_id>/cd/result', methods=['GET'])
 def call_cd_result(workspace_id):
     """CD結果の呼び出し口 CD result call
@@ -64,7 +87,7 @@ def call_cd_result(workspace_id):
             raise Exception("method not support!")
 
     except Exception as e:
-        return common.serverError(e, "{} error".format(inspect.currentframe().f_code.co_name))
+        return common.server_error(e, "{} error".format(inspect.currentframe().f_code.co_name))
 
 @app.route('/workspace/<int:workspace_id>/cd/result/<string:cd_result_id>', methods=['PUT', 'GET'])
 def call_cd_result_by_id(workspace_id, cd_result_id):
@@ -94,7 +117,7 @@ def call_cd_result_by_id(workspace_id, cd_result_id):
             raise Exception("method not support!")
 
     except Exception as e:
-        return common.serverError(e, "{} error".format(inspect.currentframe().f_code.co_name))
+        return common.server_error(e, "{} error".format(inspect.currentframe().f_code.co_name))
 
 @app.route('/workspace/<int:workspace_id>/member/<string:username>/cd/result/<string:cd_result_id>', methods=['POST','GET'])
 def call_cd_result_member(workspace_id, username, cd_result_id):
@@ -125,7 +148,7 @@ def call_cd_result_member(workspace_id, username, cd_result_id):
             raise Exception("method not support!")
 
     except Exception as e:
-        return common.serverError(e, "{} error".format(inspect.currentframe().f_code.co_name))
+        return common.server_error(e, "{} error".format(inspect.currentframe().f_code.co_name))
 
 def cd_result_insert(workspace_id, cd_result_id, username):
     """CD結果登録 cd result insert
@@ -155,7 +178,7 @@ def cd_result_insert(workspace_id, cd_result_id, username):
         return jsonify({"result": "200", "lastrowid": lastrowid}), 200
 
     except Exception as e:
-        return common.serverError(e, "{} error".format(inspect.currentframe().f_code.co_name))
+        return common.server_error(e, "{} error".format(inspect.currentframe().f_code.co_name))
 
 def cd_result_update(workspace_id, cd_result_id):
     """CD結果更新 cd result update
@@ -174,10 +197,10 @@ def cd_result_update(workspace_id, cd_result_id):
         with dbconnector() as db, dbcursor(db) as cursor:
             
             # Requestからcontentsを設定 Set contents from Request
-            contents = request.json.copy()
+            update_contents_items = request.json.copy()
 
             # cd-result update実行
-            upd_cnt = da_cd_result.update_cd_result(cursor, workspace_id, cd_result_id, contents)
+            upd_cnt = da_cd_result.update_cd_result(cursor, workspace_id, cd_result_id, update_contents_items)
 
             if upd_cnt == 0:
                 # データがないときは404応答
@@ -189,9 +212,9 @@ def cd_result_update(workspace_id, cd_result_id):
         return jsonify({"result": "200"}), 200
 
     except Exception as e:
-        return common.serverError(e, "{} error".format(inspect.currentframe().f_code.co_name))
+        return common.server_error(e, "{} error".format(inspect.currentframe().f_code.co_name))
 
-def cd_result_list(workspace_id, cd_result_id=None, username=None, latest=False):
+def cd_result_list(workspace_id=None, cd_result_id=None, username=None, latest=False):
     """CD結果取得 cd result list
 
     Args:
@@ -228,7 +251,7 @@ def cd_result_list(workspace_id, cd_result_id=None, username=None, latest=False)
         return jsonify({"result": "200", "rows": fetch_rows })
 
     except Exception as e:
-        return common.serverError(e, "{} error".format(inspect.currentframe().f_code.co_name))
+        return common.server_error(e, "{} error".format(inspect.currentframe().f_code.co_name))
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('API_CD_RESULT_PORT', '8000')), threaded=True)

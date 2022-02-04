@@ -93,7 +93,7 @@ def post_cd_pipeline(workspace_id):
         response = requests.get(api_url)
 
         if response.status_code != 200:
-            error_detail = multi_lang.get_test("EP020-0013", "ワークスペース情報の取得に失敗しました")
+            error_detail = multi_lang.get_text("EP020-0013", "ワークスペース情報の取得に失敗しました")
             globals.logger.debug(error_detail)
             raise common.UserException(error_detail)
 
@@ -110,7 +110,7 @@ def post_cd_pipeline(workspace_id):
         response = requests.get(api_url)
 
         if response.status_code != 200:
-            error_detail = multi_lang.get_test("EP020-0026", "ワークスペース状態情報の取得に失敗しました")
+            error_detail = multi_lang.get_text("EP020-0026", "ワークスペース状態情報の取得に失敗しました")
             globals.logger.debug(error_detail)
             raise common.UserException(error_detail)
 
@@ -140,7 +140,7 @@ def post_cd_pipeline(workspace_id):
             elif response.status_code == 404:
                 before_data = None
             elif response.status_code != 200:
-                error_detail = multi_lang.get_test("EP020-0013", "ワークスペース情報の取得に失敗しました")
+                error_detail = multi_lang.get_text("EP020-0013", "ワークスペース情報の取得に失敗しました")
                 globals.logger.debug(error_detail)
                 raise common.UserException(error_detail)
         else:
@@ -186,7 +186,7 @@ def post_cd_pipeline(workspace_id):
             response = requests.put(api_url, headers=post_headers, data=json.dumps(workspace_status))
 
             if response.status_code != 200:
-                error_detail = multi_lang.get_test("EP020-0027", "ワークスペース状態情報の更新に失敗しました")
+                error_detail = multi_lang.get_text("EP020-0027", "ワークスペース状態情報の更新に失敗しました")
                 globals.logger.debug(error_detail)
                 raise common.UserException(error_detail)
 
@@ -272,9 +272,117 @@ def post_cd_pipeline(workspace_id):
             response = requests.put(api_url, headers=post_headers, data=json.dumps(workspace_status))
 
             if response.status_code != 200:
-                error_detail = multi_lang.get_test("EP020-0027", "ワークスペース状態情報の更新に失敗しました")
+                error_detail = multi_lang.get_text("EP020-0027", "ワークスペース状態情報の更新に失敗しました")
                 globals.logger.debug(error_detail)
                 raise common.UserException(error_detail)
+
+        ret_status = 200
+
+        # 戻り値をそのまま返却        
+        return jsonify({"result": ret_status}), ret_status
+
+    except common.UserException as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+    except Exception as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+
+
+def get_cd_pipeline_argocd(workspace_id):
+    """Get CD pipeline (ArgoCD) information - CDパイプライン(ArgoCD)情報取得
+
+    Args:
+        workspace_id (int): workspace ID
+
+    Returns:
+        Response: HTTP Respose
+    """
+
+    app_name = multi_lang.get_text("EP020-0003", "ワークスペース情報:") 
+    exec_stat = multi_lang.get_text("EP020-0003", "CDパイプライン(ArgoCD)情報取得")
+    error_detail = ""
+
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
+        globals.logger.debug('#' * 50)
+
+        # CD結果の全件を取得する
+        api_url = "{}://{}:{}/workspace/{}/cd/result".format(os.environ['EPOCH_RS_CD_RESULT_PROTOCOL'],
+                                                        os.environ['EPOCH_RS_CD_RESULT_HOST'],
+                                                        os.environ['EPOCH_RS_CD_RESULT_PORT'],
+                                                        workspace_id)
+        response = requests.get(api_url)
+
+        if response.status_code != 200:
+            error_detail = multi_lang.get_text("EP020-0032", "CDパイプライン(ArgoCD)情報の取得に失敗しました")
+            globals.logger.debug(error_detail)
+            raise common.UserException(error_detail)
+
+        res_json = json.loads(response.text)
+        globals.logger.debug(res_json)
+
+        ret_status = res_json["result"]
+        
+        rows = []
+        for data_row in res_json["rows"]:
+            # Since the contents of "contents" are in string format, convert them to JSON format
+            # "contents"の内容は文字列形式なので、JSON形式に変換する
+            contents_data = json.loads(data_row["contents"])
+            rows.append(
+                {
+                    "trace_id": contents_data["trace_id"],
+                    "environment_name": contents_data["environment_name"],
+                    "namespace": contents_data["namespace"],
+                    "argocd_results": contents_data["argocd_results"]
+                }
+            )
+
+        # 戻り値をそのまま返却        
+        return jsonify({"result": ret_status, "rows": rows}), ret_status
+
+    except common.UserException as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+    except Exception as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+
+
+def post_cd_pipeline_argocd_sync(workspace_id):
+    """Get CD pipeline (ArgoCD) information - CDパイプライン(ArgoCD)情報取得
+
+    Args:
+        workspace_id (int): workspace ID
+
+    Returns:
+        Response: HTTP Respose
+    """
+
+    app_name = multi_lang.get_text("EP020-0003", "ワークスペース情報:") 
+    exec_stat = multi_lang.get_text("EP020-0003", "CDパイプライン(ArgoCD)情報取得")
+    error_detail = ""
+
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
+        globals.logger.debug('#' * 50)
+
+        # ヘッダ情報
+        post_headers = {
+            'Content-Type': 'application/json',
+        }
+
+        # 引数をJSON形式で受け取りそのまま引数に設定
+        # post_data = request.json.copy()
+        # workspace get
+        # api_url = "{}://{}:{}/workspace/{}".format(os.environ['EPOCH_CONTROL_ARGOCD_PROTOCOL'],
+        #                                             os.environ['EPOCH_CONTROL_ARGOCD_HOST'],
+        #                                             os.environ['EPOCH_CONTROL_ARGOCD_PORT'],
+        #                                             workspace_id)
+        # response = requests.get(api_url)
+
+        # if response.status_code != 200:
+        #     error_detail = multi_lang.get_text("EP020-0032", "CDパイプライン(ArgoCD)情報の取得に失敗しました")
+        #     globals.logger.debug(error_detail)
+        #     raise common.UserException(error_detail)
 
         ret_status = 200
 

@@ -14,11 +14,12 @@
 
 from flask import jsonify
 import random, string
+import json
 
 import globals
 
-def deleteDictKey(dictobj, key):
-    """Dictionary Key削除
+def delete_dictKey(dictobj, key):
+    """Dictionary Key削除 Dictionary Key deleted
 
     Args:
         dictobj (dict): Dictionary
@@ -27,8 +28,8 @@ def deleteDictKey(dictobj, key):
     if key in dictobj:
         del dictobj[key]
 
-def randomString(n):
-    """ランダム文字列生成
+def random_string(n):
+    """ランダム文字列生成 Random string generation
 
     Args:
         n (int): 文字数
@@ -39,7 +40,45 @@ def randomString(n):
     return ''.join(random.choices(string.ascii_letters + string.digits, k=n))
 
 
-def serverError(e, message=''):
+def is_json_format(str):
+    """json値判断 json value judgement
+
+    Args:
+        str (str): json文字列 json string
+
+    Returns:
+        bool: True:json, False:not json
+    """
+    try:
+        # Exceptionで引っかかるときはすべてJson意外と判断
+        # When it gets caught in Exception, it is judged that Json is unexpected
+        json.loads(str)
+    except json.JSONDecodeError:
+        return False
+    except ValueError:
+        return False
+    except Exception:
+        return False
+    return True
+
+
+def json_value(str_json):
+    """json値の値変換 Value conversion of json value
+
+    Args:
+        str_json (json): json strings
+
+    Returns:
+        str: strings value
+    """
+    # json値の場合は、json_dumpsで変換する
+    # For json value, convert with json_dumps
+    if type(str_json) is dict:
+        return json.dumps(str_json)
+    else:
+        return str_json
+
+def server_error(e, message=''):
     """サーバーエラーレスポンス
 
     Args:

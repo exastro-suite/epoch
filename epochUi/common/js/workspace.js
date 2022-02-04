@@ -2356,26 +2356,43 @@ const argoCdAddDeployMembersModal = function(){
 const arogCdResultList = function(){
   const $resultList = $('#result-list');
   
-  $resultList.html('<div class="result-get">/GET ArgoCD結果')
-  $resultList.append('<textarea class="argo-text" cols="35" rows="30"></textarea>')
-  $resultList.append('</div><br>')
-  $resultList.append('<button class="sync">同期</button>')
+  $resultList.html('<div class="result-get">/GET /api/workspace/{workspace_id}/cd/pipeline/argocd')
   
+  var workspace_id = (new URLSearchParams(window.location.search)).get('workspace_id');
+  // Call get CD pipeline (ArgoCD) information processing - CDパイプライン(ArgoCD)情報取得処理の呼び出し
+  $.ajax({
+    "type": "GET",
+    "url": workspace_api_conf.api.cd_pipeline.argocd.get.replace('{workspace_id}', workspace_id),
+  }).done(function(data) {
+    // Success get - 取得成功
+    console.log("[DONE] GET " + workspace_api_conf.api.cd_pipeline.argocd.get + " response\n" + JSON.stringify(data));
+    // display textarea - テキストエリアを表示
+    $resultList.append('<textarea class="argo-text" cols="100" rows="30">' + JSON.stringify(data.rows, null , "    ") + '</textarea>')
+    $resultList.append('</div><br>')
+
+    $resultList.append('<button class="sync">同期</button>')
+  }).fail(function(data) {
+    // Failed get - 取得失敗
+    console.log("[FAIL] GET " + workspace_api_conf.api.cd_pipeline.argocd.get + " response\n" + JSON.stringify(data));
+    
+    $resultList.append('<button class="sync">同期</button>')
+  });
+
+  // Event processing when the sync button is pressed - 同期ボタン押下時のイベント処理
   $resultList.find('.sync').on('click', function(){
 
     console.log("[CALL] GET " + workspace_api_conf.api.resource.get);
-
     // Call argoCD sync processing - ArgoCD同期処理呼び出し
-    $.ajax({
-      // TODO: サービス呼び出しは、同期処理作成後に実装
-      // "type": "POST",
-      // "url": workspace_api_conf.api.resource.get.replace('{workspace_id}', workspace_id),
+    // $.ajax({
+    //   // TODO: サービス呼び出しは、同期処理作成後に実装
+    //   // "type": "POST",
+    //   // "url": workspace_api_conf.api.resource.get.replace('{workspace_id}', workspace_id),
 
-    }).done(function(data) {
-      // console.log("[DONE] POST " + workspace_api_conf.api.resource.get + " response\n" + JSON.stringify(data));
-    }).fail(function(data) {
-      // console.log("[FAIL] POST " + workspace_api_conf.api.resource.get + " response\n" + JSON.stringify(data));
-    });
+    // }).done(function(data) {
+    //   // console.log("[DONE] POST " + workspace_api_conf.api.resource.get + " response\n" + JSON.stringify(data));
+    // }).fail(function(data) {
+    //   // console.log("[FAIL] POST " + workspace_api_conf.api.resource.get + " response\n" + JSON.stringify(data));
+    // });
   });
 };
 
@@ -3207,16 +3224,6 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         console.log("Done:getClient ita");
       }).fail(function() {
         console.log("FAIL:getClient ita");
-      });
-
-      $.ajax({
-        "type": "GET",
-        "url": workspace_api_conf.api.client.get.replace('{client_id}', workspace_api_conf.api.client.client_id.argo.replace("{workspace_id}",workspace_id))
-      }).done(function(data) {
-        workspace_client_urls.argo = workspace_api_conf.links.argo.replace("{baseurl}", data["baseUrl"]);
-        console.log("Done:getClient argo");
-      }).fail(function() {
-        console.log("FAIL:getClient argo");
       });
 
       $.ajax({

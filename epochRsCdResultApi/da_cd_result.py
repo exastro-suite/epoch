@@ -16,6 +16,7 @@ import os
 import json
 
 import globals
+import common
 from dbconnector import dbcursor
 
 def insert_cd_result(cursor, workspace_id, cd_result_id, username, contents):
@@ -62,32 +63,40 @@ def insert_cd_result(cursor, workspace_id, cd_result_id, username, contents):
     # Return the added cd_result_id
     return cursor.lastrowid
 
-def update_cd_result(cursor, workspace_id, cd_result_id, contents):
+def update_cd_result(cursor, workspace_id, cd_result_id, update_contents_items):
     """cd_result update
 
     Args:
         cursor (mysql.connector.cursor): カーソル cursor
         workspace_id (int): workspace id
         cd_result_id (int): cd-result id
-        contents (dict)): contents (include "cd_staus")
+        update_contents_items (dict)): update contents items (include "cd_staus")
 
     Returns:
         int: アップデート件数 update count
         
     """
+    upd_item = ""
     upd_json = {
             'workspace_id' : workspace_id,
             'cd_result_id' : cd_result_id,
-            'cd_staus' : contents["cd_staus"],
-            'contents' : json.dumps(contents),
+            'cd_status' : update_contents_items["cd_status"],
     }
+    # 更新対象となる項目数分、更新sqlを組み立て
+    # Assemble update sql for the number of items to be updated
+    for key, val in update_contents_items.items():
+        upd_item = upd_item + ', "$.{}", %(co_{})s'.format(key, key)
+        # upd_json["co_" + key] = json.dumps(val)
+        upd_json["co_" + key] = common.json_value(val)
 
     # 更新SQL　update SQL
     sql = 'UPDATE cd_result' \
-            ' SET cd_staus = %(cd_staus)s' \
-            ' , contents =  %(contents)s' \
+            ' SET cd_status = %(cd_status)s' \
+            ' , contents = json_replace(contents, ' + upd_item[2:] + ')' \
             ' WHERE workspace_id = %(workspace_id)s' \
             ' AND cd_result_id = %(cd_result_id)s'
+    # globals.logger.debug('SQL {}'.format(sql))
+    # globals.logger.debug('upd_json {}'.format(upd_json))
 
     # cursor.affected_rows()
     # CD結果情報 update実行 cd result update excute
@@ -122,7 +131,7 @@ def delete_cd_result(cursor, workspace_id, cd_result_id):
     # delete count to return
     return cursor.rowcount
 
-def select_cd_result(cursor, workspace_id, cd_result_id=None, cd_status_in=[], username=None, latest=False):
+def select_cd_result(cursor, workspace_id=None, cd_result_id=None, cd_status_in=[], username=None, latest=False):
     """CD結果情報取得 Get cd_result
 
     Args:
@@ -138,12 +147,15 @@ def select_cd_result(cursor, workspace_id, cd_result_id=None, cd_status_in=[], u
     """
 
     sql_limit = ""
-    cond_where = " AND workspace_id = %(workspace_id)s"
-    cond_json = {
-            'workspace_id' : workspace_id,
-    }
+    cond_where = ""
+    cond_json = {}
+
     # 条件がある場合に設定
     # Set when there are conditions
+    if workspace_id is not None:
+        cond_where += " AND workspace_id = %(workspace_id)s"
+        cond_json["workspace_id"] = workspace_id
+
     if cd_result_id is not None:
         cond_where += " AND cd_result_id = %(cd_result_id)s"
         cond_json["cd_result_id"] = cd_result_id
@@ -172,7 +184,7 @@ def select_cd_result(cursor, workspace_id, cd_result_id=None, cd_status_in=[], u
             sql_order + \
             sql_limit
 
-    # globals.logger.debug(f'sql:{sql}')
+    globals.logger.debug(f'sql:{sql}')
     # select実行 select execute
     cursor.execute(sql, cond_json)
     rows = cursor.fetchall()
