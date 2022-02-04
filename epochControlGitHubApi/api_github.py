@@ -21,7 +21,7 @@ import tempfile
 import subprocess
 import time
 import re
-from urllib.parse import urlparse
+import urllib.parse
 import base64
 import requests
 from requests.auth import HTTPBasicAuth
@@ -71,6 +71,32 @@ def call_github_webhooks(workspace_id):
         else:
             # webhooks 取得
             return get_github_webhooks(workspace_id)
+
+    except Exception as e:
+        return common.server_error(e)
+
+
+@app.route('/commits/<string:revision>', methods=['GET'])
+def call_github_commits(revision):
+    """/commits 呼び出し
+
+    Args:
+        revision (str): revision
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] revision[{}]'.format(inspect.currentframe().f_code.co_name, request.method, revision))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'GET':
+            # git commits get
+            return get_git_commits(revision)
+        else:
+            # エラー
+            raise Exception("method not support!")
 
     except Exception as e:
         return common.server_error(e)
@@ -204,6 +230,52 @@ def get_github_webhooks(workspace_id):
     except Exception as e:
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
 
+
+def get_git_commits(revision):
+    """git commits 情報の取得 Get git commits information
+
+    Args:
+        revision (str): revision
+
+    Returns:
+        Response: HTTP Respose
+    """
+
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {} revision[{}]'.format(inspect.currentframe().f_code.co_name, revision))
+        globals.logger.debug('#' * 50)
+
+        # git_url (str): 最新のみ
+        if request.args.get('git_url') is not None:
+            git_url = urllib.parse.unquote(request.args.get('git_url'))
+        else:
+            raise Exception("gir_url parameter not found")
+
+        git_repos = re.sub('\\.git$','',re.sub('^https?://[^/][^/]*/','',git_url))
+
+        # github repo commits get call 
+        api_url = "{}{}/commits/{}".format(github_webhook_base_url,
+                                                git_repos,
+                                                revision)
+        response = requests.get(api_url)
+        globals.logger.debug("api_url:[{}]".format(api_url))
+
+        ret_status = response.status_code 
+        if response.status_code == 200:
+            rows = json.loads(response.text) 
+            globals.logger.debug("rows:[{}]".format(rows))
+        else:
+            rows = None
+            globals.logger.debug("git commits get error:[{}] text:[{}]".format(response.status_code, response.text))
+
+        # 戻り値をそのまま返却
+        return jsonify({"result": ret_status, "rows": rows}), ret_status
+
+    except common.UserException as e:
+        return common.server_error(e)
+    except Exception as e:
+        return common.server_error(e)
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('API_GITHUB_PORT', '8000')), threaded=True)

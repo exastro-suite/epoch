@@ -310,8 +310,11 @@ def post_argocd_sync(workspace_id, app_name):
         # app sync
         #
         globals.logger.debug("argocd app sync :")
-        stdout_cd = subprocess.check_output(["argocd","app","sync",app_name],stderr=subprocess.STDOUT)
-        globals.logger.debug(stdout_cd.decode('utf-8'))
+        try:
+            stdout_cd = subprocess.check_output(["argocd","app","sync",app_name],stderr=subprocess.STDOUT)
+            globals.logger.debug(stdout_cd.decode('utf-8'))
+        except subprocess.CalledProcessError as e:
+            globals.logger.debug("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
         ret_status = 200
         
