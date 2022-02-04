@@ -85,7 +85,10 @@ def update_cd_result(cursor, workspace_id, cd_result_id, update_contents_items):
     # 更新対象となる項目数分、更新sqlを組み立て
     # Assemble update sql for the number of items to be updated
     for key, val in update_contents_items.items():
-        upd_item = upd_item + ', "$.{}", %(co_{})s'.format(key, key)
+        if type(val) is dict:
+            upd_item = upd_item + ', "$.{}", CONVERT(%(co_{})s, json)'.format(key, key)
+        else:
+            upd_item = upd_item + ', "$.{}", %(co_{})s'.format(key, key)
         # upd_json["co_" + key] = json.dumps(val)
         upd_json["co_" + key] = common.json_value(val)
 

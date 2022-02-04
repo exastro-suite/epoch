@@ -333,7 +333,7 @@ def get_cd_pipeline_argocd(workspace_id):
                     "trace_id": contents_data["trace_id"],
                     "environment_name": contents_data["environment_name"],
                     "namespace": contents_data["namespace"],
-                    "argocd_results": json.loads(contents_data["argocd_results"])
+                    "argocd_results": contents_data["argocd_results"],
                 }
             )
 
