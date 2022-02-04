@@ -3497,10 +3497,10 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         for(let i = 0; i < current_pipelineruns.length; i++) {
           if(['Pending', 'Running'].includes(current_pipelineruns[i].status)) {
             run_status = "running";
-            $('#pipelineTektonCheckArea .workspace-block-status-text').css("display", "");
+            $('#pipelineTektonCheckArea').css("visibility", "visible");
             break;
           } else {
-            $('#pipelineTektonCheckArea .workspace-block-status-text').css("display", "none");
+            $('#pipelineTektonCheckArea').css("visibility", "hidden");
           }
         }
         $('#ws-pipeline-tekton .workspace-block-status').attr('data-status', run_status);
@@ -3533,7 +3533,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
 
       $('#gitServiceCheckButton').css("display","");
       $('#pipelineTektonCheckButton').css("display","");
-      $('#pipelineTektonCheckArea').css("display","");
+      $('#pipelineTektonCheckArea').css("visibility","hidden");
       $('#registryServiceCheckButton').css("display","");
       $('#cdExecutionButtonArea').css("display","");
       $('#exastroItAutomationResultCheckButton').css("display","");
@@ -3605,7 +3605,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       // TEKTONの実行確認のボタンを設定する
       if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ci-pipeline-result".replace('{ws_id}',ws_id)) != -1) {
         $('#pipelineTektonCheckButton').css("display","");
-        $('#pipelineTektonCheckArea').css("display","");
+        // $('#pipelineTektonCheckArea').css("visibility","visible");
       }
 
       // Set the registry service execution confirmation button
