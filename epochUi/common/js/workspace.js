@@ -724,6 +724,10 @@ const wsModalJSON = {
           'comitList': {
             'type': 'loading',
             'id': 'commit-list'
+          },
+          'webhookList': {
+            'type': 'loading',
+            'id': 'webhook-list'
           }
         }
       }
@@ -2379,7 +2383,6 @@ const arogCdResultList = function(){
       console.log("[CALL] POST " + workspace_api_conf.api.cd_pipeline.argocd.sync.post.replace('{workspace_id}', workspace_id));
       // Call argoCD sync processing - ArgoCD同期処理呼び出し
       $.ajax({
-        // TODO: サービス呼び出しは、同期処理作成後に実装
         "type": "POST",
         "url": workspace_api_conf.api.cd_pipeline.argocd.sync.post.replace('{workspace_id}', workspace_id),
         data:JSON.stringify({'environment_name':'staging'}),
@@ -2397,6 +2400,57 @@ const arogCdResultList = function(){
     console.log("[FAIL] GET " + workspace_api_conf.api.cd_pipeline.argocd.get + " response\n" + JSON.stringify(data));
     
     $resultList.append('<button class="sync">同期</button>')
+  });
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//   アプリケーションコードリポジトリ結果確認
+// 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+const aplicationCodeResultList = function(){
+  const $commitList = $('#commit-list');
+  const $webhookList = $('#webhook-list');
+    
+  $commitList.html('<div>/GET /api/workspace/{workspace_id}/ci/pipeline/git/commits')
+  $webhookList.html('<div>/GET /api/workspace/{workspace_id}/ci/pipeline/git/hooks')
+
+  var workspace_id = (new URLSearchParams(window.location.search)).get('workspace_id');
+  // Call get CD pipeline (ArgoCD) information processing - CDパイプライン(ArgoCD)情報取得処理の呼び出し
+  $.ajax({
+    "type": "GET",
+    "url": workspace_api_conf.api.ci_pipeline.git.commits.get.replace('{workspace_id}', workspace_id),
+  }).done(function(data) {
+    // Success get - 取得成功
+    console.log("[DONE] GET " + workspace_api_conf.api.ci_pipeline.git.commits.get + " response\n" + JSON.stringify(data));
+    // display textarea - テキストエリアを表示
+    $commitList.append('<textarea cols="100" rows="25">' + JSON.stringify(data.rows, null , "    ") + '</textarea>')
+    $commitList.append('</div><br><br>')  
+  }).fail(function(data) {
+    // Failed get - 取得失敗
+    console.log("[FAIL] GET " + workspace_api_conf.api.ci_pipeline.git.commits.get + " response\n" + JSON.stringify(data));
+
+    $commitList.append('<textarea cols="100" rows="10">取得失敗</textarea>')
+    $commitList.append('</div><br><br>')  
+  });
+
+  $.ajax({
+    "type": "GET",
+    "url": workspace_api_conf.api.ci_pipeline.git.hooks.get.replace('{workspace_id}', workspace_id),
+  }).done(function(data) {
+    // Success get - 取得成功
+    console.log("[DONE] GET " + workspace_api_conf.api.ci_pipeline.git.hooks.get + " response\n" + JSON.stringify(data));
+
+    // display textarea - テキストエリアを表示
+    $webhookList.append('<textarea cols="100" rows="25">' + JSON.stringify(data.rows, null , "    ") + '</textarea>')
+    $webhookList.append('</div>')
+
+  }).fail(function(data) {
+    // Failed get - 取得失敗
+    console.log("[FAIL] GET " + workspace_api_conf.api.ci_pipeline.git.hooks.get + " response\n" + JSON.stringify(data));
+
+    $webhookList.append('<textarea cols="100" rows="10">取得失敗</textarea>')
+    $webhookList.append('</div>')  
   });
 };
 
@@ -2537,6 +2591,10 @@ $content.find('.modal-open, .workspace-status-item').not('[data-button="pipeline
     
     // ここからCD実行画面
     
+    // アプリケーションコード結果一覧
+    case 'gitServiceCheck': {
+      callback = aplicationCodeResultList;
+    } break;
     // CD実行
     case 'cdExecution': {
       // ok = function( $modal ){
@@ -2590,16 +2648,6 @@ $content.find('.modal-open, .workspace-status-item').not('[data-button="pipeline
   console.log($('.modal-block-main'));
   switch(target) {
     case 'gitServiceCheck':
-      var link_append = "";
-      data_pipelines = data_workspace['ci_config']['pipelines'];
-      for(var i in data_pipelines) {
-        var item = data_pipelines[i]['pipeline_id'];
-
-        var link = wsDataJSON['application-code'][item][item + '-git-repository-url'];
-        link = link.replace(".git","") + "/commits";
-        link_append += '<a href="' + link + '" target="_blank">' + link + '</a><br />';
-      };
-      $('.modal-block-main').html(link_append);
       break;
     case 'gitServiceArgoCheck':
       var link = "";
