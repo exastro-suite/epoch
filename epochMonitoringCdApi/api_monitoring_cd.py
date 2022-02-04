@@ -248,6 +248,8 @@ def main():
 
         ARGOCD_ERROR_RETRY_COUNT = int(os.environ["EPOCH_MONITORING_ARGOCD_ERROR_RETRY_COUNT"])
         ITA_ERROR_RETRY_COUNT = int(os.environ["EPOCH_MONITORING_ITA_ERROR_RETRY_COUNT"]) 
+        ARGOCD_ERROR_COUNT = 0
+        ITA_ERROR_COUNT = 0
 
         schedule.every(argocd_interval_sec).seconds.do(monitoring_argo_cd)
         schedule.every(ita_interval_sec).seconds.do(monitoring_it_automation)
