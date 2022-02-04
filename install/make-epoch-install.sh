@@ -99,6 +99,7 @@ cat <<EOF > ${SOURCE_MANIFEST}/epoch-setting-tools-script.yaml
 #   limitations under the License.
 EOF
 kubectl create cm epoch-setting-tools-script -n epoch-system --dry-run=client -o yaml \
+    --from-file=${TOOLS_SCRIPT}/common-import-logger.sh \
     --from-file=${TOOLS_SCRIPT}/set-host.sh \
     --from-file=${TOOLS_SCRIPT}/set-host-gitlab.sh \
     --from-file=${TOOLS_SCRIPT}/get-gitlab-initial-root-password.sh \

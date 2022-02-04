@@ -15,22 +15,12 @@
 
 
 BASENAME=$(basename "$0")
-LOGFILE="/var/log/epoch/epoch-setting-tools.log.`date '+%Y%m%d'`"
 CMD_RESULT="/tmp/result.$$"
 LF='
 '
-function logger() {
-    LOG_LEVEL=$1
-    LOG_MESSAGE=$2
-    LOG_TEXT="[`TZ=JST-9 date '+%Y/%m/%d %H:%M:%S'`][${BASENAME}][${LOG_LEVEL}] ${LOG_MESSAGE}"
-    if [ "${LOG_LEVEL}" != "DEBUG" ]; then
-        echo "[${LOG_LEVEL}] ${LOG_MESSAGE}"
-    fi
-    echo "${LOG_TEXT}" > /proc/1/fd/1
-    echo "${LOG_TEXT}" >> "${LOGFILE}"
-}
+source "`dirname $0`/common-import-logger.sh" "${BASENAME}"
 
-logger "INFO" "START : set-host.sh"
+logger "INFO" "START : ${BASENAME}"
 
 #
 # Initialize variables
@@ -48,6 +38,7 @@ if [ $# -ne 1 ]; then
 fi
 
 PRM_MY_HOST="$1"
+logger "INFO" "PARAM PRM_MY_HOST : ${PRM_MY_HOST}"
 
 #
 # Initialize Setting Parameter
