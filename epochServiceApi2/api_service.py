@@ -156,6 +156,52 @@ def call_ci_pipeline(workspace_id):
         return common.server_error(e)
 
 
+@app.route('/workspace/<int:workspace_id>/ci/pipeline/git/commits', methods=['GET'])
+def call_git_commits(workspace_id):
+    """Get git commit history - gitコミット履歴取得
+
+    Args:
+        workspace_id (int): workspace ID
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'POST':
+            return api_service_ci.get_git_commits(workspace_id)
+        else:
+            raise Exception("method not support!")
+    except Exception as e:
+        return common.server_error(e)
+
+
+@app.route('/workspace/<int:workspace_id>/ci/pipeline/git/hooks', methods=['GET'])
+def call_git_hooks(workspace_id):
+    """Get webhook history - webhook履歴取得
+
+    Args:
+        workspace_id (int): workspace ID
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'POST':
+            return api_service_ci.get_git_hooks(workspace_id)
+        else:
+            raise Exception("method not support!")
+    except Exception as e:
+        return common.server_error(e)
+
+
 @app.route('/workspace/<int:workspace_id>/ci/pipeline/result', methods=['GET'])
 def call_ci_result(workspace_id):
     """workspace/workspace_id/ci/pipeline/result Call

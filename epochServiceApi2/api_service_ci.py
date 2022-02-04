@@ -279,6 +279,99 @@ def post_ci_pipeline(workspace_id):
     except Exception as e:
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
 
+def get_git_commits(workspace_id):
+    """Get git commit history - gitコミット履歴取得
+
+    Args:
+        workspace_id (int): workspace ID
+    Returns:
+        Response: HTTP Respose
+    """
+    app_name = "ワークスペース情報:"
+    exec_stat = "CIパイプラインgit履歴取得"
+    error_detail = ""
+
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
+        globals.logger.debug('#' * 50)
+
+        response = {
+            "result":"200",
+            "rows" : [
+                {
+                "branch": "master",
+                "commit_id": "0000100000000000000000000000000000000001",
+                "name": "dummyuser-1",
+                "date": "2021-11-29T08:07:10Z",
+                "message": "commit-message-1",
+                "html_url": "https://localhost/",
+                },
+                {
+                "branch": "master",
+                "commit_id": "0000200000000000000000000000000000000002",
+                "name": "dummyuser-2",
+                "date": "2021-11-29T08:07:10Z",
+                "message": "commit-message-2",
+                "html_url": "https://localhost/",
+                }
+            ],
+        }
+        ret_status = 200
+
+        return jsonify(response), ret_status
+
+    except common.UserException as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+    except Exception as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+
+def get_git_hooks(workspace_id):
+    """Get webhook history - webhook履歴取得
+
+    Args:
+        workspace_id (int): workspace ID
+    Returns:
+        Response: HTTP Respose
+    """
+    app_name = "ワークスペース情報:"
+    exec_stat = "CIパイプラインwebhook履歴取得"
+    error_detail = ""
+
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
+        globals.logger.debug('#' * 50)
+
+        response = {
+            "result":"200",
+            "rows" : [
+                {
+                "branch": "master",
+                "url": "https://localhost/api/listener/1",
+                "date": "2021-11-30T02:09:25Z",
+                "status": "OK",
+                "status_code": 202,
+                "event": "push",
+                },
+                {
+                "branch": "master",
+                "url": "https://localhost/api/listener/2",
+                "date": "2021-11-30T02:09:25Z",
+                "status": "failed to connect to host",
+                "status_code": 502,
+                "event": "push",
+                }
+            ],
+        }
+        ret_status = 200
+
+        return jsonify(response), ret_status
+
+    except common.UserException as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+    except Exception as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
 
 def get_ci_pipeline_result(workspace_id):
     """Get CI pipeline results (CIパイプライン結果取得)
