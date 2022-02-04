@@ -708,7 +708,7 @@ spec:
           name: epoch-control-argocd-conf
       containers:
       - name: epoch-control-argocd-api
-        image: exastro/epoch-control-argocd-api:0.3.1_20220201_1000
+        image: exastro/epoch-control-argocd-api:0.3.1_20220204_1300
         env:
         - name: CONFIG_API_ARGOCD_PATH
           value: "/etc/epoch/epochControlArgoCDApi/api_argocd.conf"
@@ -1287,6 +1287,205 @@ spec:
   selector:
     name: tekton-pipelinerun-db
 
+#---- epoch-rs-cd-result-api.yaml
+---
+#   Copyright 2022 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: epoch-rs-cd-result-conf
+  namespace: epoch-system
+data:
+  api_cd_result.conf: |
+    TZ='Asia/Tokyo'
+    MYSQL_HOST='rs-cd-result-db'
+    MYSQL_PORT='3306'
+    MYSQL_DATABASE='rs_cd_result_db'
+    MYSQL_USER='app_user'
+    MYSQL_PASSWORD='password'
+    RESOURCE_CREATION_WAIT=60
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: epoch-rs-cd-result-api
+  namespace: epoch-system
+spec:
+  selector:
+    matchLabels:
+      name: epoch-rs-cd-result-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: epoch-rs-cd-result-api
+    spec:
+      volumes:
+      - name: epoch-rs-cd-result-conf
+        configMap:
+          name: epoch-rs-cd-result-conf
+      containers:
+      - name: epoch-rs-cd-result-api
+        image: exastro/epoch-rs-cd-result-api:0.3.1_20220204_1300
+        env:
+        - name: CONFIG_API_CD_RESULT_PATH
+          value: "/etc/epoch/epochRsCdResultApi/api_cd_result.conf"
+        - name: FLASK_ENV
+          value: "development"
+        - name: API_CD_RESULT_PORT
+          value: "8000"
+        - name: PYTHONIOENCODING
+          value: utf-8
+        volumeMounts:
+        - name: epoch-rs-cd-result-conf
+          mountPath: /etc/epoch/epochRsCdResultApi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: epoch-rs-cd-result-api
+  labels:
+    name: epoch-rs-cd-result-api
+  namespace: epoch-system
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+  selector:
+    name: epoch-rs-cd-result-api
+
+#---- epoch-rs-cd-result-db.yaml
+---
+#   Copyright 2022 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rs-cd-result-db-myconf
+  namespace: epoch-system
+data:
+  my.cnf: |
+    [mysqld]
+    character-set-server=utf8mb4
+    collation-server=utf8mb4_bin
+    secure_file_priv=/tmp
+    [client]
+    default-character-set=utf8mb4
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rs-cd-result-db-initdb
+  namespace: epoch-system
+data:
+  workspace.sql: |
+    create database rs_cd_result_db
+      CHARACTER SET utf8mb4
+      COLLATE utf8mb4_unicode_ci;
+    create user app_user IDENTIFIED WITH mysql_native_password BY 'password';
+    GRANT ALL ON rs_cd_result_db.* TO app_user;
+    use rs_cd_result_db;
+    create table cd_result (
+      workspace_id int unsigned not null,
+      cd_result_id varchar(10) not null,
+      cd_status varchar(32),
+      contents json,
+      username text,
+      create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
+      update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      PRIMARY KEY (workspace_id, cd_result_id)
+    );
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rs-cd-result-db
+  namespace: epoch-system
+spec:
+  selector:
+    matchLabels:
+      name: rs-cd-result-db
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: rs-cd-result-db
+    spec:
+      volumes:
+      - name: mysqlconf-volume
+        configMap:
+          name: rs-cd-result-db-myconf
+      # COMMENT OUT:Persistent data retention
+      #- name: mysqldata
+      #  hostPath:
+      #    path: /var/data/epoch/rs_cd_result_db/mysql
+      #    type: DirectoryOrCreate
+      - name: mysqlinitdb-volume
+        configMap:
+          name: rs-cd-result-db-initdb
+      containers:
+      - name: mysql
+        image: mysql
+        volumeMounts:
+        # COMMENT OUT:Persistent data retention
+        #- name: mysqldata
+        #  mountPath: /var/lib/mysql
+        - name: mysqlconf-volume
+          mountPath: /etc/mysql
+        - name: mysqlinitdb-volume
+          mountPath: /docker-entrypoint-initdb.d
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: password
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rs-cd-result-db
+  labels:
+    name: rs-cd-result-db
+  namespace: epoch-system
+spec:
+  type: ClusterIP
+  ports:
+  - name: mysql
+    port: 3306
+    targetPort: 3306
+  selector:
+    name: rs-cd-result-db
+
 #---- epoch-rs-logs-api.yaml
 ---
 #   Copyright 2021 NEC Corporation
@@ -1484,205 +1683,6 @@ spec:
   selector:
     name: rs-logs-db
 
-#---- epoch-rs-cd-result-api.yaml
----
-#   Copyright 2022 NEC Corporation
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: epoch-rs-cd-result-conf
-  namespace: epoch-system
-data:
-  api_cd_result.conf: |
-    TZ='Asia/Tokyo'
-    MYSQL_HOST='rs-cd-result-db'
-    MYSQL_PORT='3306'
-    MYSQL_DATABASE='rs_cd_result_db'
-    MYSQL_USER='app_user'
-    MYSQL_PASSWORD='password'
-    RESOURCE_CREATION_WAIT=60
-
----
-
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: epoch-rs-cd-result-api
-  namespace: epoch-system
-spec:
-  selector:
-    matchLabels:
-      name: epoch-rs-cd-result-api
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        name: epoch-rs-cd-result-api
-    spec:
-      volumes:
-      - name: epoch-rs-cd-result-conf
-        configMap:
-          name: epoch-rs-cd-result-conf
-      containers:
-      - name: epoch-rs-cd-result-api
-        image: exastro/epoch-rs-cd-result-api:0.3.1_20220201_1000
-        env:
-        - name: CONFIG_API_CD_RESULT_PATH
-          value: "/etc/epoch/epochRsCdResultApi/api_cd_result.conf"
-        - name: FLASK_ENV
-          value: "development"
-        - name: API_CD_RESULT_PORT
-          value: "8000"
-        - name: PYTHONIOENCODING
-          value: utf-8
-        volumeMounts:
-        - name: epoch-rs-cd-result-conf
-          mountPath: /etc/epoch/epochRsCdResultApi
-
----
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: epoch-rs-cd-result-api
-  labels:
-    name: epoch-rs-cd-result-api
-  namespace: epoch-system
-spec:
-  type: ClusterIP
-  ports:
-  - name: http
-    port: 8000
-    targetPort: 8000
-  selector:
-    name: epoch-rs-cd-result-api
-
-#---- epoch-rs-cd-result-db.yaml
----
-#   Copyright 2022 NEC Corporation
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: rs-cd-result-db-myconf
-  namespace: epoch-system
-data:
-  my.cnf: |
-    [mysqld]
-    character-set-server=utf8mb4
-    collation-server=utf8mb4_bin
-    secure_file_priv=/tmp
-    [client]
-    default-character-set=utf8mb4
-
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: rs-cd-result-db-initdb
-  namespace: epoch-system
-data:
-  workspace.sql: |
-    create database rs_cd_result_db
-      CHARACTER SET utf8mb4
-      COLLATE utf8mb4_unicode_ci;
-    create user app_user IDENTIFIED WITH mysql_native_password BY 'password';
-    GRANT ALL ON rs_cd_result_db.* TO app_user;
-    use rs_cd_result_db;
-    create table cd_result (
-      workspace_id int unsigned not null,
-      cd_result_id varchar(10) not null,
-      cd_status varchar(32),
-      contents json,
-      username text,
-      create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
-      update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-      PRIMARY KEY (workspace_id, cd_result_id)
-    );
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: rs-cd-result-db
-  namespace: epoch-system
-spec:
-  selector:
-    matchLabels:
-      name: rs-cd-result-db
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        name: rs-cd-result-db
-    spec:
-      volumes:
-      - name: mysqlconf-volume
-        configMap:
-          name: rs-cd-result-db-myconf
-      # COMMENT OUT:Persistent data retention
-      #- name: mysqldata
-      #  hostPath:
-      #    path: /var/data/epoch/rs_cd_result_db/mysql
-      #    type: DirectoryOrCreate
-      - name: mysqlinitdb-volume
-        configMap:
-          name: rs-cd-result-db-initdb
-      containers:
-      - name: mysql
-        image: mysql
-        volumeMounts:
-        # COMMENT OUT:Persistent data retention
-        #- name: mysqldata
-        #  mountPath: /var/lib/mysql
-        - name: mysqlconf-volume
-          mountPath: /etc/mysql
-        - name: mysqlinitdb-volume
-          mountPath: /docker-entrypoint-initdb.d
-        env:
-        - name: MYSQL_ROOT_PASSWORD
-          value: password
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: rs-cd-result-db
-  labels:
-    name: rs-cd-result-db
-  namespace: epoch-system
-spec:
-  type: ClusterIP
-  ports:
-  - name: mysql
-    port: 3306
-    targetPort: 3306
-  selector:
-    name: rs-cd-result-db
-
 #---- epoch-service-api-config.yaml
 ---
 #   Copyright 2019 NEC Corporation
@@ -1787,7 +1787,7 @@ spec:
           name: epoch-service-api2-conf
       containers:
       - name: epoch-service-api2
-        image: exastro/epoch-service-api2:0.3.1_20220201_1000
+        image: exastro/epoch-service-api2:0.3.1_20220204_1300
         env:
         - name: CONFIG_API_SERVICE_PATH
           value: "/etc/epoch/epochServiceApi/api_service.conf"
@@ -1859,7 +1859,7 @@ spec:
     spec:
       containers:
       - name: epoch-ui
-        image: exastro/epoch-ui:0.3.1_20220201_1000
+        image: exastro/epoch-ui:0.3.1_20220204_1300
 
 ---
 apiVersion: v1
@@ -1880,6 +1880,107 @@ spec:
   #  targetPort: 4430
   selector:
     name: epoch-ui
+
+#---- epoch-monitoring-api-config.yaml
+---
+#   Copyright 2022 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: epoch-monitoring-api-config
+  namespace: epoch-system
+data:
+  EPOCH_CONTROL_ARGOCD_PROTOCOL: "http"
+  EPOCH_CONTROL_ARGOCD_HOST: "epoch-control-argocd-api"
+  EPOCH_CONTROL_ARGOCD_PORT: "8000"
+  EPOCH_CONTROL_ITA_PROTOCOL: "http"
+  EPOCH_CONTROL_ITA_HOST: "epoch-control-ita-api"
+  EPOCH_CONTROL_ITA_PORT: "8000"
+  EPOCH_RS_CD_RESULT_PROTOCOL: "http"
+  EPOCH_RS_CD_RESULT_HOST: "epoch-rs-cd-result-api"
+  EPOCH_RS_CD_RESULT_PORT: "8000"
+  EPOCH_RS_LOGS_PROTOCOL: "http"
+  EPOCH_RS_LOGS_HOST: "epoch-rs-logs-api"
+  EPOCH_RS_LOGS_PORT: "8000"
+  PYTHONIOENCODING: utf-8
+  EPOCH_MONITORING_ARGOCD_INTERVAL_SEC: "5"
+  EPOCH_MONITORING_ITA_INTERVAL_SEC: "5"
+  EPOCH_MONITORING_ARGOCD_ERROR_RETRY_COUNT: "5"
+  EPOCH_MONITORING_ITA_ERROR_RETRY_COUNT: "5"
+
+#---- epoch-monitoring-cd-api.yaml
+---
+#   Copyright 2021 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: epoch-monitoring-cd-api-conf
+  namespace: epoch-system
+data:
+  api_monitoring_cd.conf: |
+    TZ='Asia/Tokyo'
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: epoch-monitoring-cd-api
+  namespace: epoch-system
+spec:
+  selector:
+    matchLabels:
+      name: epoch-monitoring-cd-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: epoch-monitoring-cd-api
+    spec:
+      volumes:
+      - name: epoch-monitoring-cd-api-conf
+        configMap:
+          name: epoch-monitoring-cd-api-conf
+      containers:
+      - name: epoch-monitoring-cd-api
+        image: exastro/epoch-monitoring-cd-api:0.3.1_20220204_1300
+        env:
+        - name: CONFIG_API_MONITORING_CD_PATH
+          value: "/etc/epoch/epochMonitoringCdApi/api_monitoring_cd.conf"
+        - name: FLASK_ENV
+          value: "development"
+        - name: PYTHONIOENCODING
+          value: utf-8
+        envFrom:
+          - configMapRef:
+              name: epoch-monitoring-api-config
+        volumeMounts:
+        - name: epoch-monitoring-cd-api-conf
+          mountPath: /etc/epoch/epochMonitoringCdApi
 
 #---- exastro-platform-authentication-infra-role.yaml
 ---
@@ -7083,6 +7184,36 @@ metadata:
 #   limitations under the License.
 apiVersion: v1
 data:
+  common-import-logger.sh: |+
+    #!/bin/bash
+    #   Copyright 2021 NEC Corporation
+    #
+    #   Licensed under the Apache License, Version 2.0 (the "License");
+    #   you may not use this file except in compliance with the License.
+    #   You may obtain a copy of the License at
+    #
+    #       http://www.apache.org/licenses/LICENSE-2.0
+    #
+    #   Unless required by applicable law or agreed to in writing, software
+    #   distributed under the License is distributed on an "AS IS" BASIS,
+    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    #   See the License for the specific language governing permissions and
+    #   limitations under the License.
+
+    LOGFILE="/var/log/epoch/epoch-setting-tools.log.`TZ=JST-9 date '+%Y%m%d'`"
+    _LOGNAME=$1
+
+    function logger() {
+        LOG_LEVEL=$1
+        LOG_MESSAGE=$2
+        LOG_TEXT="[`TZ=JST-9 date '+%Y/%m/%d %H:%M:%S'`][${_LOGNAME}][${LOG_LEVEL}] ${LOG_MESSAGE}"
+        if [ "${LOG_LEVEL}" != "DEBUG" ]; then
+            echo "[${LOG_LEVEL}] ${LOG_MESSAGE}"
+        fi
+        echo "${LOG_TEXT}" > /proc/1/fd/1
+        echo "${LOG_TEXT}" >> "${LOGFILE}"
+    }
+
   get-gitlab-initial-root-password.sh: |+
     #!/bin/bash
     #   Copyright 2019 NEC Corporation
@@ -7162,21 +7293,10 @@ data:
     #   See the License for the specific language governing permissions and
     #   limitations under the License.
     BASENAME=$(basename "$0")
-    LOGFILE="/var/log/epoch/${BASENAME}.`date '+%Y%m%d'`"
     CMD_RESULT="/tmp/result.$$"
     LF='
     '
-
-    function logger() {
-        LOG_LEVEL=$1
-        LOG_MESSAGE=$2
-        LOG_TEXT="[`TZ=JST-9 date '+%Y/%m/%d %H:%M:%S'`][${BASENAME}][${LOG_LEVEL}] ${LOG_MESSAGE}"
-        if [ "${LOG_LEVEL}" != "DEBUG" ]; then
-            echo "[${LOG_LEVEL}] ${LOG_MESSAGE}"
-        fi
-        echo "${LOG_TEXT}" > /proc/1/fd/1
-        echo "${LOG_TEXT}" >> "${LOGFILE}"
-    }
+    source "`dirname $0`/common-import-logger.sh" "${BASENAME}"
 
     logger "INFO" "START : set-host-gitlab.sh"
 
@@ -7194,6 +7314,8 @@ data:
     fi
 
     PRM_MY_HOST="$1"
+    logger "INFO" "PARAM PRM_MY_HOST : ${PRM_MY_HOST}"
+
     GITLAB_CLONE_URL="https://${PRM_MY_HOST}:31183/"
 
     logger "INFO" "START : Wait Gitlab Installer finished"
@@ -7269,22 +7391,12 @@ data:
 
 
     BASENAME=$(basename "$0")
-    LOGFILE="/var/log/epoch/${BASENAME}.`date '+%Y%m%d'`"
     CMD_RESULT="/tmp/result.$$"
     LF='
     '
-    function logger() {
-        LOG_LEVEL=$1
-        LOG_MESSAGE=$2
-        LOG_TEXT="[`TZ=JST-9 date '+%Y/%m/%d %H:%M:%S'`][${BASENAME}][${LOG_LEVEL}] ${LOG_MESSAGE}"
-        if [ "${LOG_LEVEL}" != "DEBUG" ]; then
-            echo "[${LOG_LEVEL}] ${LOG_MESSAGE}"
-        fi
-        echo "${LOG_TEXT}" > /proc/1/fd/1
-        echo "${LOG_TEXT}" >> "${LOGFILE}"
-    }
+    source "`dirname $0`/common-import-logger.sh" "${BASENAME}"
 
-    logger "INFO" "START : set-host.sh"
+    logger "INFO" "START : ${BASENAME}"
 
     #
     # Initialize variables
@@ -7302,6 +7414,7 @@ data:
     fi
 
     PRM_MY_HOST="$1"
+    logger "INFO" "PARAM PRM_MY_HOST : ${PRM_MY_HOST}"
 
     #
     # Initialize Setting Parameter
