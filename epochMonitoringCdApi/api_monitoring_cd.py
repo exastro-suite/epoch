@@ -36,6 +36,12 @@ app = Flask(__name__)
 app.config.from_envvar('CONFIG_API_MONITORING_CD_PATH')
 globals.init(app)
 
+# エラー時のリトライ回数(0は止めない) Number of retries on error (0 does not stop)
+ARGOCD_ERROR_RETRY_COUNT = 0
+ARGOCD_ERROR_COUNT = 0
+ITA_ERROR_RETRY_COUNT = 0
+ITA_ERROR_COUNT = 0
+
 def monitoring_argo_cd():
     """Argo CD 監視
 
@@ -158,7 +164,11 @@ def monitoring_argo_cd():
                 if response.status_code != 200:
                     raise Exception("cd result put error:[{}]".format(response.status_code))
 
+        # 正常時はエラーをリセット Reset error when normal
+        ARGOCD_ERROR_COUNT = 0
+
     except Exception as e:
+        ARGOCD_ERROR_COUNT += 1
         return common.serverError(e)
 
 
@@ -219,7 +229,11 @@ def monitoring_it_automation():
                 if response.status_code != 200:
                     raise Exception("cd result put error:[{}]".format(response.status_code))
 
+        # 正常時はエラーをリセット Reset error when normal
+        ITA_ERROR_COUNT = 0
+
     except Exception as e:
+        ITA_ERROR_COUNT += 1
         return common.serverError(e)
 
 
@@ -232,11 +246,23 @@ def main():
         argocd_interval_sec = int(os.environ["EPOCH_MONITORING_ARGOCD_INTERVAL_SEC"])
         ita_interval_sec = int(os.environ["EPOCH_MONITORING_ITA_INTERVAL_SEC"])
 
+        ARGOCD_ERROR_RETRY_COUNT = int(os.environ["EPOCH_MONITORING_ARGOCD_ERROR_RETRY_COUNT"])
+        ITA_ERROR_RETRY_COUNT = int(os.environ["EPOCH_MONITORING_ITA_ERROR_RETRY_COUNT"]) 
+
         schedule.every(argocd_interval_sec).seconds.do(monitoring_argo_cd)
         schedule.every(ita_interval_sec).seconds.do(monitoring_it_automation)
 
         while True:
             schedule.run_pending()
+
+            # エラーリトライ回数超えた場合は、終了する
+            # If the number of error retries is exceeded, the process will end.
+            if ARGOCD_ERROR_RETRY_COUNT != 0 and ARGOCD_ERROR_COUNT > ARGOCD_ERROR_RETRY_COUNT:
+                break
+
+            if ITA_ERROR_RETRY_COUNT != 0 and ITA_ERROR_COUNT > ITA_ERROR_RETRY_COUNT:
+                break
+
             time.sleep(1)
 
     except Exception as e:
