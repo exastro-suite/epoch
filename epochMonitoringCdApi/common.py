@@ -17,6 +17,9 @@ import random, string
 
 import globals
 
+class UserException(Exception):
+    pass
+
 def deleteDictKey(dictobj, key):
     """Dictionary Key削除 Dictionary Key delete
 

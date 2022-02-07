@@ -14,6 +14,7 @@
 
 from flask import Flask, request, abort, jsonify, render_template
 from datetime import datetime
+import inspect
 import os
 import json
 import tempfile
@@ -422,6 +423,12 @@ def get_git_commits(revision):
         globals.logger.debug('CALL {} revision[{}]'.format(inspect.currentframe().f_code.co_name, revision))
         globals.logger.debug('#' * 50)
 
+        # ヘッダ情報
+        post_headers = {
+            'PRIVATE-TOKEN': request.headers["PRIVATE-TOKEN"],
+            'Content-Type': 'application/json',
+        }
+
         # git_url (str): 最新のみ
         if request.args.get('git_url') is not None:
             git_url = urllib.parse.unquote(request.args.get('git_url'))
@@ -432,7 +439,7 @@ def get_git_commits(revision):
 
         # gitlab repo commits get call 
         api_url = "{}://{}:{}/api/v4/projects/{}%2F{}/repository/commits/{}".format(API_PROTOCOL, API_BASE_URL, API_PORT, json_url['group_name'], json_url['repos_name'], revision)
-        response = requests.get(api_url)
+        response = requests.get(api_url, headers=post_headers)
 
         ret_status = response.status_code 
         if response.status_code == 200:
