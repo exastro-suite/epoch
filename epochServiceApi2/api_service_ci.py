@@ -21,7 +21,7 @@ import tempfile
 import subprocess
 import time
 import re
-from urllib.parse import urlparse
+import urllib.parse
 import base64
 import requests
 from requests.auth import HTTPBasicAuth
@@ -296,26 +296,125 @@ def get_git_commits(workspace_id):
         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
         globals.logger.debug('#' * 50)
 
+        # workspace get
+        api_url = "{}://{}:{}/workspace/{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+                                                    os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                    os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                    workspace_id)
+        response = requests.get(api_url)
+
+        if response.status_code != 200:
+            error_detail = multi_lang.get_text("EP020-0013", "ワークスペース情報の取得に失敗しました")
+            globals.logger.debug(error_detail)
+            raise common.UserException(error_detail)
+
+        # 取得したワークスペース情報を退避 Save the acquired workspace information
+        ret = json.loads(response.text)
+        # 取得したworkspace情報をパラメータとして受け渡す Pass the acquired workspace information as a parameter
+        workspace_info = ret["rows"][0]
+
+        git_token = workspace_info["cd_config"]["environments_common"]["git_repositry"]["token"]
+
+        # ヘッダ情報 header info.
+        post_headers_in_token = {
+            'PRIVATE-TOKEN': git_token,
+            'Content-Type': 'application/json',
+        }
+
+        rows = []
+        # 環境数分処理する Process for a few minutes in the environment
+        for environment in workspace_info["cd_config"]["environments"]:
+            git_url = environment["git_repositry"]["url"]
+
+            if workspace_info["cd_config"]["environments_common"]["git_repositry"]["housing"] == const.HOUSING_INNER:
+                # EPOCH内レジストリ ブランチの一覧取得 Get a list of registry branches in EPOCH
+                api_url = "{}://{}:{}/branches?git_url={}".format(os.environ['EPOCH_CONTROL_INSIDE_GITLAB_PROTOCOL'],
+                                                        os.environ['EPOCH_CONTROL_INSIDE_GITLAB_HOST'],
+                                                        os.environ['EPOCH_CONTROL_INSIDE_GITLAB_PORT'],
+                                                        urllib.parse.quote(git_url))
+                response = requests.get(api_url, headers=post_headers_in_token)
+
+                if response.status_code != 200:
+                    raise common.UserException("git branches get error:[{}]".format(response.status_code))
+
+                ret_git_branches = json.loads(response.text)
+
+                # ブランチごとにcommit情報を取得する
+                # Get commit information for each branch
+                for branch_row in ret_git_branches["rows"]:
+                    # EPOCH内レジストリ Registry in EPOCH
+                    api_url = "{}://{}:{}/commits?git_url={}&branch={}".format(os.environ['EPOCH_CONTROL_INSIDE_GITLAB_PROTOCOL'],
+                                                            os.environ['EPOCH_CONTROL_INSIDE_GITLAB_HOST'],
+                                                            os.environ['EPOCH_CONTROL_INSIDE_GITLAB_PORT'],
+                                                            urllib.parse.quote(git_url),
+                                                            urllib.parse.quote(branch_row["name"]))
+                    response = requests.get(api_url, headers=post_headers_in_token)
+
+                    if response.status_code != 200:
+                        raise common.UserException("git commit get error:[{}]".format(response.status_code))
+
+                    ret_git_commit = json.loads(response.text)
+
+                    # 取得した情報数分処理する
+                    # Process for the number of acquired information
+                    for git_row in ret_git_commit["rows"]:
+                        row = {
+                            "branch": branch_row["name"],
+                            "commit_id": git_row["id"],
+                            "name": git_row["committer_name"],
+                            "date": git_row["committed_date"],
+                            "message": git_row["message"],
+                            "html_url": git_row["web_url"],
+                        }
+                        rows.append(row)
+            else:
+                # GitHub branches get
+                api_url = "{}://{}:{}/branches?git_url={}".format(os.environ['EPOCH_CONTROL_GITHUB_PROTOCOL'],
+                                                        os.environ['EPOCH_CONTROL_GITHUB_HOST'],
+                                                        os.environ['EPOCH_CONTROL_GITHUB_PORT'],
+                                                        urllib.parse.quote(git_url))
+                response = requests.get(api_url, headers=post_headers_in_token)
+
+                if response.status_code != 200:
+                    raise common.UserException("git branches get error:[{}]".format(response.status_code))
+
+                ret_git_branches = json.loads(response.text)
+
+                # ブランチごとにcommit情報を取得する
+                # Get commit information for each branch
+                for branch_row in ret_git_branches["rows"]:
+
+                    # GitHub commit get
+                    api_url = "{}://{}:{}/commits?git_url={}&branch={}".format(os.environ['EPOCH_CONTROL_GITHUB_PROTOCOL'],
+                                                            os.environ['EPOCH_CONTROL_GITHUB_HOST'],
+                                                            os.environ['EPOCH_CONTROL_GITHUB_PORT'],
+                                                            urllib.parse.quote(git_url),
+                                                            urllib.parse.quote(branch_row["name"]))
+                    response = requests.get(api_url, headers=post_headers_in_token)
+
+                    if response.status_code != 200:
+                        raise common.UserException("git commit get error:[{}]".format(response.status_code))
+
+                    ret_git_commit = json.loads(response.text)
+                    # globals.logger.debug("rows:[{}]".format(ret_git_commit["rows"]))
+
+                    # 取得した情報数分処理する
+                    # Process for the number of acquired information
+                    for git_row in ret_git_commit["rows"]:
+                        row = {
+                            "branch": branch_row["name"],
+                            "commit_id": git_row["sha"],
+                            "name": git_row["commit"]["committer"]["name"],
+                            "date": git_row["commit"]["committer"]["date"],
+                            "message": git_row["commit"]["message"],
+                            "html_url": git_row["html_url"],
+                        }
+
+                        rows.append(row)
+
         response = {
             "result":"200",
-            "rows" : [
-                {
-                "branch": "master",
-                "commit_id": "0000100000000000000000000000000000000001",
-                "name": "dummyuser-1",
-                "date": "2021-11-29T08:07:10Z",
-                "message": "commit-message-1",
-                "html_url": "https://localhost/",
-                },
-                {
-                "branch": "master",
-                "commit_id": "0000200000000000000000000000000000000002",
-                "name": "dummyuser-2",
-                "date": "2021-11-29T08:07:10Z",
-                "message": "commit-message-2",
-                "html_url": "https://localhost/",
-                }
-            ],
+            "rows" : rows,
         }
         ret_status = 200
 

@@ -236,6 +236,52 @@ def post_gitlab_repos(workspace_id):
         return common.serverError(e)
 
 
+@app.route('/commits', methods=['GET'])
+def call_gitlab_commits_root():
+    """/commits 呼び出し
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}]'.format(inspect.currentframe().f_code.co_name, request.method))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'GET':
+            # git commits get
+            return get_git_commits()
+        else:
+            # エラー
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+
+@app.route('/branches', methods=['GET'])
+def call_gitlab_branches_root():
+    """/branches 呼び出し
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}]'.format(inspect.currentframe().f_code.co_name, request.method))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'GET':
+            # git branches get
+            return get_git_branches()
+        else:
+            # エラー
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+
 @app.route('/commits/<string:revision>', methods=['GET'])
 def call_gitlab_commits(revision):
     """/commits 呼び出し
@@ -254,6 +300,32 @@ def call_gitlab_commits(revision):
         if request.method == 'GET':
             # git commits get
             return get_git_commits(revision)
+        else:
+            # エラー
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+
+@app.route('/commits/<string:revision>/branch', methods=['GET'])
+def call_gitlab_commits_branch(revision):
+    """/commits/branch 呼び出し
+
+    Args:
+        revision (str): revision
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] revision[{}]'.format(inspect.currentframe().f_code.co_name, request.method, revision))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'GET':
+            # git commits branch get
+            return get_git_commits_branch(revision)
         else:
             # エラー
             raise Exception("method not support!")
@@ -408,7 +480,57 @@ def exists_webhook(user, token, url, webhooks_url):
     return ret
 
 
-def get_git_commits(revision):
+def get_git_branches():
+    """git branches 情報の取得 Get git branches information
+
+    Returns:
+        Response: HTTP Respose
+    """
+
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
+        globals.logger.debug('#' * 50)
+
+        # ヘッダ情報 header info.
+        post_headers = {
+            'PRIVATE-TOKEN': request.headers["private-token"],
+            'Content-Type': 'application/json',
+        }
+
+        # git_url (str): git url
+        if request.args.get('git_url') is not None:
+            git_url = urllib.parse.unquote(request.args.get('git_url'))
+        else:
+            raise Exception("gir_url parameter not found")
+
+        json_url = get_url_split(git_url)
+
+        # gitlab repo branches get call 
+        api_url = "{}://{}:{}/api/v4/projects/{}%2F{}/repository/branches".format(API_PROTOCOL, API_BASE_URL, API_PORT, json_url['group_name'], json_url['repos_name'])
+
+        globals.logger.debug("api_url:[{}]".format(api_url))
+        response = requests.get(api_url, headers=post_headers)
+
+        ret_status = response.status_code 
+        if response.status_code == 200:
+            rows = json.loads(response.text) 
+            # globals.logger.debug("rows:[{}]".format(rows))
+        else:
+            rows = None
+            globals.logger.debug("git branches get error:[{}] text:[{}]".format(response.status_code, response.text))
+
+        # 取得したGit branches情報を返却 Return the acquired Git branches information
+        return jsonify({"result": ret_status, "rows": rows}), ret_status
+
+    except common.UserException as e:
+        return common.server_error(e)
+    except Exception as e:
+        globals.logger.debug("Exception:[{}]".format(e.args))
+        return common.server_error(e)
+
+
+def get_git_commits(revision=None):
     """git commits 情報の取得 Get git commits information
 
     Args:
@@ -423,13 +545,80 @@ def get_git_commits(revision):
         globals.logger.debug('CALL {} revision[{}]'.format(inspect.currentframe().f_code.co_name, revision))
         globals.logger.debug('#' * 50)
 
-        # ヘッダ情報
+        # ヘッダ情報 header info.
         post_headers = {
-            'PRIVATE-TOKEN': request.headers["PRIVATE-TOKEN"],
+            'PRIVATE-TOKEN': request.headers["private-token"],
             'Content-Type': 'application/json',
         }
 
-        # git_url (str): 最新のみ
+        # git_url (str): git url
+        if request.args.get('git_url') is not None:
+            git_url = urllib.parse.unquote(request.args.get('git_url'))
+        else:
+            raise Exception("gir_url parameter not found")
+
+        # branch (str): branch
+        if request.args.get('branch') is not None:
+            branch = urllib.parse.unquote(request.args.get('branch'))
+        else:
+            branch = None
+
+        json_url = get_url_split(git_url)
+
+        # gitlab repo commits get call 
+        api_url = "{}://{}:{}/api/v4/projects/{}%2F{}/repository/commits".format(API_PROTOCOL, API_BASE_URL, API_PORT, json_url['group_name'], json_url['repos_name'])
+
+        # 個別指定がある場合のみ、条件を設定
+        # Set conditions only if there is an individual specification
+        if revision is not None:
+            api_url += "/{}".format(revision)
+
+        if branch is not None:
+            api_url += "?ref_name={}".format(urllib.parse.quote(branch))
+
+        globals.logger.debug("api_url:[{}]".format(api_url))
+        response = requests.get(api_url, headers=post_headers)
+
+        ret_status = response.status_code 
+        if response.status_code == 200:
+            rows = json.loads(response.text) 
+            # globals.logger.debug("rows:[{}]".format(rows))
+        else:
+            rows = None
+            globals.logger.debug("git commits get error:[{}] text:[{}]".format(response.status_code, response.text))
+
+        # 取得したGit commit情報を返却 Return the acquired Git commit information
+        return jsonify({"result": ret_status, "rows": rows}), ret_status
+
+    except common.UserException as e:
+        return common.server_error(e)
+    except Exception as e:
+        globals.logger.debug("Exception:[{}]".format(e.args))
+        return common.server_error(e)
+
+
+def get_git_commits_branch(revision):
+    """git commits branch情報の取得 Get git commits branch information
+
+    Args:
+        revision (str): revision
+
+    Returns:
+        Response: HTTP Respose
+    """
+
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {} revision[{}]'.format(inspect.currentframe().f_code.co_name, revision))
+        globals.logger.debug('#' * 50)
+
+        # ヘッダ情報 header info.
+        post_headers = {
+            'PRIVATE-TOKEN': request.headers["private-token"],
+            'Content-Type': 'application/json',
+        }
+
+        # git_url (str): git url
         if request.args.get('git_url') is not None:
             git_url = urllib.parse.unquote(request.args.get('git_url'))
         else:
@@ -437,24 +626,27 @@ def get_git_commits(revision):
 
         json_url = get_url_split(git_url)
 
-        # gitlab repo commits get call 
-        api_url = "{}://{}:{}/api/v4/projects/{}%2F{}/repository/commits/{}".format(API_PROTOCOL, API_BASE_URL, API_PORT, json_url['group_name'], json_url['repos_name'], revision)
+        # gitlab repo commits brach get call 
+        api_url = "{}://{}:{}/api/v4/projects/{}%2F{}/repository/commits/{}/refs".format(API_PROTOCOL, API_BASE_URL, API_PORT, json_url['group_name'], json_url['repos_name'], revision)
+
+        globals.logger.debug("api_url:[{}]".format(api_url))
         response = requests.get(api_url, headers=post_headers)
 
         ret_status = response.status_code 
         if response.status_code == 200:
             rows = json.loads(response.text) 
-            globals.logger.debug("rows:[{}]".format(rows))
+            # globals.logger.debug("rows:[{}]".format(rows))
         else:
             rows = None
-            globals.logger.debug("git commits get error:[{}] text:[{}]".format(response.status_code, response.text))
+            globals.logger.debug("git commits branch get error:[{}] text:[{}]".format(response.status_code, response.text))
 
-        # 戻り値をそのまま返却
+        # 取得したGit commit branch 情報を返却 Return the acquired Git commit branch information
         return jsonify({"result": ret_status, "rows": rows}), ret_status
 
     except common.UserException as e:
         return common.server_error(e)
     except Exception as e:
+        globals.logger.debug("Exception:[{}]".format(e.args))
         return common.server_error(e)
 
 if __name__ == "__main__":
