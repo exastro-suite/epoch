@@ -246,6 +246,12 @@ def get_git_commits(revision):
         globals.logger.debug('CALL {} revision[{}]'.format(inspect.currentframe().f_code.co_name, revision))
         globals.logger.debug('#' * 50)
 
+        # ヘッダ情報
+        request_headers = {
+            'Authorization': 'token ' + request.headers["PRIVATE-TOKEN"],
+            'Accept': 'application/vnd.github.v3+json',
+        }
+
         # git_url (str): 最新のみ
         if request.args.get('git_url') is not None:
             git_url = urllib.parse.unquote(request.args.get('git_url'))
@@ -258,7 +264,7 @@ def get_git_commits(revision):
         api_url = "{}{}/commits/{}".format(github_webhook_base_url,
                                                 git_repos,
                                                 revision)
-        response = requests.get(api_url)
+        response = requests.get(api_url, headers=request_headers)
         globals.logger.debug("api_url:[{}]".format(api_url))
 
         ret_status = response.status_code 
