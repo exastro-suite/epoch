@@ -317,16 +317,16 @@ def get_git_commits(workspace_id):
 
         # ヘッダ情報 header info.
         post_headers_in_token = {
-            'PRIVATE-TOKEN': git_token,
+            'private-token': git_token,
             'Content-Type': 'application/json',
         }
 
         rows = []
-        # 環境数分処理する Process for a few minutes in the environment
-        for environment in workspace_info["cd_config"]["environments"]:
-            git_url = environment["git_repositry"]["url"]
+        # パイプライン数分処理する Process for a few minutes in the pipelines
+        for pipeline in workspace_info["ci_config"]["pipelines"]:
+            git_url = pipeline["git_repositry"]["url"]
 
-            if workspace_info["cd_config"]["environments_common"]["git_repositry"]["housing"] == const.HOUSING_INNER:
+            if workspace_info["ci_config"]["pipelines_common"]["git_repositry"]["housing"] == const.HOUSING_INNER:
                 # EPOCH内レジストリ ブランチの一覧取得 Get a list of registry branches in EPOCH
                 api_url = "{}://{}:{}/branches?git_url={}".format(os.environ['EPOCH_CONTROL_INSIDE_GITLAB_PROTOCOL'],
                                                         os.environ['EPOCH_CONTROL_INSIDE_GITLAB_HOST'],
@@ -402,6 +402,7 @@ def get_git_commits(workspace_id):
                     # Process for the number of acquired information
                     for git_row in ret_git_commit["rows"]:
                         row = {
+                            "git_url": git_url,
                             "branch": branch_row["name"],
                             "commit_id": git_row["sha"],
                             "name": git_row["commit"]["committer"]["name"],
@@ -442,26 +443,87 @@ def get_git_hooks(workspace_id):
         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
         globals.logger.debug('#' * 50)
 
+        # workspace get
+        api_url = "{}://{}:{}/workspace/{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+                                                    os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                    os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                    workspace_id)
+        response = requests.get(api_url)
+
+        if response.status_code != 200:
+            error_detail = multi_lang.get_text("EP020-0013", "ワークスペース情報の取得に失敗しました")
+            globals.logger.debug(error_detail)
+            raise common.UserException(error_detail)
+
+        # 取得したワークスペース情報を退避 Save the acquired workspace information
+        ret = json.loads(response.text)
+        # 取得したworkspace情報をパラメータとして受け渡す Pass the acquired workspace information as a parameter
+        workspace_info = ret["rows"][0]
+
+        git_token = workspace_info["cd_config"]["environments_common"]["git_repositry"]["token"]
+
+        # ヘッダ情報 header info.
+        post_headers_in_token = {
+            'private-token': git_token,
+            'Content-Type': 'application/json',
+        }
+
+        rows = []
+        # パイプライン数分処理する Process for a few minutes in the pipelines
+        for pipeline in workspace_info["ci_config"]["pipelines"]:
+            git_url = pipeline["git_repositry"]["url"]
+
+            # GitHubのみ対応 Only compatible with GitHub
+            if workspace_info["cd_config"]["environments_common"]["git_repositry"]["housing"] == const.HOUSING_OUTER:
+                # GitHub hooks get
+                api_url = "{}://{}:{}/hooks?git_url={}".format(os.environ['EPOCH_CONTROL_GITHUB_PROTOCOL'],
+                                                        os.environ['EPOCH_CONTROL_GITHUB_HOST'],
+                                                        os.environ['EPOCH_CONTROL_GITHUB_PORT'],
+                                                        urllib.parse.quote(git_url))
+                response = requests.get(api_url, headers=post_headers_in_token)
+
+                if response.status_code != 200:
+                    raise common.UserException("git hooks get error:[{}]".format(response.status_code))
+
+                ret_git_hooks = json.loads(response.text)
+                # globals.logger.debug("rows:[{}]".format(ret_git_hooks["rows"]))
+
+                # 取得した情報数分処理する
+                # Process for the number of acquired information
+                for hooks_row in ret_git_hooks["rows"]:
+                # GitHub hooks get
+                    api_url = "{}://{}:{}/hooks/{}/deliveries?git_url={}".format(os.environ['EPOCH_CONTROL_GITHUB_PROTOCOL'],
+                                                            os.environ['EPOCH_CONTROL_GITHUB_HOST'],
+                                                            os.environ['EPOCH_CONTROL_GITHUB_PORT'],
+                                                            hooks_row["id"],
+                                                            urllib.parse.quote(git_url))
+                    response = requests.get(api_url, headers=post_headers_in_token)
+
+                    if response.status_code != 200:
+                        raise common.UserException("git deliveries get error:[{}]".format(response.status_code))
+
+                    ret_git_deliveries = json.loads(response.text)
+                    # globals.logger.debug("deliveries:[{}]".format(ret_git_deliveries["rows"]))
+
+                    # 取得した情報数分処理する
+                    # Process for the number of acquired information
+                    for deliveries_row in ret_git_deliveries["rows"]:
+                        row = {
+                            "git_url": git_url,
+                            "branch": "",
+                            "url": hooks_row["config"]["url"],
+                            "date": deliveries_row["delivered_at"],
+                            "status": deliveries_row["status"],
+                            "status_code": deliveries_row["status_code"],
+                            "event": deliveries_row["event"],
+                        }
+
+                        rows.append(row)
+
+
         response = {
             "result":"200",
-            "rows" : [
-                {
-                "branch": "master",
-                "url": "https://localhost/api/listener/1",
-                "date": "2021-11-30T02:09:25Z",
-                "status": "OK",
-                "status_code": 202,
-                "event": "push",
-                },
-                {
-                "branch": "master",
-                "url": "https://localhost/api/listener/2",
-                "date": "2021-11-30T02:09:25Z",
-                "status": "failed to connect to host",
-                "status_code": 502,
-                "event": "push",
-                }
-            ],
+            "rows" : rows,
         }
         ret_status = 200
 
