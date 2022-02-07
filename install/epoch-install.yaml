@@ -290,7 +290,7 @@ spec:
           name: epoch-control-github-conf
       containers:
       - name: epoch-control-github-api
-        image: exastro/epoch-control-github-api:0.3.1_20220204_1730
+        image: exastro/epoch-control-github-api:0.3.1_20220207_1100
         env:
         - name: HTTP_PROXY
           valueFrom:
@@ -382,7 +382,7 @@ spec:
           name: epoch-control-inside-gitlab-conf
       containers:
       - name: epoch-control-inside-gitlab-api
-        image: exastro/epoch-control-inside-gitlab-api:0.3.1_20220201_1000
+        image: exastro/epoch-control-inside-gitlab-api:0.3.1_20220207_1100
         env:
         - name: CONFIG_API_INSIDE_GITLAB_PATH
           value: "/etc/epoch/epochControlInsideGitLabApi/api_inside_gitlab.conf"
@@ -1973,7 +1973,7 @@ spec:
           name: epoch-monitoring-cd-api-conf
       containers:
       - name: epoch-monitoring-cd-api
-        image: exastro/epoch-monitoring-cd-api:0.3.1_20220204_1730
+        image: exastro/epoch-monitoring-cd-api:0.3.1_20220207_1100
         env:
         - name: CONFIG_API_MONITORING_CD_PATH
           value: "/etc/epoch/epochMonitoringCdApi/api_monitoring_cd.conf"
