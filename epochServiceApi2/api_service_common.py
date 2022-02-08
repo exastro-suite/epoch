@@ -115,7 +115,7 @@ def get_workspace_members_by_role(workspace_id, pickup_roles):
                         ret_users.append(ret_user)
                         stock_user_id.append(user["user_id"])
 
-        globals.logger.debug(f"users:{ret_users}")
+        # globals.logger.debug(f"users:{ret_users}")
 
         return ret_users
 

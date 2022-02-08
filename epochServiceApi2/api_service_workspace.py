@@ -607,7 +607,7 @@ def get_workspace_list():
 
                         epai_resp_role_disp_name = requests.get(epai_api_url, headers=post_headers)
                         role_info = json.loads(epai_resp_role_disp_name.text)["rows"]
-                        globals.logger.debug("role_info:{}".format(role_info))
+                        # globals.logger.debug("role_info:{}".format(role_info))
                         
                         disp_row = {
                             "id": role["name"],
@@ -673,7 +673,7 @@ def get_workspace_list():
                         raise common.UserException("{} Error user role get status:{}".format(inspect.currentframe().f_code.co_name, users_response.status_code))
 
                     user_roles = json.loads(user_role_response.text)
-                    globals.logger.debug("user_roles: {}".format(user_roles["rows"])) 
+                    # globals.logger.debug("user_roles: {}".format(user_roles["rows"])) 
                     
                     #
                     # Processing for all roles of the acquired login user - 取得したログインユーザの全ロールに対しての処理
