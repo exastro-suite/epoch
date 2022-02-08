@@ -319,19 +319,55 @@ def get_cd_pipeline_argocd(workspace_id):
             raise common.UserException(error_detail)
 
         res_json = json.loads(response.text)
-        # globals.logger.debug(res_json)
 
         ret_status = res_json["result"]
         
-        rows = res_json["rows"]
         rows = []
         for data_row in res_json["rows"]:
             row = data_row
             # 内容はjson型なので変換して受け渡す
             # Since the content is json type, convert and pass
             row["contents"] = json.loads(data_row["contents"])
-            rows.append(row)
+            argocd_result = row["contents"]["argocd_results"]            
+            
+            # Format a part of the result JSON (resource_status) - 結果JSONの一部（resource_status）を整形
+            for status_resources in argocd_result["result"]["status"]["resources"]:
+                for sync_result_resources in argocd_result["result"]["status"]["operationState"]["syncResult"]["resources"]:
+                    
+                    if str(status_resources["kind"]) == str(sync_result_resources["kind"]) \
+                    and str(status_resources["name"]) == str(sync_result_resources["name"]): 
+                        # "kind", "name" merge resource information with the same name 
+                        # "kind", "name"が同名のリソース情報をマージ
+                        resource_status = {
+                            "kind": status_resources["kind"],
+                            "name": status_resources["name"],
+                            "health_status": status_resources["health"]["status"],
+                            "sync_status": sync_result_resources["status"],
+                            "message": sync_result_resources["message"],
+                        }
 
+            # Format the entire result JSON - 結果JSONの全体を整形
+            rows.append(
+                {
+                    "trace_id": row["contents"]["trace_id"],
+                    "environment_name": argocd_result["result"]["metadata"]["name"],
+                    "namespace": argocd_result["result"]["metadata"]["namespace"],
+                    "health": {
+                        "status": argocd_result["result"]["status"]["health"]["status"]
+                    },
+                    "sync_status": {
+                        "status": argocd_result["result"]["status"]["sync"]["status"],
+                        "repo_url": argocd_result["result"]["status"]["sync"]["comparedTo"]["source"]["repoURL"],
+                        "server": argocd_result["result"]["status"]["sync"]["comparedTo"]["destination"]["server"],
+                        "revision": argocd_result["result"]["status"]["sync"]["revision"]                        },
+                    "resource_status": [
+                        resource_status
+                    ],
+                    "startedAt": argocd_result["result"]["status"]["operationState"]["startedAt"],
+                    "finishedAt": argocd_result["result"]["status"]["operationState"]["finishedAt"]
+                }
+            )
+            
         # 戻り値をそのまま返却 Return the return value as it is       
         return jsonify({"result": ret_status, "rows": rows}), ret_status
 
