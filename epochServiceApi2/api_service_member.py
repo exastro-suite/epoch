@@ -188,7 +188,7 @@ def get_workspace_members(workspace_id):
 
                 stock_user_id.append(user["user_id"])
 
-        globals.logger.debug(f"users:{ret_users}")
+        # globals.logger.debug(f"users:{ret_users}")
 
         rows = ret_users
 
@@ -321,7 +321,7 @@ def merge_workspace_members(workspace_id):
             raise common.UserException("{} Error user get status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
 
         users = json.loads(response.text)
-        globals.logger.debug(f"users:{users}")
+        # globals.logger.debug(f"users:{users}")
 
         # 取得したユーザーのロールを取得 
         # Get the role of the acquired user

@@ -551,7 +551,7 @@ def cd_execute(workspace_id):
             raise common.UserException("{} Error user get status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
 
         users = json.loads(response.text)
-        globals.logger.debug(f"users:{users}")
+        # globals.logger.debug(f"users:{users}")
 
         # ヘッダ情報 header info.
         post_headers = {

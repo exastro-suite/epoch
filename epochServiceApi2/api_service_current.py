@@ -94,7 +94,7 @@ def user_get():
             raise common.UserException("{} Error user get status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
 
         users = json.loads(response.text)
-        globals.logger.debug(f"users:{users}")
+        # globals.logger.debug(f"users:{users}")
 
         # 取得したユーザーのロールを取得 Get the role of the acquired user
         api_url = "{}://{}:{}/{}/user/{}/roles/epoch-system".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
@@ -116,7 +116,7 @@ def user_get():
         # globals.logger.debug(f"roles:{ret_roles}")
 
         sorted_roles = sorted(ret_roles["rows"], key=lambda x:x['name'])
-        globals.logger.debug(f"sorted_roles:{sorted_roles}")
+        # globals.logger.debug(f"sorted_roles:{sorted_roles}")
 
         stock_workspace_id = []
         set_role_display = []
@@ -192,7 +192,7 @@ def user_get():
             "roles": all_roles,
             "composite_roles": all_composite_roles,
         }
-        globals.logger.debug(f"ret_user:{ret_user}")
+        # globals.logger.debug(f"ret_user:{ret_user}")
 
         return ret_user
 

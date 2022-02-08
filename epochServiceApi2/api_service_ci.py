@@ -359,6 +359,7 @@ def get_git_commits(workspace_id):
                     # Process for the number of acquired information
                     for git_row in ret_git_commit["rows"]:
                         row = {
+                            "git_url": git_url,
                             "branch": branch_row["name"],
                             "commit_id": git_row["id"],
                             "name": git_row["committer_name"],
