@@ -330,6 +330,7 @@ def get_cd_pipeline_argocd(workspace_id):
             row["contents"] = json.loads(data_row["contents"])
             argocd_result = row["contents"]["argocd_results"]            
             
+            resource_status = []
             # Format a part of the result JSON (resource_status) - 結果JSONの一部（resource_status）を整形
             for status_resources in argocd_result["result"]["status"]["resources"]:
                 for sync_result_resources in argocd_result["result"]["status"]["operationState"]["syncResult"]["resources"]:
@@ -338,13 +339,15 @@ def get_cd_pipeline_argocd(workspace_id):
                     and str(status_resources["name"]) == str(sync_result_resources["name"]): 
                         # "kind", "name" merge resource information with the same name 
                         # "kind", "name"が同名のリソース情報をマージ
-                        resource_status = {
-                            "kind": status_resources["kind"],
-                            "name": status_resources["name"],
-                            "health_status": status_resources["health"]["status"],
-                            "sync_status": sync_result_resources["status"],
-                            "message": sync_result_resources["message"],
-                        }
+                        resource_status.append(
+                            {
+                                "kind": status_resources["kind"],
+                                "name": status_resources["name"],
+                                "health_status": status_resources["health"]["status"],
+                                "sync_status": sync_result_resources["status"],
+                                "message": sync_result_resources["message"]
+                            }
+                        )
 
             # Format the entire result JSON - 結果JSONの全体を整形
             rows.append(
@@ -360,9 +363,7 @@ def get_cd_pipeline_argocd(workspace_id):
                         "repo_url": argocd_result["result"]["status"]["sync"]["comparedTo"]["source"]["repoURL"],
                         "server": argocd_result["result"]["status"]["sync"]["comparedTo"]["destination"]["server"],
                         "revision": argocd_result["result"]["status"]["sync"]["revision"]                        },
-                    "resource_status": [
-                        resource_status
-                    ],
+                    "resource_status": resource_status,
                     "startedAt": argocd_result["result"]["status"]["operationState"]["startedAt"],
                     "finishedAt": argocd_result["result"]["status"]["operationState"]["finishedAt"]
                 }
