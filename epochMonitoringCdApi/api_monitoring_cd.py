@@ -152,7 +152,7 @@ def monitoring_argo_cd():
 
                     # ヘッダ情報 header info.
                     post_headers_in_token = {
-                        'PRIVATE-TOKEN': git_token,
+                        'private-token': git_token,
                         'Content-Type': 'application/json',
                     }
 

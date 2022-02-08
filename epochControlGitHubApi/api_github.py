@@ -76,6 +76,52 @@ def call_github_webhooks(workspace_id):
         return common.server_error(e)
 
 
+@app.route('/branches', methods=['GET'])
+def call_github_branches_root():
+    """/branches 呼び出し
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}]'.format(inspect.currentframe().f_code.co_name, request.method))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'GET':
+            # git branches get
+            return get_git_branches()
+        else:
+            # エラー
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+
+@app.route('/commits', methods=['GET'])
+def call_github_commits_root():
+    """/commits 呼び出し
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}]'.format(inspect.currentframe().f_code.co_name, request.method))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'GET':
+            # git commits get
+            return get_git_commits()
+        else:
+            # エラー
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+
 @app.route('/commits/<string:revision>', methods=['GET'])
 def call_github_commits(revision):
     """/commits 呼び出し
@@ -100,6 +146,83 @@ def call_github_commits(revision):
 
     except Exception as e:
         return common.server_error(e)
+
+
+@app.route('/commits/<string:revision>/branch', methods=['GET'])
+def call_github_commits_branch(revision):
+    """/commits/branches-where-head 呼び出し
+
+    Args:
+        revision (str): revision
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] revision[{}]'.format(inspect.currentframe().f_code.co_name, request.method, revision))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'GET':
+            # git commits branch get
+            return get_git_commits_branch(revision)
+        else:
+            # エラー
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+
+
+@app.route('/hooks', methods=['GET'])
+def call_github_hooks_root():
+    """/hooks 呼び出し
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}]'.format(inspect.currentframe().f_code.co_name, request.method))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'GET':
+            # git hooks get
+            return get_git_hooks()
+        else:
+            # エラー
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+
+@app.route('/hooks/<string:hook_id>/deliveries', methods=['GET'])
+def call_github_hook_deliveries(hook_id):
+    """/hooks/deliveries 呼び出し
+
+    Args:
+        hook_id (str): hook id
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] hook_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, hook_id))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'GET':
+            # git deliveries get
+            return get_git_deliveries(hook_id)
+        else:
+            # エラー
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
 
 def create_github_webhooks(workspace_id):
     """webhooks 設定
@@ -231,7 +354,56 @@ def get_github_webhooks(workspace_id):
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
 
 
-def get_git_commits(revision):
+def get_git_branches():
+    """git branches 情報の取得 Get git branches information
+
+    Returns:
+        Response: HTTP Respose
+    """
+
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
+        globals.logger.debug('#' * 50)
+
+        # ヘッダ情報 header info.
+        request_headers = {
+            'Authorization': 'token ' + request.headers["private-token"],
+            'Accept': 'application/vnd.github.v3+json',
+        }
+
+        # git_url (str): git url
+        if request.args.get('git_url') is not None:
+            git_url = urllib.parse.unquote(request.args.get('git_url'))
+        else:
+            raise Exception("gir_url parameter not found")
+
+        git_repos = re.sub('\\.git$','',re.sub('^https?://[^/][^/]*/','',git_url))
+
+        # github repo branches get call 
+        api_url = "{}{}/branches".format(github_webhook_base_url, git_repos)
+
+        response = requests.get(api_url, headers=request_headers)
+        globals.logger.debug("api_url:[{}]".format(api_url))
+
+        ret_status = response.status_code 
+        if response.status_code == 200:
+            rows = json.loads(response.text) 
+            # globals.logger.debug("rows:[{}]".format(rows))
+        else:
+            rows = None
+            globals.logger.debug("git branches get error:[{}] text:[{}]".format(response.status_code, response.text))
+
+        # 取得したGit branches情報を返却 Return the acquired Git branches information
+        return jsonify({"result": ret_status, "rows": rows}), ret_status
+
+    except common.UserException as e:
+        return common.server_error(e)
+    except Exception as e:
+        return common.server_error(e)
+
+
+def get_git_commits(revision = None):
     """git commits 情報の取得 Get git commits information
 
     Args:
@@ -246,13 +418,79 @@ def get_git_commits(revision):
         globals.logger.debug('CALL {} revision[{}]'.format(inspect.currentframe().f_code.co_name, revision))
         globals.logger.debug('#' * 50)
 
-        # ヘッダ情報
+        # ヘッダ情報 header info.
         request_headers = {
-            'Authorization': 'token ' + request.headers["PRIVATE-TOKEN"],
+            'Authorization': 'token ' + request.headers["private-token"],
             'Accept': 'application/vnd.github.v3+json',
         }
 
-        # git_url (str): 最新のみ
+        # git_url (str): git url
+        if request.args.get('git_url') is not None:
+            git_url = urllib.parse.unquote(request.args.get('git_url'))
+        else:
+            raise Exception("gir_url parameter not found")
+
+        # branch (str): branch
+        if request.args.get('branch') is not None:
+            branch = urllib.parse.unquote(request.args.get('branch'))
+        else:
+            branch = None
+
+        git_repos = re.sub('\\.git$','',re.sub('^https?://[^/][^/]*/','',git_url))
+
+        # github repo commits get call 
+        api_url = "{}{}/commits".format(github_webhook_base_url, git_repos)
+
+        # 個別指定がある場合のみ、条件を設定
+        # Set conditions only if there is an individual specification
+        if revision is not None:
+            api_url += "/{}".format(revision)
+
+        if branch is not None:
+            api_url += "?sha={}".format(urllib.parse.quote(branch))
+
+        globals.logger.debug("api_url:[{}]".format(api_url))
+        response = requests.get(api_url, headers=request_headers)
+
+        ret_status = response.status_code 
+        if response.status_code == 200:
+            rows = json.loads(response.text) 
+            # globals.logger.debug("rows:[{}]".format(rows))
+        else:
+            rows = None
+            globals.logger.debug("git commits get error:[{}] text:[{}]".format(response.status_code, response.text))
+
+        # 取得したGit commit情報を返却 Return the acquired Git commit information
+        return jsonify({"result": ret_status, "rows": rows}), ret_status
+
+    except common.UserException as e:
+        return common.server_error(e)
+    except Exception as e:
+        return common.server_error(e)
+
+
+def get_git_commits_branch(revision):
+    """git commits branch 情報の取得 Get git commits branch information
+
+    Args:
+        revision (str): revision
+
+    Returns:
+        Response: HTTP Respose
+    """
+
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {} revision[{}]'.format(inspect.currentframe().f_code.co_name, revision))
+        globals.logger.debug('#' * 50)
+
+        # ヘッダ情報 header info.
+        request_headers = {
+            'Authorization': 'token ' + request.headers["private-token"],
+            'Accept': 'application/vnd.github.v3+json',
+        }
+
+        # git_url (str): git url
         if request.args.get('git_url') is not None:
             git_url = urllib.parse.unquote(request.args.get('git_url'))
         else:
@@ -261,9 +499,8 @@ def get_git_commits(revision):
         git_repos = re.sub('\\.git$','',re.sub('^https?://[^/][^/]*/','',git_url))
 
         # github repo commits get call 
-        api_url = "{}{}/commits/{}".format(github_webhook_base_url,
-                                                git_repos,
-                                                revision)
+        api_url = "{}{}/commits/{}/branches-where-head".format(github_webhook_base_url, git_repos, revision)
+
         response = requests.get(api_url, headers=request_headers)
         globals.logger.debug("api_url:[{}]".format(api_url))
 
@@ -273,15 +510,117 @@ def get_git_commits(revision):
             globals.logger.debug("rows:[{}]".format(rows))
         else:
             rows = None
-            globals.logger.debug("git commits get error:[{}] text:[{}]".format(response.status_code, response.text))
+            globals.logger.debug("git commits branch get error:[{}] text:[{}]".format(response.status_code, response.text))
 
-        # 戻り値をそのまま返却
+        # 取得したGit commit branch情報を返却 Return the acquired Git commit branch information
         return jsonify({"result": ret_status, "rows": rows}), ret_status
 
     except common.UserException as e:
         return common.server_error(e)
     except Exception as e:
         return common.server_error(e)
+
+
+def get_git_hooks():
+    """git hooks 情報の取得 Get git hooks information
+
+    Returns:
+        Response: HTTP Respose
+    """
+
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
+        globals.logger.debug('#' * 50)
+
+        # ヘッダ情報 header info.
+        request_headers = {
+            'Authorization': 'token ' + request.headers["private-token"],
+            'Accept': 'application/vnd.github.v3+json',
+        }
+
+        # git_url (str): git url
+        if request.args.get('git_url') is not None:
+            git_url = urllib.parse.unquote(request.args.get('git_url'))
+        else:
+            raise Exception("gir_url parameter not found")
+
+        git_repos = re.sub('\\.git$','',re.sub('^https?://[^/][^/]*/','',git_url))
+
+        # github repo commits get call 
+        api_url = "{}{}/hooks".format(github_webhook_base_url, git_repos)
+
+        globals.logger.debug("api_url:[{}]".format(api_url))
+        response = requests.get(api_url, headers=request_headers)
+
+        ret_status = response.status_code 
+        if response.status_code == 200:
+            rows = json.loads(response.text) 
+            # globals.logger.debug("rows:[{}]".format(rows))
+        else:
+            rows = None
+            globals.logger.debug("git hooks get error:[{}] text:[{}]".format(response.status_code, response.text))
+
+        # 取得したGit commit情報を返却 Return the acquired Git commit information
+        return jsonify({"result": ret_status, "rows": rows}), ret_status
+
+    except common.UserException as e:
+        return common.server_error(e)
+    except Exception as e:
+        return common.server_error(e)
+
+
+def get_git_deliveries(hook_id):
+    """git commits branch 情報の取得 Get git commits branch information
+
+    Args:
+        hook_id (str): hook id
+
+    Returns:
+        Response: HTTP Respose
+    """
+
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {} hook_id[{}]'.format(inspect.currentframe().f_code.co_name, hook_id))
+        globals.logger.debug('#' * 50)
+
+        # ヘッダ情報 header info.
+        request_headers = {
+            'Authorization': 'token ' + request.headers["private-token"],
+            'Accept': 'application/vnd.github.v3+json',
+        }
+
+        # git_url (str): git url
+        if request.args.get('git_url') is not None:
+            git_url = urllib.parse.unquote(request.args.get('git_url'))
+        else:
+            raise Exception("gir_url parameter not found")
+
+        git_repos = re.sub('\\.git$','',re.sub('^https?://[^/][^/]*/','',git_url))
+
+        # github repo commits get call 
+        api_url = "{}{}/hooks/{}/deliveries".format(github_webhook_base_url, git_repos, hook_id)
+
+        response = requests.get(api_url, headers=request_headers)
+        globals.logger.debug("api_url:[{}]".format(api_url))
+
+        ret_status = response.status_code 
+        if response.status_code == 200:
+            rows = json.loads(response.text) 
+            globals.logger.debug("rows:[{}]".format(rows))
+        else:
+            rows = None
+            globals.logger.debug("git hooks deliveries get error:[{}] text:[{}]".format(response.status_code, response.text))
+
+        # 取得したGit commit branch情報を返却 Return the acquired Git commit branch information
+        return jsonify({"result": ret_status, "rows": rows}), ret_status
+
+    except common.UserException as e:
+        return common.server_error(e)
+    except Exception as e:
+        return common.server_error(e)
+
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('API_GITHUB_PORT', '8000')), threaded=True)

@@ -40,7 +40,7 @@ spec:
   - apiVersion: tekton.dev/v1beta1
     kind: PipelineRun
     metadata:
-      generateName: pipeline-run-$(tt.params.git_repository_name)-
+      generateName: pipeline-run-{{ loop.index }}-
       labels:
         workspace_id: $(tt.params.workspace_id)
         pipeline_id: $(tt.params.pipeline_id)
