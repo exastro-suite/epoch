@@ -358,6 +358,11 @@ def get_git_commits(workspace_id):
                     # 取得した情報数分処理する
                     # Process for the number of acquired information
                     for git_row in ret_git_commit["rows"]:
+                        web_url = git_row["web_url"]
+                        base_url = re.search('^https?://[^/][^/]*/',git_url).group()
+                        web_url = web_url.replace("https://gitlab.gitlab.svc/", base_url)
+                        # web_url = web_url.replace("https://gitlab.gitlab.svc/", git_url.match("(https?://[^/]+/)"))
+
                         row = {
                             "git_url": git_url,
                             "branch": branch_row["name"],
@@ -365,7 +370,7 @@ def get_git_commits(workspace_id):
                             "name": git_row["committer_name"],
                             "date": git_row["committed_date"],
                             "message": git_row["message"],
-                            "html_url": git_row["web_url"],
+                            "html_url": web_url,
                         }
                         rows.append(row)
             else:
@@ -509,17 +514,19 @@ def get_git_hooks(workspace_id):
                     # 取得した情報数分処理する
                     # Process for the number of acquired information
                     for deliveries_row in ret_git_deliveries["rows"]:
-                        row = {
-                            "git_url": git_url,
-                            "branch": "",
-                            "url": hooks_row["config"]["url"],
-                            "date": deliveries_row["delivered_at"],
-                            "status": deliveries_row["status"],
-                            "status_code": deliveries_row["status_code"],
-                            "event": deliveries_row["event"],
-                        }
+                        # event push only
+                        if deliveries_row["event"].lower() == "push":
+                            row = {
+                                "git_url": git_url,
+                                "branch": "",
+                                "url": hooks_row["config"]["url"],
+                                "date": deliveries_row["delivered_at"],
+                                "status": deliveries_row["status"],
+                                "status_code": deliveries_row["status_code"],
+                                "event": deliveries_row["event"],
+                            }
 
-                        rows.append(row)
+                            rows.append(row)
 
 
         response = {
