@@ -1440,7 +1440,7 @@ const registryServiceInput = function(){
       $modal.find('.modal-tab-body-block').each(function(i){
         const $imageTarget = $( this ).find('.registry-service-output-destination');
         if ( inputArray[i][1] === null ) {
-          $imageTarget.val( value + '/' + inputArray[i][0] ).trigger('input');
+          $imageTarget.val( value + '/' + inputArray[i][0].toLowerCase() ).trigger('input');
         }
       });
     }
