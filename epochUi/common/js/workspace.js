@@ -1541,6 +1541,11 @@ const templateFileList = function(){
           $button.mouseleave().closest('.c-table-row').remove();
           $button.closest('.c-table-row').remove();
 
+          // data-key再設定
+          $fileList.find('.c-table-menu-button').each((index, elm) => {
+            $(elm).attr('data-key',index);       
+          });
+
           // 件数によって入力画面ボタンを制御
           if ( $modal.find('tbody .c-table-row').length < 1 ) {
             moveButton( true );
