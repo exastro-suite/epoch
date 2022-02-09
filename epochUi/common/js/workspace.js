@@ -3376,8 +3376,8 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       // file_id順に並び変える
       prmenv['manifests'].sort( function( a, b ){
         var r = 0;
-        if( a.file_id < b.file_id ){ r = -1; }
-        else if( a.file_id > b.file_id ){ r = 1; }
+        if( Number(a.file_id) < Number(b.file_id) ){ r = -1; }
+        else if( Number(a.file_id) > Number(b.file_id) ){ r = 1; }
     
         return r;
       } );
