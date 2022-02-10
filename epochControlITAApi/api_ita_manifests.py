@@ -671,7 +671,7 @@ def settings_manifest_parameter(workspace_id):
         # globals.logger.debug(maniparam_json)
 
         if maniparam_json["status"] != "SUCCEED" or maniparam_json["resultdata"]["LIST"]["NORMAL"]["error"]["ct"] != 0:
-            raise common.server_error_to_message(manuparam_edit_resp.text.encode().decode('unicode-escape'))
+            raise common.UserException(manuparam_edit_resp.text.encode().decode('unicode-escape'))
 
         # 正常終了
         ret_status = 200
