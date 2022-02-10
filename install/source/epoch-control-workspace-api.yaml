@@ -41,7 +41,7 @@ spec:
           name: epoch-control-workspace-conf
       containers:
       - name: epoch-control-workspace-api
-        image: exastro/epoch-control-workspace-api:0.3.1_20220201_1000
+        image: exastro/epoch-control-workspace-api:0.3.1_20220210_1100
         env:
         - name: CONFIG_API_WORKSPACE_PATH
           value: "/etc/epoch/epochControlWorkspaceApi/api_workspace.conf"
