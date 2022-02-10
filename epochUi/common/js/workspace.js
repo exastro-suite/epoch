@@ -1440,7 +1440,7 @@ const registryServiceInput = function(){
       $modal.find('.modal-tab-body-block').each(function(i){
         const $imageTarget = $( this ).find('.registry-service-output-destination');
         if ( inputArray[i][1] === null ) {
-          $imageTarget.val( value + '/' + inputArray[i][0] ).trigger('input');
+          $imageTarget.val( value + '/' + inputArray[i][0].toLowerCase() ).trigger('input');
         }
       });
     }
@@ -1540,6 +1540,11 @@ const templateFileList = function(){
 
           $button.mouseleave().closest('.c-table-row').remove();
           $button.closest('.c-table-row').remove();
+
+          // data-key再設定
+          $fileList.find('.c-table-menu-button').each((index, elm) => {
+            $(elm).attr('data-key',index);       
+          });
 
           // 件数によって入力画面ボタンを制御
           if ( $modal.find('tbody .c-table-row').length < 1 ) {
