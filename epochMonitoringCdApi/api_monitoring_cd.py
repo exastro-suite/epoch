@@ -197,13 +197,13 @@ def monitoring_argo_cd():
                     # Check if the return value of ArgoCD is normal and set the corresponding status
                     if ret_argocd_app["result"]["status"]["health"]["status"] == const.ARGOCD_HEALTH_STATUS_HEALTHY:
                         cd_status = const.CD_STATUS_ARGOCD_SYNCED
-                    elif ret_argocd_app["result"]["status"]["health"]["status"] == ARGOCD_HEALTH_STATUS_DEGRADED:
+                    elif ret_argocd_app["result"]["status"]["health"]["status"] == const.ARGOCD_HEALTH_STATUS_DEGRADED:
                         cd_status = const.CD_STATUS_ARGOCD_FAILED
-                    elif ret_argocd_app["result"]["status"]["health"]["status"] == ARGOCD_HEALTH_STATUS_PROGRESSING:
+                    elif ret_argocd_app["result"]["status"]["health"]["status"] == const.ARGOCD_HEALTH_STATUS_PROGRESSING:
                         cd_status = const.CD_STATUS_ARGOCD_PROCESSING
-                    elif ret_argocd_app["result"]["status"]["health"]["status"] == ARGOCD_HEALTH_STATUS_SUSPENDED:
+                    elif ret_argocd_app["result"]["status"]["health"]["status"] == const.ARGOCD_HEALTH_STATUS_SUSPENDED:
                         cd_status = const.CD_STATUS_ARGOCD_FAILED
-                    elif ret_argocd_app["result"]["status"]["health"]["status"] == ARGOCD_HEALTH_STATUS_MISSING:
+                    elif ret_argocd_app["result"]["status"]["health"]["status"] == const.ARGOCD_HEALTH_STATUS_MISSING:
                         cd_status = const.CD_STATUS_ARGOCD_FAILED
                     else:
                         cd_status = const.CD_STATUS_ARGOCD_FAILED
