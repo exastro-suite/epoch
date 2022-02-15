@@ -337,8 +337,8 @@ def get_cd_pipeline_argocd(workspace_id):
                     
                     if str(status_resources["kind"]) == str(sync_result_resources["kind"]) \
                     and str(status_resources["name"]) == str(sync_result_resources["name"]): 
-                        # "kind", "name" merge resource information with the same name 
-                        # "kind", "name"が同名のリソース情報をマージ
+                        # In the acquisition result of ArgoCD, the result "resources" is divided into two places, so "kind" and "name" merge the resource information with the same name
+                        # ArgoCDの取得結果では、結果の"resources"が2か所に分かれているため、"kind", "name"が同名のリソース情報をマージ
                         resource_status.append(
                             {
                                 "kind": status_resources["kind"],
