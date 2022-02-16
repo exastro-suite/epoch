@@ -516,6 +516,7 @@ paths:
         指定したワークスペースIDに対して、CIパイプライン実行結果を取得する
       parameters:
         - $ref: '#/definitions/parameters/Workspace_Id'
+        - $ref: '#/definitions/parameters/Latest'
 
       # レスポンス結果
       responses:
@@ -535,6 +536,7 @@ paths:
       parameters:
         - $ref: '#/definitions/parameters/Workspace_Id'
         - $ref: '#/definitions/parameters/Taskrun_Name'
+        - $ref: '#/definitions/parameters/Latest'
 
       # レスポンス結果
       responses:
@@ -571,9 +573,10 @@ paths:
       summary: 
         CDパイプライン(ArgoCD)情報取得
       description: 
-        指定したワークスペースIDに対して、CDパイプラインのArgoCD情報を取得する
+        指定したワークスペースIDに対して、CDパイプライン実行結果（ArgoCD情報）を取得する
       parameters:
         - $ref: '#/definitions/parameters/Workspace_Id'
+        - $ref: '#/definitions/parameters/Processing'
 
       # レスポンス結果
       responses:
@@ -892,6 +895,20 @@ definitions:
       in: path
       description: タスクラン名
       required: true
+      schema:
+        type: string
+
+    Latest:
+      name: latest
+      in: string
+      description: 最新情報取得(True or False)
+      schema:
+        type: string
+
+    Processing:
+      name: processing
+      in: string
+      description: 実行中情報取得(True or False)
       schema:
         type: string
 
