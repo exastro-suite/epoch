@@ -331,41 +331,120 @@ def get_cd_pipeline_argocd(workspace_id):
             argocd_result = row["contents"]["argocd_results"]            
             
             resource_status = []
-            # Format a part of the result JSON (resource_status) - 結果JSONの一部（resource_status）を整形
-            for status_resources in argocd_result["result"]["status"]["resources"]:
-                for sync_result_resources in argocd_result["result"]["status"]["operationState"]["syncResult"]["resources"]:
-                    
-                    if str(status_resources["kind"]) == str(sync_result_resources["kind"]) \
-                    and str(status_resources["name"]) == str(sync_result_resources["name"]): 
-                        # In the acquisition result of ArgoCD, the result "resources" is divided into two places, so "kind" and "name" merge the resource information with the same name
-                        # ArgoCDの取得結果では、結果の"resources"が2か所に分かれているため、"kind", "name"が同名のリソース情報をマージ
-                        resource_status.append(
-                            {
-                                "kind": status_resources["kind"],
-                                "name": status_resources["name"],
-                                "health_status": status_resources["health"]["status"],
-                                "sync_status": sync_result_resources["status"],
-                                "message": sync_result_resources["message"]
-                            }
-                        )
+
+            # argocdの結果があるかチェック
+            # Check for argocd result
+            if "result" not in argocd_result or \
+                "status" not in argocd_result["result"] or \
+                "resources" not in argocd_result["result"]["status"] or \
+                "operationState" not in argocd_result["result"]["status"] or \
+                "syncResult" not in argocd_result["result"]["status"]["operationState"] or \
+                "resources" not in argocd_result["result"]["status"]["operationState"]["syncResult"]:
+                pass
+            else:
+                # Format a part of the result JSON (resource_status) - 結果JSONの一部（resource_status）を整形
+                for status_resources in argocd_result["result"]["status"]["resources"]:
+                    for sync_result_resources in argocd_result["result"]["status"]["operationState"]["syncResult"]["resources"]:
+                        
+                        if str(status_resources["kind"]) == str(sync_result_resources["kind"]) \
+                        and str(status_resources["name"]) == str(sync_result_resources["name"]): 
+                            # In the acquisition result of ArgoCD, the result "resources" is divided into two places, so "kind" and "name" merge the resource information with the same name
+                            # ArgoCDの取得結果では、結果の"resources"が2か所に分かれているため、"kind", "name"が同名のリソース情報をマージ
+                            resource_status.append(
+                                {
+                                    "kind": status_resources["kind"],
+                                    "name": status_resources["name"],
+                                    "health_status": status_resources["health"]["status"],
+                                    "sync_status": sync_result_resources["status"],
+                                    "message": sync_result_resources["message"]
+                                }
+                            )
+            # argocdの結果があるかチェック
+            # Check for argocd result
+            if "result" not in argocd_result or \
+                "status" not in argocd_result["result"]:
+                # 必要な項目最低限がないので、全て無しに設定する 
+                # Since there is no minimum required item, set it to none
+                health_status = ""
+                sync_status_status = ""
+                sync_status_repo_url = ""
+                sync_status_server = ""
+                sync_status_revision = ""
+                startedAt = ""
+                finishedAt = ""
+            else:
+                # 項目区単位で有無をチェックする
+                # Check for presence in each item section
+                if "health" not in argocd_result["result"]["status"] or \
+                    "status" not in argocd_result["result"]["status"]["health"]:
+                    health_status = ""
+                else:
+                    health_status = argocd_result["result"]["status"]["health"]["status"]
+
+                if "sync" not in argocd_result["result"]["status"]:
+                    sync_status_status = ""
+                    sync_status_repo_url = ""
+                    sync_status_server = ""
+                    sync_status_revision = ""
+                else:
+                    if "status" not in argocd_result["result"]["status"]["sync"]:
+                        sync_status_status = ""
+                    else:
+                        sync_status_status = argocd_result["result"]["status"]["sync"]["status"]
+
+                    if "comparedTo" not in argocd_result["result"]["status"]["sync"]:
+                        sync_status_repo_url = ""
+                        sync_status_server = ""
+                    else:
+                        if "source" not in argocd_result["result"]["status"]["sync"]["comparedTo"] or \
+                            "repoURL" not in argocd_result["result"]["status"]["sync"]["comparedTo"]["source"]:
+                            sync_status_repo_url = ""
+                        else:
+                            sync_status_repo_url = argocd_result["result"]["status"]["sync"]["comparedTo"]["source"]["repoURL"]
+
+                        if "destination" not in argocd_result["result"]["status"]["sync"]["comparedTo"] or \
+                            "server" not in argocd_result["result"]["status"]["sync"]["comparedTo"]["destination"]:
+                            sync_status_server = ""
+                        else:
+                            sync_status_server = argocd_result["result"]["status"]["sync"]["comparedTo"]["destination"]["server"]
+
+                    if "revision" not in argocd_result["result"]["status"]["sync"]:
+                        sync_status_revision = ""
+                    else:
+                        sync_status_revision = argocd_result["result"]["status"]["sync"]["revision"]
+
+                if "operationState" not in argocd_result["result"]["status"]:
+                    startedAt = ""
+                    finishedAt = ""
+                else:
+                    if "startedAt" not in argocd_result["result"]["status"]["operationState"]:
+                        startedAt = ""
+                    else:
+                        startedAt = argocd_result["result"]["status"]["operationState"]["startedAt"]
+
+                    if "finishedAt" not in argocd_result["result"]["status"]["operationState"]:
+                        finishedAt = ""
+                    else:
+                        finishedAt = argocd_result["result"]["status"]["operationState"]["finishedAt"]
 
             # Format the entire result JSON - 結果JSONの全体を整形
             rows.append(
                 {
                     "trace_id": row["contents"]["trace_id"],
-                    "environment_name": argocd_result["result"]["metadata"]["name"],
-                    "namespace": argocd_result["result"]["metadata"]["namespace"],
+                    "environment_name": row["contents"]["environment_name"],
+                    "namespace": row["contents"]["namespace"],
                     "health": {
-                        "status": argocd_result["result"]["status"]["health"]["status"]
+                        "status": health_status,
                     },
                     "sync_status": {
-                        "status": argocd_result["result"]["status"]["sync"]["status"],
-                        "repo_url": argocd_result["result"]["status"]["sync"]["comparedTo"]["source"]["repoURL"],
-                        "server": argocd_result["result"]["status"]["sync"]["comparedTo"]["destination"]["server"],
-                        "revision": argocd_result["result"]["status"]["sync"]["revision"]                        },
+                        "status": sync_status_status,
+                        "repo_url": sync_status_repo_url,
+                        "server": sync_status_server,
+                        "revision": sync_status_revision,
+                    },
                     "resource_status": resource_status,
-                    "startedAt": argocd_result["result"]["status"]["operationState"]["startedAt"],
-                    "finishedAt": argocd_result["result"]["status"]["operationState"]["finishedAt"]
+                    "startedAt": startedAt,
+                    "finishedAt": finishedAt,
                 }
             )
             
