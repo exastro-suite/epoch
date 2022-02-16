@@ -1,0 +1,2155 @@
+openapi: 3.0.0
+
+# 基本情報
+info:
+  # バージョン表記
+  version: 0.3.1
+  # タイトル
+  title: epoch-serivice-api
+  # 説明
+  description: |
+    - Exastro EPOCH service-api のRestAPIドキュメント
+# タグ定義
+tags:
+  - name: "Workspace"
+    description: ワークスペース情報に関するAPI
+  - name: "Manifest"
+    description: ワークスペースのmanifestに関するAPI
+  - name: "Member"
+    description: メンバー情報に関するAPI
+  - name: "User"
+    description: ユーザ情報に関するAPI
+  - name: "CI Pipeline"
+    description: CIパイプライン情報に関するAPI
+  - name: "CD Pipeline"
+    description: CDパイプライン情報に関するAPI
+    
+# エンドポイント
+paths:
+  #
+  # Workspace
+  #
+  /workspace:
+    post:
+      tags:
+        - Workspace
+      summary:
+        ワークスペース作成
+      description:
+        新しいワークスペースを作成し、ワークスペースIDを返却する
+
+      # リクエストパラメータ
+      parameters: []
+      requestBody: # リクエストボディ
+        description: ワークスペース情報
+        content:
+          項目説明:
+            schema: # POSTするオブジェクト
+              $ref: '#/definitions/schemas/Workspace_Example'
+          application/json:
+            schema: # POSTするオブジェクト
+              $ref: '#/definitions/schemas/Workspace'
+
+      # レスポンス結果
+      responses:
+        200:
+          description: "成功時のレスポンス"
+          content:
+            項目説明: # レスポンスの形式指定
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: "200 正常終了"
+                  rows:
+                    $ref: '#/definitions/schemas/Workspace_Row_Example'
+            application/json: # レスポンスの形式指定
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: 200
+                  rows:
+                    $ref: '#/definitions/schemas/Workspace_Row'
+        500:
+          $ref: '#/definitions/responses/CommonException'
+
+    get:
+      tags:
+        - Workspace
+      summary:
+        ワークスペース情報取得
+      description:
+        ログインユーザーが使用できるワークスペース情報を取得する
+      # レスポンス結果
+      responses:
+        200:
+          description: "成功時のレスポンス"
+          content:
+            項目説明: # レスポンスの形式指定
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: "200 正常終了"
+                  rows:
+                    $ref: '#/definitions/schemas/Workspace_List_Example'
+            application/json: # レスポンスの形式指定
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: 200
+                  rows:
+                    $ref: '#/definitions/schemas/Workspace_List'
+        500:
+          $ref: '#/definitions/responses/CommonException'
+
+  # エンドポイント
+  /workspace/{workspace_id}:
+    get:
+      tags:
+        - Workspace
+      summary:
+        ワークスペース取得(ワークスペースID指定)
+      description:
+        指定されたワークスペースIDのワークスペース情報を取得する
+      parameters:
+        - $ref: '#/definitions/parameters/Workspace_Id'
+
+      # レスポンス結果
+      responses:
+        200:
+          description: "成功時のレスポンス"
+          content:
+            項目説明: # レスポンスの形式指定
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: "200 正常終了"
+                  rows:
+                    $ref: '#/definitions/schemas/Workspace_Row_Example'
+            application/json: # レスポンスの形式指定
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: 200
+                  rows:
+                    $ref: '#/definitions/schemas/Workspace_Row'
+        404:
+          description: "該当なしのレスポンス"
+          content:
+            項目説明: # レスポンスの形式指定
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: "404 該当なし"
+                  rows:
+                    type: object
+                    example: []
+            application/json: # レスポンスの形式指定
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: "404"
+                  rows:
+                    type: object
+                    example: []
+        500:
+          $ref: '#/definitions/responses/CommonException'
+
+    put:
+      tags:
+        - Workspace
+      summary:
+        ワークスペース更新
+      description:
+        指定されたワークスペースIDのワークスペース情報を更新する
+      parameters:
+        - $ref: '#/definitions/parameters/Workspace_Id'
+
+      requestBody: # リクエストボディ
+        description: ワークスペース情報
+        content:
+          項目説明:
+            schema: # POSTするオブジェクト
+              $ref: '#/definitions/schemas/Workspace_Example'
+          application/json:
+            schema: # POSTするオブジェクト
+              $ref: '#/definitions/schemas/Workspace'
+
+      # レスポンス結果
+      responses:
+        200:
+          description: "成功時のレスポンス"
+          content:
+            項目説明: # レスポンスの形式指定
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: "200 正常終了"
+            application/json: # レスポンスの形式指定
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: 200
+        400:
+          description: "更新失敗"
+          content:
+            項目説明: # レスポンスの形式指定
+              schema:
+                type: object
+                $ref: '#/definitions/schemas/http_return_Example'
+            application/json: # レスポンスの形式指定
+              schema:
+                type: object
+                $ref: '#/definitions/schemas/http_return'
+        500:
+          $ref: '#/definitions/responses/CommonException'
+
+    patch:
+      tags:
+        - Workspace
+      summary:
+        ワークスペース更新（指定項目のみの更新）
+      description:
+        指定されたワークスペースIDのワークスペース情報を更新する
+      parameters:
+        - $ref: '#/definitions/parameters/Workspace_Id'
+
+      requestBody: # リクエストボディ
+        description: 更新対象となる項目群
+        content:
+          項目説明:
+            schema: # POSTするオブジェクト
+              $ref: '#/definitions/schemas/Workspace_Example'
+          application/json:
+            schema: # POSTするオブジェクト
+              $ref: '#/definitions/schemas/Workspace'
+
+      # レスポンス結果
+      responses:
+        200:
+          description: "成功時のレスポンス"
+          content:
+            項目説明: # レスポンスの形式指定
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: "200 正常終了"
+            application/json: # レスポンスの形式指定
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: 200
+        500:
+          $ref: '#/definitions/responses/CommonException'
+
+  #
+  # Manifest
+  #
+  /workspace/{workspace_id}/manifest/parameter:
+    post:
+      tags:
+        - Manifest
+      summary:
+        ワークスぺース manifestパラメータ登録
+      description:
+        指定されたワークスペースIDのワークスペース情報のマニフェストパラメータを登録する
+      # リクエストパラメータ
+      parameters: 
+        - $ref: '#/definitions/parameters/Workspace_Id'
+
+      requestBody: # リクエストボディ
+        description: ワークスペース情報
+        content:
+          項目説明:
+            schema: # POSTするオブジェクト
+              $ref: '#/definitions/schemas/Workspace_Manifest_Parameter_Example'
+          application/json:
+            schema: # POSTするオブジェクト
+              $ref: '#/definitions/schemas/Workspace_Manifest_Parameter'
+
+      # レスポンス結果
+      responses:
+        200:
+          description: "成功時のレスポンス"
+          content:
+            項目説明: # レスポンスの形式指定
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: "200 正常終了"
+            application/json: # レスポンスの形式指定
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: 200
+        500:
+          $ref: '#/definitions/responses/CommonException'
+
+  # エンドポイント
+  /workspace/{workspace_id}/manifest/template:
+    post:
+      tags:
+        - Manifest
+      summary:
+        ワークスペース manifestテンププレート登録
+      description:
+        指定されたワークスペースIDのmanifestテンプレートを登録する
+      # リクエストパラメータ
+      parameters: 
+        - $ref: '#/definitions/parameters/Workspace_Id'
+
+      requestBody: # リクエストボディ
+        description: ファイルアップロード情報
+        content:
+          項目説明:
+            schema: # POSTするオブジェクト
+              type: object
+              properties:
+                manifest_files:
+                  type: string
+                  example: "ファイル情報"
+          multipart/form-data:
+            schema: # POSTするオブジェクト
+              type: object
+              properties:
+                manifest_files:
+                  type: string
+                  format: binary
+
+      # レスポンス結果
+      responses:
+        200:
+          description: "成功時のレスポンス"
+          content:
+            項目説明: # レスポンスの形式指定
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: "200 正常終了"
+                  rows:
+                    type: string
+                    example: "IT-Automation削除結果のレスポンスデータ"
+            application/json: # レスポンスの形式指定
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: 200
+                  rows:
+                    type: string
+                    example: ""
+        500:
+          $ref: '#/definitions/responses/CommonException'
+
+    get:
+      tags:
+        - Manifest
+      summary:
+        ワークスペース manifestテンププレート取得
+      description:
+        指定されたワークスペースIDのmanifestテンプレート情報を取得する
+      # リクエストパラメータ
+      parameters: 
+        - $ref: '#/definitions/parameters/Workspace_Id'
+
+      # レスポンス結果
+      responses:
+        200:
+          description: "成功時のレスポンス"
+          content:
+            項目説明: # レスポンスの形式指定
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: "200 正常終了"
+                  rows:
+                    $ref: '#/definitions/schemas/Workspace_Manifest_Template_Example'
+            application/json: # レスポンスの形式指定
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: 200
+                  rows:
+                    $ref: '#/definitions/schemas/Workspace_Manifest_Template'
+        500:
+          $ref: '#/definitions/responses/CommonException'
+
+  # エンドポイント
+  /workspace/{workspace_id}/manifest/template/{file_id}:
+    delete:
+      tags:
+        - Manifest
+      summary:
+        ワークスペース manifestテンププレート削除
+      description:
+        指定されたワークスペースIDのmanifestテンプレート情報を削除する
+      # リクエストパラメータ
+      parameters: 
+        - $ref: '#/definitions/parameters/Workspace_Id'
+        - $ref: '#/definitions/parameters/File_Id'
+
+      # レスポンス結果
+      responses:
+        200:
+          description: "成功時のレスポンス"
+          content:
+            項目説明: # レスポンスの形式指定
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: "200 正常終了"
+                  rows:
+                    type: string
+                    example: "IT-Automation削除結果のレスポンスデータ"
+            application/json: # レスポンスの形式指定
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: 200
+                  rows:
+                    type: string
+                    example: ""
+        500:
+          $ref: '#/definitions/responses/CommonException'
+  #
+  # CI Pipeline
+  #
+  /workspace/{workspace_id}/ci/pipeline: 
+    post: 
+      tags: 
+        - CI Pipeline
+      summary: 
+        CIパイプライン情報設定
+      description: 
+        指定したワークスペースIDに対して、CIパイプライン情報を設定する
+      parameters:
+        - $ref: '#/definitions/parameters/Workspace_Id'
+
+      # レスポンス結果
+      responses:
+        200:
+          $ref: '#/definitions/responses/200'
+        500:
+          $ref: '#/definitions/responses/CommonException'
+
+  /workspace/{workspace_id}/ci/pipeline/git/commits:
+    get: 
+      tags:
+        - CI Pipeline
+      summary: 
+        gitコミット履歴取得
+      description: 
+        指定したワークスペースIDに対して、CIパイプラインのGitコミット履歴を取得する
+      parameters:
+        - $ref: '#/definitions/parameters/Workspace_Id'
+
+      # レスポンス結果
+      responses:
+        200:
+          $ref: '#/definitions/responses/Cipipeline_GitCommits'
+        500:
+          $ref: '#/definitions/responses/CommonException'
+      
+  /workspace/{workspace_id}/ci/pipeline/git/hooks:
+    get: 
+      tags:
+        - CI Pipeline
+      summary: 
+        webhook履歴取得
+      description: 
+        指定したワークスペースIDに対して、CIパイプラインのWebhook実行履歴を取得する
+      parameters:
+        - $ref: '#/definitions/parameters/Workspace_Id'
+
+      # レスポンス結果
+      responses:
+        200:
+          $ref: '#/definitions/responses/Cipipeline_GitHooks'
+        500:
+          $ref: '#/definitions/responses/CommonException'
+
+  /workspace/{workspace_id}/ci/pipeline/result:
+    get:
+      tags:
+        - CI Pipeline
+      summary: 
+        CIパイプライン結果取得
+      description: 
+        指定したワークスペースIDに対して、CIパイプライン実行結果を取得する
+      parameters:
+        - $ref: '#/definitions/parameters/Workspace_Id'
+
+      # レスポンス結果
+      responses:
+        200:
+          $ref: '#/definitions/responses/Cipipeline_Result'
+        500:
+          $ref: '#/definitions/responses/CommonException'
+
+  /workspace/{workspace_id}/ci/pipeline/result/{taskrun_name}/logs:
+    get:
+      tags:
+        - CI Pipeline
+      summary: 
+        タスク実行ログ情報取得
+      description: 
+        指定したワークスペースIDとタスクラン名に対する、CIパイプライン結果のログを取得する
+      parameters:
+        - $ref: '#/definitions/parameters/Workspace_Id'
+        - $ref: '#/definitions/parameters/Taskrun_Name'
+
+      # レスポンス結果
+      responses:
+        200:
+          $ref: '#/definitions/responses/Cipipeline_ResultTaskrunLogs'
+        500:
+          $ref: '#/definitions/responses/CommonException'
+
+  #
+  # CD Pipeline
+  #
+  /workspace/{workspace_id}/cd/pipeline:
+    post:
+      tags:
+        - CD Pipeline
+      summary: 
+        CDパイプライン情報設定
+      description: 
+        指定したワークスペースIDに対して、CDパイプライン情報を設定する
+      parameters:
+        - $ref: '#/definitions/parameters/Workspace_Id'
+
+      # レスポンス結果
+      responses:
+        200:
+          $ref: '#/definitions/responses/200'
+        500:
+          $ref: '#/definitions/responses/CommonException'
+
+  /workspace/{workspace_id}/cd/pipeline/argocd:
+    get:
+      tags:
+        - CD Pipeline
+      summary: 
+        CDパイプライン(ArgoCD)情報取得
+      description: 
+        指定したワークスペースIDに対して、CDパイプラインのArgoCD情報を取得する
+      parameters:
+        - $ref: '#/definitions/parameters/Workspace_Id'
+
+      # レスポンス結果
+      responses:
+        200:
+          $ref: '#/definitions/responses/Cdpipeline_Argocd'
+        500:
+          $ref: '#/definitions/responses/CommonException'
+
+  /workspace/{workspace_id}/cd/pipeline/argocd/sync:
+    post:
+      tags:
+        - CD Pipeline
+      summary: 
+        CDパイプライン(ArgoCD)同期
+      description: 
+        指定したワークスペースIDに対して、CDパイプラインのArgoCD情報の同期を実行する
+      parameters:
+        - $ref: '#/definitions/parameters/Workspace_Id'
+
+      requestBody: # リクエストボディ
+        $ref: '#/definitions/requestBodies/Cdpipeline_Argocd_Sync'
+
+      # レスポンス結果
+      responses:
+        200:
+          $ref: '#/definitions/responses/200'
+        500:
+          $ref: '#/definitions/responses/CommonException'
+
+  /workspace/{workspace_id}/cd/exec:
+    post:
+      tags:
+        - CD Pipeline
+      summary: 
+        CD実行
+      description: 
+        指定したワークスペースIDに対して、CDを実行する
+      parameters:
+        - $ref: '#/definitions/parameters/Workspace_Id'
+
+      requestBody: # リクエストボディ
+        $ref: '#/definitions/requestBodies/Cdpipeline_Cd_Exec'
+
+      # レスポンス結果
+      responses:
+        200:
+          $ref: '#/definitions/responses/200'
+        401:
+          $ref: '#/definitions/responses/Cdpipeline_Cd_Exec_401'
+        500:
+          $ref: '#/definitions/responses/CommonException'
+
+  /workspace/{workspace_id}/cd/environment:
+    get:
+      tags:
+        - CD Pipeline
+      summary: 
+        CD実行環境取得
+      description: 
+        指定したワークスペースIDに対して、CD実行する対象の環境情報を取得する
+      parameters:
+        - $ref: '#/definitions/parameters/Workspace_Id'
+
+      # レスポンス結果
+      responses:
+        200:
+          $ref: '#/definitions/responses/Cdpipeline_Cd_Env'
+        500:
+          $ref: '#/definitions/responses/CommonException'
+
+  #
+  # Member
+  #
+  /workspace/{workspace_id}/member:
+    post:
+      tags:
+        - Member
+      summary:
+        ワークスペース該当メンバー登録
+      description: 
+        指定したワークスペースIDに、メンバーを登録する
+
+      # リクエストパラメータ
+      parameters: 
+        - $ref: '#/definitions/parameters/Workspace_Id'
+      requestBody: # リクエストボディ
+        description: リクエストパラメータ
+        # required: true
+        content:
+          項目説明: 
+            schema: # POSTするオブジェクト
+              description: 説明用の内容
+              $ref: '#/definitions/schemas/Member_Post_Example'
+          application/json:
+            schema: # POSTするオブジェクト
+              $ref: '#/definitions/schemas/Member_Post'
+
+      # レスポンス結果
+      responses:
+        200:
+          description: "成功時のレスポンス"
+          content: 
+            項目説明: 
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: 200
+                  rows:
+                    $ref: '#/definitions/schemas/Member_Example'
+                    
+            application/json: # レスポンスの形式指定
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: 200
+                  rows:
+                    $ref: '#/definitions/schemas/Member'
+
+        400:
+          description: "エラー時のレスポンス"
+          content:
+            項目説明: 
+              schema:
+                type: object
+                $ref: '#/definitions/schemas/http_return_member_400_Example'
+
+            application/json: # レスポンスの形式指定
+              schema:
+                type: object
+                $ref: '#/definitions/schemas/http_return_member_400'
+
+        500:
+          $ref: '#/definitions/responses/CommonException'
+    get:
+      summary:
+        ワークスペース該当メンバー情報取得
+      tags:
+        - Member
+      description: 
+        指定したワークスペースIDの、メンバー情報を取得する
+      parameters:
+        - $ref: '#/definitions/parameters/Workspace_Id'
+
+      # レスポンス結果
+      responses:
+        200:
+          description: "成功時のレスポンス"
+          content:
+            項目説明: 
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: 200
+                  rows:
+                    $ref: '#/definitions/schemas/Member_Example'
+
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: 200
+                  rows:
+                    $ref: '#/definitions/schemas/Member'
+
+        500:
+          $ref: '#/definitions/responses/CommonException'
+
+  /workspace/{workspace_id}/member/cdexec:
+    get: 
+      tags: 
+        - Member
+      summary: 
+        ワークスペース CD実行メンバー情報取得
+      description: 
+        指定したワークスペースIDの、CD実行メンバーの情報を取得する
+      parameters:
+        - $ref: '#/definitions/parameters/Workspace_Id'
+      responses:
+        200:
+          description: "成功時のレスポンス"
+          content:
+            項目説明:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: 200
+                  rows:
+                    $ref: '#/definitions/schemas/MemberExec_Example'
+
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: 200
+                  rows:
+                    $ref: '#/definitions/schemas/MemberExec'
+
+        500:
+          $ref: '#/definitions/responses/CommonException'
+
+  /workspace/{workspace_id}/member/current:
+    delete: 
+      tags: 
+        - Member
+      summary: 
+        ワークスペースのメンバーから退去
+      description: 
+        指定したワークスペースIDから退去する
+      parameters:
+        - $ref: '#/definitions/parameters/Workspace_Id'
+      responses:
+        200:
+          $ref: '#/definitions/responses/200'
+
+        400: 
+          description: "エラー時のレスポンス"
+          content:
+            項目説明: 
+              schema:
+                type: object
+                $ref: '#/definitions/schemas/http_return_member_current_400_Example'
+
+            application/json: # レスポンスの形式指定
+              schema:
+                type: object
+                $ref: '#/definitions/schemas/http_return_member_current_400'
+
+        500:
+          $ref: '#/definitions/responses/CommonException'
+
+  /user/current:
+    get: 
+      tags:
+        - User
+      summary: 
+        ユーザー情報取得
+      description: 
+        現在ログイン中のユーザ情報を取得する
+      responses:
+        200:
+          description: "成功時のレスポンス"
+          content:
+            項目説明:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: 200
+                  info:
+                    $ref: '#/definitions/schemas/User_Example'
+
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: 200
+                  info:
+                    $ref: '#/definitions/schemas/User'
+
+definitions:
+  #
+  # 共通のPOSTデータ定義
+  #
+  requestBodies: 
+    Cdpipeline_Argocd_Sync:
+      description: リクエストパラメータ
+      content:
+        項目説明: 
+          schema: # POSTするオブジェクト
+            description: 説明用の内容
+            $ref: '#/definitions/schemas/Cdpipeline_Argocd_Sync_Example'
+        application/json:
+          schema: # POSTするオブジェクト
+            $ref: '#/definitions/schemas/Cdpipeline_Argocd_Sync'
+
+    Cdpipeline_Cd_Exec:  
+      description: リクエストパラメータ
+      content:
+        項目説明: 
+          schema: # POSTするオブジェクト
+            description: 説明用の内容
+            $ref: '#/definitions/schemas/Cdpipeline_Cd_Exec_Example'
+        application/json:
+          schema: # POSTするオブジェクト
+            $ref: '#/definitions/schemas/Cdpipeline_Cd_Exec'
+
+  #
+  # 共通パラメータ定義
+  #
+  parameters: 
+    Workspace_Id:
+      name: workspace_id
+      in: path
+      description: ワークスペースID
+      required: true
+      schema:
+        type: integer
+
+    Taskrun_Name:
+      name: taskrun_name
+      in: path
+      description: タスクラン名
+      required: true
+      schema:
+        type: string
+
+    File_Id:
+      name: file_id
+      in: path
+      description: manifestテンプレートファイルID
+      required: true
+      schema:
+        type: integer
+
+  responses: 
+    #
+    # 共通レスポンス定義
+    #
+    200: 
+      description: "成功時のレスポンス"
+      content:
+        項目説明: 
+          schema:
+            $ref: '#/definitions/schemas/return_200_Example'
+
+        application/json:
+          schema:
+            $ref: '#/definitions/schemas/return_200'
+
+    CommonException: 
+      description: "エラー時のレスポンス"
+      content:
+        項目説明: 
+          schema:
+            $ref: '#/definitions/schemas/http_return_Example'
+
+        application/json:
+          schema:
+            $ref: '#/definitions/schemas/http_return'
+
+    #
+    # CI Pipelineのレスポンス定義
+    #
+    Cipipeline_GitCommits:
+      description: "成功時のレスポンス"
+      content:
+        項目説明: 
+          schema:
+            $ref: '#/definitions/schemas/Cipipeline_GitCommits_Example'
+
+        application/json:
+          schema:
+            $ref: '#/definitions/schemas/Cipipeline_GitCommits'
+
+    Cipipeline_GitHooks:
+      description: "成功時のレスポンス"
+      content:
+        項目説明: 
+          schema:
+            $ref: '#/definitions/schemas/Cipipeline_GitHooks_Example'
+
+        application/json:
+          schema:
+            $ref: '#/definitions/schemas/Cipipeline_GitHooks'
+
+    Cipipeline_Result:
+      description: "成功時のレスポンス"
+      content:
+        項目説明: 
+          schema:
+            $ref: '#/definitions/schemas/Cipipeline_Result_Example'
+
+        application/json:
+          schema:
+            $ref: '#/definitions/schemas/Cipipeline_Result'
+
+    Cipipeline_ResultTaskrunLogs:
+      description: "成功時のレスポンス"
+      content:
+        項目説明: 
+          schema:
+            $ref: '#/definitions/schemas/Cipipeline_ResultTaskrunLogs_Example'
+
+        application/json:
+          schema:
+            $ref: '#/definitions/schemas/Cipipeline_ResultTaskrunLogs'
+
+    #
+    # CD Pipelineのレスポンス定義
+    #
+    Cdpipeline_Argocd:
+      description: "成功時のレスポンス"
+      content:
+        項目説明: 
+          schema:
+            $ref: '#/definitions/schemas/Cdpipeline_Argocd_Example'
+
+        application/json:
+          schema:
+            $ref: '#/definitions/schemas/Cdpipeline_Argocd'
+
+    Cdpipeline_Cd_Exec_401:
+      description: "権限なしエラー時のレスポンス"
+      content:
+        項目説明: 
+          schema:
+            $ref: '#/definitions/schemas/Cdpipeline_Cd_Exec_401_Example'
+
+        application/json:
+          schema:
+            $ref: '#/definitions/schemas/Cdpipeline_Cd_Exec_401'
+
+    Cdpipeline_Cd_Env:
+      description: "成功時のレスポンス"
+      content:
+        項目説明: 
+          schema:
+            $ref: '#/definitions/schemas/Cdpipeline_Cd_Env_Example'
+
+        application/json:
+          schema:
+            $ref: '#/definitions/schemas/Cdpipeline_Cd_Env'
+
+  schemas: # スキーマオブジェクトの定義
+    #
+    # Workspaceの共通モデル
+    #
+    Workspace_Row_Example: # 作成時のRow
+      type: object
+      example:
+        [
+          {
+            "organization_id": "オーガナイゼーションID(未使用)",
+            "specification": {
+              "common": {
+                "name": "ワークスペース名",
+                "note": "備考",
+                "organization_id": "1固定",
+                "owners": "[]固定" 
+              },
+              "ci_config": {
+                "pipelines_common": {
+                  "git_repositry": {
+                      "housing": "アプリケーションレポジトリ gitサービス選択 outer or inner",
+                      "interface": "gitサービス inner時はgitlab、outer時はgithub固定",
+                      "user": "gitユーザ名",
+                      "password": "gitユーザトークン",
+                      "token": "gitユーザトークン"
+                  },
+                  "container_registry": {
+                      "housing": "レジストリサービス選択 outer or inner",
+                      "interface": "dockerhub固定",
+                      "user": "レジストリユーザ名",
+                      "password": "レジストリユーザパスワード"
+                  }
+                },
+                "pipelines": [
+                  {
+                    "pipeline_id": "defaultapplicationCode固定",
+                    "git_repositry": {
+                        "url": "アプリケーションコードリポジトリURL"
+                    },
+                    "webhooks_url": "Webhook URL",
+                    "build": {
+                        "branch": "ブランチを配列指定[]",
+                        "dockerfile_path": "Dockerfileのファイルパス"
+                    },
+                    "container_registry": {
+                        "image": "レジストリイメージ出力先"
+                    },
+                    "static_analysis": {
+                        "interface": "静的解析有の場合 sonarQube固定"
+                    }
+                  }
+                ],
+                "environments": [
+                    {
+                        "environment_id": "環境ID(UIで設定されたID)",
+                        "manifests": [
+                            {
+                                "file_id": "ファイル番号",
+                                "file": "manifestテンプレートファイル名",
+                                "parameters": {
+                                    "image": "イメージレジストリ格納先",
+                                    "image_tag": "イメージレジストリタグ名",
+                                    "param01": "manifestパラメータ 01~20まで",
+                                }
+                            }
+                        ]
+                    }
+                ]
+              },
+              "cd_config": {
+                "system_config": "one-namespace固定",
+                "environments_common": {
+                    "git_repositry": {
+                        "account_select": "アプリケーションコードと同一アカウントの場合はapplicationCode、それ以外は入力指定",
+                        "housing": "IaCレポジトリ Gitサービス選択 outer or inner",
+                        "interface": "gitサービス inner時はgitlab、outer時はgithub固定",
+                        "user": "gitユーザ名",
+                        "password": "gitユーザトークン",
+                        "token": "gitユーザトークン"
+                    }
+                },
+                "environments": [
+                    {
+                        "environment_id": "環境ID(UIで設定されたID)",
+                        "name": "環境名(英数小文字のみ)",
+                        "git_repositry": {
+                            "url": "IaCレポジトリURL"
+                        },
+                        "deploy_destination": {
+                            "cluster_kind": "Deploy先クラスタ 内部はinternal、外部（現在未対応）はinternal以外",
+                            "namespace": "Deploy先のnamespace名",
+                            "authentication_token": "外部接続時のトークン（現在未対応）",
+                            "base64_encoded_certificate": "外部接続時の認証情報（現在未対応）",
+                            "cluster_url": "出力先クラスタのURL"
+                        },
+                        "cd_exec_users": {
+                            "user_select": "Deployユーザ指定 all(権限のある人すべて), select(urser_idに該当するユーザのみ)",
+                            "user_id": "selectの場合、ユーザ名をカンマ区切りで指定"
+                        }
+                    }
+                ]
+              },
+              "parameter-info": {
+                  "1": {
+                      "__parameterItemInfo__-1-param01": "画面のparamの説明 処理件数分繰り返し",
+                  }
+              },
+            },
+            "create_at": "作成時の日時",
+            "update_at": "作成・更新時の日時",
+            "role_update_at": "未設定",
+          }
+        ]
+    Workspace_Row: # モデル名
+      type: object # 型
+      example:
+        [
+          {
+            "common": {
+              "name": "Exampleワークスペース",
+              "note": "",
+              "organization_id": 1,
+              "owners": [] 
+            },
+            "ci_config": {
+              "pipelines_common": {
+                "git_repositry": {
+                    "housing": "outer",
+                    "interface": "github",
+                    "user": "example-user",
+                    "password": "ghp_xxxxxxxxxxxxxxxxxx",
+                    "token": "ghp_xxxxxxxxxxxxxxxxxx"
+                },
+                "container_registry": {
+                    "housing": "outer",
+                    "interface": "dockerhub",
+                    "user": "example-user",
+                    "password": "example-userpass"
+                }
+              },
+              "pipelines": [
+                {
+                  "pipeline_id": "defaultapplicationCode",
+                  "git_repositry": {
+                      "url": "https://github.com/[git-user]/epoch-sample-app.git"
+                  },
+                  "webhooks_url": "https://xxxx.xxx.xxx.xxx",
+                  "build": {
+                      "branch": [ "main", "master" ],
+                      "dockerfile_path": "./Dockerfile"
+                  },
+                  "container_registry": {
+                      "image": "[dockerhub-user]/epoch-sample-api"
+                  },
+                  "static_analysis": {
+                      "interface": "sonarQube"
+                  }
+                }
+              ],
+              "environments": [
+                  {
+                      "environment_id": "t17ee1815bf3237a",
+                      "manifests": [
+                          {
+                              "file_id": "1",
+                              "file": "ui-app.yaml",
+                              "parameters": {
+                                  "image": "[dockerhub-user]/epoch-sample-ui",
+                                  "image_tag": "main.20220101000000",
+                                  "param01": "1",
+                                  "param02": "31001",
+                                  "param03": "32001",
+                              }
+                          }
+                      ]
+                  }
+              ]
+            },
+            "cd_config": {
+              "system_config": "one-namespace",
+              "environments_common": {
+                  "git_repositry": {
+                      "account_select": "applicationCode",
+                      "housing": "outer",
+                      "interface": "github",
+                      "user": "example-user",
+                      "password": "ghp_xxxxxxxxxxxxxxxxxx",
+                      "token": "ghp_xxxxxxxxxxxxxxxxxx"
+                  }
+              },
+              "environments": [
+                  {
+                      "environment_id": "t17ee1815bf3237a",
+                      "name": "staging",
+                      "git_repositry": {
+                          "url": "https://github.com/[github-user]/epoch-sample-staging-manifest.git"
+                      },
+                      "deploy_destination": {
+                          "cluster_kind": "internal",
+                          "namespace": "sample-staging",
+                          "authentication_token": "",
+                          "base64_encoded_certificate": "",
+                          "cluster_url": "https://kubernetes.default.svc"
+                      },
+                      "cd_exec_users": {
+                          "user_select": "all",
+                          "user_id": ""
+                      }
+                  }
+              ]
+            },
+            "parameter-info": {
+                "1": {
+                  "__parameterItemInfo__-1-param01": "この項目はreplicas",
+                  "__parameterItemInfo__-1-param02": "この項目はactive nodeport",
+                  "__parameterItemInfo__-1-param03": "この項目はpreview nodeport"
+                }
+            },
+          }
+        ]
+    Workspace_Example: # モデル名
+      type: object
+      example:
+        {
+          "common": {
+            "name": "ワークスペース名",
+            "note": "備考",
+            "organization_id": "1固定",
+            "owners": "[]固定" 
+          },
+          "ci_config": {
+            "pipelines_common": {
+              "git_repositry": {
+                  "housing": "アプリケーションレポジトリ gitサービス選択 outer or inner",
+                  "interface": "gitサービス inner時はgitlab、outer時はgithub固定",
+                  "user": "gitユーザ名",
+                  "password": "gitユーザトークン",
+                  "token": "gitユーザトークン"
+              },
+              "container_registry": {
+                  "housing": "レジストリサービス選択 outer or inner",
+                  "interface": "dockerhub固定",
+                  "user": "レジストリユーザ名",
+                  "password": "レジストリユーザパスワード"
+              }
+            },
+            "pipelines": [
+              {
+                "pipeline_id": "defaultapplicationCode固定",
+                "git_repositry": {
+                    "url": "アプリケーションコードリポジトリURL"
+                },
+                "webhooks_url": "Webhook URL",
+                "build": {
+                    "branch": "ブランチを配列指定[]",
+                    "dockerfile_path": "Dockerfileのファイルパス"
+                },
+                "container_registry": {
+                    "image": "レジストリイメージ出力先"
+                },
+                "static_analysis": {
+                    "interface": "静的解析有の場合 sonarQube固定"
+                }
+              }
+            ],
+            "environments": [
+                {
+                    "environment_id": "環境ID(UIで設定されたID)",
+                    "manifests": [
+                        {
+                            "file_id": "ファイル番号",
+                            "file": "manifestテンプレートファイル名",
+                            "parameters": {
+                                "image": "イメージレジストリ格納先",
+                                "image_tag": "イメージレジストリタグ名",
+                                "param01": "manifestパラメータ 01~20まで",
+                            }
+                        }
+                    ]
+                }
+            ]
+          },
+          "cd_config": {
+            "system_config": "one-namespace固定",
+            "environments_common": {
+                "git_repositry": {
+                    "account_select": "アプリケーションコードと同一アカウントの場合はapplicationCode、それ以外は入力指定",
+                    "housing": "IaCレポジトリ Gitサービス選択 outer or inner",
+                    "interface": "gitサービス inner時はgitlab、outer時はgithub固定",
+                    "user": "gitユーザ名",
+                    "password": "gitユーザトークン",
+                    "token": "gitユーザトークン"
+                }
+            },
+            "environments": [
+                {
+                    "environment_id": "環境ID(UIで設定されたID)",
+                    "name": "環境名(英数小文字のみ)",
+                    "git_repositry": {
+                        "url": "IaCレポジトリURL"
+                    },
+                    "deploy_destination": {
+                        "cluster_kind": "Deploy先クラスタ 内部はinternal、外部（現在未対応）はinternal以外",
+                        "namespace": "Deploy先のnamespace名",
+                        "authentication_token": "外部接続時のトークン（現在未対応）",
+                        "base64_encoded_certificate": "外部接続時の認証情報（現在未対応）",
+                        "cluster_url": "出力先クラスタのURL"
+                    },
+                    "cd_exec_users": {
+                        "user_select": "Deployユーザ指定 all(権限のある人すべて), select(urser_idに該当するユーザのみ)",
+                        "user_id": "selectの場合、ユーザ名をカンマ区切りで指定"
+                    }
+                }
+            ]
+          },
+          "parameter-info": {
+              "1": {
+                  "__parameterItemInfo__-1-param01": "画面のparamの説明 処理件数分繰り返し",
+              }
+          },
+          "update_at": "更新前の日時",
+        }
+    Workspace: # モデル名
+      type: object # 型
+      example:
+        {
+          "common": {
+            "name": "Exampleワークスペース",
+            "note": "",
+            "organization_id": 1,
+            "owners": [] 
+          },
+          "ci_config": {
+            "pipelines_common": {
+              "git_repositry": {
+                  "housing": "outer",
+                  "interface": "github",
+                  "user": "example-user",
+                  "password": "ghp_xxxxxxxxxxxxxxxxxx",
+                  "token": "ghp_xxxxxxxxxxxxxxxxxx"
+              },
+              "container_registry": {
+                  "housing": "outer",
+                  "interface": "dockerhub",
+                  "user": "example-user",
+                  "password": "example-userpass"
+              }
+            },
+            "pipelines": [
+              {
+                "pipeline_id": "defaultapplicationCode",
+                "git_repositry": {
+                    "url": "https://github.com/[git-user]/epoch-sample-app.git"
+                },
+                "webhooks_url": "https://xxxx.xxx.xxx.xxx",
+                "build": {
+                    "branch": [ "main", "master" ],
+                    "dockerfile_path": "./Dockerfile"
+                },
+                "container_registry": {
+                    "image": "[dockerhub-user]/epoch-sample-api"
+                },
+                "static_analysis": {
+                    "interface": "sonarQube"
+                }
+              }
+            ],
+            "environments": [
+                {
+                    "environment_id": "t17ee1815bf3237a",
+                    "manifests": [
+                        {
+                            "file_id": "1",
+                            "file": "ui-app.yaml",
+                            "parameters": {
+                                "image": "[dockerhub-user]/epoch-sample-ui",
+                                "image_tag": "main.20220101000000",
+                                "param01": "1",
+                                "param02": "31001",
+                                "param03": "32001",
+                            }
+                        }
+                    ]
+                }
+            ]
+          },
+          "cd_config": {
+            "system_config": "one-namespace",
+            "environments_common": {
+                "git_repositry": {
+                    "account_select": "applicationCode",
+                    "housing": "outer",
+                    "interface": "github",
+                    "user": "example-user",
+                    "password": "ghp_xxxxxxxxxxxxxxxxxx",
+                    "token": "ghp_xxxxxxxxxxxxxxxxxx"
+                }
+            },
+            "environments": [
+                {
+                    "environment_id": "t17ee1815bf3237a",
+                    "name": "staging",
+                    "git_repositry": {
+                        "url": "https://github.com/[github-user]/epoch-sample-staging-manifest.git"
+                    },
+                    "deploy_destination": {
+                        "cluster_kind": "internal",
+                        "namespace": "sample-staging",
+                        "authentication_token": "",
+                        "base64_encoded_certificate": "",
+                        "cluster_url": "https://kubernetes.default.svc"
+                    },
+                    "cd_exec_users": {
+                        "user_select": "all",
+                        "user_id": ""
+                    }
+                }
+            ]
+          },
+          "parameter-info": {
+              "1": {
+                "__parameterItemInfo__-1-param01": "この項目はreplicas",
+                "__parameterItemInfo__-1-param02": "この項目はactive nodeport",
+                "__parameterItemInfo__-1-param03": "この項目はpreview nodeport"
+              }
+          },
+          "update_at": "Thu, 10 Feb 2022 02:42:55 GMT",
+        }
+    Workspace_Update_At_Example: # Specific以外
+      type: object # 型
+      example:
+        [
+          {
+            "update_at": "更新日時",
+          }
+        ]
+    Workspace_Update_At: # Specific以外
+      type: object # 型
+      example:
+        [
+          {
+            "update_at": "Thu, 10 Feb 2022 02:42:55 GMT",
+          }
+        ]
+    Workspace_Other_Example: # specification以外
+      type: object # 型
+      example:
+        [
+          {
+            "organization_id": "オーガナイゼーションID(未使用)",
+            "create_at": "作成日時",
+            "role_update_at": "更新日時",
+          }
+        ]
+    Workspace_Other: # specification以外
+      type: object # 型
+      example:
+        [
+          {
+            "organization_id": 1,
+            "create_at": "Thu, 10 Feb 2022 02:42:55 GMT",
+            "role_update_at": "Thu, 10 Feb 2022 02:42:55 GMT",
+          }
+        ]
+    Workspace_List_Example: # モデル名
+      type: object # 型
+      example:
+        [
+          {
+            "workspace_id": "ワークスペースID",
+            "workspace_name": "ワークスペース名",
+            "roles": [ 
+              {
+                "kind": "ワークスペースに該当する自分自身ロール [owner (オーナー), manager (管理者), member-mg (メンバー管理), ci-setting (CI設定), ci-result (CI確認), cd-setting (CD設定), cd-execute (CD実行), cd-result (CD確認)]",
+                "sort": "内部の並び替え用の値",
+              },
+            ],
+            "members": "ワークスペースに該当するメンバー数",
+            "workspace_remarks": "ワークスペースの備考",
+            "update_at": "ワークスペース情報の更新日時",
+          },
+        ]
+    Workspace_List: # モデル名
+      type: object # 型
+      example:
+        [
+          {
+            "workspace_id": 1,
+            "workspace_name": "サンプルワークスペース",
+            "roles": [
+              {
+                "kind": "owner",
+                "sort": "01",
+              },
+            ],
+            "members": 10,
+            "workspace_remarks": "",
+            "update_at": "Thu, 10 Feb 2022 02:42:55 GMT",
+          },
+        ]
+
+    #
+    # Manifestの共通モデル
+    #
+    Workspace_Manifest_Parameter_Example: # モデル名
+      type: object
+      example:
+        {
+          "ci_config": {
+            "environments": [
+                {
+                    "environment_id": "環境ID(UIで設定されたID)",
+                    "manifests": [
+                        {
+                            "parameters": {
+                                "image": "イメージレジストリ格納先",
+                                "image_tag": "イメージレジストリタグ名",
+                                "param01": "manifestパラメータ 01~20まで",
+                            }
+                        }
+                    ]
+                }
+            ]
+          },
+          "parameter-info": {
+              "1": {
+                  "__parameterItemInfo__-1-param01": "画面のparamの説明 処理件数分繰り返し",
+              }
+          },
+          "update_at": "更新前の日時",
+        }
+    Workspace_Manifest_Parameter: # モデル名
+      type: object # 型
+      example:
+        {
+          "ci_config": {
+            "environments": [
+                {
+                    "environment_id": "t17ee1815bf3237a",
+                    "manifests": [
+                        {
+                            "parameters": {
+                                "image": "[dockerhub-user]/epoch-sample-ui",
+                                "image_tag": "main.20220101000000",
+                                "param01": "1",
+                                "param02": "31001",
+                                "param03": "32001",
+                            }
+                        }
+                    ]
+                }
+            ]
+          },
+          "parameter-info": {
+              "1": {
+                "__parameterItemInfo__-1-param01": "この項目はreplicas",
+                "__parameterItemInfo__-1-param02": "この項目はactive nodeport",
+                "__parameterItemInfo__-1-param03": "この項目はpreview nodeport"
+              }
+          },
+          "update_at": "Thu, 10 Feb 2022 02:42:55 GMT",
+        }
+    Workspace_Manifest_Template_Example: # モデル名
+      type: object
+      example:
+        [
+          {
+            "id": "manifestテンプレートID",
+            "workspace_id": "ワークスペースID",
+            "file_name": "ファイル名",
+            "file_text": "テンプレートの内容",
+            "create_at": "登録日時",
+            "update_at": "更新日時"
+          }
+        ]
+    Workspace_Manifest_Template: # モデル名
+      type: object # 型
+      example:
+        [
+          {
+            "id": 1,
+            "workspace_id": 1,
+            "file_name": "sample_ui.yaml",
+            "file_text": "xxxxxxx",
+            "create_at": "Thu, 10 Feb 2022 02:42:55 GMT",
+            "update_at": "Thu, 10 Feb 2022 02:42:55 GMT"
+          }
+        ]
+        
+    #
+    # CI Pipelineの共通モデル
+    #
+    Cipipeline_GitCommits_Example: # モデル名
+      type: object # 型
+      example:
+        {
+          "result": "HTTPステータスコード", 
+          "rows": [
+            {
+              "branch": "コミット先のブランチ名", 
+              "commit_id": "コミットID", 
+              "date": "コミットした日付", 
+              "git_url": "コミットしたリポジトリURL", 
+              "html_url": "コミット詳細へのURL", 
+              "message": "コミットメッセ―ジ", 
+              "name": "コミットしたユーザ名"
+            }
+          ]
+        }
+
+    Cipipeline_GitCommits: # モデル名
+      type: object # 型
+      example:
+        {
+          "result": "200", 
+          "rows": [
+            {
+              "branch": "feature", 
+              "commit_id": "6ba4f2321c0524b454ba4354c05e3318d1ef792b", 
+              "date": "2021-12-10T01:22:14Z", 
+              "git_url": "https://github.com/git-user/epoch-sample-app.git", 
+              "html_url": "https://github.com/git-user/epoch-sample-app/commit/6ba4f2321c0524b454ba4354c05e3318d1ef792b", 
+              "message": "add text", 
+              "name": "git-user"
+            }
+          ]
+        }
+
+    Cipipeline_GitHooks_Example: # モデル名
+      type: object # 型
+      example:
+        {
+          "result": "HTTPステータスコード", 
+          "rows": [
+            {
+              "branch": "ブランチ名", 
+              "date": "webhook実行日付", 
+              "event": "webhook実行契機 push固定", 
+              "git_url": "Webhook実行したリポジトリURL", 
+              "status": "メッセージ", 
+              "status_code": "ステータスコード", 
+              "url": "Webhook実行先のURL"
+            }
+          ]
+        }
+
+    Cipipeline_GitHooks: # モデル名
+      type: object # 型
+      example:
+        {
+          "result": "200", 
+          "rows": [
+            {
+              "branch": "", 
+              "date": "2022-01-19T07:25:41Z", 
+              "event": "push", 
+              "git_url": "https://github.com/git-user/epoch-sample-app.git", 
+              "status": "failed to connect to host", 
+              "status_code": 502, 
+              "url": "https://localhost:xxxxx/api/listener/1"
+            }
+          ]
+        }
+
+    Cipipeline_Result_Example: # モデル名
+      type: object # 型
+      example:
+        {
+          "result": "HTTPステータスコード", 
+          "rows": [
+            {
+              "build_branch": "ビルド対象のブランチ", 
+              "container_image": "コンテナイメージの出力先", 
+              "finish_time": "終了日時", 
+              "git_sender_user": "webhook送信者", 
+              "pipeline_id": "パイプラインID", 
+              "pipelinerun_name": "パイプライン名", 
+              "repository_url": "実行対象のリポジトリURL", 
+              "start_time": "開始日時", 
+              "status": "パイプラインのステータス", 
+              "task_id": "タスクID", 
+              "tasks": [
+                {
+                  "finish_time": "終了日時", 
+                  "name": "タスク名", 
+                  "start_time": "開始日時", 
+                  "status": "タスクのステータス", 
+                  "taskrun_name": "task run名"
+                }
+              ]
+            }
+          ]
+        }
+
+    Cipipeline_Result: # モデル名
+      type: object # 型
+      example:
+        {
+          "result": "200", 
+          "rows": [
+            {
+              "build_branch": "main", 
+              "container_image": "docker-user/epoch-sample-api:main.20220214-171235", 
+              "finish_time": "", 
+              "git_sender_user": "yamada-tarou", 
+              "pipeline_id": 1, 
+              "pipelinerun_name": "pipeline-run-1-8zrjt", 
+              "repository_url": "https://github.com/git-user/epoch-sample-app.git", 
+              "start_time": "2022/02/14 17:12:25", 
+              "status": "Running", 
+              "task_id": 2, 
+              "tasks": [
+                {
+                  "finish_time": "", 
+                  "name": "task-build-and-push", 
+                  "start_time": "2022/02/14 17:13:14", 
+                  "status": "Running", 
+                  "taskrun_name": "pipeline-run-1-8zrjt-task-build-and-push-7h2ck"
+                }
+              ]
+            }
+          ]
+        }
+
+    Cipipeline_ResultTaskrunLogs_Example: 
+      type: object # 型
+      example:
+        {
+          "result": "HTTPステータスコード",
+          "log": "TEKTONのタスクラン実行ログ"
+        }
+
+    Cipipeline_ResultTaskrunLogs: # モデル名
+      type: object # 型
+      example:
+        {
+          "result": "200",
+          "log": "task task-build-and-push has failed: ..."
+        }
+
+    #
+    # CD Pipelineの共通モデル
+    #
+    Cdpipeline_Argocd_Example: 
+      type: object # 型
+      example:
+        {
+          "result": "HTTPステータスコード",
+          "rows": [
+            {
+              "trace_id": "トレースID",
+              "environment_name": "環境名",
+              "namespace": "デプロイ先のnamespace",
+              "health": {
+                "status": "全体のhealthステータス"
+              },
+              "sync_status": {
+                "status": "syncステータス",
+                "repo_url": "デプロイ対象のリポジトリURL",
+                "server": "デプロイ先のKebernetesサーバのURL",
+                "revision": "デプロイ対象のGitのリビジョン"
+              },
+              "resource_status": [
+                {
+                  "kind": "リソースのkind名",
+                  "name": "リソース名",
+                  "health_status": "リソースのhealthステータス",
+                  "sync_status": "リソースのsyncステータス",
+                  "message": "メッセージ"
+                }
+              ],
+              "startedAt": "開始日時",
+              "finishedAt": "終了日時"
+            }
+          ]
+        }
+
+    Cdpipeline_Argocd:
+      type: object # 型
+      example:
+        {
+          "result": "200",
+          "rows": [
+            {
+              "trace_id": "0000000010",
+              "environment_name": "development",
+              "namespace": "argo-test",
+              "argocd_results": {
+                "health": {
+                  "status": "Healthy"
+                },
+                "sync_status": {
+                  "status": "Synced",
+                  "repo_url": "https://github.com/git-user/epoch-sample-staging-manifest.git",
+                  "server": "https://kubernetes.default.svc",
+                  "revision": "5783c0611f0a31ab965b9aee055066f566130293"
+                },
+                "resource_status": [
+                  {
+                    "kind": "Rollout",
+                    "name": "api-app",
+                    "health_status": "Healty",
+                    "sync_status": "Synced",
+                    "message": "rollout.argoproj.io/api-app unchanged"
+                  }
+                ],
+                "startedAt": "2022-01-20T08:27:39Z",
+                "finishedAt": "2022-01-20T08:27:49Z"
+              }
+            }
+          ]
+        }
+
+    Cdpipeline_Argocd_Sync_Example:
+      type: object # 型
+      example:
+        {
+          "environment_name": "環境名 staging固定"
+        }
+
+    Cdpipeline_Argocd_Sync:
+      type: object # 型
+      example:
+        {
+          "environment_name": "staging"
+        }
+
+    Cdpipeline_Cd_Exec_Example:
+      type: object # 型
+      example:
+        {
+          "operationSearchKey": "CD実行対象のリポジトリURL",
+          "environmentName": "環境名",
+          "preserveDatetime": "予約日時 *予約日時を指定しない場合は空文字"
+        }
+
+    Cdpipeline_Cd_Exec:
+      type: object # 型
+      example:
+        {
+          "operationSearchKey": "https://github.com/git-user/epoch-sample-staging-manifest.git",
+          "environmentName": "staging",
+          "preserveDatetime": "2022/02/15 09:35"
+        }
+
+    Cdpipeline_Cd_Env_Example:
+      type: object # 型
+      example:
+        {
+          "result": "HTTPステータスコード", 
+          "environments": [
+            {
+              "id": "各環境に割り当てられるID",
+              "name": "環境名",
+            }
+          ]
+        }
+
+    Cdpipeline_Cd_Env:
+      type: object # 型
+      example:
+        {
+          "result": "200", 
+          "environments": [
+            {
+              "id": "t17ef747cdd0246d",
+              "name": "staging",
+            }
+          ]
+        }
+
+    #
+    # Memberの共通モデル
+    #
+    Member_Post_Example: # モデル名
+      type: object # 型
+      # required: # 必須フィールド
+      #   - id
+      example:
+        [
+          {
+            "user_id": "各ユーザに割り当てられているID",
+            "roles": [
+              {
+                "kind": "追加するユーザに割り当てるロール \
+                [ owner (オーナー), manager (管理者), \
+                  member-mg (メンバー管理), \
+                  ci-setting (CI設定), ci-result (CI確認), \
+                  cd-setting (CD設定), cd-execute (CD実行), \
+                  cd-result (CD確認) ]"
+              }
+            ]
+          }
+        ]
+
+    Member_Post: # モデル名
+      type: object # 型
+      # required: # 必須フィールド
+      #   - id
+      example: 
+        [
+          {
+            "user_id": "74fd1988-0906-4697-9499-38078cb26b20",
+            "roles": [
+              {
+                "kind": "owner"
+              }
+            ]
+          }
+        ]
+
+    Member_Example: 
+      type: object
+      example: 
+        [
+          {
+            "roles": [
+              {
+                "kind": "追加するユーザに割り当てるロール \
+                  [ owner (オーナー), manager (管理者), \
+                    member-mg (メンバー管理), \
+                    ci-setting (CI設定), ci-result (CI確認), \
+                    cd-setting (CD設定), cd-execute (CD実行), \
+                    cd-result (CD確認) ]"
+              }
+            ], 
+            "user_id": "各ユーザに割り当てられているID", 
+            "username": "ユーザ名"
+          }
+        ]
+
+    Member:
+      type: object
+      example: 
+        [
+          {
+            "roles": [
+              {
+                "kind": "owner"
+              }
+            ], 
+            "user_id": "74fd1988-0906-4697-9499-38078cb26b20", 
+            "username": "user-01"
+          }
+        ]
+
+    MemberExec_Example: 
+      type: object
+      example: 
+        [
+          {
+            "user_id": "各ユーザに割り当てられているID", 
+            "username": "ユーザ名"
+          }
+        ]
+
+    MemberExec: 
+      type: object
+      example: 
+        [
+          {
+            "user_id": "74fd1988-0906-4697-9499-38078cb26b20", 
+            "username": "user-01"
+          }
+        ]
+
+    #
+    # Userの共通モデル
+    #
+    User_Example: # モデル名
+      type: object # 型
+      example: 
+        {
+          "composite_roles": [
+              "ユーザに割り当てられている権限のリスト \
+              形式=> ws-{workspace_id}-role-{権限} \
+              権限=> [ cd-execute, cd-execute-result, \
+                ci-pipeline-result, manifest-setting, \
+                manifest-upload, member-add, \
+                member-role-update, owner-role-setting, \
+                cd-update, ci-update, ws-delete, \
+                ws-name-update, ws-reference ]"
+            ],
+          "email": "ユーザのEメールアドレス",
+          "enabled": "ログイン可能／不可 [ true (可能), false(不可) ]",
+          "firstName": "ユーザの名",
+          "lastName": "ユーザの姓",
+          "role": "全てのワークスペースに対する、ロールの表示名のリスト \
+                    形式=> \"{ワークスペース名}\":[\"{ロール名の表示名}\"] \
+                    ワークスペース名=> 画面で設定した、ワークスペース名 \
+                    ロールの表示名=> [ オーナー, 管理者, メンバー管理, \
+                                      CI設定, CI確認, CD設定, CD実行, CD確認 ]",
+          "roles": [
+              "全てのワークスペースに対する、ユーザに割り当てられているロールのリスト \
+                形式=> ws-{ワークスペースID}-{ロール} \
+                ワークスペースID=> ワークスペースのID \
+                ロール=> [ owner (オーナー), manager (管理者), \
+                  member-mg (メンバー管理), \
+                  ci-setting (CI設定), ci-result (CI確認), \
+                  cd-setting (CD設定), cd-execute (CD実行), \
+                  cd-result (CD確認) ]"
+          ],
+          "user_id": "ユーザに割り当てられているID",
+          "username": "ユーザ名"
+      }
+
+    User: # モデル名
+      type: object # 型
+      example: 
+        {
+          "composite_roles": [
+              "ws-1-role-cd-execute",
+              "ws-1-role-cd-execute-result",
+              "ws-1-role-ci-pipeline-result",
+              "ws-1-role-manifest-setting",
+              "ws-1-role-manifest-upload",
+              "ws-1-role-member-add",
+              "ws-1-role-member-role-update",
+              "ws-1-role-owner-role-setting",
+              "ws-1-role-ws-cd-update",
+              "ws-1-role-ws-ci-update",
+              "ws-1-role-ws-delete",
+              "ws-1-role-ws-name-update",
+              "ws-1-role-ws-reference",
+          ],
+          "email": "test-01@mail.epoch.test",
+          "enabled": true,
+          "firstName": "user-01",
+          "lastName": "test",
+          "role": "{\"user-01-20220210_153606\":[\"オーナー\"],\"user-01-20220210_154125\":[\"オーナー\"],\"user-01-20220210_154440\":[\"オーナー\"]}",
+          "roles": [
+              "ws-1-owner"
+          ],
+          "user_id": "74fd1988-0906-4697-9499-38078cb26b20",
+          "username": "user-01"
+      }
+
+    #
+    # 共通レスポンスのモデル
+    #
+    http_return_member_400_Example:
+      type: object # 型
+      properties:
+        result:
+          type: string # 型 
+          example: 'HTTPステータスコード'
+        errorDetail:
+          type: string # 型 
+          example: 'エラー詳細内容'
+
+    http_return_member_400:
+      type: object # 型
+      properties:
+        result:
+          type: string # 型 
+          example: '400'
+        errorDetail:
+          type: string # 型 
+          example: 'エラー詳細内容'
+
+    http_return_member_current_400_Example:
+      type: object # 型
+      properties:
+        result:
+          type: string # 型 
+          example: 'HTTPステータスコード'
+        reason:
+          type: string # 型 
+          example: 'エラー詳細内容'
+
+    http_return_member_current_400:
+      type: object # 型
+      properties:
+        result:
+          type: string # 型 
+          example: '400'
+        reason:
+          type: string # 型 
+          example: 'エラー詳細内容'
+
+    return_200_Example:
+      type: object # 型
+      properties:
+        result:
+          type: string # 型 
+          example: 'HTTPステータスコード'
+
+    return_200:
+      type: object # 型
+      properties:
+        result:
+          type: string # 型 
+          example: '200'
+
+    Cdpipeline_Cd_Exec_401_Example:
+      type: object # 型
+      example:
+        {
+          "result": "HTTPステータスコード", 
+          "errorDetail": "エラー詳細内容"
+        }
+
+    Cdpipeline_Cd_Exec_401:
+      type: object # 型
+      example:
+        {
+          "result": "401",
+          "errorDetail": "xxxxxxx"
+        }
+
+    http_return_Example:
+      type: object # 型
+      properties:
+        result:
+          type: string # 型 
+          example: '200 or 201 or 400,404,500'
+        errorStatement:
+          type: string # 型 
+          example: 'エラー処理名'
+        error_statement:
+          type: string # 型 
+          example: 'エラー詳細内容'
+        exception:
+          type: string # 型 
+          example: 'エラー時のトレースバック'
+
+    http_return:
+      type: object # 型
+      properties:
+        result:
+          type: string # 型 
+          example: '500'
+        errorStatement:
+          type: string # 型 
+          example: 'ワークスペース情報:作成'
+        error_statement:
+          type: string # 型 
+          example: 'ユーザー情報の取得に失敗しました'
+        exception:
+          type: string # 型 
+          example: 'xxxxxx'
