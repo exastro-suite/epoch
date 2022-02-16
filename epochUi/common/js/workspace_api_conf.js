@@ -56,6 +56,10 @@ var workspace_api_conf = {
             },
         },
         "cd_pipeline": {
+            "nop" : {
+                "get" : URL_BASE + "/api/alive"
+            },
+
             "post":     URL_BASE + "/api/workspace/{workspace_id}/cd/pipeline",
 
             "argocd": {
@@ -91,3 +95,5 @@ var workspace_api_conf = {
     }
 }
 const ci_result_polling_span = 10000; // 10s
+const argocd_result_polling_span = 10000; // 10s
+const ita_result_polling_span = 10000; // 10s

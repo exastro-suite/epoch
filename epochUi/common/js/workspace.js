@@ -2482,7 +2482,9 @@ const cdRunning = function(){
   new Promise(function(resolve, reject) {
     // 実行中ダイアログ表示
     $('#modal-progress-container').css('display','flex');
-    $('#progress-message-ok').prop("disabled", true);
+    $('#progress-message-ok').css("display","none");
+    $('#progress-message-ok-cdexec').css("display","inline");
+    $('#progress-message-ok-cdexec').prop("disabled", true);
     //
     // CD実行APIの呼び出し
     //
@@ -2518,11 +2520,11 @@ const cdRunning = function(){
   }).then(() => {
     $('#progress_message').html('CD実行開始しました');
     console.log('Complete !!');
-    $('#progress-message-ok').prop("disabled", false);
+    $('#progress-message-ok-cdexec').prop("disabled", false);
   }).catch(() => {
     // 実行中ダイアログ表示
     $('#progress_message').html('CD実行失敗しました');
-    $('#progress-message-ok').prop("disabled", false);
+    $('#progress-message-ok-cdexec').prop("disabled", false);
     console.log('Fail !!');
   });
 };
@@ -3064,6 +3066,8 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
     new Promise(function(resolve, reject) {
       // 実行中ダイアログ表示
       $('#modal-progress-container').css('display','flex');
+      $('#progress-message-ok').css("display","inline");
+      $('#progress-message-ok-cdexec').css("display","none");
       $('#progress-message-ok').prop("disabled", true);
       //
       // ワークスペース情報登録API
@@ -3461,6 +3465,8 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
     new Promise(function(resolve, reject) {
       // 実行中ダイアログ表示
       // $('#modal-progress-container').css('display','flex');
+      $('#progress-message-ok').css("display","inline");
+      $('#progress-message-ok-cdexec').css("display","none");
       $('#progress-message-ok').prop("disabled", true);
 
       //
@@ -3518,6 +3524,13 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       window.location.reload();      
     }
   });
+  //
+  // 処理中メッセージBOXのOKボタン(CD実行用)
+  //
+  $('#progress-message-ok-cdexec').on('click',() => {
+    $('#modal-progress-container').css('display','none');
+    modal.close();
+  });
 
   /* ---------------- *\
   |  ci result polling
@@ -3545,19 +3558,15 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         "url": workspace_api_conf.api.ciResult.pipelinerun.get.replace('{workspace_id}', workspace_id),
         "data": {'latest': "True"}
       }).done(function(response) {
-        var run_status = "";
         var current_pipelineruns = response.rows;
+        var visibility = "hidden";
         for(let i = 0; i < current_pipelineruns.length; i++) {
           if(['Pending', 'Running'].includes(current_pipelineruns[i].status)) {
-            run_status = "running";
-            $('#pipelineTektonCheckArea').css("visibility", "visible");
+            visibility = "visible";
             break;
-          } else {
-            $('#pipelineTektonCheckArea').css("visibility", "hidden");
           }
         }
-        $('#ws-pipeline-tekton .workspace-block-status').attr('data-status', run_status);
-
+        $('#pipelineTektonCheckArea').css("visibility", visibility);
       }).fail(function(error) {
         console.log("FAIL : get pipelinerun");
 
@@ -3568,8 +3577,56 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
     }
   }
   
+    /* ---------------- *\
+  |  argocd result polling
+  \* ---------------- */
+  const argocd_result_polling = function() {
+
+    let argocd_result_call = false;
+    try {
+      if(workspace_id != null
+      && currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-cd-execute-result".replace('{ws_id}',workspace_id)) != -1 ) {
+        argocd_result_call = true;
+      }
+    } catch(e) { }
+
+    if(!argocd_result_call) {
+      $.ajax({
+        "type": "GET",
+        "url": workspace_api_conf.api.cd_pipeline.nop.get
+      }).always(function(result) {
+        setTimeout(argocd_result_polling, argocd_result_polling_span);
+      });
+    } else {
+      $.ajax({
+        "type": "GET",
+        "url": workspace_api_conf.api.cd_pipeline.argocd.get.replace('{workspace_id}', workspace_id),
+        "data": {'processing': "True"}
+      }).done(function(response) {
+        var cdresult = response.rows;
+        console.log("DONE : cdresult");
+        console.log("--- data ----");
+        console.log(JSON.stringify(cdresult));
+        var visibility = "hidden";
+        for(let i = 0; i < cdresult.length; i++) {
+          if(['ArgoCD-Sync', 'ArgoCD-Processing'].includes(cdresult[i].cd_status)) {
+            visibility = "visible"
+            break;
+          }
+        }
+        $('#arogCdResultCheckArea').css("visibility", visibility);
+      }).fail(function(error) {
+        console.log("FAIL : get argocd result");
+
+      }).always(function(result) {
+
+        setTimeout(argocd_result_polling, argocd_result_polling_span);
+      });
+    }
+  }
+
   // window onloadイベント
-  $(document).ready(function(){ ci_result_polling(); });
+  $(document).ready(function(){ ci_result_polling();argocd_result_polling(); });
 
   // Button control by role - ロールによるボタン制御
   function show_buttons_by_role() {
@@ -3586,7 +3643,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
 
       $('#gitServiceCheckButton').css("display","");
       $('#pipelineTektonCheckButton').css("display","");
-      $('#pipelineTektonCheckArea').css("visibility","hidden");
+      // $('#pipelineTektonCheckArea').css("visibility","hidden");
       $('#registryServiceCheckButton').css("display","");
       $('#cdExecutionButtonArea').css("display","");
       $('#exastroItAutomationResultCheckButton').css("display","");
