@@ -1818,25 +1818,26 @@ function templateFileDelete(key, file_id){
       // 該当行のManifestパラメータ削除
       console.log("environment:-------------------------");
       for(var env in wsDataJSON['environment']) {
-        newPara = {};
-        var i = 0;
-        for(var fileKey in wsDataJSON['environment'][env]["parameter"]) {
-          // 選択されている行を除いて移行
-          if (fileKey != key){
-            i = i + 1;
-            fildID = 'file'+("000"+i).slice(-3);
-            newPara[fildID] = {};
-            // パラメータごとにキー値があるので置き換え
-            for(var para in wsDataJSON['environment'][env]["parameter"][fileKey])
-            {
-              paraID = para.substr((key + '-' + env + '-').length);
-              newPara[fildID][fildID + "-" + env + "-" + paraID] = wsDataJSON['environment'][env]["parameter"][fileKey][para];
-            }
-          }
-        }
-        // 編集後の値を設定
-        wsDataJSON['environment'][env]["parameter"] = newPara;
-        console.log(wsDataJSON['environment'][env]['parameter']);
+        delete wsDataJSON.environment[env].parameter[file_id];
+        // newPara = {};
+        // var i = 0;
+        // for(var fileKey in wsDataJSON['environment'][env]["parameter"]) {
+        //   // 選択されている行を除いて移行
+        //   if (fileKey != key){
+        //     i = i + 1;
+        //     fildID = 'file'+("000"+i).slice(-3);
+        //     newPara[fildID] = {};
+        //     // パラメータごとにキー値があるので置き換え
+        //     for(var para in wsDataJSON['environment'][env]["parameter"][fileKey])
+        //     {
+        //       paraID = para.substr((key + '-' + env + '-').length);
+        //       newPara[fildID][fildID + "-" + env + "-" + paraID] = wsDataJSON['environment'][env]["parameter"][fileKey][para];
+        //     }
+        //   }
+        // }
+        // // 編集後の値を設定
+        // wsDataJSON['environment'][env]["parameter"] = newPara;
+        // console.log(wsDataJSON['environment'][env]['parameter']);
       }
 
       workspaceImageUpdate();
