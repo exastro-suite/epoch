@@ -306,11 +306,24 @@ def get_cd_pipeline_argocd(workspace_id):
         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
         globals.logger.debug('#' * 50)
 
-        # CD結果の全件を取得する
-        api_url = "{}://{}:{}/workspace/{}/cd/result".format(os.environ['EPOCH_RS_CD_RESULT_PROTOCOL'],
+        # Get Query Parameter
+        processing = request.args.get('processing', default='False')
+        if processing == "True":
+            # 画面に実行中を表示するための抽出条件は、ArgoCD同期中、ArgoCD処理中とする
+            # The extraction conditions for displaying the execution status on the screen are ArgoCD synchronization and ArgoCD processing.
+            cd_status_in = "{}.{}".format(const.CD_STATUS_ARGOCD_SYNC, const.CD_STATUS_ARGOCD_PROCESSING) 
+        else:
+            # ArgoCDの監視する状態は、ArgoCD同期中、ArgoCD処理中、ArgoCD失敗、ArgoCD同期完了とする
+            # ArgoCD monitoring status is ArgoCD synchronization, ArgoCD processing, ArgoCD failure, ArgoCD synchronization completion.
+            cd_status_in = "{}.{}.{}.{}".format(const.CD_STATUS_ARGOCD_SYNC, const.CD_STATUS_ARGOCD_PROCESSING, const.CD_STATUS_ARGOCD_FAILED, const.CD_STATUS_ARGOCD_SYNCED) 
+
+        # CD結果のargocdの結果がある内容について全件を取得する
+        # Get all the contents of argocd result of CD result
+        api_url = "{}://{}:{}/workspace/{}/cd/result?cd_status_in={}".format(os.environ['EPOCH_RS_CD_RESULT_PROTOCOL'],
                                                         os.environ['EPOCH_RS_CD_RESULT_HOST'],
                                                         os.environ['EPOCH_RS_CD_RESULT_PORT'],
-                                                        workspace_id)
+                                                        workspace_id,
+                                                        cd_status_in)
         response = requests.get(api_url)
 
         if response.status_code != 200:
@@ -431,6 +444,7 @@ def get_cd_pipeline_argocd(workspace_id):
             rows.append(
                 {
                     "trace_id": row["contents"]["trace_id"],
+                    "cd_status": row["cd_status"],
                     "environment_name": row["contents"]["environment_name"],
                     "namespace": row["contents"]["namespace"],
                     "health": {

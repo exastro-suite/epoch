@@ -621,7 +621,7 @@
                   </div>
                 </div>
               </div>
-              <div class="workspace-block-status workspace-mode-running modal-open" data-status="unentered" data-button="pipelineTektonCheck" id="pipelineTektonCheckArea" style="visibility: hidden;">
+              <div class="workspace-block-status workspace-mode-running modal-open" data-status="running" data-button="pipelineTektonCheck" id="pipelineTektonCheckArea" style="visibility: hidden;">
                 <div class="workspace-block-status-bar"></div>
                 <div class="workspace-block-status-text">実行中</div>
               </div>
@@ -656,10 +656,10 @@
                   </div>
                 </div>
               </div>
-              <!-- <div class="workspace-block-status workspace-mode-running modal-open" data-status="running" data-button="arogCdResultCheck">
+              <div class="workspace-block-status workspace-mode-running modal-open" data-status="running" data-button="arogCdResultCheck" id="arogCdResultCheckArea" style="visibility: hidden;">
                 <div class="workspace-block-status-bar"></div>
                 <div class="workspace-block-status-text">実行中</div>
-              </div> -->
+              </div>
             </div>
 
             <!-- レジストリサービス -->
@@ -809,10 +809,10 @@
                       <svg viewBox="0 0 160 32" class="workspace-ita-frow-svg" id="ws-ita-frow">
                         <use href="#icon-ita-flow" />
                       </svg>
-                      <!-- <div class="workspace-ita-status workspace-mode-running modal-open" data-status="running" data-button="exastroItAutomationResultCheck">
+                      <div class="workspace-ita-status workspace-mode-running modal-open" data-status="running" data-button="exastroItAutomationResultCheck" id="exastroItAutomationResultCheckArea" style="visibility: hidden;">
                         <div class="workspace-ita-status-bar"></div>
                         <div class="workspace-ita-status-text">実行中</div>
-                      </div> -->
+                      </div>
                     </div>
                     <div class="workspace-block-setting workspace-mode-running">
                       <button class="modal-open workspace-button epoch-popup" data-button="exastroItAutomationResultCheck" title="IT Automationの稼働状況を確認します。" id="exastroItAutomationResultCheckButton" style="display:none!important;">
@@ -904,7 +904,8 @@
     <div class="modal-footer">
       <ul class="modal-menu-list">
         <li class="modal-menu-item">
-          <button id="progress-message-ok" class="modal-menu-button message-ok">OK</button>
+          <button id="progress-message-ok" class="modal-menu-button message-ok" style="display: none;">OK</button>
+          <button id="progress-message-ok-cdexec" class="modal-menu-button message-ok" style="display: none;">OK</button>
           <input type="hidden" id="progress-complete" value="">
         </li>
       </ul>
