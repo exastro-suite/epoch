@@ -352,14 +352,34 @@ def monitoring_it_automation():
                         # 取得失敗 Acquisition failure
                         cd_status = const.CD_STATUS_ITA_FAILED
 
-                    # ステータスが更新されたら更新
-                    # Update when status is updated
-                    if cd_status != result_row["cd_status"]:
-                        post_data = json.loads(result_row["contents"])
+                    # ステータスが更新されるか、実行中は更新
+                    # Status is updated or updated while running
+                    if cd_status != result_row["cd_status"] or \
+                        cd_status == const.CD_STATUS_ITA_EXECUTE:
+                        # post_data = json.loads(result_row["contents"])
+
+                        # cd-result get
+                        api_url = "{}://{}:{}/workspace/{}/it-automation/cd/result/{}/logs".format(os.environ['EPOCH_CONTROL_ITA_PROTOCOL'],
+                                                                                                os.environ['EPOCH_CONTROL_ITA_HOST'],
+                                                                                                os.environ['EPOCH_CONTROL_ITA_PORT'],
+                                                                                                workspace_id,
+                                                                                                conductor_instance_id)
+                        response = requests.get(api_url)
+
+                        if response.status_code != 200 and response.status_code != 404:
+                            raise Exception("it-automation cd result logs get error:[{}]".format(response.status_code))
+
+                        ret_logs = json.loads(response.text)
+
+                        globals.logger.debug("it-automation cd-result logs[{}]".format(result_row["workspace_id"], result_row["cd_result_id"], ret_logs))
+
+                        ita_rows["manifest_embedding"] = ret_logs["rows"]["manifest_embedding"]
+                        ita_rows["manifest_commit_push"] = ret_logs["rows"]["manifest_commit_push"]
+
                         #globals.logger.debug(post_data)
                         # post_data["cd_status"] = const.CD_STATUS_ITA_COMPLETE
                         post_data = {
-                            "cd_status": const.CD_STATUS_ITA_COMPLETE,
+                            "cd_status": cd_status,
                             "ita_results": ita_rows,
                         }
 

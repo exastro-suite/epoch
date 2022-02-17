@@ -28,6 +28,8 @@ from requests.auth import HTTPBasicAuth
 import traceback
 from datetime import timedelta, timezone
 import hashlib
+import zipfile
+import glob
 
 import globals
 import common
@@ -45,8 +47,9 @@ EPOCH_ITA_PORT = "8084"
 # メニューID
 ite_menu_operation = '2100000304'
 ite_menu_conductor_exec = '2100180004'
-ite_menu_conductor_conductor_result = '2100180005'
+ite_menu_conductor_result = '2100180005'
 ite_menu_conductor_cancel = '2100180005'
+ite_menu_conductor_download = '2100180006'
 
 def get_cd_operations(workspace_id):
     """get cd-operations list
@@ -274,7 +277,7 @@ def cd_result_get(workspace_id, conductor_id):
 
     try:
         globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
+        globals.logger.debug('CALL {} workspace_id[{}] conductor_id[{}]'.format(inspect.currentframe().f_code.co_name, workspace_id, conductor_id))
         globals.logger.debug('#' * 50)
 
         # ワークスペースアクセス情報取得 get workspace access info.
@@ -287,8 +290,8 @@ def cd_result_get(workspace_id, conductor_id):
         ita_user = access_info['ITA_USER']
         ita_pass = access_info['ITA_PASSWORD']
 
-        # POST送信する
-        # HTTPヘッダの生成
+        # POST送信する post sender
+        # HTTPヘッダの生成 HTTP header generation
         filter_headers = {
             'host': EPOCH_ITA_HOST + ':' + EPOCH_ITA_PORT,
             'Content-Type': 'application/json',
@@ -296,16 +299,16 @@ def cd_result_get(workspace_id, conductor_id):
             'X-Command': 'INFO',
         }
 
-        # 実行パラメータ設定
+        # 実行パラメータ設定 parameter setting
         data = {
             "CONDUCTOR_INSTANCE_ID": conductor_id
         }
 
-        # json文字列に変換（"utf-8"形式に自動エンコードされる）
+        # json文字列に変換 json convert
         json_data = json.dumps(data)
 
-        # リクエスト送信
-        exec_response = requests.post(ita_restapi_endpoint + '?no=' + ite_menu_conductor_conductor_result, headers=filter_headers, data=json_data)
+        # リクエスト送信 request post
+        exec_response = requests.post(ita_restapi_endpoint + '?no=' + ite_menu_conductor_result, headers=filter_headers, data=json_data)
 
         if exec_response.status_code != 200:
             globals.logger.error(exec_response.text)
@@ -326,7 +329,175 @@ def cd_result_get(workspace_id, conductor_id):
 
         rows = resp_data
 
-        # 正常終了
+        # 正常終了 normal end
+        ret_status = 200
+
+        # 戻り値をそのまま返却 return to it-automation results        
+        return jsonify({"result": ret_status, "rows": rows}), ret_status
+
+    except common.UserException as e:
+        return common.server_error(e)
+    except Exception as e:
+        return common.server_error(e)
+
+
+def cd_result_logs_get(workspace_id, conductor_id):
+    """CD実行結果ログ取得 cd result logs get
+
+    Args:
+        workspace_id (int): workspace id
+        conductor_id (str): conductor id
+
+    Returns:
+        Response: HTTP Respose
+    """
+
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {} workspace_id[{}] conductor_id[{}]'.format(inspect.currentframe().f_code.co_name, workspace_id, conductor_id))
+        globals.logger.debug('#' * 50)
+
+        # ワークスペースアクセス情報取得 get workspace access info.
+        access_info = api_access_info.get_access_info(workspace_id)
+
+        # namespaceの取得 get namespace 
+        namespace = common.get_namespace_name(workspace_id)
+
+        ita_restapi_endpoint = "http://{}.{}.svc:{}/default/menu/07_rest_api_ver1.php".format(EPOCH_ITA_HOST, namespace, EPOCH_ITA_PORT)
+        ita_user = access_info['ITA_USER']
+        ita_pass = access_info['ITA_PASSWORD']
+
+        # POST送信する post sender
+        # HTTPヘッダの生成 HTTP header generation
+        filter_headers = {
+            'host': EPOCH_ITA_HOST + ':' + EPOCH_ITA_PORT,
+            'Content-Type': 'application/json',
+            'Authorization': base64.b64encode((ita_user + ':' + ita_pass).encode()),
+            'X-Command': 'DOWNLOAD',
+        }
+
+        # 実行パラメータ設定 parameter setting
+        data = {
+            "CONDUCTOR_INSTANCE_NO": [ str(int(conductor_id)+1) ]
+
+        }
+
+        # json文字列に変換 json convert
+        json_data = json.dumps(data)
+
+        # リクエスト送信 request post
+        exec_response = requests.post(ita_restapi_endpoint + '?no=' + ite_menu_conductor_download, headers=filter_headers, data=json_data)
+
+        if exec_response.status_code != 200:
+            globals.logger.error(exec_response.text)
+            error_detail = multi_lang.get_text("EP034-0007", "実行結果ログ取得の呼び出しに失敗しました status:{0}".format(exec_response.status_code), exec_response.status_code)
+            raise common.UserException(error_detail)
+
+        # globals.logger.debug("-------------------------")
+        # globals.logger.debug("response:")
+        # globals.logger.debug(exec_response)
+        # globals.logger.debug("response_text:")
+        # globals.logger.debug(exec_response.text)
+        # globals.logger.debug("-------------------------")
+
+        # 戻り値用の器設定 Device setting for return value
+        rows = {
+            "manifest_embedding": {},
+            "manifest_commit_push": {},
+        }
+
+        # 実行してすぐは読込ができない状況があるのでチェックする
+        # Check because there are situations where it cannot be read immediately after execution.
+        if not common.is_json_format(exec_response.text):
+            # 実行途中の正常終了として返す Returns as normal termination during execution
+            globals.logger.debug("not start!")
+            ret_status = 404
+            # 実行前なので404を返却 Return 404 because it is before execution  
+            return jsonify({"result": ret_status, "rows": rows}), ret_status
+
+        resp_data = json.loads(exec_response.text)
+        globals.logger.debug(f"resp_data:{resp_data}")
+
+        if resp_data["status"] != "SUCCEED":
+            globals.logger.error("no={} status:{}".format(ite_menu_conductor_exec, resp_data["status"]))
+            error_detail = multi_lang.get_text("EP034-0008", "実行結果ログ取得の呼び出しに失敗しました ita-status:{0} resultdata:{1}".format(eresp_data["status"], eresp_data["resultdata"]), eresp_data["status"], eresp_data["resultdata"])
+            raise common.UserException(error_detail)
+
+        body_cnt = 0
+        for body in resp_data["resultdata"]["CONTENTS"]["BODY"]:
+            # download_input_key =  body["INPUT_DATA"]
+            # base64_input_log_zip = resp_data["resultdata"]["CONTENTS"]["DOWNLOAD"][download_key]
+            download_result_key =  body["RESULT_DATA"]
+            base64_result_log_zip = resp_data["resultdata"]["CONTENTS"]["DOWNLOAD_FILE"][body_cnt][download_result_key]
+            # globals.logger.debug(f"base64_result_log_zip:{base64_result_log_zip}")
+            binary_result_log_zip = base64.b64decode(base64_result_log_zip.encode())
+
+            with tempfile.TemporaryDirectory() as tempdir:
+
+                # zipファイル生成 Zip file generation
+                path_zip_file = '{}/{}'.format(tempdir, download_result_key)
+                # globals.logger.debug(f"path_zip_file:{path_zip_file}")
+                with open(path_zip_file, mode='bw') as fp:
+                    fp.write(binary_result_log_zip)
+                
+                # zipファイルに含まれているファイル名の取得
+                # Get the file name contained in the zip file
+                with zipfile.ZipFile(path_zip_file) as log_zip:
+                    # zipファイルに含まれているファイルのリストを返す
+                    # Returns a list of files contained in the zip file
+                    for f in log_zip.namelist():
+                        # ファイル名の末尾が"/"じゃない内容を解凍
+                        # Unzip the contents that do not end with "/" in the file name
+                        if f[-1:] != "/":
+                            # globals.logger.debug(f"f:{f}")
+
+                            # zipファイルに含まれているファイルを取り出す
+                            # Extract the files contained in the zip file
+                            log_zip.extract(f, tempdir)
+
+                # 解凍した各フォルダの内容を再度解凍
+                # Unzip the contents of each unzipped folder again
+                files = glob.glob(tempdir + "/**/*.zip")
+                for file in files:
+                    globals.logger.debug(f"file:{file}")
+
+                    with zipfile.ZipFile(file) as log_zip:
+                        for f in log_zip.namelist():
+                            if f == "exec.log":
+                                # 実行ログ Execution log
+                                # globals.logger.debug(f"f:{f}")
+                                with log_zip.open(f) as f_log:
+                                    exec_logs = f_log.read()
+                                    # globals.logger.debug(f"logs:{exec_logs}")
+                            elif f == "error.log":
+                                # エラーログ error log
+                                # globals.logger.debug(f"f:{f}")
+                                with log_zip.open(f) as f_log:
+                                    error_logs = f_log.read()
+                                    # globals.logger.debug(f"logs:{error_logs}")
+
+                    sub_dir_name = os.path.basename(os.path.dirname(file))
+                    globals.logger.debug(f"sub_dir_name:{sub_dir_name}")
+                    if sub_dir_name == "0000000001":
+                        # フォルダの1番目は、Manifest埋め込みのログ
+                        # The first folder is the Manifest embedded log
+                        rows["manifest_embedding"] = {
+                                "execute_logs": exec_logs.decode('utf-8'),
+                                "error_logs": error_logs.decode('utf-8'),
+                            }
+                    elif sub_dir_name == "0000000002":
+                        # フォルダの2番目は、Manifest Commit&Pushのログ
+                        # The second folder is the Manifest Commit & Push log
+                        rows["manifest_commit_push"] = {
+                                "execute_logs": exec_logs.decode('utf-8'),
+                                "error_logs": error_logs.decode('utf-8'),
+                            }
+
+            body_cnt += 1
+
+        globals.logger.debug(f"rows:{rows}")
+
+        # 正常終了 normal end
         ret_status = 200
 
         # 戻り値をそのまま返却        
