@@ -284,26 +284,115 @@ def monitoring_it_automation():
             # UserException during repetition is ignored because all data is processed.
             try:
                 globals.logger.debug("cd-result workspace_id:[{}] cd_result_id:[{}] cd_status:[{}]".format(result_row["workspace_id"], result_row["cd_result_id"], result_row["cd_status"]))
-                
-                # ダミー処理　⇒　無条件でCD_STATUS_ITA_COMPLETEへ
-                if True:
-                    post_data = json.loads(result_row["contents"])
-                    #globals.logger.debug(post_data)
-                    # post_data["cd_status"] = const.CD_STATUS_ITA_COMPLETE
-                    post_data = {
-                        "cd_status": const.CD_STATUS_ITA_COMPLETE
-                    }
 
-                    # cd-result put
-                    api_url = "{}://{}:{}/workspace/{}/cd/result/{}".format(os.environ['EPOCH_RS_CD_RESULT_PROTOCOL'],
-                                                            os.environ['EPOCH_RS_CD_RESULT_HOST'],
-                                                            os.environ['EPOCH_RS_CD_RESULT_PORT'],
-                                                            result_row["workspace_id"],
-                                                            result_row["cd_result_id"])
-                    response = requests.put(api_url, headers=post_headers, data=json.dumps(post_data))
+                workspace_id = result_row["workspace_id"]
+                conductor_instance_id = int(result_row["cd_result_id"]) # インスタンスIDは、0埋め無しの数値 Instance ID is a number without 0 padding
+
+                # ステータスが"Start"または"Reserve" or "Excute"の場合はITAから結果を取得する
+                if result_row["cd_status"] == const.CD_STATUS_START or \
+                    result_row["cd_status"] == const.CD_STATUS_ITA_RESERVE or \
+                    result_row["cd_status"] == const.CD_STATUS_ITA_EXECUTE:
+
+                    # cd-result get
+                    api_url = "{}://{}:{}/workspace/{}/it-automation/cd/result/{}".format(os.environ['EPOCH_CONTROL_ITA_PROTOCOL'],
+                                                                                            os.environ['EPOCH_CONTROL_ITA_HOST'],
+                                                                                            os.environ['EPOCH_CONTROL_ITA_PORT'],
+                                                                                            workspace_id,
+                                                                                            conductor_instance_id)
+                    response = requests.get(api_url)
 
                     if response.status_code != 200:
-                        raise common.UserException("cd result put error:[{}]".format(response.status_code))
+                        raise Exception("it-automation cd result get error:[{}]".format(response.status_code))
+
+                    ret = json.loads(response.text)
+
+                    globals.logger.debug("it-automation cd-result workspace_id:[{}] cd_result_id:[{}] ret[{}]".format(result_row["workspace_id"], result_row["cd_result_id"], ret))
+
+                    ita_rows = ret["rows"]["resultdata"]
+
+                    # ステータスIDが存在する場合のみ処理
+                    # Process only if status ID exists
+                    if "STATUS_ID" in ita_rows["CONDUCTOR_INSTANCE_INFO"]:
+                        # 実行中になった場合は、実行中のステータスに更新
+                        # If it becomes running, update to running status
+                        if ita_rows["CONDUCTOR_INSTANCE_INFO"]["STATUS_ID"] == const.ITA_STATUS_ID_EXECUTING or \
+                            ita_rows["CONDUCTOR_INSTANCE_INFO"]["STATUS_ID"] == const.ITA_STATUS_ID_EXEC_DELAY:
+                            cd_status = const.CD_STATUS_ITA_EXECUTE
+                        # 予約中になった場合は、予約中のステータスに更新
+                        # If it is reserved, it will be updated to the reserved status.
+                        elif ita_rows["CONDUCTOR_INSTANCE_INFO"]["STATUS_ID"] == const.ITA_STATUS_ID_RESERVED:
+                            cd_status = const.CD_STATUS_ITA_RESERVE
+                        # 緊急停止された場合は、緊急停止のステータスに更新
+                        # In case of emergency stop, update to emergency stop status
+                        elif ita_rows["CONDUCTOR_INSTANCE_INFO"]["STATUS_ID"] == const.ITA_STATUS_ID_EMERGENCY:
+                            cd_status = const.CD_STATUS_ITA_EMERGENCY
+                        # 正常終了した場合は、正常終了のステータスに更新
+                        # If it ends normally, it will be updated to the status of normal end.
+                        elif ita_rows["CONDUCTOR_INSTANCE_INFO"]["STATUS_ID"] == const.ITA_STATUS_ID_COMPLETE:
+                            cd_status = const.CD_STATUS_ITA_COMPLETE
+                        # 予約取消となった場合は、キャンセルのステータスに更新
+                        # If the reservation is canceled, it will be updated to the cancellation status.
+                        elif ita_rows["CONDUCTOR_INSTANCE_INFO"]["STATUS_ID"] == const.ITA_STATUS_ID_CANCEL:
+                            cd_status = const.CD_STATUS_CANCEL
+                        # 異常終了・想定外エラー・警告終了した場合は、失敗のステータスに更新
+                        # Abnormal termination / unexpected error / warning If terminated, update to failure status
+                        elif ita_rows["CONDUCTOR_INSTANCE_INFO"]["STATUS_ID"] == const.ITA_STATUS_ID_ABNORMAL_END or \
+                            ita_rows["CONDUCTOR_INSTANCE_INFO"]["STATUS_ID"] == const.ITA_STATUS_ID_UNEXPECTED or \
+                            ita_rows["CONDUCTOR_INSTANCE_INFO"]["STATUS_ID"] == const.ITA_STATUS_ID_WARNING:
+                            cd_status = const.CD_STATUS_ITA_FAILED
+                        # 未実行の場合は、なにもしない更新
+                        # If not executed, update without doing anything
+                        elif ita_rows["CONDUCTOR_INSTANCE_INFO"]["STATUS_ID"] == const.ITA_STATUS_ID_NOT_EXECUTED:
+                            cd_status = result_row["cd_status"]
+                        else:
+                            # 上記以外はエラー
+                            # Errors other than the abov
+                            cd_status = const.CD_STATUS_ITA_FAILED
+                    else:
+                        # 取得失敗 Acquisition failure
+                        cd_status = const.CD_STATUS_ITA_FAILED
+
+                    # ステータスが更新されるか、実行中は更新
+                    # Status is updated or updated while running
+                    if cd_status != result_row["cd_status"] or \
+                        cd_status == const.CD_STATUS_ITA_EXECUTE:
+                        # post_data = json.loads(result_row["contents"])
+
+                        # cd-result get
+                        api_url = "{}://{}:{}/workspace/{}/it-automation/cd/result/{}/logs".format(os.environ['EPOCH_CONTROL_ITA_PROTOCOL'],
+                                                                                                os.environ['EPOCH_CONTROL_ITA_HOST'],
+                                                                                                os.environ['EPOCH_CONTROL_ITA_PORT'],
+                                                                                                workspace_id,
+                                                                                                conductor_instance_id)
+                        response = requests.get(api_url)
+
+                        if response.status_code != 200 and response.status_code != 404:
+                            raise Exception("it-automation cd result logs get error:[{}]".format(response.status_code))
+
+                        ret_logs = json.loads(response.text)
+
+                        globals.logger.debug("it-automation cd-result logs[{}]".format(result_row["workspace_id"], result_row["cd_result_id"], ret_logs))
+
+                        ita_rows["manifest_embedding"] = ret_logs["rows"]["manifest_embedding"]
+                        ita_rows["manifest_commit_push"] = ret_logs["rows"]["manifest_commit_push"]
+
+                        #globals.logger.debug(post_data)
+                        # post_data["cd_status"] = const.CD_STATUS_ITA_COMPLETE
+                        post_data = {
+                            "cd_status": cd_status,
+                            "ita_results": ita_rows,
+                        }
+
+                        # cd-result put
+                        api_url = "{}://{}:{}/workspace/{}/cd/result/{}".format(os.environ['EPOCH_RS_CD_RESULT_PROTOCOL'],
+                                                                os.environ['EPOCH_RS_CD_RESULT_HOST'],
+                                                                os.environ['EPOCH_RS_CD_RESULT_PORT'],
+                                                                result_row["workspace_id"],
+                                                                result_row["cd_result_id"])
+                        response = requests.put(api_url, headers=post_headers, data=json.dumps(post_data))
+
+                        if response.status_code != 200:
+                            raise common.UserException("cd result put error:[{}]".format(response.status_code))
 
             except common.UserException as e:
                 error_exists = True
