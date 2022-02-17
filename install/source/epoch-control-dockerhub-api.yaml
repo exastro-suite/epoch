@@ -17,7 +17,7 @@ metadata:
   name: epoch-control-dockerhub-conf
   namespace: epoch-system
 data:
-  api_github.conf: |
+  api_dockerhub.conf: |
     TZ='Asia/Tokyo'
 ---
 apiVersion: apps/v1
@@ -59,7 +59,7 @@ spec:
           value: "/etc/epoch/epochControlDockerHubApi/api_dockerhub.conf"
         - name: FLASK_ENV
           value: "development"
-        - name: API_GITHUB_PORT
+        - name: API_DOCKERHUB_PORT
           value: "8000"
         - name: PYTHONIOENCODING
           value: utf-8
