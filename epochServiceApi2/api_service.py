@@ -305,6 +305,32 @@ def call_cd_pipeline_argocd(workspace_id):
         return common.server_error(e)
 
 
+@app.route('/workspace/<int:workspace_id>/cd/pipeline/it-automation', methods=['GET'])
+def call_cd_pipeline_ita(workspace_id):
+    """workspace/workspace_id/cd/pipeline/it-automation Call
+
+    Args:
+        workspace_id (int): workspace ID
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'GET':
+            # Get CD pipeline (ArgoCD) information - CDパイプライン(ArgoCD)情報取得
+            return api_service_cd.get_cd_pipeline_ita(workspace_id)
+        else:
+            # Error
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+
 @app.route('/workspace/<int:workspace_id>/cd/pipeline/argocd/sync', methods=['POST'])
 def call_cd_pipeline_argocd_sync(workspace_id):
     """workspace/workspace_id/cd/pipeline/argocd/sync Call
@@ -437,6 +463,35 @@ def call_cd_exec(workspace_id):
 
     except Exception as e:
         return common.server_error(e)
+
+
+
+@app.route('/workspace/<int:workspace_id>/cd/exec/<string:trace_id>', methods=['DELETE'])
+def call_cd_exec_trace_id(workspace_id, trace_id):
+    """workspace/workspace_id/cd/exec Call
+
+    Args:
+        workspace_id (int): workspace ID
+        trace_id (str): trace id
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}] trace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id, trace_id))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'DELETE':
+            # cd execute (post)
+            return api_service_cd.cd_execute_cancel(workspace_id, trace_id)
+        else:
+            # Error
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
 
 @app.route('/workspace/<int:workspace_id>/cd/environment', methods=['GET'])
 def call_cd_environment(workspace_id):

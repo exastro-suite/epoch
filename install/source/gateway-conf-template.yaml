@@ -141,10 +141,10 @@ data:
         ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/cd/exec retry=0 timeout=600
         ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/cd/exec
         AuthType openid-connect
-        <Limit POST>
+        <Limit POST DELETE>
             Require claim "epoch-role:ws-{{ param.workspace_id }}-role-cd-execute"
         </Limit>
-        <LimitExcept GET POST>
+        <LimitExcept GET POST DELETE>
             Require all denied
         </LimitExcept>
       </Location>
