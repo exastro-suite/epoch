@@ -153,7 +153,7 @@ def create_argocd(workspace_id):
         # argocd apply pod create
         globals.logger.debug('apply : argocd_install_v2_1_1.yaml')
         stdout_cd = subprocess.check_output(["kubectl","apply","-n",workspace_namespace(workspace_id),"-f",(template_dir + "/argocd_install_v2_1_1.yaml")],stderr=subprocess.STDOUT)
-        globals.logger.debug(stdout_cd.decode('utf-8'))
+        # globals.logger.debug(stdout_cd.decode('utf-8'))
 
         #
         # argocd apply rolebinding
@@ -171,7 +171,7 @@ def create_argocd(workspace_id):
             # yamlの適用
             globals.logger.debug('apply : argocd_rolebinding.yaml')
             stdout_cd = subprocess.check_output(["kubectl","apply","-n",workspace_namespace(workspace_id),"-f",path_yamlfile],stderr=subprocess.STDOUT)
-            globals.logger.debug(stdout_cd.decode('utf-8'))
+            # globals.logger.debug(stdout_cd.decode('utf-8'))
 
         #
         # パスワードの初期化
@@ -189,7 +189,7 @@ def create_argocd(workspace_id):
 
         globals.logger.debug('patch argocd-secret :')
         stdout_cd = subprocess.check_output(["kubectl","-n",workspace_namespace(workspace_id),"patch","secret","argocd-secret","-p",pdata],stderr=subprocess.STDOUT)
-        globals.logger.debug(stdout_cd.decode('utf-8'))
+        # globals.logger.debug(stdout_cd.decode('utf-8'))
 
         #
         # PROXY setting
@@ -212,9 +212,9 @@ def create_argocd(workspace_id):
         for deployment_name in deployments:
             for env_name in envs:
                 # 環境変数の設定
-                globals.logger.debug('set env : {} {}'.format(deployment_name, env_name))
+                # globals.logger.debug('set env : {} {}'.format(deployment_name, env_name))
                 stdout_cd = subprocess.check_output(["kubectl","set","env",deployment_name,"-n",workspace_namespace(workspace_id),env_name],stderr=subprocess.STDOUT)
-                globals.logger.debug(stdout_cd.decode('utf-8'))
+                # globals.logger.debug(stdout_cd.decode('utf-8'))
 
         # 戻り値をそのまま返却        
         return jsonify({"result": ret_status}), ret_status
@@ -253,16 +253,16 @@ def get_argocd_app(workspace_id, app_name):
         #
         globals.logger.debug("argocd login :")
         stdout_cd = subprocess.check_output(["argocd","login",argo_host,"--insecure","--username",argo_id,"--password",argo_password],stderr=subprocess.STDOUT)
-        globals.logger.debug(stdout_cd.decode('utf-8'))
+        # globals.logger.debug(stdout_cd.decode('utf-8'))
 
         #
         # argocd app get
         #
         globals.logger.debug("argocd app get :")
         stdout_cd = subprocess.check_output(["argocd","app","get", app_name, "-o","json"],stderr=subprocess.STDOUT)
-        globals.logger.debug(stdout_cd.decode('utf-8'))
+        # globals.logger.debug(stdout_cd.decode('utf-8'))
 
-        globals.logger.debug(stdout_cd)
+        # globals.logger.debug(stdout_cd)
         ret_status = 200
         
         result = json.loads(stdout_cd)
@@ -304,7 +304,7 @@ def post_argocd_sync(workspace_id, app_name):
         #
         globals.logger.debug("argocd login :")
         stdout_cd = subprocess.check_output(["argocd","login",argo_host,"--insecure","--username",argo_id,"--password",argo_password],stderr=subprocess.STDOUT)
-        globals.logger.debug(stdout_cd.decode('utf-8'))
+        # globals.logger.debug(stdout_cd.decode('utf-8'))
 
         #
         # app sync
@@ -312,7 +312,7 @@ def post_argocd_sync(workspace_id, app_name):
         globals.logger.debug("argocd app sync :")
         try:
             stdout_cd = subprocess.check_output(["argocd","app","sync",app_name],stderr=subprocess.STDOUT)
-            globals.logger.debug(stdout_cd.decode('utf-8'))
+            # globals.logger.debug(stdout_cd.decode('utf-8'))
         except subprocess.CalledProcessError as e:
             globals.logger.debug("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
