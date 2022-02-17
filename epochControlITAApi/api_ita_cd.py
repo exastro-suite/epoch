@@ -45,6 +45,8 @@ EPOCH_ITA_PORT = "8084"
 # メニューID
 ite_menu_operation = '2100000304'
 ite_menu_conductor_exec = '2100180004'
+ite_menu_conductor_result = '2100180005'
+ite_menu_conductor_conductor_result = '2100180005'
 
 def get_cd_operations(workspace_id):
     """get cd-operations list
@@ -300,39 +302,38 @@ def cd_result_get(workspace_id, conductor_id):
             'host': EPOCH_ITA_HOST + ':' + EPOCH_ITA_PORT,
             'Content-Type': 'application/json',
             'Authorization': base64.b64encode((ita_user + ':' + ita_pass).encode()),
-            'X-Command': 'EXECUTE',
+            'X-Command': 'INFO',
         }
 
-        # # 実行パラメータ設定
-        # data = {
-        #     "CONDUCTOR_CLASS_NO": conductor_class_no,
-        #     "OPERATION_ID": operation_id,
-        #     "PRESERVE_DATETIME": preserve_datetime,
-        # }
+        # 実行パラメータ設定
+        data = {
+            "CONDUCTOR_INSTANCE_ID": conductor_id
+        }
 
-        # # json文字列に変換（"utf-8"形式に自動エンコードされる）
-        # json_data = json.dumps(data)
+        # json文字列に変換（"utf-8"形式に自動エンコードされる）
+        json_data = json.dumps(data)
 
-        # # リクエスト送信
-        # exec_response = requests.post(ita_restapi_endpoint + '?no=' + ite_menu_conductor_exec, headers=filter_headers, data=json_data)
+        # リクエスト送信
+        exec_response = requests.post(ita_restapi_endpoint + '?no=' + ite_menu_conductor_conductor_result, headers=filter_headers, data=json_data)
 
-        # if exec_response.status_code != 200:
-        #     globals.logger.error(exec_response.text)
-        #     error_detail = multi_lang.get_text("EP034-0001", "CD実行の呼び出しに失敗しました status:{0}".format(exec_response.status_code), exec_response.status_code)
-        #     raise common.UserException(error_detail)
+        if exec_response.status_code != 200:
+            globals.logger.error(exec_response.text)
+            error_detail = multi_lang.get_text("EP034-0005", "実行結果取得の呼び出しに失敗しました status:{0}".format(exec_response.status_code), exec_response.status_code)
+            raise common.UserException(error_detail)
 
         # globals.logger.debug("-------------------------")
         # globals.logger.debug("response:")
         # globals.logger.debug(exec_response.text)
         # globals.logger.debug("-------------------------")
 
-        # resp_data = json.loads(exec_response.text)
-        # if resp_data["status"] != "SUCCEED":
-        #     globals.logger.error("no={} status:{}".format(ite_menu_conductor_exec, resp_data["status"]))
-        #     error_detail = multi_lang.get_text("EP034-0002", "CD実行の呼び出しに失敗しました ita-status:{0} resultdata:{1}".format(eresp_data["status"], eresp_data["resultdata"]), eresp_data["status"], eresp_data["resultdata"])
-        #     raise common.UserException(error_detail)
+        resp_data = json.loads(exec_response.text)
 
-        rows = []
+        if resp_data["status"] != "SUCCEED":
+            globals.logger.error("no={} status:{}".format(ite_menu_conductor_exec, resp_data["status"]))
+            error_detail = multi_lang.get_text("EP034-0006", "実行結果取得の呼び出しに失敗しました ita-status:{0} resultdata:{1}".format(eresp_data["status"], eresp_data["resultdata"]), eresp_data["status"], eresp_data["resultdata"])
+            raise common.UserException(error_detail)
+
+        rows = resp_data
 
         # 正常終了
         ret_status = 200
