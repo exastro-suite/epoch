@@ -45,8 +45,8 @@ EPOCH_ITA_PORT = "8084"
 # メニューID
 ite_menu_operation = '2100000304'
 ite_menu_conductor_exec = '2100180004'
-ite_menu_conductor_result = '2100180005'
 ite_menu_conductor_conductor_result = '2100180005'
+ite_menu_conductor_cancel = '2100180005'
 
 def get_cd_operations(workspace_id):
     """get cd-operations list
@@ -176,7 +176,7 @@ def cd_execute(workspace_id):
         resp_data = json.loads(exec_response.text)
         if resp_data["status"] != "SUCCEED":
             globals.logger.error("no={} status:{}".format(ite_menu_conductor_exec, resp_data["status"]))
-            error_detail = multi_lang.get_text("EP034-0002", "CD実行の呼び出しに失敗しました ita-status:{0} resultdata:{1}".format(eresp_data["status"], eresp_data["resultdata"]), eresp_data["status"], eresp_data["resultdata"])
+            error_detail = multi_lang.get_text("EP034-0002", "CD実行の呼び出しに失敗しました ita-status:{0} resultdata:{1}".format(resp_data["status"], resp_data["resultdata"]), resp_data["status"], resp_data["resultdata"])
             raise common.UserException(error_detail)
 
         # 作業IDを退避
@@ -220,48 +220,39 @@ def cd_execute_cancel(workspace_id, conductor_id):
         ita_user = access_info['ITA_USER']
         ita_pass = access_info['ITA_PASSWORD']
 
-        # POST送信する
-        # HTTPヘッダの生成
+        # HTTPヘッダの生成 HTTP header generation
         filter_headers = {
             'host': EPOCH_ITA_HOST + ':' + EPOCH_ITA_PORT,
             'Content-Type': 'application/json',
             'Authorization': base64.b64encode((ita_user + ':' + ita_pass).encode()),
-            'X-Command': 'EXECUTE',
+            'X-Command': 'CANCEL',
         }
 
-        # # 実行パラメータ設定
-        # data = {
-        #     "CONDUCTOR_CLASS_NO": conductor_class_no,
-        #     "OPERATION_ID": operation_id,
-        #     "PRESERVE_DATETIME": preserve_datetime,
-        # }
+        # 実行パラメータ設定 Execution parameter setting
+        data = {
+            "CONDUCTOR_INSTANCE_ID": conductor_id
+        }
 
-        # # json文字列に変換（"utf-8"形式に自動エンコードされる）
-        # json_data = json.dumps(data)
+        # json文字列に変換（"utf-8"形式に自動エンコードされる） Convert to json string (automatically encoded in "utf-8" format)
+        json_data = json.dumps(data)
 
-        # # リクエスト送信
-        # exec_response = requests.post(ita_restapi_endpoint + '?no=' + ite_menu_conductor_exec, headers=filter_headers, data=json_data)
+        # リクエスト送信
+        response = requests.post(ita_restapi_endpoint + '?no=' + ite_menu_conductor_cancel, headers=filter_headers, data=json_data)
 
-        # if exec_response.status_code != 200:
-        #     globals.logger.error(exec_response.text)
-        #     error_detail = multi_lang.get_text("EP034-0001", "CD実行の呼び出しに失敗しました status:{0}".format(exec_response.status_code), exec_response.status_code)
-        #     raise common.UserException(error_detail)
+        globals.logger.debug(response.text)
 
-        # globals.logger.debug("-------------------------")
-        # globals.logger.debug("response:")
-        # globals.logger.debug(exec_response.text)
-        # globals.logger.debug("-------------------------")
+        resp_data = json.loads(response.text)
+        # Even if it fails, "status" is returned as "SUCCEED", so the error is judged by "RESULTCODE" (success: 0, failure: 2).
+        # 失敗時も"status"は"SUCCEED"で返ってくるため、"RESULTCODE"(成功：0, 失敗：2)でエラーを判断
+        if resp_data["resultdata"]["RESULTCODE"] == "002":
+            globals.logger.error("no={} status:{}".format(ite_menu_conductor_cancel, resp_data["status"]))
+            error_detail = multi_lang.get_text("EP034-0004", "CD予約取り消しの呼び出しに失敗しました ita-status:{0} resultdata:{1}".format(resp_data["status"], resp_data["resultdata"]), resp_data["status"], resp_data["resultdata"])
+            raise common.UserException(error_detail)
 
-        # resp_data = json.loads(exec_response.text)
-        # if resp_data["status"] != "SUCCEED":
-        #     globals.logger.error("no={} status:{}".format(ite_menu_conductor_exec, resp_data["status"]))
-        #     error_detail = multi_lang.get_text("EP034-0002", "CD実行の呼び出しに失敗しました ita-status:{0} resultdata:{1}".format(eresp_data["status"], eresp_data["resultdata"]), eresp_data["status"], eresp_data["resultdata"])
-        #     raise common.UserException(error_detail)
-
-        # 正常終了
+        # 正常終了 Successful completion
         ret_status = 200
 
-        # 戻り値をそのまま返却        
+        # 戻り値をそのまま返却 Return the return value as it is
         return jsonify({"result": ret_status}), ret_status
 
     except common.UserException as e:

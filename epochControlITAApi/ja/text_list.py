@@ -42,4 +42,8 @@ class TextList:
     lang_array['EP020-0013'] = "ワークスペース情報の取得に失敗しました"
     lang_array['EP020-0014'] = "あなた以外のオーナーがいないので退去できません"
     lang_array['EP020-0015'] = "ワークスペースからの退去に失敗しました"
-    
+    lang_array['EP034-0001'] = "CD実行の呼び出しに失敗しました status:{0}"
+    lang_array['EP034-0002'] = "CD実行の呼び出しに失敗しました ita-status:{0} resultdata:{1}"
+    lang_array['EP034-0003'] = "CD予約取り消しの呼び出しに失敗しました status:{0}"
+    lang_array['EP034-0004'] = "CD予約取り消しの呼び出しに失敗しました ita-status:{0} resultdata:{1}"
+
