@@ -2519,6 +2519,40 @@ const aplicationCodeResultList = function(){
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
+//   コンテナレジストリ結果確認
+// 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+const registryResultList = function(){
+  const $imageList = $('#image-list');
+
+  $imageList.html(' \
+    <div>/GET ' + workspace_api_conf.api.ci_pipeline.registry.get + ' \
+      <textarea class="regis-text "cols="100" rows="25"></textarea> \
+    </div> \
+  ');
+
+  $.ajax({
+    "type": "GET",
+    "url": workspace_api_conf.api.ci_pipeline.registry.get.replace('{workspace_id}', workspace_id),
+  }).done(function(data) {
+    // Success get - 取得成功
+    console.log("[DONE] GET " + workspace_api_conf.api.ci_pipeline.registry.get + " response\n" + JSON.stringify(data));
+    $imageList.find('.regis-text').val(JSON.stringify(data, null , "    "))
+
+  }).fail(function(data) {
+    // Failed get - 取得失敗
+    console.log("[FAIL] GET " + workspace_api_conf.api.ci_pipeline.registry.get + " response\n" + JSON.stringify(data));
+    $imageList.html(' \
+      <div>/GET ' + workspace_api_conf.api.ci_pipeline.registry.get + ' \
+        <textarea class="regis-text "cols="100" rows="25"></textarea> \
+      </div> \
+    ');
+    $imageList.find('.regis-text').val(JSON.stringify(data, null , "    "))
+  });
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
 //   Argo CD 実行状況確認
 // 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2660,6 +2694,10 @@ $content.find('.modal-open, .workspace-status-item').not('[data-button="pipeline
     case 'gitServiceCheck': {
       callback = aplicationCodeResultList;
     } break;
+    // レジストリ結果一覧
+    case 'registryServiceCheck': {
+      callback = registryResultList;
+    } break;
     // CD実行
     case 'cdExecution': {
       // ok = function( $modal ){
@@ -2727,7 +2765,7 @@ $content.find('.modal-open, .workspace-status-item').not('[data-button="pipeline
       };
       break;
     case 'registryServiceCheck':
-      $('.modal-block-main').html('<a href="' + workspace_api_conf.links.registry + '" target="_blank">確認</a>');
+      // $('.modal-block-main').html('<a href="' + workspace_api_conf.links.registry + '" target="_blank">確認</a>');
       break;
     case 'arogCdResultCheck':
       break;

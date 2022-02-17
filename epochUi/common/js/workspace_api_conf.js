@@ -15,7 +15,7 @@
 */
 var workspace_api_conf = {
     "links" : {
-        "registry"  : "https://hub.docker.com/repositories",
+        // "registry"  : "https://hub.docker.com/repositories",
         // "ita"       : location_prot + "//" + location_host + ":" + (location_prot == "https:"? "31183": "31183") + "/default/menu/01_browse.php?no=2100180006",
         // "sonarqube" : location_prot + "//" + location_host + ":" + (location_prot == "https:"? "31185": "31185") + "/",
         "ita"       : "{baseurl}/default/menu/01_browse.php?no=2100180006",
@@ -53,6 +53,9 @@ var workspace_api_conf = {
                 "hooks": {
                     "get":     URL_BASE + "/api/workspace/{workspace_id}/ci/pipeline/git/hooks",
                 },
+            },
+            "registry": {
+                "get":      URL_BASE + "/api/workspace/{workspace_id}/ci/pipeline/registry",
             },
         },
         "cd_pipeline": {
