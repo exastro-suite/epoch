@@ -139,10 +139,10 @@ def get_namespace(name):
         v1 = client.CoreV1Api()
         
         # namespaceの情報取得
-        globals.logger.debug('get namespace :')
+        # globals.logger.debug('get namespace :')
         ret = v1.read_namespace(name=name)
 
-        globals.logger.debug("ret: %s" % (ret))
+        # globals.logger.debug("ret: %s" % (ret))
         return ret 
 
     except Exception as e:
@@ -171,10 +171,10 @@ def create_namespace(name):
         body = client.V1Namespace(metadata=client.V1ObjectMeta(name=name))
 
         # namespaceの作成
-        globals.logger.debug('create namespace :')
+        # globals.logger.debug('create namespace :')
         ret = v1.create_namespace(body=body)
 
-        globals.logger.debug("ret: %s" % (ret))
+        # globals.logger.debug("ret: %s" % (ret))
         return ret 
 
     except Exception as e:
