@@ -190,3 +190,157 @@ def cd_execute(workspace_id):
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
     except Exception as e:
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+
+
+def cd_execute_cancel(workspace_id, conductor_id):
+    """CD実行取り消し cd execute cancel
+
+    Args:
+        workspace_id (int): workspace id
+        conductor_id (str): conductor id
+
+    Returns:
+        Response: HTTP Respose
+    """
+
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
+        globals.logger.debug('#' * 50)
+
+        # ワークスペースアクセス情報取得 get workspace access info.
+        access_info = api_access_info.get_access_info(workspace_id)
+
+        # namespaceの取得 get namespace 
+        namespace = common.get_namespace_name(workspace_id)
+
+        ita_restapi_endpoint = "http://{}.{}.svc:{}/default/menu/07_rest_api_ver1.php".format(EPOCH_ITA_HOST, namespace, EPOCH_ITA_PORT)
+        ita_user = access_info['ITA_USER']
+        ita_pass = access_info['ITA_PASSWORD']
+
+        # POST送信する
+        # HTTPヘッダの生成
+        filter_headers = {
+            'host': EPOCH_ITA_HOST + ':' + EPOCH_ITA_PORT,
+            'Content-Type': 'application/json',
+            'Authorization': base64.b64encode((ita_user + ':' + ita_pass).encode()),
+            'X-Command': 'EXECUTE',
+        }
+
+        # # 実行パラメータ設定
+        # data = {
+        #     "CONDUCTOR_CLASS_NO": conductor_class_no,
+        #     "OPERATION_ID": operation_id,
+        #     "PRESERVE_DATETIME": preserve_datetime,
+        # }
+
+        # # json文字列に変換（"utf-8"形式に自動エンコードされる）
+        # json_data = json.dumps(data)
+
+        # # リクエスト送信
+        # exec_response = requests.post(ita_restapi_endpoint + '?no=' + ite_menu_conductor_exec, headers=filter_headers, data=json_data)
+
+        # if exec_response.status_code != 200:
+        #     globals.logger.error(exec_response.text)
+        #     error_detail = multi_lang.get_text("EP034-0001", "CD実行の呼び出しに失敗しました status:{0}".format(exec_response.status_code), exec_response.status_code)
+        #     raise common.UserException(error_detail)
+
+        # globals.logger.debug("-------------------------")
+        # globals.logger.debug("response:")
+        # globals.logger.debug(exec_response.text)
+        # globals.logger.debug("-------------------------")
+
+        # resp_data = json.loads(exec_response.text)
+        # if resp_data["status"] != "SUCCEED":
+        #     globals.logger.error("no={} status:{}".format(ite_menu_conductor_exec, resp_data["status"]))
+        #     error_detail = multi_lang.get_text("EP034-0002", "CD実行の呼び出しに失敗しました ita-status:{0} resultdata:{1}".format(eresp_data["status"], eresp_data["resultdata"]), eresp_data["status"], eresp_data["resultdata"])
+        #     raise common.UserException(error_detail)
+
+        # 正常終了
+        ret_status = 200
+
+        # 戻り値をそのまま返却        
+        return jsonify({"result": ret_status}), ret_status
+
+    except common.UserException as e:
+        return common.server_error(e)
+    except Exception as e:
+        return common.server_error(e)
+
+
+def cd_result_get(workspace_id, conductor_id):
+    """CD実行結果取得 cd result get
+
+    Args:
+        workspace_id (int): workspace id
+        conductor_id (str): conductor id
+
+    Returns:
+        Response: HTTP Respose
+    """
+
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
+        globals.logger.debug('#' * 50)
+
+        # ワークスペースアクセス情報取得 get workspace access info.
+        access_info = api_access_info.get_access_info(workspace_id)
+
+        # namespaceの取得 get namespace 
+        namespace = common.get_namespace_name(workspace_id)
+
+        ita_restapi_endpoint = "http://{}.{}.svc:{}/default/menu/07_rest_api_ver1.php".format(EPOCH_ITA_HOST, namespace, EPOCH_ITA_PORT)
+        ita_user = access_info['ITA_USER']
+        ita_pass = access_info['ITA_PASSWORD']
+
+        # POST送信する
+        # HTTPヘッダの生成
+        filter_headers = {
+            'host': EPOCH_ITA_HOST + ':' + EPOCH_ITA_PORT,
+            'Content-Type': 'application/json',
+            'Authorization': base64.b64encode((ita_user + ':' + ita_pass).encode()),
+            'X-Command': 'EXECUTE',
+        }
+
+        # # 実行パラメータ設定
+        # data = {
+        #     "CONDUCTOR_CLASS_NO": conductor_class_no,
+        #     "OPERATION_ID": operation_id,
+        #     "PRESERVE_DATETIME": preserve_datetime,
+        # }
+
+        # # json文字列に変換（"utf-8"形式に自動エンコードされる）
+        # json_data = json.dumps(data)
+
+        # # リクエスト送信
+        # exec_response = requests.post(ita_restapi_endpoint + '?no=' + ite_menu_conductor_exec, headers=filter_headers, data=json_data)
+
+        # if exec_response.status_code != 200:
+        #     globals.logger.error(exec_response.text)
+        #     error_detail = multi_lang.get_text("EP034-0001", "CD実行の呼び出しに失敗しました status:{0}".format(exec_response.status_code), exec_response.status_code)
+        #     raise common.UserException(error_detail)
+
+        # globals.logger.debug("-------------------------")
+        # globals.logger.debug("response:")
+        # globals.logger.debug(exec_response.text)
+        # globals.logger.debug("-------------------------")
+
+        # resp_data = json.loads(exec_response.text)
+        # if resp_data["status"] != "SUCCEED":
+        #     globals.logger.error("no={} status:{}".format(ite_menu_conductor_exec, resp_data["status"]))
+        #     error_detail = multi_lang.get_text("EP034-0002", "CD実行の呼び出しに失敗しました ita-status:{0} resultdata:{1}".format(eresp_data["status"], eresp_data["resultdata"]), eresp_data["status"], eresp_data["resultdata"])
+        #     raise common.UserException(error_detail)
+
+        rows = []
+
+        # 正常終了
+        ret_status = 200
+
+        # 戻り値をそのまま返却        
+        return jsonify({"result": ret_status, "rows": rows}), ret_status
+
+    except common.UserException as e:
+        return common.server_error(e)
+    except Exception as e:
+        return common.server_error(e)

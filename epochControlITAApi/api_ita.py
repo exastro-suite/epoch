@@ -237,6 +237,60 @@ def call_ita_cd_execute(workspace_id):
         return common.server_error(e)
 
 
+@app.route('/workspace/<int:workspace_id>/it-automation/cd/execute/<string:conductor_id>', methods=['DELETE'])
+def call_ita_cd_execute_by_conductor_id(workspace_id, conductor_id):
+    """workspace/workspace_id/it-automation/cd/execute call
+
+    Args:
+        workspace_id (int): workspace id
+        conductor_id (str): conductor id
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}] conductor_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id, conductor_id))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'DELETE':
+            # it-automation cd execute cancel
+            return api_ita_cd.cd_execute_cancel(workspace_id, conductor_id)
+        else:
+            # Error
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+
+@app.route('/workspace/<int:workspace_id>/it-automation/cd/result/<string:conductor_id>', methods=['GET'])
+def call_ita_cd_result(workspace_id, conductor_id):
+    """workspace/workspace_id/it-automation/cd/result call
+
+    Args:
+        workspace_id (int): workspace id
+        conductor_id (str): conductor id
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}] conductor_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id, conductor_id))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'GET':
+            # it-automation cd result get
+            return api_ita_cd.cd_result_get(workspace_id, conductor_id)
+        else:
+            # Error
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+
 def create_ita(workspace_id):
     """IT-Automation Pod Create
 
