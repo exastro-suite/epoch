@@ -61,7 +61,9 @@ var workspace_api_conf = {
             },
 
             "post":     URL_BASE + "/api/workspace/{workspace_id}/cd/pipeline",
-
+            "ita" : {
+                "get":  URL_BASE + "/api/workspace/{workspace_id}/cd/pipeline/it-automation"
+            },
             "argocd": {
                 "get":     URL_BASE + "/api/workspace/{workspace_id}/cd/pipeline/argocd",
 
@@ -80,6 +82,7 @@ var workspace_api_conf = {
         },
         "cdExecDesignation": {
             "post" :    URL_BASE + "/api/workspace/{workspace_id}/cd/exec",
+            "delete" :  URL_BASE + "/api/workspace/{workspace_id}/cd/exec/{trace_id}",
         },
         "ciResult": {
             "nop" : {

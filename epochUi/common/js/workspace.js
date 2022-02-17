@@ -2262,6 +2262,63 @@ const itaResultList = function(){
     });
   });
 
+  // TEST画面に切り替え
+  $resultList.html('\
+    <div class="result-get">DELETE ' + workspace_api_conf.api.cdExecDesignation.delete + '\
+      <br>\
+      ID:<input type="text" class="tarce_id" size=20>\
+      <button class="cancel">予約取消</button>\
+      <br><br>\
+    </div>\
+    <hr>\
+    <div class="result-get">GET ' + workspace_api_conf.api.cd_pipeline.ita.get + '\
+    <button class="reload">更新</button>\
+    <textarea class="ita-text" cols="100" rows="25"></textarea>\
+    </div><br>\
+  ');
+  
+  var workspace_id = (new URLSearchParams(window.location.search)).get('workspace_id');
+
+  var get_ita_text = function() {
+    // Call get CD pipeline (ita) information processing - CDパイプライン(ITA)情報取得処理の呼び出し
+    $.ajax({
+      "type": "GET",
+      "url": workspace_api_conf.api.cd_pipeline.ita.get.replace('{workspace_id}', workspace_id),
+    }).done(function(data) {
+      // Success get - 取得成功
+      console.log("[DONE] GET " + workspace_api_conf.api.cd_pipeline.ita.get + " response\n" + JSON.stringify(data));
+      // display textarea - テキストエリアに表示
+      $resultList.find('.ita-text').val(JSON.stringify(data, null , "  "));
+      
+    }).fail(function(data) {
+      // Failed get - 取得失敗
+      console.log("[FAIL] GET " + workspace_api_conf.api.cd_pipeline.ita.get + " response\n" + JSON.stringify(data));
+      $resultList.find('.ita-text').val(JSON.stringify(data, null , "  "));
+    });
+  }
+  get_ita_text();
+  $resultList.find('.reload').on('click', () => {
+    get_ita_text();
+  });
+  $resultList.find('.cancel').on('click', () => {
+    var trace_id = $resultList.find('.tarce_id').val();
+    if(! confirm("予約を取り消します。トレースID:"+ trace_id)) {
+      return;
+    }
+    // Call get CD pipeline (ita) Cancellation of reservation - CDパイプライン(ITA)予約取り消し
+    $.ajax({
+      "type": "DELETE",
+      "url": workspace_api_conf.api.cdExecDesignation.delete.replace('{workspace_id}', workspace_id).replace('{trace_id}',trace_id),
+    }).done(function(data) {
+      // Success get - 取得成功
+      console.log("[DONE] DELETE " + workspace_api_conf.api.cdExecDesignation.delete + " response\n" + JSON.stringify(data));
+      alert("予約を取り消しました");
+    }).fail(function(data) {
+      // Failed get - 取得失敗
+      console.log("[FAIL] DELETE " + workspace_api_conf.api.cdExecDesignation.delete + " response\n" + JSON.stringify(data));
+      alert("予約を取り消しできませんでした");
+    });
+  });
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2675,7 +2732,7 @@ $content.find('.modal-open, .workspace-status-item').not('[data-button="pipeline
     case 'arogCdResultCheck':
       break;
     case 'exastroItAutomationResultCheck':
-      $('.modal-block-main').html('<a href="' + workspace_client_urls.ita + '" target="_blank">確認</a>');
+      //$('.modal-block-main').html('<a href="' + workspace_client_urls.ita + '" target="_blank">確認</a>');
       break;
   }
 });
