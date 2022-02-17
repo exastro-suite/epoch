@@ -3634,8 +3634,55 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       });
     }
   }
-  
-    /* ---------------- *\
+
+  /* ---------------- *\
+  |  it-automation result polling
+  \* ---------------- */
+  const ita_result_polling = function() {
+
+    let ita_result_call = false;
+    try {
+      if(workspace_id != null
+      && currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-cd-execute-result".replace('{ws_id}',workspace_id)) != -1 ) {
+        ita_result_call = true;
+      }
+    } catch(e) { }
+
+    if(!ita_result_call) {
+      $.ajax({
+        "type": "GET",
+        "url": workspace_api_conf.api.cd_pipeline.nop.get
+      }).always(function(result) {
+        setTimeout(ita_result_polling, ita_result_polling_span);
+      });
+    } else {
+      $.ajax({
+        "type": "GET",
+        "url": workspace_api_conf.api.cd_pipeline.ita.get.replace('{workspace_id}', workspace_id),
+        "data": {'processing': "True"}
+      }).done(function(response) {
+        var cdresult = response.rows;
+        console.log("DONE : cdresult");
+        console.log("--- data ----");
+        console.log(JSON.stringify(cdresult));
+        var visibility = "hidden";
+        for(let i = 0; i < cdresult.length; i++) {
+          if(['ITA-Execute'].includes(cdresult[i].cd_status)) {
+            visibility = "visible"
+            break;
+          }
+        }
+        $('#exastroItAutomationResultCheckArea').css("visibility", visibility);
+      }).fail(function(error) {
+        console.log("FAIL : get ita result");
+
+      }).always(function(result) {
+        setTimeout(ita_result_polling, ita_result_polling_span);
+      });
+    }
+  }
+
+  /* ---------------- *\
   |  argocd result polling
   \* ---------------- */
   const argocd_result_polling = function() {
@@ -3684,7 +3731,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
   }
 
   // window onloadイベント
-  $(document).ready(function(){ ci_result_polling();argocd_result_polling(); });
+  $(document).ready(function(){ ci_result_polling();argocd_result_polling(); ita_result_polling();});
 
   // Button control by role - ロールによるボタン制御
   function show_buttons_by_role() {
