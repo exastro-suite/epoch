@@ -117,7 +117,7 @@ def select_tekton_pipeline_task(cursor, workspace_id):
     Returns:
         response: HTTP Respose
     """
-    # SQL生成
+    # create sql - SQL生成
     sql = "SELECT * FROM tekton_pipeline_task \
             WHERE workspace_id = {}" \
             .format(workspace_id)

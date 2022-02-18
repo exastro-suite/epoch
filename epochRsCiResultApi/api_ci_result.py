@@ -120,7 +120,7 @@ def get_tekton_task(workspace_id):
 
         with dbconnector() as db, dbcursor(db) as cursor:
             
-            # CI結果情報 insert実行(戻り値：追加したtask_id)
+            # CI result information select execution - CI結果情報 select実行
             fetch_rows = da_ci_result.select_tekton_pipeline_task(cursor, workspace_id)
 
         # Successful completion - 正常終了
