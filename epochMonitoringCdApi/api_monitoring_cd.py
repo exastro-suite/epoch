@@ -90,12 +90,18 @@ def monitoring_argo_cd():
                     # 状態をArgoCD同期中に変更
                     contents = json.loads(result_row["contents"])
 
+                    # get argocd app name
+                    app_name = env_name_to_argo_app_name(
+                                result_row["workspace_id"],
+                                contents["workspace_info"]["cd_config"]["environments"],
+                                contents["environment_name"])
+
                     # ArgoCD Sync call 
                     api_url = "{}://{}:{}/workspace/{}/argocd/app/{}/sync".format(os.environ['EPOCH_CONTROL_ARGOCD_PROTOCOL'],
                                                             os.environ['EPOCH_CONTROL_ARGOCD_HOST'],
                                                             os.environ['EPOCH_CONTROL_ARGOCD_PORT'],
                                                             result_row["workspace_id"],
-                                                            contents["environment_name"])
+                                                            app_name)
                     response = requests.post(api_url, headers=post_headers)
 
                     if response.status_code != 200:
@@ -122,12 +128,18 @@ def monitoring_argo_cd():
                     # Get the result of ArgoCD and check the status
                     contents = json.loads(result_row["contents"])
 
+                    # get argocd app name
+                    app_name = env_name_to_argo_app_name(
+                                result_row["workspace_id"],
+                                contents["workspace_info"]["cd_config"]["environments"],
+                                contents["environment_name"])
+
                     # ArgoCD app get call 
                     api_url = "{}://{}:{}/workspace/{}/argocd/app/{}".format(os.environ['EPOCH_CONTROL_ARGOCD_PROTOCOL'],
                                                             os.environ['EPOCH_CONTROL_ARGOCD_HOST'],
                                                             os.environ['EPOCH_CONTROL_ARGOCD_PORT'],
                                                             result_row["workspace_id"],
-                                                            contents["environment_name"])
+                                                            app_name)
                     response = requests.get(api_url)
 
                     if response.status_code != 200:
@@ -410,6 +422,36 @@ def monitoring_it_automation():
         globals.logger.debug("it-automation Exception error args [{}]".format(e.args))
         return common.serverError(e)
 
+
+def get_argo_app_name(workspace_id,environment_id):
+    """ArgoCD app name
+
+    Args:
+        workspace_id (int): workspace_id
+        environment_id (str): environment_id
+
+    Returns:
+        str: ArgoCD app name
+    """
+    return 'ws-{}-{}'.format(workspace_id,environment_id)
+
+
+def env_name_to_argo_app_name(workspace_id, environments, env_name):
+    """Get the app name of ArgoCD from the environment name - 環境名からArgoCDのapp nameを取得します
+
+    Args:
+        workspace_id (int): workspace id
+        environments (arr): Environment information list of workspace - workspaceの環境情報リスト
+        env_name (str): enviroment name
+
+    Returns:
+        str: ArgoCD app name
+    """
+    for env in environments:
+        if env["name"] == env_name:
+            return get_argo_app_name(workspace_id, env["environment_id"])
+
+    return None
 
 
 def main():

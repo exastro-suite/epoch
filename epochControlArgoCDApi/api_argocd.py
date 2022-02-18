@@ -230,7 +230,7 @@ def get_argocd_app(workspace_id, app_name):
 
     Args:
         workspace_id (int): workspace id
-        app_name (str): app name (same environment name)
+        app_name (str): argocd app name
 
     Returns:
         Response: HTTP Respose
@@ -449,7 +449,7 @@ def argocd_settings(workspace_id):
 
         # 環境群数分処理を実行
         for env in request_cd_env:
-            env_name = env["name"]
+            argo_app_name = get_argo_app_name(workspace_id, env['environment_id'])
             cluster = env["deploy_destination"]["cluster_url"]
             namespace = env["deploy_destination"]["namespace"]
             gitUrl = env["git_repositry"]["url"]
@@ -477,7 +477,7 @@ def argocd_settings(workspace_id):
             # --sync-policy automated
             # アプリケーション作成
             globals.logger.debug("argocd app create :")
-            stdout_cd = subprocess.check_output(["argocd","app","create",env_name,
+            stdout_cd = subprocess.check_output(["argocd","app","create",argo_app_name,
                 "--repo",gitUrl,
                 "--path","./",
                 "--dest-server",cluster,
@@ -537,6 +537,37 @@ def workspace_namespace(workspace_id):
         str: workspace用namespace
     """
     return  'epoch-ws-{}'.format(workspace_id)
+
+def get_argo_app_name(workspace_id,environment_id):
+    """ArgoCD app name
+
+    Args:
+        workspace_id (int): workspace_id
+        environment_id (str): environment_id
+
+    Returns:
+        str: ArgoCD app name
+    """
+    return 'ws-{}-{}'.format(workspace_id,environment_id)
+
+
+def env_name_to_argo_app_name(workspace_id, environments, env_name):
+    """Get the app name of ArgoCD from the environment name - 環境名からArgoCDのapp nameを取得します
+
+    Args:
+        workspace_id (int): workspace id
+        enviroments (arr): Environment information list of workspace - workspaceの環境情報リスト
+        env_name (str): enviroment name
+
+    Returns:
+        str: ArgoCD app name
+    """
+    for env in environments:
+        if env["name"] == env_name:
+            return get_argo_app_name(workspace_id, env["environment_id"])
+
+    return None
+
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('API_ARGOCD_PORT', '8000')), threaded=True)

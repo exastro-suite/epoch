@@ -2442,13 +2442,15 @@ const arogCdResultList = function(){
     
     // Event processing when the sync button is pressed - 同期ボタン押下時のイベント処理
     $resultList.find('.sync').on('click', function(){
+      var environment_id = "";
+      for(environment_id in wsDataJSON["environment"]) break;
 
       console.log("[CALL] POST " + workspace_api_conf.api.cd_pipeline.argocd.sync.post.replace('{workspace_id}', workspace_id));
       // Call argoCD sync processing - ArgoCD同期処理呼び出し
       $.ajax({
         "type": "POST",
         "url": workspace_api_conf.api.cd_pipeline.argocd.sync.post.replace('{workspace_id}', workspace_id),
-        data:JSON.stringify({'environment_name':'staging'}),
+        data:JSON.stringify({'environment_id':environment_id}),
         contentType: "application/json",
         dataType: "json",
       }).done(function(data) {

@@ -611,14 +611,15 @@ def post_cd_pipeline_argocd_sync(workspace_id):
 
         # 状態をArgoCD同期中に変更
         req_json = request.json.copy()
-        environment_name = req_json["environment_name"]
+        environment_id = req_json["environment_id"]
+
 
         # ArgoCD Sync call 
         api_url = "{}://{}:{}/workspace/{}/argocd/app/{}/sync".format(os.environ['EPOCH_CONTROL_ARGOCD_PROTOCOL'],
                                                 os.environ['EPOCH_CONTROL_ARGOCD_HOST'],
                                                 os.environ['EPOCH_CONTROL_ARGOCD_PORT'],
                                                 workspace_id,
-                                                environment_name)
+                                                get_argo_app_name(workspace_id,environment_id))
         response = requests.post(api_url, headers=post_headers)
 
         if response.status_code != 200:
@@ -635,6 +636,19 @@ def post_cd_pipeline_argocd_sync(workspace_id):
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
     except Exception as e:
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+
+
+def get_argo_app_name(workspace_id,environment_id):
+    """ArgoCD app name
+
+    Args:
+        workspace_id (int): workspace_id
+        environment_id (str): environment_id
+
+    Returns:
+        str: ArgoCD app name
+    """
+    return 'ws-{}-{}'.format(workspace_id,environment_id)
 
 
 def cd_execute(workspace_id):
