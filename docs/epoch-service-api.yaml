@@ -566,6 +566,25 @@ paths:
         500:
           $ref: '#/definitions/responses/CommonException'
 
+  /workspace/{workspace_id}/cd/pipeline/it-automation:
+    get:
+      tags:
+        - CD Pipeline
+      summary: 
+        CDパイプライン(IT-Automation)情報取得
+      description: 
+        指定したワークスペースIDに対して、CDパイプライン実行結果（IT-Automation情報）を取得する
+      parameters:
+        - $ref: '#/definitions/parameters/Workspace_Id'
+        - $ref: '#/definitions/parameters/Processing'
+
+      # レスポンス結果
+      responses:
+        200:
+          $ref: '#/definitions/responses/Cdpipeline_ITA'
+        500:
+          $ref: '#/definitions/responses/CommonException'
+
   /workspace/{workspace_id}/cd/pipeline/argocd:
     get:
       tags:
@@ -619,6 +638,27 @@ paths:
 
       requestBody: # リクエストボディ
         $ref: '#/definitions/requestBodies/Cdpipeline_Cd_Exec'
+
+      # レスポンス結果
+      responses:
+        200:
+          $ref: '#/definitions/responses/200'
+        401:
+          $ref: '#/definitions/responses/Cdpipeline_Cd_Exec_401'
+        500:
+          $ref: '#/definitions/responses/CommonException'
+
+  /workspace/{workspace_id}/cd/exec/{trace_id}:
+    delete:
+      tags:
+        - CD Pipeline
+      summary: 
+        CD実行の予約取り消し
+      description: 
+        指定したCD実行予約に対して、CD実行の予約を取り消しする
+      parameters:
+        - $ref: '#/definitions/parameters/Workspace_Id'
+        - $ref: '#/definitions/parameters/Trace_Id'
 
       # レスポンス結果
       responses:
@@ -920,6 +960,14 @@ definitions:
       schema:
         type: integer
 
+    Trace_Id:
+      name: trace_id
+      in: path
+      description: トレースID
+      required: true
+      schema:
+        type: string
+
   responses: 
     #
     # 共通レスポンス定義
@@ -1006,6 +1054,17 @@ definitions:
         application/json:
           schema:
             $ref: '#/definitions/schemas/Cdpipeline_Argocd'
+
+    Cdpipeline_ITA:
+      description: "成功時のレスポンス"
+      content:
+        項目説明: 
+          schema:
+            $ref: '#/definitions/schemas/Cdpipeline_ITA_Example'
+
+        application/json:
+          schema:
+            $ref: '#/definitions/schemas/Cdpipeline_ITA'
 
     Cdpipeline_Cd_Exec_401:
       description: "権限なしエラー時のレスポンス"
@@ -1846,7 +1905,7 @@ definitions:
       type: object # 型
       example:
         {
-          "environment_name": "環境名 staging固定"
+          "environment_name": "環境名"
         }
 
     Cdpipeline_Argocd_Sync:
@@ -1855,6 +1914,215 @@ definitions:
         {
           "environment_name": "staging"
         }
+
+    Cdpipeline_ITA_Example: 
+      type: object # 型
+      example:
+        {
+          "result": "HTTPステータスコード",
+          "rows": [
+            {
+              "workspace_id": "ワークスペースID",
+              "trace_id": "トレースID",
+              "cd_status": "CD実行状態コード",
+              "cd_status_name": "CD実行状態名",
+              "environment_name": "環境名",
+              "namespace": "デプロイ先のnamespace",
+              "username": "CD実行ユーザ名",
+              "create_at": "開始日時",
+              "update_at": "更新日時",
+              "contents": {
+                "ita_results": {
+                  "CONDUCTOR_INSTANCE_INFO": {
+                    "ABORT_EXECUTE_FLAG": "実行フラグ",
+                    "CONDUCTOR_CLASS_NO": "コンダクタークラスNO",
+                    "CONDUCTOR_INSTANCE_ID": "コンダクターインスタンスID",
+                    "EXECUTION_USER": "実行ユーザ名 システム管理者固定",
+                    "EXEC_LOG": "",
+                    "NOTICE_INFO": "その他の情報",
+                    "OPERATION_NAME": "オペレーション名",
+                    "OPERATION_NO_IDBH": "オペレーションIDBH",
+                    "STATUS_ID": "状態ID",
+                    "TIME_BOOK": "",
+                    "TIME_END": "開始日時",
+                    "TIME_START": "終了日時"
+                  },
+                  "NODE_INFO": {
+                    "node-1": {
+                      "NODE_INSTANCE_NO": "実行時のインスタンスNO",
+                      "NODE_NAME": "ノード名",
+                      "NODE_TYPE_ID": "ノードのタイプ",
+                      "OPERATION_ID": "オペレーションID",
+                      "OPERATION_NAME": "オペレーション名",
+                      "SKIP": "スキップフラグ",
+                      "STATUS": "状態",
+                      "TIME_END": "開始日時",
+                      "TIME_START": "終了日時",
+                    },
+                    "node-2": {
+                      "NODE_INSTANCE_NO": "実行時のインスタンスNO",
+                      "NODE_NAME": "ノード名",
+                      "NODE_TYPE_ID": "ノードのタイプ",
+                      "OPERATION_ID": "オペレーションID",
+                      "OPERATION_NAME": "オペレーション名",
+                      "SKIP": "スキップフラグ",
+                      "STATUS": "状態",
+                      "TIME_END": "開始日時",
+                      "TIME_START": "終了日時",
+                    },
+                    "node-3": {
+                      "JUMP": "実行時のリンク先URL",
+                      "NODE_INSTANCE_NO": "実行時のインスタンスNO",
+                      "NODE_NAME": "ノード名",
+                      "NODE_TYPE_ID": "ノードのタイプ",
+                      "OPERATION_ID": "オペレーションID",
+                      "OPERATION_NAME": "オペレーション名",
+                      "SKIP": "スキップフラグ",
+                      "STATUS": "状態",
+                      "TIME_END": "開始日時",
+                      "TIME_START": "終了日時",
+                    }
+                  },
+                  "RESULTCODE": "実行結果コード",
+                  "RESULTINFO": "実行結果の情報",
+                  "manifest_embedding": {
+                    "execute_log": "manifest パラメータ埋込の実行ログ",
+                    "error_log": "manifest パラメータ埋込のエラーログ",
+                  },
+                  "manifest_commit_push": {
+                    "execute_log": "manifest Commit & Pushの実行ログ",
+                    "error_log": "manifest Commit & Pushのエラーログ",
+                  },
+                },
+                "workspace_info": {
+                    "ci_config": {
+                        "environments": {
+                          "environment_id": "環境ID",
+                          "manifests": [
+                            {
+                              "file_id": "manifestテンプレートID",
+                              "file": "manifestテンプレートファイル名",
+                              "parameters": {	
+                                "image": "imageのmanifestパラメータ入力値",
+                                "image_tag": "image_tagのmanifestパラメータ入力値",
+                                "param01": "param01~20までのmanifestパラメータ入力値",
+                              },
+                            },
+                          ],
+                        },
+                    }
+                }
+              }            
+            }
+          ]
+        }
+
+    Cdpipeline_ITA:
+      type: object # 型
+      example:
+        {
+          "result": "200",
+          "rows": [
+            {
+              "workspace_id": "1",
+              "trace_id": "0000000010",
+              "cd_status": "ITA-Execute",
+              "cd_status_name": "実行中",
+              "environment_name": "development",
+              "namespace": "sample-staging",
+              "username": "epoch-user",
+              "create_at": "Thu, 17 Feb 2022 07:39:51 GMT",
+              "update_at": "Thu, 17 Feb 2022 07:39:51 GMT",
+              "contents": {
+                "ita_results": {
+                  "CONDUCTOR_INSTANCE_INFO": {
+                    "ABORT_EXECUTE_FLAG": "1",
+                    "CONDUCTOR_CLASS_NO": "45",
+                    "CONDUCTOR_INSTANCE_ID": "45",
+                    "EXECUTION_USER": "システム管理者",
+                    "EXEC_LOG": "",
+                    "NOTICE_INFO": [],
+                    "OPERATION_NAME": "CD実行:https://github.com/[epoch-user]/epoch-sample-staging-manifest.git",
+                    "OPERATION_NO_IDBH": "1",
+                    "STATUS_ID": "7",
+                    "TIME_BOOK": null,
+                    "TIME_END": "2022/02/17 15:29:39",
+                    "TIME_START": "2022/02/17 15:28:52"
+                  },
+                  "NODE_INFO": {
+                    "node-1": {
+                      "NODE_INSTANCE_NO": "155",
+                      "NODE_NAME": "node-1",
+                      "NODE_TYPE_ID": "1",
+                      "OPERATION_ID": null,
+                      "OPERATION_NAME": null,
+                      "SKIP": null,
+                      "STATUS": "9",
+                      "TIME_END": "2022/02/17 15:28:52",
+                      "TIME_START": "2022/02/17 15:28:52"
+                    },
+                    "node-2": {
+                      "NODE_INSTANCE_NO": "156",
+                      "NODE_NAME": "node-2",
+                      "NODE_TYPE_ID": "2",
+                      "OPERATION_ID": null,
+                      "OPERATION_NAME": null,
+                      "SKIP": null,
+                      "STATUS": "1",
+                      "TIME_END": null,
+                      "TIME_START": null
+                    },
+                    "node-3": {
+                      "JUMP": "/default/menu/01_browse.php?no=2100180005&conductor_instance_id=46",
+                      "NODE_INSTANCE_NO": "157",
+                      "NODE_NAME": "node-3",
+                      "NODE_TYPE_ID": "4",
+                      "OPERATION_ID": null,
+                      "OPERATION_NAME": null,
+                      "SKIP": "1",
+                      "STATUS": "6",
+                      "TIME_END": "2022/02/17 15:29:36",
+                      "TIME_START": "2022/02/17 15:28:55"
+                    }
+                  },
+                  "RESULTCODE": "000",
+                  "RESULTINFO": "",
+                  "manifest_commit_push": {
+                    "execute_logs": "",
+                    "error_logs": "",
+                  },
+                  "manifest_embedding": {
+                    "execute_logs": "",
+                    "error_logs": "",
+                  }
+                },
+                "workspace_info": {
+                  "ci_config": {
+                    "environments": [
+                      {
+                        "environment_id": "xxxxxxxxxxx",
+                        "manifests": [
+                          {
+                            "file": "ui-app.yaml",
+                            "file_id": "1",
+                            "parameters": {
+                              "image": "[xxxxxxxx]/epoch-sample-app-ui",
+                              "image_tag": "master.xxxxxxx",
+                              "param01": "1",
+                              "param02": "31001",
+                              "param03": "32001"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
+            }
+          ]
+        }
+
 
     Cdpipeline_Cd_Exec_Example:
       type: object # 型
