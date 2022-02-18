@@ -2533,11 +2533,7 @@ const registryResultList = function(){
 
   $.ajax({
     "type": "GET",
-    "url": workspace_api_conf.api.ci_pipeline.registry.get.replace('{workspace_id}', workspace_id),
-    "data": {
-      'username': data_workspace["ci_config"]["pipelines_common"]["container_registry"]["user"], 
-      "password": data_workspace["ci_config"]["pipelines_common"]["container_registry"]["password"]
-    }
+    "url": workspace_api_conf.api.ci_pipeline.registry.get.replace('{workspace_id}', workspace_id)
   }).done(function(data) {
     // Success get - 取得成功
     console.log("[DONE] GET " + workspace_api_conf.api.ci_pipeline.registry.get + " response\n" + JSON.stringify(data));

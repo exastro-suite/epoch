@@ -560,12 +560,27 @@ def get_registry(workspace_id):
         globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
         globals.logger.debug('#' * 50)
 
+        # Workspace information acquisition URL - ワークスペース情報取得URL
+        api_url = "{}://{}:{}/workspace/{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+                                                    os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                    os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                    workspace_id)
+
+        # Get Workspace information ― ワークスペース情報取得
+        response = requests.get(api_url)
+        workspace_json = json.loads(response.text)
+
+        if response.status_code != 200:
+            error_detail = multi_lang.get_text("EP020-0089", "ワークスペース情報の取得に失敗しました")
+            globals.logger.debug(error_detail)
+            raise common.UserException(error_detail)
+
         # Request header for getting container registry information
         # コンテナレジストリ情報取得用 リクエストヘッダ
         request_headers = {
             'Content-Type': 'application/json',
-            'username': request.args.get("username"),
-            'password': request.args.get("password")
+            'username': workspace_json["rows"][0]["ci_config"]["pipelines_common"]["container_registry"]["user"],
+            'password': workspace_json["rows"][0]["ci_config"]["pipelines_common"]["container_registry"]["password"]
         }
 
         # CI result information acquisition URL - CI結果情報取得URL
@@ -578,7 +593,7 @@ def get_registry(workspace_id):
         ci_result_json = json.loads(response.text)
         
         if response.status_code != 200:
-            error_detail = multi_lang.get_text("EP020-0076", "CI結果情報の取得に失敗しました")
+            error_detail = multi_lang.get_text("EP020-0088", "CI結果情報の取得に失敗しました")
             globals.logger.debug(error_detail)
             raise common.UserException(error_detail)
 
