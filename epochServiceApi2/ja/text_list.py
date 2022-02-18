@@ -70,4 +70,8 @@ class TextList:
     lang_array['EP020-0032'] = "CDパイプライン(ArgoCD)情報の取得に失敗しました"
     lang_array['EP020-0033'] = "CDパイプライン(ArgoCD)同期に失敗しました"
     
+    lang_array['EP020-0074'] = "CIパイプライン コンテナレジストリ情報取得"
+    lang_array['EP020-0075'] = "コンテナレジストリ情報の取得に失敗しました"
+    lang_array['EP020-0076'] = "CI結果情報の取得に失敗しました"
+    
     

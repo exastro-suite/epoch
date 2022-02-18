@@ -17,7 +17,7 @@ from datetime import datetime
 import os
 import json
 import re
-
+import inspect
 import globals
 import common
 from dbconnector import dbconnector
@@ -106,6 +106,31 @@ def patch_tekton_task(workspace_id, task_id):
 
     except Exception as e:
         return common.serverError(e, "tekton_pipeline_task db update error")
+
+@app.route('/workspace/<int:workspace_id>/tekton/task', methods=['GET'])
+def get_tekton_task(workspace_id):
+    """CI結果情報取得
+
+    Returns:
+        response: HTTP Respose
+    """
+
+    try:
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
+
+        with dbconnector() as db, dbcursor(db) as cursor:
+            
+            # CI結果情報 insert実行(戻り値：追加したtask_id)
+            fetch_rows = da_ci_result.select_tekton_pipeline_task(cursor, workspace_id)
+
+        # Successful completion - 正常終了
+        res_status = 200
+        
+        return jsonify({ "result": res_status, "rows": fetch_rows }), res_status
+
+    except Exception as e:
+        return common.serverError(e, "tekton_pipeline_task db registration error")
+
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('API_CI_RESULT_PORT', '8000')), threaded=True)

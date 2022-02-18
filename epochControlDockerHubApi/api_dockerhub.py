@@ -52,7 +52,7 @@ def alive():
 
 
 
-@app.route('/registry/<path:registry>')
+@app.route('/registry/<path:registry>', methods=["POST"])
 def get_repositories(registry):
     app_name = "ワークスペース情報:"
     exec_stat = "DockerHub container images取得"

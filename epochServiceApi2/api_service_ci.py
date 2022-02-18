@@ -542,6 +542,94 @@ def get_git_hooks(workspace_id):
     except Exception as e:
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
 
+
+def get_registry(workspace_id):
+    """Get container registry information - コンテナレジストリ情報取得
+
+    Args:
+        workspace_id (int): workspace ID
+    Returns:
+        Response: HTTP Respose
+    """
+    app_name = multi_lang.get_text("EP020-0003", "ワークスペース情報:")
+    exec_stat = multi_lang.get_text("EP020-0074", "CIパイプライン コンテナレジストリ情報取得") 
+    error_detail = ""
+
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
+        globals.logger.debug('#' * 50)
+
+        # Request header for getting container registry information
+        # コンテナレジストリ情報取得用 リクエストヘッダ
+        request_headers = {
+            'Content-Type': 'application/json',
+            'username': request.args.get("username"),
+            'password': request.args.get("password")
+        }
+
+        # CI result information acquisition URL - CI結果情報取得URL
+        api_url = "{}://{}:{}/workspace/{}/tekton/task".format(os.environ['EPOCH_RS_CI_RESULT_PROTOCOL'],
+                                                                os.environ['EPOCH_RS_CI_RESULT_HOST'],
+                                                                os.environ['EPOCH_RS_CI_RESULT_PORT'],
+                                                                workspace_id)
+        # Get CI result information ― CI結果情報取得
+        response = requests.get(api_url)
+        ci_result_json = json.loads(response.text)
+        
+        if response.status_code != 200:
+            error_detail = multi_lang.get_text("EP020-0076", "CI結果情報の取得に失敗しました")
+            globals.logger.debug(error_detail)
+            raise common.UserException(error_detail)
+
+        rows = []
+        
+        # Extract the repository information from the acquired CI result information and format it
+        # 取得したCI結果情報の内、リポジトリ情報を抜き出して整形
+        for ci_result in ci_result_json["rows"]:
+            
+            # Container registry information acquisition URL - コンテナレジストリ情報取得URL
+            api_url = "{}://{}:{}/registry/{}".format(os.environ['EPOCH_CONTROL_DOCKERHUB_PROTOCOL'],
+                                                        os.environ['EPOCH_CONTROL_DOCKERHUB_HOST'],
+                                                        os.environ['EPOCH_CONTROL_DOCKERHUB_PORT'],
+                                                        ci_result["container_registry_image"])
+
+            # Get container registry information - コンテナレジストリ情報取得
+            response = requests.post(api_url, headers=request_headers)
+            registry_json = json.loads(response.text)
+            
+            if response.status_code != 200:
+                error_detail = multi_lang.get_text("EP020-0075", "コンテナレジストリ情報の取得に失敗しました")
+                globals.logger.debug(error_detail)
+                raise common.UserException(error_detail)
+
+            for registry in registry_json["rows"]:
+                # Merge repository information with repository information that matches the registry name and image tag
+                # レジストリ名とイメージタグが一致する、リポジトリ情報と、レジストリ情報をマージする
+                if ci_result["container_registry_image"] in registry["name"] \
+                and ci_result["container_registry_image_tag"] in registry["tag"]:
+                
+                    rows.append(
+                        {
+                            "registry": registry,
+                            "repository": {
+                                "name": ci_result["container_registry_image"],
+                                "url": ci_result["git_repository_url"],
+                                "branch": ci_result["git_branch"]
+                            }
+                        }
+                    )
+
+        ret_status = 200
+
+        return jsonify({ "return": ret_status, "rows": rows }), ret_status
+
+    except common.UserException as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+    except Exception as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+
+
 def get_ci_pipeline_result(workspace_id):
     """Get CI pipeline results (CIパイプライン結果取得)
 

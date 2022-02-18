@@ -158,7 +158,7 @@ def call_ci_pipeline(workspace_id):
 
 @app.route('/workspace/<int:workspace_id>/ci/pipeline/git/commits', methods=['GET'])
 def call_git_commits(workspace_id):
-    """Get git commit history - gitコミット履歴取得
+    """/workspace/workspace_id/ci/pipeline/git/commits Call
 
     Args:
         workspace_id (int): workspace ID
@@ -181,7 +181,7 @@ def call_git_commits(workspace_id):
 
 @app.route('/workspace/<int:workspace_id>/ci/pipeline/git/hooks', methods=['GET'])
 def call_git_hooks(workspace_id):
-    """Get webhook history - webhook履歴取得
+    """workspace/workspace_id/ci/pipeline/git/hooks Call
 
     Args:
         workspace_id (int): workspace ID
@@ -196,6 +196,30 @@ def call_git_hooks(workspace_id):
 
         if request.method == 'GET':
             return api_service_ci.get_git_hooks(workspace_id)
+        else:
+            raise Exception("method not support!")
+    except Exception as e:
+        return common.server_error(e)
+
+
+@app.route('/workspace/<int:workspace_id>/ci/pipeline/registry', methods=['GET'])
+def call_registry(workspace_id):
+    """workspace/workspace_id/ci/pipeline/registry Call
+
+    Args:
+        workspace_id (int): workspace ID
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'GET':
+            # Get container registry information - コンテナレジストリ情報取得
+            return api_service_ci.get_registry(workspace_id)
         else:
             raise Exception("method not support!")
     except Exception as e:

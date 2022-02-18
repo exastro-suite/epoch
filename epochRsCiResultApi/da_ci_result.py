@@ -105,3 +105,24 @@ def update_tekton_pipeline_task(cursor, info, task_id):
 
     # 更新した件数をreturn
     return upd_cnt
+
+
+def select_tekton_pipeline_task(cursor, workspace_id):
+    """ tekton_pipeline_task Information acquisition ― tekton_pipeline_task情報取得
+
+    Args:
+        cursor (mysql.connector.cursor): カーソル cursor
+        workspace_id (int):  workspace ID
+
+    Returns:
+        response: HTTP Respose
+    """
+    # SQL生成
+    sql = "SELECT * FROM tekton_pipeline_task \
+            WHERE workspace_id = {}" \
+            .format(workspace_id)
+
+    cursor.execute(sql)
+    rows = cursor.fetchall()
+    
+    return rows
