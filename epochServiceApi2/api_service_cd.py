@@ -1035,11 +1035,12 @@ def cd_execute_cancel(workspace_id, trace_id):
         # globals.logger.debug ("cicd url:" + apiInfo)
 
         # 予約取り消し reserve cancel
-        request_response = requests.delete(apiInfo)
+        response = requests.delete(apiInfo)
         # globals.logger.debug("cd/operations:" + request_response.text)
         # 戻り値がJson形式かチェックする return parameter is json?
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0086", "CD実行の取り消しに失敗しました")
+            globals.logger.debug(error_detail)
             raise common.UserException("{} Error it-automation cd exec cancel status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
 
         #
