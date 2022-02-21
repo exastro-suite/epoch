@@ -41,7 +41,7 @@ spec:
           name: epoch-control-github-conf
       containers:
       - name: epoch-control-github-api
-        image: exastro/epoch-control-github-api:0.3.1_20220210_1100
+        image: exastro/epoch-control-github-api:0.3.1_20220221_1640
         env:
         - name: HTTP_PROXY
           valueFrom:
