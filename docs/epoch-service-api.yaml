@@ -545,6 +545,24 @@ paths:
         500:
           $ref: '#/definitions/responses/CommonException'
 
+  /workspace/{workspace_id}/ci/pipeline/registry:
+    get:
+      tags:
+        - CI Pipeline
+      summary: 
+        コンテナレジストリ情報取得
+      description: 
+        指定したワークスペースIDに対する、CIパイプライン結果のコンテナレジストリ情報を取得する
+      parameters:
+        - $ref: '#/definitions/parameters/Workspace_Id'
+
+      # レスポンス結果
+      responses:
+        200:
+          $ref: '#/definitions/responses/Cipipeline_Registry'
+        500:
+          $ref: '#/definitions/responses/CommonException'
+
   #
   # CD Pipeline
   #
@@ -1040,6 +1058,17 @@ definitions:
         application/json:
           schema:
             $ref: '#/definitions/schemas/Cipipeline_ResultTaskrunLogs'
+
+    Cipipeline_Registry:
+      description: "成功時のレスポンス"
+      content:
+        項目説明: 
+          schema:
+            $ref: '#/definitions/schemas/Cipipeline_Registry_Example'
+
+        application/json:
+          schema:
+            $ref: '#/definitions/schemas/Cipipeline_Registry'
 
     #
     # CD Pipelineのレスポンス定義
@@ -1826,6 +1855,48 @@ definitions:
         {
           "result": "200",
           "log": "task task-build-and-push has failed: ..."
+        }
+
+    Cipipeline_Registry_Example: 
+      type: object # 型
+      example:
+        {
+          "return": "HTTPステータスコード",
+          "rows": {
+            "registroy" : {
+              "name": "コンテナイメージ名",
+              "url": "Dockerリンク先",
+              "tag": "コンテナイメージタグ",
+              "tag_last_pushed": "Push日時",
+              "full_size": "サイズ"
+            },
+            "repository": {
+              "name" : "ビルドリポジトリ名",
+              "url": "リポジトリリンク先",
+              "branch": "ビルドブランチ refs/heads/{ブランチ名}の形式"
+            }
+          }
+        }
+
+    Cipipeline_Registry:
+      type: object # 型
+      example:
+        {
+          "return": "200",
+          "rows": {
+            "registroy" : {
+              "name": "xxxxx/aplication1",
+              "url": "https://hub.docker.com/r/xxxxx/aplication1",
+              "tag": "master.20211206-152408",
+              "tag_last_pushed": "2021-12-06T06:26:19.631546Z",
+              "full_size": 93005290
+            },
+            "repository": {
+              "name" : "xxxxx/aplication1",
+              "url": "https://github.com/xxxxx/aplication1",
+              "branch": "refs/heads/main"
+            }
+          }
         }
 
     #
