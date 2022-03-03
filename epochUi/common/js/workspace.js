@@ -2481,7 +2481,7 @@ const aplicationCodeResultList = function(){
   $webhookList.html('<div>/GET /api/workspace/{workspace_id}/ci/pipeline/git/hooks')
 
   var workspace_id = (new URLSearchParams(window.location.search)).get('workspace_id');
-  // Call get CD pipeline (ArgoCD) information processing - CDパイプライン(ArgoCD)情報取得処理の呼び出し
+  // Call get CI pipeline (Application repository) information processing - CIパイプライン(アプリケーションリポジトリ)情報取得処理の呼び出し
   $.ajax({
     "type": "GET",
     "url": workspace_api_conf.api.ci_pipeline.git.commits.get.replace('{workspace_id}', workspace_id),
@@ -2550,6 +2550,36 @@ const registryResultList = function(){
       </div> \
     ');
     $imageList.find('.regis-text').val(JSON.stringify(data, null , "    "))
+  });
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//   IaCリポジトリ結果確認
+// 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+const gitServiceArgoCheckList = function(){
+  const $commitList = $('#commit-list');
+    
+  $commitList.html('<div>/GET /api/workspace/{workspace_id}/cd/pipeline/git/commits')
+
+  var workspace_id = (new URLSearchParams(window.location.search)).get('workspace_id');
+  // Call get CD pipeline (IaC Repositroy) information processing - CDパイプライン(IaCリポジトリ)情報取得処理の呼び出し
+  $.ajax({
+    "type": "GET",
+    "url": workspace_api_conf.api.cd_pipeline.git.commits.get.replace('{workspace_id}', workspace_id),
+  }).done(function(data) {
+    // Success get - 取得成功
+    console.log("[DONE] GET " + workspace_api_conf.api.cd_pipeline.git.commits.get + " response\n" + JSON.stringify(data));
+    // display textarea - テキストエリアを表示
+    $commitList.append('<textarea cols="100" rows="25">' + JSON.stringify(data.rows, null , "    ") + '</textarea>')
+    $commitList.append('</div><br><br>')  
+  }).fail(function(data) {
+    // Failed get - 取得失敗
+    console.log("[FAIL] GET " + workspace_api_conf.api.cd_pipeline.git.commits.get + " response\n" + JSON.stringify(data));
+
+    $commitList.append('<textarea cols="100" rows="10">取得失敗</textarea>')
+    $commitList.append('</div><br><br>')  
   });
 };
 
@@ -2719,6 +2749,10 @@ $content.find('.modal-open, .workspace-status-item').not('[data-button="pipeline
       };
       callback = cdExecution;
     } break;
+    // IaCリポジトリ結果
+    case 'gitServiceArgoCheck': {
+      callback = gitServiceArgoCheckList;
+    } break;
     // Kubernetes Manifest テンプレート
     case 'kubernetesManifestTemplate': {
       callback = templateFileList;
@@ -2755,16 +2789,16 @@ $content.find('.modal-open, .workspace-status-item').not('[data-button="pipeline
     case 'gitServiceCheck':
       break;
     case 'gitServiceArgoCheck':
-      var link = "";
-      const $commitList = $('#commit-list');
-      $commitList.html('');
-      for(var env in wsDataJSON['environment']) {
-        link = wsDataJSON['environment'][env][env + '-git-service-argo-repository-url'];
-        link = link.replace(".git","") + "/commits";
+      // var link = "";
+      // const $commitList = $('#commit-list');
+      // $commitList.html('');
+      // for(var env in wsDataJSON['environment']) {
+      //   link = wsDataJSON['environment'][env][env + '-git-service-argo-repository-url'];
+      //   link = link.replace(".git","") + "/commits";
 
-        // EPOCH_LINK
-        $commitList.append('<a href="' + link + '" target="_blank">' + link + '</a><br />')
-      };
+      //   // EPOCH_LINK
+      //   $commitList.append('<a href="' + link + '" target="_blank">' + link + '</a><br />')
+      // };
       break;
     case 'registryServiceCheck':
       // $('.modal-block-main').html('<a href="' + workspace_api_conf.links.registry + '" target="_blank">確認</a>');

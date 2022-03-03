@@ -355,6 +355,31 @@ def call_cd_pipeline_ita(workspace_id):
         return common.server_error(e)
 
 
+
+@app.route('/workspace/<int:workspace_id>/cd/pipeline/git/commits', methods=['GET'])
+def call_cd_pipeline_git_commits(workspace_id):
+    """/workspace/workspace_id/cd/pipeline/git/commits Call
+
+    Args:
+        workspace_id (int): workspace ID
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'GET':
+            return api_service_cd.get_git_commits(workspace_id)
+        else:
+            raise Exception("method not support!")
+    except Exception as e:
+        return common.server_error(e)
+
+
+
 @app.route('/workspace/<int:workspace_id>/cd/pipeline/argocd/sync', methods=['POST'])
 def call_cd_pipeline_argocd_sync(workspace_id):
     """workspace/workspace_id/cd/pipeline/argocd/sync Call

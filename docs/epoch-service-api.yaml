@@ -603,6 +603,24 @@ paths:
         500:
           $ref: '#/definitions/responses/CommonException'
 
+  /workspace/{workspace_id}/cd/pipeline/git/commits:
+    get:
+      tags:
+        - CD Pipeline
+      summary: 
+        CDパイプライン(IaCリポジトリ)情報取得
+      description: 
+        指定したワークスペースIDに対して、CDパイプライン実行結果（IaCリポジトリ情報）を取得する
+      parameters:
+        - $ref: '#/definitions/parameters/Workspace_Id'
+
+      # レスポンス結果
+      responses:
+        200:
+          $ref: '#/definitions/responses/Cdpipeline_GitCommits'
+        500:
+          $ref: '#/definitions/responses/CommonException'
+
   /workspace/{workspace_id}/cd/pipeline/argocd:
     get:
       tags:
@@ -1094,6 +1112,17 @@ definitions:
         application/json:
           schema:
             $ref: '#/definitions/schemas/Cdpipeline_ITA'
+
+    Cdpipeline_GitCommits:
+      description: "成功時のレスポンス"
+      content:
+        項目説明: 
+          schema:
+            $ref: '#/definitions/schemas/Cdpipeline_GitCommits_Example'
+
+        application/json:
+          schema:
+            $ref: '#/definitions/schemas/Cdpipeline_GitCommits'
 
     Cdpipeline_Cd_Exec_401:
       description: "権限なしエラー時のレスポンス"
@@ -2194,6 +2223,55 @@ definitions:
           ]
         }
 
+    Cdpipeline_GitCommits_Example: # モデル名
+      type: object # 型
+      example:
+        {
+          "result": "HTTPステータスコード", 
+          "rows": [
+            {
+              "environment_id": "環境ID", 
+              "environment_name": "環境名", 
+              "git_url": "コミットしたリポジトリURL", 
+              "commits":[
+                {
+                  "branch": "コミット先のブランチ名", 
+                  "commit_id": "コミットID", 
+                  "date": "コミットした日付", 
+                  "git_url": "コミットしたリポジトリURL", 
+                  "html_url": "コミット詳細へのURL", 
+                  "message": "コミットメッセ―ジ", 
+                  "name": "コミットしたユーザ名"
+                }
+              ]
+            }    
+          ]
+        }
+
+    Cdpipeline_GitCommits: # モデル名
+      type: object # 型
+      example:
+        {
+          "result": "200", 
+          "rows": [
+            {
+              "environment_id": "xxxxxxxxxxx", 
+              "environment_name": "staging", 
+              "git_url": "https://github.com/[git-user]/epoch-sample-staging-manifest.git", 
+              "commits":[
+                {
+                  "branch": "feature", 
+                  "commit_id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxx", 
+                  "date": "2021-12-10T01:22:14Z", 
+                  "git_url": "https://github.com/[git-user]/epoch-sample-staging-manifest.git", 
+                  "html_url": "https://github.com/[git-user]/epoch-sample-staging-manifest/commit/6ba4f2321c0524b454ba4354c05e3318d1ef792b", 
+                  "message": "0000000001_deploy_xxxxx", 
+                  "name": "git-user"
+                }
+              ]
+            }
+          ]
+        }
 
     Cdpipeline_Cd_Exec_Example:
       type: object # 型

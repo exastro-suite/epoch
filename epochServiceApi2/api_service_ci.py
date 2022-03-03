@@ -313,7 +313,7 @@ def get_git_commits(workspace_id):
         # 取得したworkspace情報をパラメータとして受け渡す Pass the acquired workspace information as a parameter
         workspace_info = ret["rows"][0]
 
-        git_token = workspace_info["cd_config"]["environments_common"]["git_repositry"]["token"]
+        git_token = workspace_info["ci_config"]["pipelines_common"]["git_repositry"]["token"]
 
         # ヘッダ情報 header info.
         post_headers_in_token = {
