@@ -1988,6 +1988,8 @@ const cdExecution = function(){
         $okButton = $modal.find('.modal-menu-button[data-button="ok"]');
         
   $okButton.prop('disabled', true );
+  $okButton.on('click',cdRunning);
+
   // CD execution environment information processing - CD実行環境情報処理
   new Promise((resolve, reject) =>{
     var workspace_id = (new URLSearchParams(window.location.search)).get('workspace_id');
