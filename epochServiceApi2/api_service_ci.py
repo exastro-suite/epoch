@@ -689,11 +689,57 @@ def get_ci_pipeline_result(workspace_id):
                 exec_detail = ""
             raise common.UserException(error_detail)
 
-        response = {
-            "result":"200",
-            "rows" : ret["rows"],
-        }
+        rows = []
+        # globals.logger.debug(f'rows:{ret["rows"]}')
+        for row in ret["rows"]:
+            tasks = []
+            for task in row["tasks"]:
+                # globals.logger.debug(f'tasks:{task}')
+
+                # taskにログがある場合のみ取得
+                # Get only if task has a log
+                if "taskrun_name" in task:
+                    taskrun_name = task["taskrun_name"]
+
+                    # epoch-control-tekton-api の呼び先設定
+                    api_url_tekton = "{}://{}:{}/workspace/{}/tekton/taskrun/{}/logs".format(
+                                                                                    os.environ["EPOCH_CONTROL_TEKTON_PROTOCOL"], 
+                                                                                    os.environ["EPOCH_CONTROL_TEKTON_HOST"], 
+                                                                                    os.environ["EPOCH_CONTROL_TEKTON_PORT"],
+                                                                                    workspace_id,
+                                                                                    taskrun_name)
+                    # TEKTONタスク実行ログ情報取得
+                    exec_stat = "taskrunログ情報取得"
+                    request_response = requests.get(api_url_tekton, params={"latest": latest})
+
+                    ret = json.loads(request_response.text)
+
+                    if request_response.status_code != 200:
+                        if "errorDetail" in ret:
+                            error_detail = ret["errorDetail"]
+                        else:
+                            error_detail = ""
+                        raise common.UserException(error_detail)
+
+                    # 取得したログをtaskの"log"として追加
+                    # Add the acquired log as "log" of task
+                    task["log"] = ret["log"]
+
+                tasks.append(task)
+
+            # 成形したtaskの情報を上書き
+            # Overwrite the information of the molded task
+            row["tasks"] = tasks
+
+            rows.append(row)
+
+        # globals.logger.debug(f'rows:{rows}')
+
         ret_status = 200
+        response = {
+            "result": ret_status,
+            "rows" : rows,
+        }
 
         # 戻り値をそのまま返却        
         return jsonify(response), ret_status
@@ -743,11 +789,11 @@ def get_ci_pipeline_result_logs(workspace_id, taskrun_name):
                 error_detail = ""
             raise common.UserException(error_detail)
 
+        ret_status = 200
         response = {
-            "result":"200",
+            "result": ret_status,
             "log" : ret["log"],
         }
-        ret_status = 200
 
         # 戻り値をそのまま返却        
         return jsonify(response), ret_status
