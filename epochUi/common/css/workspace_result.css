@@ -1,0 +1,1135 @@
+@charset "utf-8";
+/*
+#   Copyright 2022 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+*/
+/* CSS Document */
+
+/* -------------------------------------------------- *\
+
+   共通部分
+   
+\* -------------------------------------------------- */
+
+#result-detail-modal {
+justify-content: flex-start;
+}
+#result-detail-modal .modal,
+#result-detail-modal .modal-main {
+height: 100%;
+}
+#result-detail-modal .modal-body {
+min-height: 100%;
+}
+.status-trace-id-block {
+display: flex;
+}
+.status-trace-id-number {
+flex: 1 1 auto;
+text-align: center;
+background-color: #E9F4F2;
+border-radius: 4px;
+line-height: 32px;
+letter-spacing: 0.025em;
+font-weight: bold;
+}
+.status-trace-id-number::before {
+content: attr(data-title);
+margin-right: 16px;
+vertical-align: middle;
+font-weight: normal;
+font-size: 80%;
+color: #62AFA1;
+}
+.status-trace-id-button {
+position: relative;
+z-index: 0;
+width: 32px;
+height: 32px;
+background-color: #FFFBF2;
+border: 1px solid #FFA500;
+border-radius: 4px;
+font-size: 20px;
+color: #FFA500;
+cursor: pointer;
+}
+.status-trace-id-button:disabled {
+background-color: #F2F2F2;
+border: 1px solid #CCC;
+color: #CCC;
+cursor: default;
+opacity: .5;
+}
+.status-trace-id-button[data-button="prev"],
+.status-trace-id-button[data-button="next"] {
+margin: 0 8px;
+}
+.et-b .lb .et-ci::after {
+content: '';
+display: block;
+position: absolute;
+left: 0; top: 4px;
+width: 1px; height: calc( 100% - 8px );
+background-color: #8FC6BC;
+}
+.et-h .nb.et-c::after {
+display: none;
+}
+.table-grid .et-r {
+display: grid;
+padding: 4px 0;
+}
+.table-grid .et-c {
+min-height: auto;
+}
+.table-grid .et-ci {
+padding: 4px 8px;
+}
+.table-grid .et-ht {
+white-space: nowrap;
+}
+.table-grid .et-h .rs .et-ci {
+padding-right: 28px;
+}
+
+/* -------------------------------------------------- *\
+
+   アプリケーションコードリポジトリ Commit一覧
+   マニフェストリポジトリ Commit一覧
+
+\* -------------------------------------------------- */
+
+.commit-status .manifest-file { grid-area: manifest; }
+.commit-status .repository { grid-area: repository; }
+.commit-status .branch { grid-area: branch; }
+.commit-status .commit-id { grid-area: commit-id; }
+.commit-status .changer { grid-area: changer; }
+.commit-status .message { grid-area: message; }
+.commit-status .update { grid-area: update; }
+.commit-status .status-icon { grid-area: status-icon; }
+.commit-status .payload { grid-area: payload; }
+.commit-status .trigger { grid-area: trigger; }
+.commit-status .status { grid-area: status; }
+.commit-status .result { grid-area: result; }
+
+.webhook .et-b .status-icon {
+border-left: 4px solid #CCC;
+}
+.webhook .et-b .Succeeded .status-icon { border-color: #60C60D; }
+.webhook .et-b .Failed .status-icon { border-color: #C80000; }
+
+.commit-status.application-code .et-r {
+grid-template-areas:
+    "repository message message commit-id"
+    "branch changer update commit-id";
+grid-template-columns: 240px min-content 1fr 100px;
+}
+.commit-status.webhook .et-r {
+grid-template-areas:
+    "status-icon repository payload payload payload result"
+    "status-icon branch trigger status update result";
+grid-template-columns: 64px 240px min-content 1fr 176px 64px;
+}
+.commit-status.manifest .et-r {
+grid-template-areas:
+    "manifest branch message message commit-id"
+    "manifest branch changer update commit-id";
+grid-template-columns: 240px 160px min-content 1fr 100px;
+}
+.commit-status .et-b .changer .et-ci {
+max-width: 240px;
+}
+.commit-status.application-code .et-b .update .et-ci::before,
+.commit-status.manifest .et-b .update .et-ci::before {
+content: 'committed on ';
+display: inline;
+}
+
+.tekton-task .et-b .branch .et-ci,
+.resigry .et-b .branch .et-ci,
+.commit-status .et-b .branch .et-ci {
+font-weight: bold;
+font-size: 13px;
+}
+
+.tekton-task .et-b .branch .et-ci::before,
+.resigry .et-b .branch .et-ci::before,
+.commit-status .et-b .branch .et-ci::before {
+content: "\e918";
+display: inline-block;
+margin-right: 8px;
+font-family: 'exastro-ui-icons' !important;
+speak: never;
+font-style: normal;
+font-weight: normal;
+font-variant: normal;
+text-transform: none;
+line-height: 1;
+-webkit-font-smoothing: antialiased;
+-moz-osx-font-smoothing: grayscale;
+}
+.commit-status .commit-id a {
+display: inline-block;
+padding: 5px 16px;
+background-color: #F6F8FA;
+border: 1px solid #CCC;
+border-radius: 6px;
+font-weight: 500;
+line-height: 20px;
+white-space: nowrap;
+text-decoration: none;
+cursor: pointer;
+}
+.commit-status .commit-id a:hover {
+background-color: #0969DA;
+color: #FFF;
+}
+
+#manifest-repository-check .item-block {
+display: flex;
+min-height: 64px;
+}
+#manifest-repository-check .item-header {
+display: flex;
+align-items: center;
+width: 160px;
+margin: 0;
+}
+#manifest-repository-check .item-string {
+display: flex;
+align-items: center;
+height: 100%;
+padding-left: 16px;
+border: none;
+border-left: 1px solid #DDD;
+font-size: 20px;
+}
+
+/* -------------------------------------------------- *\
+
+   TEKTONタスク実行状況
+
+\* -------------------------------------------------- */
+.tekton-task .et-r {
+grid-template-areas:
+    "status repository date task"
+    "status image branch task";
+grid-template-columns: 64px 1fr 176px 64px;
+padding: 4px 0 4px 4px;
+}
+.tekton-task .status { grid-area: status; }
+.tekton-task .repository { grid-area: repository; }
+.tekton-task .image { grid-area: image; }
+.tekton-task .date { grid-area: date; }
+.tekton-task .branch { grid-area: branch; }
+.tekton-task .task { grid-area: task; }
+
+.tekton-task .et-b .status {
+border-left: 4px solid #CCC;
+}
+.tekton-task .et-b .Succeeded .status { border-color: #60C60D; }
+.tekton-task .et-b .reserve .status { border-color: #FFB733; }
+.tekton-task .et-b .Failed .status { border-color: #C80000; }
+.tekton-task .et-b .Running .status { border-color: #57A99A; }
+
+.task-detail-list {
+position: relative;
+z-index: 0;
+margin: 4px 0 16px; padding: 24px;
+background-color: #F8F8F8;
+border: 1px solid #DDD;
+border-radius: 4px;
+}
+.task-detail-item {
+display: flex;
+flex-wrap: wrap;
+position: relative;
+z-index: 0;
+margin-bottom: 16px; padding: 8px;
+background-color: #FFF;
+border: 1px solid #CCC;
+border-left-width: 4px;
+border-radius: 0 4px 4px 0;
+box-shadow: 2px 2px 2px rgba( 0,0,0,.1 );
+}
+.task-detail-item:last-child {
+margin-bottom: 0;
+}
+.task-detail-item::after {
+content: '';
+display: block;
+position: absolute;
+z-index: -1;
+left: 23px; bottom: 100%;
+width: 3px; height: 18px;
+background-color: #DDD;
+}
+.task-detail-item:first-child::after {
+display: none;
+}
+.task-detail-item > div {
+display: flex;
+align-items: center;
+}
+.task-detail-status {
+width: 64px;
+}
+.task-detail-name {
+width: calc( 100% - 272px );
+}
+.task-detail-date {
+width: 176px;
+}
+.task-detail-log-open {
+width: 32px;
+}
+.task-detail-log {
+display: none;
+width: 100%;
+}
+
+.task-detail-item[data-status="Running"] {
+background-color: #F4F9F8;
+border-color: #1F8C78;
+}
+.task-detail-item[data-status="Running"]::after {
+background-color: #1F8C78;
+}
+.task-detail-item[data-status="Succeeded"] {
+background-color: #F7FCF3;
+border-color: #60C60D;
+}
+.task-detail-item[data-status="Succeeded"]::after {
+background-color: #60C60D;
+}
+.task-detail-item[data-status="Failed"] {
+background-color: #FCF2F2;
+border-color: #C80000;
+}
+.task-detail-item[data-status="Failed"]::after {
+background-color: #C80000;
+}
+.task-detail-item[data-status="Pending"] {
+background-color: #F2F2F2;
+border-color: #CCC;
+opacity: .5;
+}
+.task-detail-item[data-status="Pending"]::after {
+background-color: #CCC;
+}
+.task-detail-item[data-status="Pending"] .task-status-open {
+display: none;
+}
+.task-detail-item > .task-detail-log {
+overflow: auto;
+display: none;
+height: 240px;
+margin: 8px 0 0; padding: 8px;
+border: 1px solid #DDD;
+background-color: #FFF;
+border-radius: 4px;
+white-space: pre;
+line-height: 20px;
+font-family: Consolas, "メイリオ", Meiryo, Osaka, "ＭＳ Ｐゴシック", "MS PGothic", "sans-serif";
+font-size: 12px;
+}
+
+/* -------------------------------------------------- *\
+
+   IT Automation 実行結果・状況確認
+
+\* -------------------------------------------------- */
+.ita-result .et-r {
+grid-template-areas:
+    "status-icon date user menu"
+    "status-icon trace-id environment menu";
+grid-template-columns: 64px 176px 1fr 108px;
+padding: 4px 0 4px 4px;
+}
+.ita-result .status-icon { grid-area: status-icon; }
+.ita-result .date { grid-area: date; }
+.ita-result .user { grid-area: user; }
+.ita-result .environment { grid-area: environment; }
+.ita-result .menu { grid-area: menu; }
+.ita-result .trace-id { grid-area: trace-id; }
+.ita-result .execution-status { grid-area: execution-status; }
+
+.ita-result .et-b .status-icon {
+border-left: 4px solid #CCC;
+}
+.ita-result .et-b .Succeeded .status-icon { border-color: #60C60D; }
+.ita-result .et-b .reserve .status-icon { border-color: #FFB733; }
+.ita-result .et-b .Failed .status-icon { border-color: #C80000; }
+.ita-result .et-b .Running .status-icon { border-color: #57A99A; }
+
+/* Conductor */
+.conductor-area {
+overflow: auto;
+position: relative;
+z-index: 0;
+width: 100%; height: 120px;
+background: linear-gradient( transparent, transparent 99px, #CCC 99px, #CCC 100px ),
+linear-gradient( 90deg, transparent, transparent 99px, #CCC 99px, #CCC 100px ),
+linear-gradient( transparent, transparent 49px, #D0D0D0 49px, #D0D0D0 50px ),
+linear-gradient( 90deg, transparent, transparent 49px, #D0D0D0 49px, #D0D0D0 50px ),
+linear-gradient( transparent, transparent 9px, #DDD 9px, #DDD 10px ),
+linear-gradient( 90deg, transparent, transparent 9px, #DDD 9px, #DDD 10px ), transparent;
+background-color: #F2F2F2;
+background-size: 100px 100px, 100px 100px, 50px 50px, 50px 50px, 10px 10px, 10px 10px;
+border: 1px solid #CCC;
+border-radius: 4px;
+}
+.conductor-area-inner {
+overflow: hidden;
+position: absolute;
+left: 0; top: 0;
+width: 707px; height: 100%;
+}
+.conductor-area-inner > .node {
+position: absolute;
+top: 50%;
+}
+.conductor-start {
+left: 16px;
+transform: translateY(-50%);
+}
+.conductor-end {
+right: 16px;
+transform: translateY(-50%);
+}
+.conductor-epoch {
+left: 50%;
+transform: translate(-50%,-50%);
+}
+.conductor-line1,
+.conductor-line2 {
+position: absolute;
+z-index: -1;
+top: 50%;
+transform: translateY(-50%);
+width: 28px; height: 3px;
+background-color: #002B62;
+}
+.conductor-line1 {
+left: 214px;
+}
+.conductor-line2 {
+right: 214px;
+}
+
+.node-main,
+.node-sub {
+display: flex;
+padding: 1px;
+background: linear-gradient( #666, #111 );
+border-radius: 9px;
+box-shadow: 4px 4px 8px rgba( 0,0,0,.4 );
+}
+.node-body {
+position: relative;
+z-index: 1;
+}
+.node-circle {
+position: absolute;
+left: 4px; top: -8px;
+z-index: 1;
+width: 72px; height: 72px;
+background-image: linear-gradient( -45deg, #CCC, #EEE );
+box-shadow: 1px 1px 3px 1px rgba( 0,0,0,.4 );
+border-radius: 50%;
+}
+.node-circle::before {
+content: '';
+position: absolute;
+left: 1px; top: 1px;
+z-index: 2;
+width: 70px; height: 70px;
+background-image: linear-gradient( -45deg, #EEE, #CCC );
+border-radius: 50%;
+}
+.node-circle::after {
+content: '';
+position: absolute;
+left: 4px; top: 4px;
+z-index: 3;
+width: 64px; height: 64px;
+background-image: linear-gradient( -45deg, #333, #666 );
+box-shadow: 0 0 2px 1px rgba( 0,0,0,.3 ) inset;
+border-radius: 50%;
+}
+.node-circle .node-gem {
+display: block;
+position: absolute;
+left: 7px; top: 7px;
+z-index: 5;
+width: 58px; height: 58px;
+box-shadow: 0 0 2px 1px rgba( 0,0,0,.3 );
+border-radius: 50%;
+text-align: center;
+line-height: 58px;
+text-shadow: 1px 1px 1px rgba( 0,0,0,.6 );
+font-family: Consolas, "メイリオ", Meiryo, Osaka, "ＭＳ Ｐゴシック", "MS PGothic", "sans-serif";
+font-weight: bold;
+font-size: 28px;
+color: #EEE;
+transition-duration: 1s;
+}
+.node-circle .node-gem::before,
+.node-circle .node-gem::after {
+content: '';
+display: block;
+position: absolute;
+right: 0; top: 0;
+width: 58px; height: 58px;
+border-radius: 50%;
+}
+.node-circle .node-gem::before {
+background-image: radial-gradient( circle at 50% 80%, rgba( 255,255,255,.6 ), transparent );
+box-shadow: 0 -1px 4px 2px rgba( 0,0,0,.3 ) inset;
+}
+.node-circle .node-gem::after {
+background-image: linear-gradient( rgba( 255,255,255,.95 ), rgba( 255,255,255,.7 ) 10%, transparent 85% );
+transform-origin: center top;
+transform: scale(.8,.6) translateY(4px);
+}
+.node-circle .node-gem-inner {
+display: block;
+position: absolute;
+left: 50%;
+transform: translateX(-50%);
+}
+.node-type,
+.node-name {
+overflow: hidden;
+max-width: 400px;
+font-family: Consolas, "メイリオ", Meiryo, Osaka, "ＭＳ Ｐゴシック", "MS PGothic", "sans-serif";
+}
+.drag .node-name {
+white-space: nowrap;
+text-overflow: ellipsis;
+}
+.node-type {
+overflow: hidden;
+text-overflow: ellipsis;
+height: 24px;
+padding: 0 8px 0 84px;
+background: linear-gradient( rgba( 255,255,255,.2 ), transparent, rgba( 0,0,0,.3 ) ) #666;
+border-top: 1px solid rgba( 255,255,255,.2 );
+border-left: 1px solid rgba( 255,255,255,.2 );
+border-bottom: 1px solid rgba( 0,0,0,.5 );
+border-right: 1px solid rgba( 0,0,0,.3 );
+text-shadow: 1px 1px 2px rgba( 255,255,255,.6 ),
+            -1px -1px 2px rgba( 0,0,0,.6 );
+white-space: nowrap;
+line-height: 24px;
+font-size: 11px;
+color: #DDD;
+}
+.node-name {
+min-height: 32px;
+padding: 4px 8px 4px 84px;
+background-color: #DDD;
+background-image: linear-gradient( rgba( 0,0,0,0 ), rgba( 0,0,0,.3 ) );
+background-position: -1px -1px;
+background-size: 105% 105%;
+border-top: 1px solid rgba( 255,255,255,.2 );
+border-left: 1px solid rgba( 255,255,255,.4 );
+border-bottom: 1px solid rgba( 0,0,0,.6 );
+border-right: 1px solid rgba( 0,0,0,.1 );
+line-height: 1.5;
+font-size: 14px;
+font-weight: bold;
+word-break: break-all;
+color: #222;
+}
+.node-in, .node-out {
+position: relative;
+z-index: 1;
+width: 32px; min-height: 32px;
+background-color: #666;
+background-image: linear-gradient( rgba( 0,0,0,0 ), rgba( 0,0,0,.7 ) );
+background-position: -1px -1px;
+background-size: 105% 105%;
+border-top: 1px solid rgba( 255,255,255,.2 );
+border-left: 1px solid rgba( 255,255,255,.2 );
+border-bottom: 1px solid rgba( 0,0,0,.3 );
+border-right: 1px solid rgba( 0,0,0,.3 );
+}
+.node-in {
+border-radius: 8px 0 0 8px;
+}
+.node-out {
+border-radius: 0 8px 8px 0;
+}
+.node-cap {
+width: 16px;
+}
+.node-terminal::after,
+.node-cap::before,
+.node-cap::after {
+content: '';
+display: block;
+position: absolute;
+left: 20%;
+z-index: 1;
+width: 60%; height: 8px;
+background-size: 6px 6px;
+}
+.node-cap::before {
+top: 4px;
+background-image: linear-gradient( #666 1px, #333 1px, #333 2px, transparent 2px );
+}
+.node-terminal::after,
+.node-cap::after {
+bottom: 4px;
+background-image: linear-gradient( #444 1px, #111 1px, #111 2px, transparent 2px );
+}
+.node-in.node-terminal::before,
+.node-out.node-terminal::before {
+content: 'IN';
+display: block;
+position: absolute;
+left: 0; top: 4px;
+z-index: 1;
+transform: scale(0.9);
+width: 100%;
+text-shadow: 1px 1px 1px rgba( 0,0,0,.8 ), -1px -1px 1px rgba( 255,255,255,.2 );
+text-align: center;
+line-height: 1;
+letter-spacing: 0.2em;
+font-size: 10px;
+font-weight: bold;
+font-family: Consolas, "メイリオ", Meiryo, Osaka, "ＭＳ Ｐゴシック", "MS PGothic", "sans-serif";
+color: #DDD;
+}
+.node-out.node-terminal::before {
+content: 'OUT';
+}
+.node-terminal .hole,
+.node-terminal .hole::before,
+.node-terminal .hole::after {
+display: block;
+content: '';
+position: absolute;
+left: 50%;
+transform: translateX(-50%);
+border-radius: 50%;
+}
+.node-terminal .hole {
+top: 50%;
+z-index: 2;
+transform: translate(-50%,-50%);
+width: 24px; height: 24px;
+background-image: linear-gradient( #111, #444 );
+box-shadow: 0 1px 1px rgba( 255,255,255,.3 ),
+0 -1px 1px rgba( 0,0,0,.4 );
+}
+.node-terminal .hole::before {
+top: 3px;
+z-index: 3;
+width: 18px; height: 18px;
+background-image: linear-gradient( #CCC, #AAA );
+}
+.node-terminal .hole::after {
+top: 4px;
+z-index: 4;
+width: 16px; height: 16px;
+border: 1px solid #888;
+background-color: #333;
+box-shadow: 0 0 8px #000 inset;
+}
+.node-terminal.connect .hole::after,
+.node-terminal.connected .hole::after {
+background-image: linear-gradient( 130deg, #AAA, #FFFFF2, #AAA );
+border-color: #333;
+box-shadow: 1px 1px 6px 2px rgba( 0,0,0,.8 );
+}
+.node-terminal .hole-inner {
+display: block;
+position: absolute;
+left: 0; top: 0;
+z-index: 5;
+width: 100%; height: 100%;
+border: 2px solid transparent;
+border-radius: 50%;
+transform: scale(1);
+transition-duration: .2s;
+}
+.node-terminal.connect .hole-inner::after,
+.node-terminal.connected .hole-inner::after,
+.node-terminal.connect .hole-inner::before,
+.node-terminal.connected .hole-inner::before {
+content: '';
+position: absolute;
+left: 50%; top: 50%;
+z-index: 6;
+transform: translate(-50%,-50%);
+width: 8px; height: 2px;
+background-color: #333;
+border-radius: 1px;
+}
+.node-terminal.connect .hole-inner::before,
+.node-terminal.connected .hole-inner::before {
+z-index: 7;
+transform: translate(-50%,-50%) rotate(90deg);
+}
+
+/* Conductor color */
+.conductor-start .node-type,
+.conductor-start .node-circle .node-gem,
+.conductor-end .node-type,
+.conductor-end .node-circle .node-gem { background-color: #002B62; }
+
+.conductor-epoch .node-type { background-color: #1F8C78; }
+.conductor-epoch .node-circle .node-gem { background-color: #1F8C78; }
+
+.conductor-area .node,
+.conductor-area .conductor-line1,
+.conductor-area .conductor-line2 {
+filter: grayscale(1) opacity(0.3);
+}
+.conductor-area[data-mode="running"] .conductor-start,
+.conductor-area[data-mode="running"] .conductor-epoch,
+.conductor-area[data-mode="running"] .conductor-line1,
+.conductor-area[data-mode="error"] .conductor-start,
+.conductor-area[data-mode="error"] .conductor-epoch,
+.conductor-area[data-mode="error"] .conductor-line1,
+.conductor-area[data-mode="success"] .node,
+.conductor-area[data-mode="success"] .conductor-line1,
+.conductor-area[data-mode="success"] .conductor-line2 {
+filter: none;
+}
+
+/* Running */
+.conductor-area[data-mode="running"] .conductor-start .node-circle::after,
+.conductor-area[data-mode="running"] .conductor-epoch .node-circle::after {
+background-image: linear-gradient( #264F05 2px, #132803 2px );
+background-size: 3px 3px;
+animation: runningNodeCircleBack 0.5s linear infinite;
+}
+@keyframes runningNodeCircleBack {
+0% {
+  background-position: 0 0;
+  opacity: 1;
+  box-shadow: 0 0 2px #60C60D;
+  }
+50% {
+  background-position: 0 1px;
+  opacity: .9;
+  box-shadow: 0 0 4px #60C60D;
+  }
+100% {
+  background-position: 0 3px;
+  opacity: 1;
+  box-shadow: 0 0 2px #60C60D;
+  }
+}
+.conductor-area[data-mode="running"] .conductor-start .node-circle::after,
+.conductor-area[data-mode="running"] .conductor-epoch .node-circle::after {
+animation: none;
+background-image: linear-gradient( -45deg, #333, #666 );
+}
+.conductor-area[data-mode="running"] .conductor-start .node-running,
+.conductor-area[data-mode="running"] .conductor-epoch .node-running {
+display: block;
+position: absolute;
+left: 11%; top: 11%;
+z-index: 4;
+width: 78%; height: 78%;
+border: 4px solid transparent;
+border-top-color: #FFF;
+border-radius: 50%;
+opacity: 0.75;
+}
+.conductor-area[data-mode="running"] .conductor-start .node-running,
+.conductor-area[data-mode="running"] .conductor-epoch .node-running {
+animation: runningNodeCircle 3s linear infinite;
+}
+@keyframes runningNodeCircle {
+to { transform: rotate(360deg); }
+}
+.conductor-area[data-mode="success"] .node-running {
+animation: none;
+}
+
+.conductor-area[data-mode="running"] .conductor-start .node-running::before,
+.conductor-area[data-mode="running"] .conductor-start .node-running::after,
+.conductor-area[data-mode="running"] .conductor-epoch .node-running::before,
+.conductor-area[data-mode="running"] .conductor-epoch .node-running::after {
+content: '';
+position: absolute;
+left: -4px; top: -4px;
+z-index: 4;
+width: calc( 100% + 8px ); height: calc( 100% + 8px );
+border: 4px solid transparent;
+border-radius: 50%;
+}
+.conductor-area[data-mode="running"] .conductor-start .node-running::before,
+.conductor-area[data-mode="running"] .conductor-epoch .node-running::before {
+transform: rotate(120deg);
+border-top-color: #FFF;
+}
+.conductor-area[data-mode="running"] .conductor-start .node-running::after,
+.conductor-area[data-mode="running"] .conductor-epoch .node-running::after {
+transform: rotate(240deg);
+border-top-color: #FFF;
+}
+.conductor-area[data-mode="running"] .conductor-start .node-circle .node-gem,
+.conductor-area[data-mode="running"] .conductor-epoch .node-circle .node-gem {
+transform: scale(.75);
+box-shadow: 0 0 16px 2px rgba( 0,0,0,.3 ) inset,
+0 0 8px 2px #264F05;
+}
+.conductor-area[data-mode="success"] .node-circle .node-gem {
+transform: scale(1);
+box-shadow: 0 0 16px 2px rgba( 0,0,0,.3 ) inset;
+}
+.conductor-area[data-mode="success"] .node-circle::after,
+.conductor-area[data-mode="success"] .node-running {
+animation: none;
+}
+
+.node-result {
+overflow: hidden;
+display: block;
+align-items: center;
+justify-content: center;
+position: absolute;
+left: 5px; top: 5px;
+z-index: 20;
+width: 62px; height: 62px;
+border-radius: 50%;
+}
+
+/* 結果表示 */
+.conductor-area[data-mode="success"] {
+background-color: #EEF8E7;
+border-color: #58B60C;
+}
+.conductor-area[data-mode="error"] {
+background-color: #FCE6E6;
+border-color: #D00;
+}
+.node-result::before {
+display: none;
+content: '';
+align-items: center;
+justify-content: center;
+width: 100%; height: 100%;
+background-color: #666;
+background-image: linear-gradient( rgba( 255,255,255,0 ) 50%, rgba( 255,255,255,.1 ) 50% );
+background-size: 4px 4px;
+border: 2px solid rgba( 0,0,0,.3);
+box-shadow: 0 0 0 1px #111 inset, 0 0 8px rgba( 0,0,0,.6 ) inset;
+border-radius: 50%;
+text-shadow: 0 0 4px #111;
+text-align: center;
+line-height: 1;
+white-space: nowrap;
+font-size: 16px;
+font-family: Consolas, "メイリオ", Meiryo, Osaka, "ＭＳ Ｐゴシック", "MS PGothic", "sans-serif";
+font-weight: bold;
+color: #FFF;
+transition-duration: .5s;
+}
+.conductor-area[data-mode="success"] .conductor-epoch .node-result::before {
+content: 'DONE';
+}
+.conductor-area[data-mode="error"] .conductor-epoch .node-result::before {
+content: 'ERROR';
+}
+.conductor-area[data-mode="success"] .conductor-epoch .node-result::before,
+.conductor-area[data-mode="error"] .conductor-epoch .node-result::before {
+display: flex;
+transform: scale(1);
+animation: completeResult 1s forwards;
+}
+@keyframes completeResult {
+  0% { transform: scale(1.5); opacity: 0; }
+100% { transform: scale(1); opacity: 1; }
+}
+.conductor-area[data-mode="error"] .conductor-epoch .node-result::before {
+background-color: #D00;
+}
+.conductor-area[data-mode="success"] .conductor-epoch .node-result::before {
+background-color: #58B60C;
+}
+#tab01-ita-manifest-parameter .modal-tab-body {
+padding: 0;
+}
+#tab01-ita-manifest-parameter .modal-tab-body-block {
+overflow: auto;
+padding: 8px;
+max-height: 160px;
+}
+#tab01-ita-manifest-parameter .c-table-col {
+height: auto;
+}
+#tab01-ita-manifest-parameter .c-table-col-header {
+background-color: #E9F4F2;
+font-weight: bold;
+font-size: 13px;
+color: #197060;
+}
+
+/* -------------------------------------------------- *\
+
+   argoCD 実行結果・状況確認
+
+\* -------------------------------------------------- */
+.argocd-result .et-r {
+grid-template-areas:
+    "status-icon sync-icon sync environment start execution-status"
+    "status-icon head head trace-id  finish execution-status";
+grid-template-columns: 64px 28px 132px 1fr 176px 64px;
+padding: 4px 0 4px 4px;
+}
+.argocd-result .et-h .et-r {
+grid-template-areas:
+    "status-icon sync-icon environment start execution-status"
+    "status-icon head trace-id  finish execution-status";
+grid-template-columns: 64px 160px 1fr 176px 64px;
+}
+.argocd-result .status-icon { grid-area: status-icon; }
+.argocd-result .status { grid-area: status; }
+.argocd-result .sync-icon { grid-area: sync-icon; }
+.argocd-result .sync { grid-area: sync; }
+.argocd-result .head { grid-area: head; }
+.argocd-result .start { grid-area: start; }
+.argocd-result .finish { grid-area: finish; }
+.argocd-result .environment { grid-area: environment; }
+.argocd-result .trace-id { grid-area: trace-id; }
+.argocd-result .execution-status { grid-area: execution-status; }
+
+.argocd-result .et-h .sync {
+display: none;
+}
+
+.argocd-result .et-b .status-icon {
+border-left: 4px solid #CCC;
+}
+.argocd-result .et-b .sync-icon .et-ci {
+font-size: 14px;
+}
+.argocd-result .et-b .sync-icon .et-si {
+width: 16px; height: 16px;
+font-size: 14px;
+}
+.argocd-result .et-b .sync .et-ci {
+font-size: 14px;
+font-weight: bold;
+color: #555;
+}
+.argocd-result .et-b .sync-icon .et-ci {
+padding-right: 4px;
+}
+.argocd-result .et-b .sync .et-ci {
+padding-left: 0;
+padding-right: 0;
+}
+.argocd-result .et-b .head {
+padding-right: 16px;
+}
+.argocd-result .et-b .head .et-ci::before {
+content: 'from HEAD : ';
+}
+.argocd-result .health-status-healthy .status-icon,
+.argocd-result .health-status-healthy .status {
+border-color: #18BE94;
+}
+.argocd-result .health-status-progressing .status-icon,
+.argocd-result .health-status-progressing .status {
+border-color: #0DADEA;
+}
+.argocd-result .health-status-degraded .status-icon,
+.argocd-result .health-status-degraded .status {
+border-color: #E96D76;
+}
+
+
+
+
+.argocd-result .icon-Healthy,
+.argocd-exe-info .icon-Healthy { color: #18BE94; }
+.argocd-result .icon-Progressing,
+.argocd-exe-info .icon-Progressing { color: #0DADEA; }
+.argocd-result .icon-Degraded,
+.argocd-exe-info .icon-Degraded { color: #E96D76; }
+
+.argocd-exe-info .icon-Synced,
+.argocd-result .icon-Synced { color: #18BE94; }
+.argocd-exe-info .icon-OutOfSync,
+.argocd-result .icon-OutOfSync { color: #F4C030; }
+
+.argocd-result .icon-Progressing {
+display: inline-block;
+animation: healthProgressing 3s infinite linear;
+}
+@keyframes healthProgressing {
+to { transform: rotate(360deg); }
+}
+.table-button {
+display: block;
+width: 40px;
+height: 40px;
+padding: 4px;
+background-color: #FFF;
+background-image: linear-gradient( rgba( 255,100,10,0 ), rgba( 255,100,10,.2 ) );
+box-shadow: 0 0 0 1px rgb(255 255 255), 2px 2px 4px rgb(0 0 0 / 40%);
+border: 1px solid #FF640A;
+border-radius: 4px;
+font-size: 30px;
+color: #FF640A;
+}
+
+
+.argocd-exe-info {
+overflow: hidden;
+display: flex;
+flex-wrap: wrap;
+background-color: #FFF;
+border: 1px solid #DDD;
+border-radius: 4px;
+}
+.argocd-exe-info span {
+margin-right: .3em;
+vertical-align: 0;
+}
+.argocd-health {
+width: 35%;
+padding: 16px;
+border-right: 1px solid #DEE6EB;
+}
+.argocd-sync {
+position: relative;
+width: 65%;
+padding: 16px 120px 16px 24px;
+}
+.argocd-health-title,
+.argocd-sync-title {
+font-size: 16px;
+color: #888;
+}
+.argocd-health-status,
+.argocd-sync-status {
+font-size: 28px;
+color: #333;
+}
+.argocd-sync-head {
+font-size: 16px;
+color: #555;
+}
+.argocd-sync-sync {
+position: absolute;
+right: 0; top: 0;
+display: flex;
+align-items: center;
+justify-content: center;
+width: 120px; height: 100%;
+}
+.argocd-sync-button {
+width: 100px; height: 32px;
+background-color: #6D7F8B;
+border: none;
+border-radius: 16px;
+text-align: center;
+font-weight: bold;
+font-size: 14px;
+color: #FFF;
+cursor: pointer;
+}
+.argocd-sync-button:hover {
+opacity: .8;
+}
+.argocd-sync-button:active {
+opacity: 1;
+}
+.argocd-resource {
+position: relative;
+width: 100%;
+padding: 24px 24px 24px 88px;
+background-color: #DEE6EB;
+}
+.argocd-resource-list {
+position: relative;
+}
+.argocd-resource-item {
+position: relative;
+margin: 0 0 16px; padding: 8px 8px 8px 120px;
+background-color: #FFF;
+border-radius: 4px;
+box-shadow: 2px 2px 2px rgba( 0,0,0,.1 );
+letter-spacing: -0.4em;
+}
+.argocd-resource-item:last-child {
+margin: 0;
+}
+.argocd-resource-item::before {
+content: '';
+display: block;
+position: absolute;
+left: -60px; top: -16px;
+width: 60px; height: calc( 100% + 16px );
+border-left: 1px dashed #AAA;
+}
+.argocd-resource-item::after {
+content: '';
+display: block;
+position: absolute;
+left: -60px; top: 50%;
+width: 60px; height: 1px;
+border-bottom: 1px dashed #AAA;
+}
+.argocd-resource-item:first-child::before {
+top: -24px;
+height: calc( 100% + 24px );
+}
+.argocd-resource-item:last-child::before {
+height: calc( 50% + 16px );
+}
+.argocd-resource-item > * {
+display: inline-block;
+width: 100%;
+padding: 4px;
+letter-spacing: normal;
+font-size: 12px;
+color: #555;
+}
+.argocd-resource-kind {
+position: absolute;
+left: 0; top: 50%;
+transform: translateY(-50%);
+width: 120px;
+text-align: center;
+font-weight: bold;
+font-size: 14px;
+color: #8FA4B1;
+}
+.argocd-resource-kind::before {
+content: '';
+display: block;
+position: absolute;
+left: -8px; top: 50%;
+transform: translateY(-50%);
+border: 6px solid transparent;
+border-left-width: 8px;
+border-left-color: #AAA;
+}
+.argocd-resource-name {
+font-size: 14px;
+}
+.argocd-resource-health_status,
+.argocd-resource-sync_status {
+width: auto;
+}

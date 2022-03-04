@@ -1,31 +1,43 @@
 @charset "utf-8";
-/* CSS Document */
 /*
-.modal-open #container {
-filter: blur(4px);
-}
-.sub-modal-open #modal-container {
-filter: blur(4px);
-}
+#   Copyright 2022 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
 */
 
-#modal-container,
-#sub-modal-container {
+/* CSS Document */
+
+#modal-container {
 overflow: hidden;
 position: fixed;
 display: none;
-justify-content: center;
-align-items: center; 
-flex-direction: column;
 left: 0; top: 0;
 z-index: 9999;
 width: 100%; height: 100%;
-padding: 16px;
-background-color: rgba(0,0,0,.5);
 }
-#sub-modal-container {
-padding: 32px;
-z-index: 19999;
+.modal-open #modal-container {
+display: block;
+}
+.modal-overlay {
+display: flex;
+justify-content: center;
+align-items: center; 
+flex-direction: column;
+position: absolute;
+left: 0; top: 0;
+width: 100%; height: 100%;
+background-color: rgba(0,0,0,.5);
+/*backdrop-filter: blur(2px);*/
 }
 .modal {
 width: 100%; max-width: 800px;
@@ -161,7 +173,6 @@ display: inline-block;
 padding: 0 4px;
 font-weight: bold;
 }
-
 .item-confirmation-table {
 width: 100%;
 margin-bottom: 16px;
@@ -240,13 +251,20 @@ cursor: pointer;
 background-color: #EF8457;
 color: #FFF;
 }
-
-
+.modal-item {
+display: flex;
+flex-wrap: wrap;
+justify-content: space-between;
+}
+.modal-item > div {
+width: 100%;
+}
 
 
 
 .item-block {
 position: relative;
+width: 100%;
 margin-bottom: 4px; padding: 8px 12px;
 background-color: #FFF;
 border: 1px solid #DDD;
@@ -264,7 +282,11 @@ animation: emphasis .8s linear forwards;
  50% { transform: scale(1.01); }
 100% { transform: scale(1); }
 }
-
+.modal-block::after {
+content: '';
+display: block;
+clear: both;
+}
 .item-header {
 overflow: hidden;
 display: flex;
@@ -356,7 +378,9 @@ color: #FFF;
 }
 
 
-
+.item-area {
+word-break: break-all;
+}
 .item-text,
 .item-number,
 .item-password,
@@ -390,16 +414,46 @@ resize: vertical;
 min-height: 120px;
 vertical-align: top;
 }
-.item-reference {
+.item-reference,
+.item-string {
 display: block;
 min-height: 32px;
 padding: 0 8px;
 background-color: #FFF;
 border-bottom: 1px solid #DDD;
-line-height: 31px;
+line-height: 1.5;
 font-size: 100%;
 color: #666;
 }
+.item-horizontal {
+display: flex;
+}
+.item-horizontal .item-header {
+display: flex;
+align-items: center;
+width: 40%;
+margin: 0;
+}
+.item-horizontal .item-area {
+width: 60%;
+padding-left: 16px;
+border-left: 1px solid #DDD;
+}
+.item-horizontal .item-reference,
+.item-horizontal .item-string {
+min-height: 24px;
+}
+.item-horizontal .item-string {
+border-bottom: none;
+}
+.item-half {
+width: calc( 50% - 2px );
+}
+.item-half:last-child {
+margin-bottom: 4px;
+}
+
+
 .item-text:focus,
 .item-number:focus,
 .item-password:focus,
@@ -772,6 +826,94 @@ border-bottom: 1px solid #CCC;
 transform: translateX(-4px) rotate(-45deg);
 pointer-events: none;
 }
+.item-pre,
+.item-log {
+overflow: auto;
+display: block;
+height: 240px;
+margin: 0; padding: 8px;
+border: 1px solid #DDD;
+background-color: #F8F8F8;
+border-radius: 4px;
+white-space: pre;
+line-height: 20px;
+font-family: Consolas, "メイリオ", Meiryo, Osaka, "ＭＳ Ｐゴシック", "MS PGothic", "sans-serif";
+font-size: 12px;
+}
+.item-log.error {
+background-color: #FAE6E6;
+border-color: #C00;
+color: #C00;
+}
+
+.item-title-help {
+margin-left: 4px;
+color: #8A2BE2;
+}
+.item-accordion {
+padding-bottom: 4px;
+}
+.item-accordion .item-area {
+margin-bottom: 4px!important;
+}
+.item-accordion.empty {
+opacity: .75;
+}
+.item-accordion.empty .item-title-text {
+color: #AAA;
+}
+.item-accordion.empty .item-header::before {
+background-color: #DDD;
+}
+.item-accordion.empty .item-area {
+display: none;
+}
+.item-accordion-button {
+display: block;
+position: relative;
+z-index: 0;
+width: 32px; height: 20px;
+background-color: #FFFBF2;
+border: 1px solid #FFA500;
+border-radius: 4px;
+cursor: pointer;
+user-select: none;
+-moz-user-select: none;
+-webkit-user-select: none;
+-ms-user-select: none;
+}
+.empty .item-accordion-button {
+border-color: #DDD;
+background-color: #F8F8F8;
+pointer-events: none;
+}
+.item-accordion-button::after {
+content: '';
+display: block;
+position: absolute;
+left: 50%; top: 7px;
+transform: translateX(-50%) rotate(45deg);
+width: 10px; height: 10px;
+border: 2px solid transparent;
+border-top-color: #FFA500;
+border-left-color: #FFA500;
+transition-duration: .2s;
+}
+.item-accordion-button:hover::after {
+top: 4px;
+}
+.close .item-accordion-button::after {
+top: 0;
+border-color: transparent;
+border-bottom-color: #FFA500;
+border-right-color: #FFA500;
+}
+.close .item-accordion-button:hover::after {
+top: 3px;
+}
+.empty .item-accordion-button::after {
+display: none;
+}
 
 .modal-tab-menu {
 width: 100%;
@@ -1023,15 +1165,22 @@ word-break: break-all;
 .layout-padding-0 .modal-body {
 padding: 0;
 }
-.layout-tab-fixed.modal,
+.layout-tab-fixed .modal,
 .layout-tab-fixed .modal-main,
 .layout-tab-fixed .modal-body,
 .layout-tab-fixed .modal-block,
 .layout-tab-fixed .modal-tab-block,
 .layout-tab-fixed .modal-tab-body-block,
-.layout-tab-fixed .modal-item,
-.layout-tab-fixed .modal-item > div,
 .layout-tab-fixed .item-parameter-block {
+height: 100%;
+}
+.layout-tab-fixed .modal-item {
+height: 100%;
+display: flex;
+flex-direction: column;
+flex-wrap: nowrap;
+}
+.layout-tab-fixed .modal-item > div {
 height: 100%;
 }
 .layout-tab-fixed .modal-main {

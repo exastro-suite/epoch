@@ -1,0 +1,131 @@
+/*
+#   Copyright 2022 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+*/
+@font-face {
+  font-family: 'exastro-ui-icons';
+  src:
+    url('../ui_fonts/exastro-ui-icons.ttf?mirqrf') format('truetype'),
+    url('../ui_fonts/exastro-ui-icons.woff?mirqrf') format('woff'),
+    url('../ui_fonts/exastro-ui-icons.svg?mirqrf#exastro-ui-icons') format('svg');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+
+.icon {
+  /* use !important to prevent issues with browser extensions that change fonts */
+  font-family: 'exastro-ui-icons' !important;
+  speak: never;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+
+  /* Better Font Rendering =========== */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-First:before {
+  content: "\e91a";
+}
+.icon-Prev:before {
+  content: "\e91b";
+}
+.icon-Next:before {
+  content: "\e91c";
+}
+.icon-Last:before {
+  content: "\e91d";
+}
+.icon-Update:before {
+  content: "\e919";
+}
+.icon-Branch:before {
+  content: "\e918";
+}
+.icon-Detail:before {
+  content: "\e908";
+}
+.icon-Cal:before {
+  content: "\e909";
+}
+.icon-Cal_off:before {
+  content: "\e90a";
+}
+.icon-Edit:before {
+  content: "\e90b";
+}
+.icon-Filter:before {
+  content: "\e90c";
+}
+.icon-Filter_off:before {
+  content: "\e90d";
+}
+.icon-Login:before {
+  content: "\e90e";
+}
+.icon-Logout:before {
+  content: "\e90f";
+}
+.icon-Download:before {
+  content: "\e910";
+}
+.icon-Eye_close:before {
+  content: "\e911";
+}
+.icon-Eye_open:before {
+  content: "\e912";
+}
+.icon-Gear:before {
+  content: "\e913";
+}
+.icon-Link:before {
+  content: "\e914";
+}
+.icon-Trash:before {
+  content: "\e915";
+}
+.icon-Upload:before {
+  content: "\e916";
+}
+.icon-User:before {
+  content: "\e917";
+}
+.icon-Degraded:before {
+  content: "\e900";
+}
+.icon-Healthy:before {
+  content: "\e901";
+}
+.icon-Missing:before {
+  content: "\e902";
+}
+.icon-OutOfSync:before {
+  content: "\e903";
+}
+.icon-Progressing:before {
+  content: "\e904";
+}
+.icon-Suspended:before {
+  content: "\e905";
+}
+.icon-Synced:before {
+  content: "\e906";
+}
+.icon-Unknown:before {
+  content: "\e907";
+}

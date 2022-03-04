@@ -22,7 +22,11 @@ var workspace_client_urls = {
   "sonarqube": null
 }
 
-$(function(){
+// function workspace()
+// ├ initWorkspaceType: 初期タブ
+// └ settingMode: ワークスペースの作成or更新（ new or update ）
+
+function workspace( initWorkspaceType, settingMode ){
 
 backgroundAurora();
 
@@ -31,6 +35,36 @@ backgroundAurora();
 //   JSON
 // 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// ワークスペースの説明
+//{ type: { block: description }}
+const wsDescription = {
+  'setting': {
+    'ws-git-service': 'アプリケーションコードリポジトリの説明アプリケーションコードリポジトリの説明アプリケーションコードリポジトリの説明',
+    'ws-pipeline-tekton': 'CIパイプラインの説明CIパイプラインの説明CIパイプラインの説明',
+    'ws-registry-service': 'レジストリサービスの説明レジストリサービスの説明レジストリサービスの説明',
+    'ws-pipeline-argo': 'CDパイプラインの説明CDパイプラインの説明CDパイプラインの説明',
+    'ws-git-argo': 'IaCリポジトリの説明IaCリポジトリの説明IaCリポジトリの説明'
+  },
+  'deploy': {
+    'ws-git-service': 'アプリケーションコードリポジトリの確認',
+    'ws-pipeline-tekton': 'CIパイプラインの確認',
+    'ws-registry-service': 'レジストリサービスの確認',
+    'ws-pipeline-argo': 'CDパイプラインの確認',
+    'ws-git-argo': 'Manifestリポジトリの確認',
+    'ws-kubernetes-manifest-template': 'Kubernetes Manifestテンプレートの登録',
+    'ws-ita-parameter': 'マニフェストパラメータの入力',
+    'ws-ita-check': 'ITAの確認',
+    'ws-cd-user': 'デプロイ'
+  },
+  'footer': {
+    'create': 'ワークスペースを作成します。',
+    'update': 'ワークスペースの変更点を確認・更新を行います。',
+    'reset': '入力値を変更する前の状態に戻します。',
+    'cdExecution': 'デプロイします。'
+  }
+};
+
 const wsDataJSON = {
   // 
   'parameter-info': {
@@ -52,7 +86,7 @@ const wsDataJSON = {
     'git-service-select': 'epoch'
   },
   'registry-service': {
-    'registry-service-select': 'epoch'
+    'registry-service-select': 'dockerhub'
   },
   'git-service-argo': {
     'git-service-argo-select': 'epoch'
@@ -79,6 +113,48 @@ const wsModalJSON = {
         'item': {
           'templateFileListBody': {
             'id': 'yaml-preview-body',
+            'type': 'loading'
+          }
+        }
+      }
+    }
+  },
+  /* -------------------------------------------------- *\
+     Workspace作成
+  \* -------------------------------------------------- */
+  'createWorkspace': {
+    'id': 'create-workspace',
+    'title': 'ワークスペース作成確認',
+    'footer': {
+      'ok': {'text': '作成する', 'type': 'positive'},
+      'cancel': {'text': 'キャンセル', 'type': 'negative'}
+    },
+    'block': {
+      'compareData': {
+        'item': {
+          'compareDataBody': {
+            'id': 'compare-list',
+            'type': 'loading'
+          }
+        }
+      }
+    }
+  },
+  /* -------------------------------------------------- *\
+     Workspace作成
+  \* -------------------------------------------------- */
+  'updateWorkspace': {
+    'id': 'create-workspace',
+    'title': 'ワークスペース更新確認',
+    'footer': {
+      'ok': {'text': '更新する', 'type': 'positive'},
+      'cancel': {'text': 'キャンセル', 'type': 'negative'}
+    },
+    'block': {
+      'compareData': {
+        'item': {
+          'compareDataBody': {
+            'id': 'compare-list',
             'type': 'loading'
           }
         }
@@ -704,262 +780,7 @@ const wsModalJSON = {
         }
       }
     }
-  },
-  /* -------------------------------------------------- *\
-     TEKTON Gitサービス確認
-  \* -------------------------------------------------- */
-  'gitServiceCheck': {
-    'id': 'git-service-check',
-    'title': 'Gitサービス',
-    'footer': {
-      'cancel': {
-        'text': '閉じる',
-        'type': 'negative'
-      }
-    },
-    'block': {
-      'commitList': {
-        'title': 'Commit一覧',
-        'item': {
-          'comitList': {
-            'type': 'loading',
-            'id': 'commit-list'
-          },
-          'webhookList': {
-            'type': 'loading',
-            'id': 'webhook-list'
-          }
-        }
-      }
-    }
-  },
-  /* -------------------------------------------------- *\
-     レジストリサービス確認
-  \* -------------------------------------------------- */
-  'registryServiceCheck': {
-    'id': 'registry-service-check',
-    'title': 'レジストリサービス',
-    'footer': {
-      'cancel': {
-        'text': '閉じる',
-        'type': 'negative'
-      }
-    },
-    'block': {
-      'imageList': {
-        'title': 'イメージ一覧',
-        'item': {
-          'comitList': {
-            'type': 'loading',
-            'id': 'image-list'            
-          }
-        }
-      }
-    }
-  },
-  /* -------------------------------------------------- *\
-     Exastro IT Automation 実行結果一覧
-  \* -------------------------------------------------- */
-  'exastroItAutomationResultCheck': {
-    'id': 'exastro-it-automation-result-check',
-    'title': 'Exastro IT Automation 実行結果一覧',
-    'footer': {
-      'cancel': {
-        'text': '閉じる',
-        'type': 'negative'
-      }
-    },
-    'block': {
-      'resultList': {
-        'title': '実行結果一覧',
-        'item': {
-          'comitList': {
-            'type': 'loading',
-            'id': 'result-list'            
-          }
-        }
-      }
-    }
-  },
-  /* -------------------------------------------------- *\
-     Exastro IT Automation 実行状況確認
-  \* -------------------------------------------------- */
-  'exastroItAutomationStatusCheck': {
-    'id': 'exastro-it-automation-status-check',
-    'title': 'Exastro IT Automation 実行状況確認',
-    'footer': {
-      'cancel': {
-        'text': '実行結果一覧に戻る',
-        'type': 'negative'
-      }
-    },
-    'block': {
-      'statusList': {
-        'title': '実行状況確認',
-        'item': {
-          'comitList': {
-            'type': 'loading',
-            'id': 'status-list'            
-          }
-        }
-      },
-      'manifestParameter': {
-        'title': 'Manifestパラメータ',
-        'item': {
-          'comitList': {
-            'type': 'loading',
-            'id': 'manifest-parameter'            
-          }
-        }
-      },
-      'progressLog': {
-        'title': '進行状況ログ',
-        'item': {
-          'comitList': {
-            'type': 'loading',
-            'id': 'progress-log'            
-          }
-        }
-      }
-    }
-  },
-  /* -------------------------------------------------- *\
-     Kubernetes Manifest
-  \* -------------------------------------------------- */
-  'kubernetesManifestCheck': {
-    'id': 'kubernetes-manifest-check',
-    'title': 'Manifestリポジトリ',
-    'footer': {
-      'cancel': {
-        'text': '閉じる',
-        'type': 'negative'
-      }
-    },
-    'block': {
-      'commitList': {
-        'title': 'Commit一覧',
-        'tab': {
-          'type': 'reference',
-          'target': {
-            'key1': 'environment',
-            'key2': 'text'
-          },
-          'emptyText': '環境の設定がありません。',
-          'item': {
-            'commitListBody': {
-              'type': 'loading',
-              'id': 'commit-list-body'
-            }
-          }
-        }
-      }
-    }
-  },
-  /* -------------------------------------------------- *\
-     IaC リポジトリ確認
-  \* -------------------------------------------------- */
-  'gitServiceArgoCheck': {
-    'id': 'git-service-argo-check',
-    'title': 'IaC リポジトリ',
-    'footer': {
-      'cancel': {
-        'text': '閉じる',
-        'type': 'negative'
-      }
-    },
-    'block': {
-      'commitList': {
-        'title': 'リポジトリ一覧',
-        'item': {
-          'comitList': {
-            'type': 'loading',
-            'id': 'commit-list'
-          }
-        }
-      }
-    }
-  },
-  /* -------------------------------------------------- *\
-     Argo CD 実行結果一覧
-  \* -------------------------------------------------- */
-  'arogCdResultCheck': {
-    'id': 'pipeline-argo-cd-check',
-    // 'class': 'layout-tab-fixed',
-    'title': 'Argo CD',
-    'footer': {
-      'cancel': {
-        'text': '閉じる',
-        'type': 'negative'
-      }
-    },
-    'block': {
-      'resultList': {
-        'title': '実行結果一覧',
-        'item': {
-          'comitList': {
-            'type': 'loading',
-            'id': 'result-list'            
-          }
-        }
-      }
-    }
-  },
-  /* -------------------------------------------------- *\
-     Argo CD 実行状況確認
-  \* -------------------------------------------------- */
-  'arogCdStatusCheck': {
-    'id': 'pipeline-argo-cd-check',
-    'title': 'Argo CD',
-    'footer': {
-      'cancel': {
-        'text': '閉じる',
-        'type': 'negative'
-      }
-    },
-    'block': {
-      'resultList': {
-        'title': '実行状況確認',
-        'item': {
-          'comitList': {
-            'type': 'loading',
-            'id': 'status-list'            
-          }
-        }
-      }
-    }
-  },
-  /* -------------------------------------------------- *\
-     システム
-  \* -------------------------------------------------- */
-  'systemCheck': {
-    'id': 'system-check',
-    'title': 'システム',
-    'footer': {
-      'cancel': {
-        'text': '閉じる',
-        'type': 'negative'
-      }
-    },
-    'block': {
-      'systemOperationStatus': {
-        'title': '稼働状況',
-        'tab': {
-          'type': 'reference',
-          'target': {
-            'key1': 'environment',
-            'key2': 'text'
-          },
-          'emptyText': '環境の設定がありません。',
-          'item': {
-            'systemOperationStatusBody': {
-              'type': 'loading',
-              'id': 'system-operation-status-body'
-            }
-          }
-        }
-      }
-    }
-  },
+  }
 };
 const modal = new modalFunction( wsModalJSON, wsDataJSON );
 
@@ -976,6 +797,7 @@ const fn = new epochCommon();
 const $content = $('#content'),
       $workspace = $('#workspace'),
       $workspaceBody = $workspace.find('.workspace-body'),
+      $workspaceFooter = $workspace.find('.workspace-footer'),
       $workspaceImage = $workspace.find('.workspace-setting-image'),
       $workspaceLine = $('#workspace-line'),
       $workspaceEpoch = $('#workspace-epoch');
@@ -1311,6 +1133,100 @@ $('#side').on('transitionend', function(e){
   }
 });
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//   ワークスペースフッターボタンセット
+// 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// ボタンをセット
+const footerButton = [
+  {'type': 'setting', 'mode': ['new'], 'text': 'ワークスペース作成', 'buttonType': 'create', 'buttonCategory': 'positive', 'disabled': true, 'separate': true },
+  {'type': 'setting', 'mode': ['update'], 'text': 'ワークスペース更新', 'buttonType': 'update', 'buttonCategory': 'positive', 'disabled': true, 'separate': true },
+  {'type': 'setting', 'mode': ['new', 'update'], 'text': 'リセット', 'buttonType': 'reset', 'buttonCategory': 'negative', 'disabled': true, 'separate': false },
+  {'type': 'deploy', 'mode': [], 'text': 'デプロイ', 'buttonType': 'cdExecution', 'buttonCategory': 'modal-open positive', 'disabled': false, 'separate': false },
+];
+const buttonLength = footerButton.length;
+
+const setFotter = function( workspaceType ) {
+  let footerHTML = '<ul class="workspace-footer-menu-list">';
+  for ( let i = 0; i < buttonLength; i++ ) {
+    if ( footerButton[i].type !== workspaceType ) continue;
+    if ( workspaceType === 'setting' && footerButton[i].mode.indexOf( settingMode ) === -1 ) continue;
+    const text = footerButton[i].text,
+          button = footerButton[i].buttonType,
+          type = footerButton[i].buttonCategory,
+          disabled = ( footerButton[i].disabled )? ' disabled': '',
+          separate = ( footerButton[i].separate )? ' separate': '',
+          description = wsDescription.footer[button];
+    footerHTML += '<li class="workspace-footer-menu-item' + separate + '">'
+    + '<button class="epoch-button epoch-popup workspace-footer-menu-button ' + type + '" data-button="' + button + '"' + disabled + ' title="' + description + '">' + text + '</button>';
+  }
+  footerHTML += '</ul>';
+
+  $workspaceFooter.html( footerHTML );
+}
+
+// ボタンイベント
+$workspaceFooter.on('click', '.workspace-footer-menu-button', function(){
+  const $button = $( this ),
+        type = $button.attr('data-button');
+
+  switch ( type ) {
+    case 'create': {
+      modal.open('createWorkspace', {
+        'callback': function(){
+          const compareData = wsDataCompare(),
+                html = [];
+          for ( const key in compareData.html ) {
+            html.push( compareData.html[key] );
+          }
+          modal.$modal.find('#compare-list').html( html.join('') );
+        },
+        'ok': function(){
+          // 作成処理
+          // alert('作成しました。');
+          apply_workspace();
+        }
+      }, '1200');
+    } break;
+    case 'update': {
+      modal.open('updateWorkspace', {
+        'callback': function(){
+          const compareData = wsDataCompare(),
+                html = [];
+          for ( const key in compareData.html ) {
+            html.push( compareData.html[key] );
+          }
+          modal.$modal.find('#compare-list').html( html.join('') );
+        },
+        'ok': function(){
+          // 更新処理
+          console.log( compareFlag ); // 変更箇所
+          // alert('更新しました。');
+          apply_workspace();
+        }
+      }, '1200');
+    } break;
+    case 'reset':
+      // リセット
+      // alert('リセットしました。');
+      // 確認メッセージ
+      if (confirm("入力値をリセットしてもよろしいですか？"))
+        if(workspace_id == null) {
+          // 新規のときは画面リロード
+          top.location.reload();        
+        } else {
+          // ワークスペース情報の読み込み
+          getWorksapce();
+        }
+    break;
+    case 'cdExecution':
+      modal.open('cdExecution',{
+          'callback': cdExecution
+      });
+  }
+});
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -1327,8 +1243,8 @@ const setInputData = function( tabTarget, commonTarget ){
     const $tab = $( this ),
           tabID = $tab.attr('data-id'),
           tabText = $tab.text();
-    if ( wsDataJSON[ tabTarget ] === undefined ) wsDataJSON[ tabTarget ] = new Object();
-    if ( wsDataJSON[ tabTarget ][ tabID ] === undefined ) wsDataJSON[ tabTarget ][ tabID ] = new Object();
+    if ( wsDataJSON[ tabTarget ] === undefined ) wsDataJSON[ tabTarget ] = {};
+    if ( wsDataJSON[ tabTarget ][ tabID ] === undefined ) wsDataJSON[ tabTarget ][ tabID ] = {};
     wsDataJSON[ tabTarget ][ tabID ]['text'] = tabText;
   });
   modal.$modal.find( inputTarget ).each( function(){
@@ -1338,15 +1254,15 @@ const setInputData = function( tabTarget, commonTarget ){
     const $tabBlock = $input.closest('.modal-tab-body-block');
     if ( $tabBlock.length ) {
       const tabID = $tabBlock.attr('id');
-      if ( wsDataJSON[ tabTarget ] === undefined ) wsDataJSON[ tabTarget ] = new Object();
-      if ( wsDataJSON[ tabTarget ][ tabID ] === undefined ) wsDataJSON[ tabTarget ][ tabID ] = new Object();
+      if ( wsDataJSON[ tabTarget ] === undefined ) wsDataJSON[ tabTarget ] = {};
+      if ( wsDataJSON[ tabTarget ][ tabID ] === undefined ) wsDataJSON[ tabTarget ][ tabID ] = {};
       if ( $input.is(':disabled') ) {
         wsDataJSON[ tabTarget ][ tabID ][ name ] = null
       } else {
         wsDataJSON[ tabTarget ][ tabID ][ name ] = $input.val();
       }
     } else {
-      if ( wsDataJSON[ commonTarget ] === undefined ) wsDataJSON[ commonTarget ] = new Object();
+      if ( wsDataJSON[ commonTarget ] === undefined ) wsDataJSON[ commonTarget ] = {};
       if ( $input.is(':disabled') ) {
         wsDataJSON[ commonTarget ][ name ] = null
       } else {
@@ -1383,21 +1299,21 @@ const setParameterData = function(){
           name = $input.attr('name'),
           value = $input.val();
     if ( enviromentID !== '__parameterItemInfo__') {
-      if ( wsDataJSON['environment'] === undefined )  wsDataJSON['environment'] = new Object();
+      if ( wsDataJSON['environment'] === undefined )  wsDataJSON['environment'] = {};
       if ( wsDataJSON['environment'][ enviromentID ] !== undefined ) {
         if ( wsDataJSON['environment'][ enviromentID ]['parameter'] === undefined ) {
-          wsDataJSON['environment'][ enviromentID ]['parameter'] = new Object();
+          wsDataJSON['environment'][ enviromentID ]['parameter'] = {};
         }
         if ( wsDataJSON['environment'][ enviromentID ]['parameter'][ fileID ] === undefined ) {
-          wsDataJSON['environment'][ enviromentID ]['parameter'][ fileID ] = new Object();
+          wsDataJSON['environment'][ enviromentID ]['parameter'][ fileID ] = {};
         }
         wsDataJSON['environment'][ enviromentID ]['parameter'][ fileID ][ name ] = value;
       }
     } else {
       // パラメータ説明
-      if ( wsDataJSON['parameter-info'] === undefined )  wsDataJSON['parameter-info'] = new Object();
+      if ( wsDataJSON['parameter-info'] === undefined )  wsDataJSON['parameter-info'] = {};
       if ( wsDataJSON['parameter-info'][ fileID ] === undefined ) {
-        wsDataJSON['parameter-info'][ fileID ] = new Object();
+        wsDataJSON['parameter-info'][ fileID ] = {};
       }
       wsDataJSON['parameter-info'][ fileID ][ name ] = value;
     }
@@ -1412,7 +1328,7 @@ const setParameterData = function(){
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // ユーザ名の入力に合わせてイメージ出力先に値をセットする
-const registryServiceInput = function(){
+const setRegistryServiceInput = function(){
   const $modal = $('#registry-service'),
         inputArray = [];
   $modal.find('.registry-service-account-user').on({
@@ -1892,7 +1808,7 @@ const inputParameter = function(){
     + '</div>');
     
     // パラメータリストの作成
-    const parameterList = new Object();
+    const parameterList = {};
     $parameter.find('.item-parameter').each(function(){
       const parameterID = $( this ).attr('data-value');
       // 重複チェック
@@ -2238,115 +2154,6 @@ const cdExecution = function(){
 
 };
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-//   IT Automation実行結果一覧
-// 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-const itaResultList = function(){
-  const $resultList = $('#result-list');
-  
-  $resultList.html('<button class="running-status">実行状況</button>')
-  
-  const cancel = function(){
-    //const callback = itaResultList;
-    modal.change('exastroItAutomationResultCheck', {
-      'callback': itaResultList
-    });
-  };
-  
-  $resultList.find('.running-status').on('click', function(){
-    modal.change('exastroItAutomationStatusCheck', {
-      'cancel': cancel,
-      'callback': itaStatusList
-    });
-  });
-
-  // TEST画面に切り替え
-  $resultList.html('\
-    <div class="result-get">DELETE ' + workspace_api_conf.api.cdExecDesignation.delete + '\
-      <br>\
-      ID:<input type="text" class="tarce_id" size=20>\
-      <button class="cancel">予約取消</button>\
-      <br><br>\
-    </div>\
-    <hr>\
-    <div class="result-get">GET ' + workspace_api_conf.api.cd_pipeline.ita.get + '\
-    <button class="reload">更新</button>\
-    <textarea class="ita-text" cols="100" rows="25"></textarea>\
-    </div><br>\
-  ');
-  
-  var workspace_id = (new URLSearchParams(window.location.search)).get('workspace_id');
-
-  var get_ita_text = function() {
-    // Call get CD pipeline (ita) information processing - CDパイプライン(ITA)情報取得処理の呼び出し
-    $.ajax({
-      "type": "GET",
-      "url": workspace_api_conf.api.cd_pipeline.ita.get.replace('{workspace_id}', workspace_id),
-    }).done(function(data) {
-      // Success get - 取得成功
-      console.log("[DONE] GET " + workspace_api_conf.api.cd_pipeline.ita.get + " response\n" + JSON.stringify(data));
-      // display textarea - テキストエリアに表示
-      $resultList.find('.ita-text').val(JSON.stringify(data, null , "  "));
-      
-    }).fail(function(data) {
-      // Failed get - 取得失敗
-      console.log("[FAIL] GET " + workspace_api_conf.api.cd_pipeline.ita.get + " response\n" + JSON.stringify(data));
-      $resultList.find('.ita-text').val(JSON.stringify(data, null , "  "));
-    });
-  }
-  get_ita_text();
-  $resultList.find('.reload').on('click', () => {
-    get_ita_text();
-  });
-  $resultList.find('.cancel').on('click', () => {
-    var trace_id = $resultList.find('.tarce_id').val();
-    if(! confirm("予約を取り消します。トレースID:"+ trace_id)) {
-      return;
-    }
-    // Call get CD pipeline (ita) Cancellation of reservation - CDパイプライン(ITA)予約取り消し
-    $.ajax({
-      "type": "DELETE",
-      "url": workspace_api_conf.api.cdExecDesignation.delete.replace('{workspace_id}', workspace_id).replace('{trace_id}',trace_id),
-    }).done(function(data) {
-      // Success get - 取得成功
-      console.log("[DONE] DELETE " + workspace_api_conf.api.cdExecDesignation.delete + " response\n" + JSON.stringify(data));
-      alert("予約を取り消しました");
-    }).fail(function(data) {
-      // Failed get - 取得失敗
-      console.log("[FAIL] DELETE " + workspace_api_conf.api.cdExecDesignation.delete + " response\n" + JSON.stringify(data));
-      alert("予約を取り消しできませんでした");
-    });
-  });
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-//   IT Automation実行状況確認
-// 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-const itaStatusList = function(){
-  const $statusList = $('#status-list');
-  
-  // Conductor画面
-  const $itaConductor = $(''
-  + '<div class="conductor-area">'
-    + '<div class="node conductor-start"><div class="node-main"><div class="node-cap node-in"></div><div class="node-body"><div class="node-circle"><span class="node-gem"><span class="node-gem-inner node-gem-length-1">S</span></span><span class="node-running"></span><span class="node-result" data-result-text="" data-href="#"></span></div><div class="node-type"><span>Conductor</span></div><div class="node-name"><span>Start</span></div></div><div id="terminal-1" class="node-terminal node-out connect-a connected"><span class="connect-mark"></span><span class="hole"><span class="hole-inner"></span></span></div></div><div class="node-note"><div class="node-note-inner"><p></p></div></div></div>'
-    + '<div class="node conductor-end"><div class="node-main"><div id="terminal-2" class="node-terminal node-in connected connect-a"><span class="connect-mark"></span><span class="hole"><span class="hole-inner"></span></span></div><div class="node-body"><div class="node-circle"><span class="node-gem"><span class="node-gem-inner node-gem-length-1">E</span></span><span class="node-running"></span><span class="node-result" data-result-text="" data-href="#"></span></div><div class="node-type"><span>Conductor</span></div><div class="node-name"><span>End</span></div></div><div class="node-cap node-out"></div></div><div class="node-note"><div class="node-note-inner"><p></p></div></div></div>'
-    + '<div class="node conductor-epoch"><div class="node-main"><div id="terminal-3" class="node-terminal node-in connected connect-a"><span class="connect-mark"></span><span class="hole"><span class="hole-inner"></span></span></div><div class="node-body"><div class="node-circle"><span class="node-gem"><span class="node-gem-inner node-gem-length-1"></span></span><span class="node-running"></span><span class="node-result" data-result-text="" data-href="#"></span></div><div class="node-type"><span>Movement</span></div><div class="node-name"><span>Parameter set</span></div></div><div id="terminal-4" class="node-terminal node-out connect-a connected"><span class="connect-mark"></span><span class="hole"><span class="hole-inner"></span></span></div></div><div class="node-note"><div class="node-note-inner"><p></p></div></div><div class="node-skip"><input class="node-skip-checkbox" tabindex="-1" type="checkbox"><label class="node-skip-label">Skip</label></div><div class="node-operation"><dl class="node-operation-body"><dt class="node-operation-name">OP</dt><dd class="node-operation-data"></dd></dl><div class="node-operation-border"></div></div></div>'
-    + '<div class="conductor-line"></div>'
-  + '</div>');
-  
-  setTimeout( function(){ $itaConductor.find('.conductor-start').addClass('running'); }, 1000 );
-  setTimeout( function(){ $itaConductor.find('.conductor-epoch').addClass('running'); }, 3000 );
-  setTimeout( function(){ $itaConductor.find('.conductor-end').addClass('running'); }, 5000 );
-  setTimeout( function(){
-    $itaConductor.find('.node').addClass('complete').attr('data-result', '9').find('.node-result').attr('data-result-text', 'DONE');
-  }, 7000 );
-  
-  $statusList.html( $itaConductor )
-};
 
 // CD実行可能メンバーの取得 - Get a CD executable member
 const deployMembers = wsModalJSON.pipelineArgo.block.environmentList.tab.item.environmentDeployMember;
@@ -2415,155 +2222,6 @@ const argoCdAddDeployMembersModal = function(){
   });
 };
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-//   Argo CD 実行結果一覧
-// 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-const arogCdResultList = function(){
-  const $resultList = $('#result-list');
-  
-  $resultList.html('<div class="result-get">/GET /api/workspace/{workspace_id}/cd/pipeline/argocd')
-  
-  var workspace_id = (new URLSearchParams(window.location.search)).get('workspace_id');
-  // Call get CD pipeline (ArgoCD) information processing - CDパイプライン(ArgoCD)情報取得処理の呼び出し
-  $.ajax({
-    "type": "GET",
-    "url": workspace_api_conf.api.cd_pipeline.argocd.get.replace('{workspace_id}', workspace_id),
-  }).done(function(data) {
-    // Success get - 取得成功
-    console.log("[DONE] GET " + workspace_api_conf.api.cd_pipeline.argocd.get + " response\n" + JSON.stringify(data));
-    // display textarea - テキストエリアを表示
-    $resultList.append('<textarea class="argo-text" cols="100" rows="30">' + JSON.stringify(data.rows, null , "    ") + '</textarea>')
-    $resultList.append('</div><br>')
-
-    $resultList.append('<button class="sync">同期</button>')
-
-    
-    // Event processing when the sync button is pressed - 同期ボタン押下時のイベント処理
-    $resultList.find('.sync').on('click', function(){
-      var environment_id = "";
-      for(environment_id in wsDataJSON["environment"]) break;
-
-      console.log("[CALL] POST " + workspace_api_conf.api.cd_pipeline.argocd.sync.post.replace('{workspace_id}', workspace_id));
-      // Call argoCD sync processing - ArgoCD同期処理呼び出し
-      $.ajax({
-        "type": "POST",
-        "url": workspace_api_conf.api.cd_pipeline.argocd.sync.post.replace('{workspace_id}', workspace_id),
-        data:JSON.stringify({'environment_id':environment_id}),
-        contentType: "application/json",
-        dataType: "json",
-      }).done(function(data) {
-        console.log("[DONE] POST " + workspace_api_conf.api.cd_pipeline.argocd.sync.post + " response\n" + JSON.stringify(data));
-      }).fail(function(data) {
-        console.log("[FAIL] POST " + workspace_api_conf.api.cd_pipeline.argocd.sync.post + " response\n" + JSON.stringify(data));
-      });
-    });
-
-  }).fail(function(data) {
-    // Failed get - 取得失敗
-    console.log("[FAIL] GET " + workspace_api_conf.api.cd_pipeline.argocd.get + " response\n" + JSON.stringify(data));
-    
-    $resultList.append('<button class="sync">同期</button>')
-  });
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-//   アプリケーションコードリポジトリ結果確認
-// 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-const aplicationCodeResultList = function(){
-  const $commitList = $('#commit-list');
-  const $webhookList = $('#webhook-list');
-    
-  $commitList.html('<div>/GET /api/workspace/{workspace_id}/ci/pipeline/git/commits')
-  $webhookList.html('<div>/GET /api/workspace/{workspace_id}/ci/pipeline/git/hooks')
-
-  var workspace_id = (new URLSearchParams(window.location.search)).get('workspace_id');
-  // Call get CD pipeline (ArgoCD) information processing - CDパイプライン(ArgoCD)情報取得処理の呼び出し
-  $.ajax({
-    "type": "GET",
-    "url": workspace_api_conf.api.ci_pipeline.git.commits.get.replace('{workspace_id}', workspace_id),
-  }).done(function(data) {
-    // Success get - 取得成功
-    console.log("[DONE] GET " + workspace_api_conf.api.ci_pipeline.git.commits.get + " response\n" + JSON.stringify(data));
-    // display textarea - テキストエリアを表示
-    $commitList.append('<textarea cols="100" rows="25">' + JSON.stringify(data.rows, null , "    ") + '</textarea>')
-    $commitList.append('</div><br><br>')  
-  }).fail(function(data) {
-    // Failed get - 取得失敗
-    console.log("[FAIL] GET " + workspace_api_conf.api.ci_pipeline.git.commits.get + " response\n" + JSON.stringify(data));
-
-    $commitList.append('<textarea cols="100" rows="10">取得失敗</textarea>')
-    $commitList.append('</div><br><br>')  
-  });
-
-  $.ajax({
-    "type": "GET",
-    "url": workspace_api_conf.api.ci_pipeline.git.hooks.get.replace('{workspace_id}', workspace_id),
-  }).done(function(data) {
-    // Success get - 取得成功
-    console.log("[DONE] GET " + workspace_api_conf.api.ci_pipeline.git.hooks.get + " response\n" + JSON.stringify(data));
-
-    // display textarea - テキストエリアを表示
-    $webhookList.append('<textarea cols="100" rows="25">' + JSON.stringify(data.rows, null , "    ") + '</textarea>')
-    $webhookList.append('</div>')
-
-  }).fail(function(data) {
-    // Failed get - 取得失敗
-    console.log("[FAIL] GET " + workspace_api_conf.api.ci_pipeline.git.hooks.get + " response\n" + JSON.stringify(data));
-
-    $webhookList.append('<textarea cols="100" rows="10">取得失敗</textarea>')
-    $webhookList.append('</div>')  
-  });
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-//   コンテナレジストリ結果確認
-// 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-const registryResultList = function(){
-  const $imageList = $('#image-list');
-
-  $imageList.html(' \
-    <div>/GET ' + workspace_api_conf.api.ci_pipeline.registry.get + ' \
-      <textarea class="regis-text "cols="100" rows="25"></textarea> \
-    </div> \
-  ');
-
-  $.ajax({
-    "type": "GET",
-    "url": workspace_api_conf.api.ci_pipeline.registry.get.replace('{workspace_id}', workspace_id)
-  }).done(function(data) {
-    // Success get - 取得成功
-    console.log("[DONE] GET " + workspace_api_conf.api.ci_pipeline.registry.get + " response\n" + JSON.stringify(data));
-    $imageList.find('.regis-text').val(JSON.stringify(data, null , "    "))
-
-  }).fail(function(data) {
-    // Failed get - 取得失敗
-    console.log("[FAIL] GET " + workspace_api_conf.api.ci_pipeline.registry.get + " response\n" + JSON.stringify(data));
-    $imageList.html(' \
-      <div>/GET ' + workspace_api_conf.api.ci_pipeline.registry.get + ' \
-        <textarea class="regis-text "cols="100" rows="25"></textarea> \
-      </div> \
-    ');
-    $imageList.find('.regis-text').val(JSON.stringify(data, null , "    "))
-  });
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-//   Argo CD 実行状況確認
-// 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-const arogCdStatusList = function(){
-  const $resultList = $('#result-list');
-  
-  $resultList.html('<button class="running-status">実行状況</button>')
-
-};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -2628,153 +2286,195 @@ const cdRunning = function(){
 //   モーダルオープン
 // 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-$content.find('.modal-open, .workspace-status-item').not('[data-button="pipelineTektonCheck"]').on('click', function(){
+$('#content').find('.modal-open').on('click', function(e){
+  e.stopPropagation();
   const $button = $( this ),
-        target = $button.attr('data-button');
-  
-  let ok, cancel, callback, width = 800;
+        target = $button.attr('data-button'),
+        funcs = {};
+
+  let width = 800;
 
   console.log('modal open:' + target);
 
   switch( target ) {
     // Workspace
     case 'workspace': {
-      ok = function(){
+      funcs.ok = function(){
         setInputData('', 'workspace');
+        wsDataCompare();
         workspaceImageUpdate();
         modal.close();
       };   
       } break;
     // Gitサービス
     case 'gitService': {
-      ok = function(){
+      funcs.ok = function(){
         setInputData('application-code', 'git-service');
         deleteTabData('application-code');
+        wsDataCompare();
         workspaceImageUpdate();
         modal.close();
       };   
       } break;
     // レジストリサービス
     case 'registryService': {
-      ok = function(){
+      funcs.ok = function(){
         setInputData('application-code', 'registry-service');
+        wsDataCompare();
         workspaceImageUpdate();
         modal.close();
       };      
-      callback = registryServiceInput;
+      funcs.callback = setRegistryServiceInput;
     } break;
     // Argo CD
     case 'pipelineArgo': {
-      ok = function(){
+      funcs.ok = function(){
         setInputData('environment', '');
         deleteTabData('environment');
+        wsDataCompare();
         workspaceImageUpdate();
         modal.close();
       };
-      callback = argoCdAddDeployMembersModal;
+      funcs.callback = argoCdAddDeployMembersModal;
       } break;
     // Tekton
     case 'pipelineTekton': {
-      ok = function(){
+      funcs.ok = function(){
         setInputData('application-code', '');
+        wsDataCompare();
         workspaceImageUpdate();
         modal.close();
       };      
       } break;
     // Argo CD Gitサービス
     case 'gitServiceArgo': {
-      ok = function(){
+      funcs.ok = function(){
         setInputData('environment', 'git-service-argo');
+        wsDataCompare();
         workspaceImageUpdate();
         modal.close();
       };
     } break;
     
     // ここからCD実行画面
-    
-    // アプリケーションコード結果一覧
-    case 'gitServiceCheck': {
-      callback = aplicationCodeResultList;
-    } break;
-    // レジストリ結果一覧
-    case 'registryServiceCheck': {
-      callback = registryResultList;
-    } break;
-    // CD実行
-    case 'cdExecution': {
-      // ok = function( $modal ){
-      //   if($modal.find('input:radio[name="execution-date"]:checked').val() == 'dateset') {
-      //     wsDataJSON['cd-execution-param']['preserve-datetime'] = $modal.find('.execution-date-input').val();
-      //   } else {
-      //     wsDataJSON['cd-execution-param']['preserve-datetime'] = '';
-      //   }
-      ok = function(){
-        if(modal.$modal.find('input:radio[name="execution-date"]:checked').val() == 'dateset') {
-          wsDataJSON['cd-execution-param']['preserve-datetime'] = modal.$modal.find('.execution-date-input').val();
-        } else {
-          wsDataJSON['cd-execution-param']['preserve-datetime'] = '';
-        }
 
-        cdRunning();
-      };
-      callback = cdExecution;
-    } break;
+    // TODO:Sprint79 DELETE
+    // アプリケーションコード結果一覧
+    // case 'gitServiceCheck': {
+    //   callback = aplicationCodeResultList;
+    // } break;
+    // // レジストリ結果一覧
+    // case 'registryServiceCheck': {
+    //   callback = registryResultList;
+    // } break;
+
+    // TODO:Sprint79 DELETE
+    // CD実行
+    // case 'cdExecution': {
+    //   // ok = function( $modal ){
+    //   //   if($modal.find('input:radio[name="execution-date"]:checked').val() == 'dateset') {
+    //   //     wsDataJSON['cd-execution-param']['preserve-datetime'] = $modal.find('.execution-date-input').val();
+    //   //   } else {
+    //   //     wsDataJSON['cd-execution-param']['preserve-datetime'] = '';
+    //   //   }
+    //   ok = function(){
+    //     if(modal.$modal.find('input:radio[name="execution-date"]:checked').val() == 'dateset') {
+    //       wsDataJSON['cd-execution-param']['preserve-datetime'] = modal.$modal.find('.execution-date-input').val();
+    //     } else {
+    //       wsDataJSON['cd-execution-param']['preserve-datetime'] = '';
+    //     }
+
+    //     cdRunning();
+    //   };
+    //   callback = cdExecution;
+    // } break;
+
     // Kubernetes Manifest テンプレート
     case 'kubernetesManifestTemplate': {
-      callback = templateFileList;
+      funcs.callback = templateFileList;
+      funcs.move = function(){}
       width = 1160;
     } break;
     // Manifestパラメータ
     case 'manifestParametar': {
-      ok = function(){
+      funcs.ok = function(){
         setParameterData();
-        apply_manifest();
+        workspaceImageUpdate();
         modal.close();
       };
-      callback = inputParameter;
+      funcs.callback = inputParameter;
       width = 1160;
     } break;
-    // Exastro IT Automation 実行結果一覧
-    case 'exastroItAutomationResultCheck': {
-      callback = itaResultList;
-    } break;
-    // Argo CD 実行結果一覧
-    case 'arogCdResultCheck': {
-      callback = arogCdResultList;
-    } break;
   }
 
-  modal.open( target, {
-    'ok': ok,
-    'cancel': cancel,
-    'callback': callback
-  }, width );
+  modal.open( target, funcs, width );
   
-  console.log($('.modal-block-main'));
-  switch(target) {
-    case 'gitServiceCheck':
-      break;
-    case 'gitServiceArgoCheck':
-      var link = "";
-      const $commitList = $('#commit-list');
-      $commitList.html('');
-      for(var env in wsDataJSON['environment']) {
-        link = wsDataJSON['environment'][env][env + '-git-service-argo-repository-url'];
-        link = link.replace(".git","") + "/commits";
+  // TODO:Sprint79 DELETE
+  // console.log($('.modal-block-main'));
+  // switch(target) {
+  //   case 'gitServiceCheck':
+  //     break;
+  //   case 'gitServiceArgoCheck':
+  //     var link = "";
+  //     const $commitList = $('#commit-list');
+  //     $commitList.html('');
+  //     for(var env in wsDataJSON['environment']) {
+  //       link = wsDataJSON['environment'][env][env + '-git-service-argo-repository-url'];
+  //       link = link.replace(".git","") + "/commits";
 
-        // EPOCH_LINK
-        $commitList.append('<a href="' + link + '" target="_blank">' + link + '</a><br />')
-      };
+  //       // EPOCH_LINK
+  //       $commitList.append('<a href="' + link + '" target="_blank">' + link + '</a><br />')
+  //     };
+  //     break;
+  //   case 'registryServiceCheck':
+  //     // $('.modal-block-main').html('<a href="' + workspace_api_conf.links.registry + '" target="_blank">確認</a>');
+  //     break;
+  //   case 'arogCdResultCheck':
+  //     break;
+  //   case 'exastroItAutomationResultCheck':
+  //     //$('.modal-block-main').html('<a href="' + workspace_client_urls.ita + '" target="_blank">確認</a>');
+  //     break;
+  // }
+});
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//   各種サービス結果確認
+//   > workspace_result.js
+// 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+$workspace.find('.modal-check').on('click', function(e){
+  e.stopPropagation();
+  
+  const $b = $( this ),
+        type = $b.attr('data-button');
+  
+  switch( type ) {
+      // アプリケーションコードリポジトリ
+      case 'gitServiceCheck':
+          wsAppCodeRepoCheck( wsDataJSON['git-service'] );
       break;
-    case 'registryServiceCheck':
-      // $('.modal-block-main').html('<a href="' + workspace_api_conf.links.registry + '" target="_blank">確認</a>');
+      case 'pipelineTektonCheck':
+          wsTektonCheck();
       break;
-    case 'arogCdResultCheck':
+      // マニフェストリポジトリ
+      case 'gitServiceArgoCheck':
+          wsManiRepoCheck( wsDataJSON['environment'] );
       break;
-    case 'exastroItAutomationResultCheck':
-      //$('.modal-block-main').html('<a href="' + workspace_client_urls.ita + '" target="_blank">確認</a>');
+      // レジストリサービス
+      case 'registryServiceCheck':
+          wsRegiSerCheck();
+      break;
+      // ArgoCD
+      case 'arogCdResultCheck':
+          wsArgocdCheck();
+      break;
+      // IT Automation
+      case 'exastroItAutomationResultCheck':
+          wsItaCheck();
       break;
   }
+  
 });
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2800,11 +2500,25 @@ const workspaceTextAdjust = function( ) {
 //   ワークスペース情報の更新
 // 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+// 変更フラグ
+const compareFlag = {
+  'workspace': false,
+  'gitService': false,
+  'pipelineTekton': false,
+  'registryService': false,
+  'pipelineArgo': false,
+  'gitServiceArgo': false
+};
+
+// 枠をクリックした際にボタンをクリック
+$workspace.on('click', '.button-box-area, .button-document-area', function(){
+  $( this ).find('button:visible').trigger('click');
+});
 
 const workspaceImageUpdate = function( ) {
   
-  // ワークスペースモード
-  const mode = $content.attr('data-mode');
+  // ワークスペースタイプ
+  const type = $content.attr('data-workspace-type');
   
   // ワークスペース名
   const $workspaceName = $content.find('.content-title-heading'),
@@ -2817,7 +2531,22 @@ const workspaceImageUpdate = function( ) {
                           '';
   $workspaceName.text( workspaceName );
   $workspaceNote.text( workspaceNote );
-  
+
+  // ボタンの親チェックと説明の追加
+  $workspace.find('.button-box-area, .button-document-area')
+    .removeClass('button-box-area button-document-area epoch-popup')
+    .removeAttr('title');
+  $workspace.find('.workspace-button:visible').each(function(){
+    const $block = $( this ).closest('.workspace-block, .workspace-point'),
+          id = $block.attr('id');
+    $block.addClass('button-box-area epoch-popup').attr('title', wsDescription[type][id] );
+  });
+  $workspace.find('.workspace-document-button:visible').each(function(){
+    const $block = $( this ).closest('.workspace-document-wrap'),
+          id = $block.attr('id');
+    $block.addClass('button-document-area epoch-popup').attr('title', wsDescription[type][id] );
+  });
+
   // ワークスペースステータス
   const $status = $workspace.find('.workspace-status-list');
 
@@ -2882,50 +2611,63 @@ const workspaceImageUpdate = function( ) {
   $tempTarget.find('.multiple-number').text( tempNumber );
   $tempTarget.find('.multiple-block').html( divTempClone );
   
-  // 入力チェック
-  if ( mode === 'setting') {
-    const done = 'done',
-          unentered = 'unentered';
+  const done = 'done',
+        unentered = 'unentered';
+
+        // 入力チェック
+  if ( type === 'setting') {
+    
+    let inputF = false,
+        compareF = false;
+    
+    // 共通
+    const checkList = {
+      'gitService': {'num': appNumber, 'block': 'ws-git-service'},
+      'pipelineTekton': {'num': appNumber, 'block': 'ws-pipeline-tekton'},
+      'registryService': {'num': appNumber, 'block': 'ws-registry-service'},
+      'pipelineArgo': {'num': envNumber, 'block': 'ws-pipeline-argo'},
+      'gitServiceArgo': {'num': envNumber, 'block': 'ws-git-argo'}
+    };
+    for ( const key in checkList ) {
+        // 枠
+        $content.find('#' + checkList[key].block )
+          .attr('data-modified', compareFlag[ key ] );
+        // ボタン
+        const inputChack = ( checkList[key].num && modal.inputCheck( key ) )? done: unentered;
+        if ( inputF === false && inputChack === 'unentered') inputF = true;
+        $content.find('.workspace-button[data-button="' + key + '"]')
+          .attr('data-status', inputChack );
+    }
+        
     // ワークスペース名
     const workspaceInput = ( modal.inputCheck('workspace') )? done: unentered;
     $content.find('.content-header .workspace-button').attr('data-status', workspaceInput );
-    // Gitサービス
-    const gitServiceInput = ( appNumber && modal.inputCheck('gitService') )? done: unentered;
-    $gitService.find('.workspace-button[data-button="gitService"]').attr('data-status', gitServiceInput );
-    // TEKTON
-    const tektonInput = ( appNumber && modal.inputCheck('pipelineTekton') )? done: unentered;
-    $('#ws-pipeline-tekton').find('.workspace-button[data-button="pipelineTekton"]').attr('data-status', tektonInput );
-    // レジストリサービス
-    const registryServiceInput = ( appNumber && modal.inputCheck('registryService') )? done: unentered;
-    $registryService.find('.workspace-button[data-button="registryService"]').attr('data-status', registryServiceInput );
-    // Argo CD
-    const argoCdInput = ( envNumber && modal.inputCheck('pipelineArgo') )? done: unentered;
-    $('#ws-pipeline-argo').find('.workspace-button[data-button="pipelineArgo"]').attr('data-status', argoCdInput );
-    // Argo CD Gitサービス
-    const gitServiceArgoInput = ( envNumber && modal.inputCheck('gitServiceArgo') )? done: unentered;
-    $gitServiceArgo.find('.workspace-button[data-button="gitServiceArgo"]').attr('data-status', gitServiceArgoInput );
-    // テンプレートファイル
-    const $wsIta = $('#ws-ita'),
-          templateInput = ( tempNumber !== 0 )? done: unentered;
-    $wsIta.find('.workspace-document-button[data-button="kubernetesManifestTemplate"]').attr('data-status', templateInput );
-    // パラメータ入力
-    /* テンプレートが無くてもdisable化しない
-    //if ( tempNumber <= 0 ) {
-    //  $wsIta.find('.workspace-document-button[data-button="manifestParametar"]').prop('disabled', true );
-    //} else if ( tempNumber > 0 ) {
-    //  $wsIta.find('.workspace-document-button[data-button="manifestParametar"]').prop('disabled', false );
-    //}
-    */
+    if ( inputF === false && workspaceInput === 'unentered') inputF = true;
+    
+    // 変更チェック
+    for ( const key in compareFlag ) {
+      if ( compareFlag[key] ) compareF = true;
+    }
+    
+    // 作成・更新ボタン
+    const createF = ( inputF === false && compareF === true )? false: true;
+    $workspaceFooter.find('.workspace-footer-menu-button[data-button="create"], .workspace-footer-menu-button[data-button="update"]').prop('disabled', createF );
+    
+    // リセットボタン
+    const resetF = ( compareF === true )? false: true;
+    $workspaceFooter.find('.workspace-footer-menu-button[data-button="reset"]').prop('disabled', resetF );
+    
+  } else if ( type === 'deploy') {
+    const manifestTemp = ( tempNumber > 0 )? done: unentered;
+    $content.find('.workspace-document-button[data-button="kubernetesManifestTemplate"]').attr('data-status', manifestTemp );
   }
   
   workspaceReload();
   workspaceTextAdjust();
   setEpochFrame();
   
-  
   console.log(wsDataJSON);
 }
-workspaceImageUpdate();
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -2933,21 +2675,273 @@ workspaceImageUpdate();
 // 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 const $tabList = $workspace.find('.workspace-tab-list');
+
+const workspaceChange = function( workspaceType ){
+  $tabList.find('.current').removeClass('current');
+  $tabList.find('.workspace-tab-link[href="#' + workspaceType + '"]').addClass('current');
+  
+  $content.attr('data-workspace-type', workspaceType );
+  
+  setFotter( workspaceType );
+  workspaceImageUpdate();
+  workspaceReload();
+  workspaceTextAdjust();
+};
+workspaceChange( initWorkspaceType );
+
 $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
   e.preventDefault();
   const $tab = $( this ),
         target = $tab.attr('href').replace(/^#/,'');
   
   if ( !$tab.is('.current') ) {
-    $tabList.find('.current').removeClass('current');
-    $tab.addClass('current');
-    $content.attr('data-mode', target );
-    
-    workspaceReload();
-    workspaceTextAdjust();
+    workspaceChange( target );    
   }
 
 });
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//   変更チェック
+// 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// 変更ステータス
+const compareStatus = {
+  'add': 'Add',
+  'equal': 'Equal',
+  'change': 'Change',
+  'remove': 'Remove'
+};
+
+// 変更前
+let beforeWsData = $.extend( true, {}, wsDataJSON );
+
+// 比較データ作成（ beforeWsData <> wsDataJSON ）
+const wsDataCompare = function(){
+    
+    const tempBeforeData = $.extend( true, {}, beforeWsData ),
+          tempAfterData =  $.extend( true, {}, wsDataJSON );
+    
+    // 比較
+    const compare = function( a, b ){
+        if ( b === undefined ) {
+            return [ compareStatus.add, b, a ];
+        } else if ( b === null || b === '') {
+            return [ compareStatus.add, b, a ];
+        } else if ( a === b ) {
+            return [ compareStatus.equal, b, a ];
+        } else {
+            return [ compareStatus.change, b, a ];
+        }
+    };
+    
+    const result = {
+      'compare': {},
+      'html': {}
+    };
+    
+    // 変更・追加チェック
+    const changeCheck = function( a, b, r ){
+        const type = modal.typeJudgment( a );
+        switch ( type ) {
+            case 'object':
+                for ( const k in a ) {
+                    const t = modal.typeJudgment( a[k] );
+                    switch ( t ) {
+                        case 'object':
+                            if ( !b[k] ) b[k] = {};
+                            if ( !r[k] ) r[k] = {};
+                        break;
+                        case 'string':
+                            r[k] = compare( a[k], b[k] );     
+                    }
+                    changeCheck( a[k], b[k], r[k] );
+                }
+            break;
+        }
+    };    
+    changeCheck( tempAfterData, tempBeforeData, result.compare );
+    
+    // 削除チェック
+    const deleteCheck = function( b, a, r ) {
+        const type = modal.typeJudgment( b );
+        switch ( type ) {
+            case 'object':
+                for ( const k in b ) {
+                    const t = modal.typeJudgment( b[k] );
+                    switch ( t ) {
+                        case 'object':
+                            if ( !r[k] ) r[k] = {};
+                            if ( a[k] === undefined ) {
+                                for ( const key in b[k] ) {
+                                  if ( b[k][key] !== null ) {
+                                    r[k][key] = [ compareStatus.remove, b[k][key], undefined ];
+                                  }
+                                }
+                            } else {
+                                deleteCheck( b[k], a[k], r[k] );
+                            }
+                        break;
+                        case 'string':
+                            if ( a[k] === null || a[k] === undefined ) {
+                                r[k] = [ compareStatus.remove, b[k], undefined ];
+                            }
+                    }
+                }
+            break;
+        }
+    };
+    deleteCheck( tempBeforeData, tempAfterData, result.compare );    
+    
+    // モーダルごとにチェック
+    for ( const key in compareFlag ) {
+      const info = compareInfo( key, result.compare );
+      compareFlag[key] = info.flag;
+      result.html[key] = info.html;
+    }    
+
+    return result;
+};
+  
+// 比較データから比較内容を表示する
+const compareInfo = function( modalID, compareData ){
+
+    const m = wsModalJSON[modalID];
+    let h = '',
+        flag = false;
+    
+    const title = m['title'],
+          block = m['block'];
+    
+    const compareRow = function( title, status, before, after ) {
+      let rowHTML = '<tr class="compareRow" data-status="' + status + '">';
+      if ( title !== '') rowHTML += '<th class="compareTh compareItemTitle"><span>' + title + '</span></th>';
+      rowHTML += '<td class="compareTd compareStatus"><span class="' + status + '">' + status + '</span></td>'
+        + '<td class="compareTd compareBefore"><span>' + before + '</span></td>'
+        + '<td class="compareTd compareAfter"><span>' + after + '</span></td>'
+      + '</tr>';
+      return rowHTML;
+    }
+    
+    const itemBlock = function( item, searchData, tabID ){
+      let ih = '';
+      for ( const itemKey in item ) {
+        const block = item[itemKey],
+              id = ( tabID )? tabID + '-': '';
+              
+        let t = ( block['title'] )? block['title']: '',
+            p = block['type'];
+
+        if ( p !== 'reference' ) {
+          const n = id + block['name'];
+          
+          const typeCheck = function( v ){
+            switch( p ) {
+              case 'radio':
+              case 'listSelect':
+                return block['item'][v];
+              case 'listSelectID': {
+                const n = block['list'].filter( function(f) {
+                  if ( v.split(',').indexOf( String( f[0] )) !== -1 ) return f;
+                });
+                
+                const nL = n.length,
+                      l = [];
+                for ( let i = 0; i < nL; i++ ) {
+                  l.push( modal.fn.textEntities( n[i][1] ));
+                }
+                return '<em>' + l.join('</em><em>') + '</em>';
+              }
+              case 'password':
+                return '********';
+              default:
+                return v;
+            }
+          };
+          
+          const addRow = function( targetID ){
+            const search = modal.searchValue( searchData, targetID );
+            if ( search ) {
+              const c = ( search )? search: [''],
+                    s = c[0],
+                    b = ( c[1] )? typeCheck(c[1]): '',
+                    a = ( c[2] )? typeCheck(c[2]): '';
+              if ( s !== compareStatus.equal ) {
+                ih += compareRow( t, s, b, a );
+                flag = true;
+              }
+            }
+          };
+          addRow( n );
+
+          // listSelect 用
+          if ( p === 'listSelect') {
+            t += '(Select)';
+            p = 'listSelectID'
+            addRow( n + '-id');
+          }        
+                    
+        }
+      }
+      if ( ih === '') {
+        return '';
+      } else {
+        return '<div class="comparaItemBody"><table class="compareTable"><tbody>' + ih + '</tbody></table></div>';
+      }
+    };
+    
+    const tabBlock = function( tab ){
+      let th = '';
+      const p = tab['type'];
+      if ( p === 'add' || p === 'reference') {
+        const t = tab['target'];
+        for ( const tabKey in compareData[t['key1']] ) {
+          // tab名
+          const r = compareData[t['key1']][tabKey][t['key2']],
+                n = ( r[2] )? r[2]: r[1];
+          if ( r[0] === compareStatus.add ) flag = true;
+          
+          const kh = itemBlock( tab['item'], compareData[t['key1']][tabKey], tabKey );
+          if ( kh !== '') {
+            th += '<div class="compareTabBlock">'
+              + '<div class="compareTabTitle">' + n + '</div>'
+              + '<div class="comparaTabBody">' + kh + '</div>'
+            + '</div>';
+          }
+        }
+      }  
+      return th;
+    };
+    
+    for ( const key in block ) {
+      const b = block[key];
+      let r = '';
+      if ( b['item'] ) {
+        r = itemBlock( b['item'], compareData );
+      } else if ( b['tab'] ) {
+        r = tabBlock( b['tab'] );
+      }
+      if ( r !== '') {
+        const blockTitle = ( b['title'] )? b['title']: '';
+        h += '<div class="compareBlockTitle">' + blockTitle + '</div>'
+        + '<div class="compareBlockBody">' + r + '</div>';
+      }
+    }
+    
+    if ( h !== '') {
+      h = '<div class="compare">'
+          + '<div class="compareTitle">' + title + '</div>'
+          + '<div class="compareBody">' + h + '</div>'
+        + '</div>';
+    }
+
+    return {
+      'html': h,
+      'flag': flag
+    };
+
+};
 
   //-----------------------------------------------------------------------
   // API呼び出し関連
@@ -2956,30 +2950,28 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
   // window onloadイベント
   $(document).ready(function(){ getWorksapce(); });
 
+  // TODO:Sprint79 DELETE
   //$(document).ready(function(){
   // リセットボタン処理
-  $('#reset-button').on('click', function(){
-    // 確認メッセージ
-    if (confirm("入力値をリセットしてもよろしいですか？"))
-      if(workspace_id == null) {
-        // 新規のときは画面リロード
-        top.location.reload();        
-      } else {
-        // ワークスペース情報の読み込み
-        getWorksapce();
-      }
-  });
+  // $('#reset-button').on('click', function(){
+  //   // 確認メッセージ
+  //   if (confirm("入力値をリセットしてもよろしいですか？"))
+  //     if(workspace_id == null) {
+  //       // 新規のときは画面リロード
+  //       top.location.reload();        
+  //     } else {
+  //       // ワークスペース情報の読み込み
+  //       getWorksapce();
+  //     }
+  // });
 
   // ワークスペース情報の読み込み
   function getWorksapce(){
 
     workspace_id = (new URLSearchParams(window.location.search)).get('workspace_id');
     if(workspace_id == null) {
-      $(".topic-path-current").text("新規");
-      $('#cicd-tab-item').css('visibility','hidden');
+      // No need to get data when new - 新規の時はデータの取得は不要
       return;
-    } else {
-      $(".topic-path-current").text("詳細");
     }
 
     new Promise((resolve, reject) => {
@@ -3115,8 +3107,8 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         reject();
       });        
     })}).then(() => {
-      // ボタン名変更
-      $('#apply-workspace-button').html('ワークスペース更新');
+      // Reset the information before the change - 変更前の情報を再設定
+      beforeWsData = $.extend( true, {}, wsDataJSON );
 
       workspaceImageUpdate();
       getClient();
@@ -3125,6 +3117,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
       $('#cicd-tab-item').css('visibility','visible');
       // alert("ワークスペース情報を読み込みました");
       console.log('[DONE] getWorksapce');
+
     }).catch((info) => {
         // CI/CD実行タブを表示
       $('#cicd-tab-item').css('visibility','hidden');
@@ -3134,18 +3127,19 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
         switch(info.reason) {
           case "http-code-401":
             alert("ワークスペースを表示する権限がありません");
-            window.location = URL_BASE;
             break;
           default:
-            //window.location = URL_BASE;
+            alert("ワークスペースを表示できません");
             break;
         }
+        window.location = URL_BASE;
       }
       console.log('[FAIL] getWorksapce');
     });
   }
 
-  $('#apply-workspace-button').on('click',apply_workspace);
+  // TODO:Sprint79 DELETE
+  // $('#apply-workspace-button').on('click',apply_workspace);
   function apply_workspace() {
   
     console.log('CALL apply_workspace()');
@@ -3901,5 +3895,17 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
     }
   }
   $(document).ready(function(){ show_buttons_by_role(); });
+}
 
+$(function(){
+  if((new URLSearchParams(window.location.search)).get('workspace_id')==null) {
+    // Display when new workspace - 新規ワークスペースの時の表示
+    workspace('setting', 'new');
+    $(".topic-path-current").text("新規");
+    $('#cicd-tab-item').css('visibility','hidden');
+  } else {
+    // Display when registered workspace - 登録済みワークスペースの時の表示
+    workspace('setting', 'update');
+    $(".topic-path-current").text("詳細");
+  }
 });

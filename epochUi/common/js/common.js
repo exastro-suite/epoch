@@ -549,14 +549,19 @@ epochCommon.prototype = {
   },
   // 日時フォーマット
   'formatDate': function( date, format ) {
-    format = format.replace(/yyyy/g, date.getFullYear());
-    format = format.replace(/MM/g, ('0' + (date.getMonth() + 1)).slice(-2));
-    format = format.replace(/dd/g, ('0' + date.getDate()).slice(-2));
-    format = format.replace(/HH/g, ('0' + date.getHours()).slice(-2));
-    format = format.replace(/mm/g, ('0' + date.getMinutes()).slice(-2));
-    format = format.replace(/ss/g, ('0' + date.getSeconds()).slice(-2));
-    format = format.replace(/SSS/g, ('00' + date.getMilliseconds()).slice(-3));
-    return format;
+    if ( date ) {
+      const d = new Date(date);
+      format = format.replace(/yyyy/g, d.getFullYear());
+      format = format.replace(/MM/g, ('0' + (d.getMonth() + 1)).slice(-2));
+      format = format.replace(/dd/g, ('0' + d.getDate()).slice(-2));
+      format = format.replace(/HH/g, ('0' + d.getHours()).slice(-2));
+      format = format.replace(/mm/g, ('0' + d.getMinutes()).slice(-2));
+      format = format.replace(/ss/g, ('0' + d.getSeconds()).slice(-2));
+      format = format.replace(/SSS/g, ('00' + d.getMilliseconds()).slice(-3));
+      return format;
+    } else {
+      return '';
+    }
   },
   // isset
   'isset': function( data ) {

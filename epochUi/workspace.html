@@ -24,9 +24,10 @@
 <link rel="stylesheet" href="common/css/common.css">
 <link rel="stylesheet" href="common/css/table.css">
 <link rel="stylesheet" href="common/css/modal.css">
+<link rel="stylesheet" href="common/css/ui_fonts.css">
 <link rel="stylesheet" href="common/css/workspace.css">
+<link rel="stylesheet" href="common/css/workspace_result.css">
 <link rel="stylesheet" href="common/css/workspace_opt.css">
-<link rel="stylesheet" href="common/css/conductor.css">
 
 <script src="common/js/jquery-3.5.1.min.js"></script>
 <script src="common/js/datepicker.js"></script>
@@ -42,6 +43,7 @@
 <script src="api/user/refresh_session.js"></script>
 
 <!-- CI/CD実行 -->
+<script src="common/js/workspace_result.js"></script>
 <script src="common/js/workspace_tekton_task.js"></script>
 
 <!-- オーロラ背景 -->
@@ -269,7 +271,7 @@
     </nav>
   </aside>
 
-  <div id="content" data-mode="setting">
+  <div id="content">
 
     <nav class="topic-path">
       <ol class="topic-path-list">
@@ -303,7 +305,7 @@
           <ul class="workspace-tab-list">
             <!-- <li class="workspace-tab-item"><a href="#" class="workspace-tab-link">一覧に戻る</a></li> -->
             <li class="workspace-tab-item"><a href="#setting" class="workspace-tab-link current">ワークスペース設定</a></li>
-            <li class="workspace-tab-item" id="cicd-tab-item"><a href="#running" class="workspace-tab-link">CI/CD実行</a></li>
+            <li class="workspace-tab-item" id="cicd-tab-item"><a href="#deploy" class="workspace-tab-link">CI/CD実行</a></li>
           </ul>
         </div>
         <div class="workspace-header-menu">
@@ -530,13 +532,6 @@
                   <use href="#icon-user" />
                 </svg>
                 <div class="workspace-point-name">CD</div>
-                <div class="workspace-point-setting workspace-mode-running" id="cdExecutionButtonArea" style="display:none!important;">
-                  <button class="modal-open workspace-button" data-button="cdExecution">
-                    <svg viewBox="0 0 64 64" class="workspace-button-svg">
-                      <use href="#icon-running" />
-                    </svg>
-                  </button>
-                </div>
               </div>
             </div>
             
@@ -563,14 +558,14 @@
                     <div class="workspace-block-name"><span class="workspace-block-name-inner adjust-text"></span></div>
                   </div>
                   <div class="workspace-block-setting workspace-mode-setting">
-                    <button class="modal-open workspace-button epoch-popup" data-button="gitService" data-status="unentered" title="Gitサービスの設定とGitリポジトリ（アプリケーションコード）の登録をします。">
+                    <button class="modal-open workspace-button" data-button="gitService" data-status="unentered">
                       <svg viewBox="0 0 64 64" class="workspace-button-svg">
                         <use href="#icon-gear" />
                       </svg>
                     </button>
                   </div>
                   <div class="workspace-block-setting workspace-mode-running">
-                    <button class="modal-open workspace-button" data-button="gitServiceCheck" id="gitServiceCheckButton" style="display:none!important;;">
+                    <button class="modal-check workspace-button" data-button="gitServiceCheck" id="gitServiceCheckButton" style="display:none!important;;">
                       <svg viewBox="0 0 64 64" class="workspace-button-svg">
                         <use href="#icon-status" />
                       </svg>
@@ -613,7 +608,7 @@
                     </button>
                   </div>
                   <div class="workspace-block-setting workspace-mode-running">
-                    <button class="modal-tekton-check workspace-button" data-button="pipelineTektonCheck" id="pipelineTektonCheckButton" style="display:none!important;">
+                    <button class="modal-check workspace-button" data-button="pipelineTektonCheck" id="pipelineTektonCheckButton" style="display:none!important;">
                       <svg viewBox="0 0 64 64" class="workspace-button-svg">
                         <use href="#icon-status" />
                       </svg>
@@ -648,7 +643,7 @@
                     </button>
                   </div>
                   <div class="workspace-block-setting workspace-mode-running">
-                    <button class="modal-open workspace-button" data-button="arogCdResultCheck" id="arogCdResultCheckButton" style="display:none!important;">
+                    <button class="modal-check workspace-button" data-button="arogCdResultCheck" id="arogCdResultCheckButton" style="display:none!important;">
                       <svg viewBox="0 0 64 64" class="workspace-button-svg">
                         <use href="#icon-status" />
                       </svg>
@@ -683,7 +678,7 @@
                     </button>
                   </div>
                   <div class="workspace-block-setting workspace-mode-running">
-                    <button class="modal-open workspace-button" data-button="registryServiceCheck" id="registryServiceCheckButton" style="display:none!important;">
+                    <button class="modal-check workspace-button" data-button="registryServiceCheck" id="registryServiceCheckButton" style="display:none!important;">
                       <svg viewBox="0 0 64 64" class="workspace-button-svg">
                         <use href="#icon-status" />
                       </svg>
@@ -707,14 +702,14 @@
                     <div class="workspace-block-name"><span class="workspace-block-name-inner adjust-text"></span></div>
                   </div>
                   <div class="workspace-block-setting workspace-mode-setting">
-                    <button class="modal-open workspace-button epoch-popup" data-button="gitServiceArgo" data-status="unentered" title="">
+                    <button class="modal-open workspace-button" data-button="gitServiceArgo" data-status="unentered">
                       <svg viewBox="0 0 64 64" class="workspace-button-svg">
                         <use href="#icon-gear" />
                       </svg>
                     </button>
                   </div>
                   <div class="workspace-block-setting workspace-mode-running">
-                    <button class="modal-open workspace-button" data-button="gitServiceArgoCheck" id="gitServiceArgoCheckButton" style="display:none!important;">
+                    <button class="modal-check workspace-button" data-button="gitServiceArgoCheck" id="gitServiceArgoCheckButton" style="display:none!important;">
                       <svg viewBox="0 0 64 64" class="workspace-button-svg">
                         <use href="#icon-status" />
                       </svg>
@@ -803,19 +798,19 @@
                   <div class="multiple-number"></div>
                   <div class="multiple-block"></div>
                 </div>
-                <div class="workspace-document-wrap">
+                <div class="workspace-document-wrap" id="ws-ita-check">
                   <div class="workspace-document">
                     <div class="workspace-ita-frow">
                       <svg viewBox="0 0 160 32" class="workspace-ita-frow-svg" id="ws-ita-frow">
                         <use href="#icon-ita-flow" />
                       </svg>
-                      <div class="workspace-ita-status workspace-mode-running modal-open" data-status="running" data-button="exastroItAutomationResultCheck" id="exastroItAutomationResultCheckArea" style="visibility: hidden;">
+                      <div class="workspace-ita-status workspace-mode-running" data-status="running" data-button="exastroItAutomationResultCheck" id="exastroItAutomationResultCheckArea" style="visibility: hidden;">
                         <div class="workspace-ita-status-bar"></div>
                         <div class="workspace-ita-status-text">実行中</div>
                       </div>
                     </div>
                     <div class="workspace-block-setting workspace-mode-running">
-                      <button class="modal-open workspace-button epoch-popup" data-button="exastroItAutomationResultCheck" title="IT Automationの稼働状況を確認します。" id="exastroItAutomationResultCheckButton" style="display:none!important;">
+                      <button class="modal-check workspace-button" data-button="exastroItAutomationResultCheck" id="exastroItAutomationResultCheckButton" style="display:none!important;">
                         <svg viewBox="0 0 64 64" class="workspace-button-svg">
                           <use href="#icon-status" />
                         </svg>
@@ -835,13 +830,6 @@
                   <use href="#icon-system" />
                 </svg>
                 <div class="workspace-point-name">システム</div>
-                <!-- <div class="workspace-point-setting workspace-mode-running">
-                  <button class="modal-open workspace-button epoch-popup" data-button="systemCheck" title="システムの稼働状況を確認します。">
-                    <svg viewBox="0 0 64 64" class="workspace-button-svg">
-                      <use href="#icon-status" />
-                    </svg>
-                  </button>
-                </div> -->
               </div>
               <div class="multiple-number"></div>
               <div class="multiple-block"></div>
@@ -854,16 +842,6 @@
       
       </div>
       <div class="workspace-footer">
-        <ul class="workspace-footer-menu-list">
-          <li class="workspace-footer-menu-item workspace-mode-setting">
-            <button id="apply-workspace-button" class="epoch-button workspace-footer-menu-button positive" style="display:none">ワークスペース作成</button>
-          </li>
-        </ul>
-        <ul class="workspace-footer-menu-list">
-          <li class="workspace-footer-menu-item workspace-mode-setting">
-            <button id="reset-button" class="epoch-button workspace-footer-menu-button negative" style="display:none">リセット</button>
-          </li>
-        </ul>
       </div>
     </div>    
   </div>

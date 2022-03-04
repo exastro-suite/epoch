@@ -1,6 +1,6 @@
 @charset "utf-8";
 /*
-#   Copyright 2019 NEC Corporation
+#   Copyright 2022 NEC Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 */
+
 /* CSS Document */
 
 .epoch-table-container {
@@ -539,6 +540,7 @@ white-space: nowrap;
 .et-h .et-ci {
 display: flex;
 align-items: center;
+height: 100%;
 flex-wrap: wrap;
 }
 .et-h .et-ht {
@@ -595,6 +597,9 @@ padding: 8px 8px 0;
 }
 .et-b .et-cbw {
 height: 100%;
+}
+.filter-highright {
+background-color: #FF0;
 }
 
 .et-cb {
@@ -746,6 +751,7 @@ font-size: 12px;
 color: #FFF;
 }
 
+
 .et-c-hidden {
 display: none;
 }
@@ -779,6 +785,11 @@ border-bottom-color: rgba( 255,255,255,.75 );
 top: 6px;
 border-left-color: rgba( 255,255,255,.75 );
 border-top-color: rgba( 255,255,255,.75 );
+}
+.rs .et-cs[data-sort="asc"]::after,
+.rs .et-cs[data-sort="desc"]::after {
+left: auto; right: 8px; top: 50%;
+transform: translate(0,-50%) rotate(45deg);
 }
 /* 列サイズ変更 */
 .et-cr {
@@ -852,6 +863,21 @@ background-color: #F2F2F2;
 border-color: #CCC;
 }
 
+
+.et-cm-l {
+display: inline-block;
+letter-spacing: -0.4em;
+}
+.et-cm-i {
+display: inline-block;
+margin-right: 8px;
+letter-spacing: normal;
+vertical-align: top;
+}
+.et-cm-i:last-child {
+margin-right: 0;
+}
+
 /* ステータスアイコン */
 .et-b .et-c-status .et-ci {
 overflow: visible;
@@ -862,6 +888,7 @@ z-index: 0;
 display: inline-block;
 width: 32px; height: 32px;
 vertical-align: middle;
+font-size: 32px;
 user-select: none;
 -moz-user-select: none;
 -webkit-user-select: none;
@@ -872,7 +899,7 @@ user-select: none;
 background-color: #D2E8E4;
 border: 2px solid #1F8C78;
 border-radius: 50%;
-animation: runningStatus 1s ease infinite;
+animation: runningStatus 1.5s ease infinite;
 }
 @keyframes runningStatus {
   0% { transform: scale(1.1); box-shadow: 0 0 8px #1F8C78; }
@@ -887,6 +914,7 @@ z-index: 1;
 left: 50%; top: 50%;
 transform: translate(-50%,-50%);
 width: 30%; height: 30%;
+
 border: 2px solid #57A99A;
 border-radius: 50%;
 }
@@ -895,7 +923,7 @@ display: block;
 position: absolute;
 left: 15%;  top: 15%;
 width: 70%; height: 70%;
-animation: statusRotation 1s linear infinite;
+animation: statusRotation 1.5s linear infinite;
 }
 .et-si[data-type="Running"] .et-sii::before,
 .et-si[data-type="Running"] .et-sii::after {
@@ -1061,6 +1089,7 @@ border: 2px solid transparent;
 border-left-color: #FFF;
 border-bottom-color: #FFF;
 }
+
 
 
 .etf-ah-t {
@@ -1376,6 +1405,8 @@ border-radius: 50%;
 transform: translate(-50%,-50%) rotate(-45deg);
 }
 
+
+
 .et-bu {
 margin: 0; padding: 0;
 background-color: transparent;
@@ -1413,7 +1444,7 @@ vertical-align: -2px;
 .task-status-start-title::before {
 background-color: #CCC;
 }
-.et-bh .et-ci,
+.et-bh .et-b .et-ci,
 .task-status-start-date {
 overflow: visible;
 padding: 2px 8px 8px;
@@ -1423,14 +1454,14 @@ word-break: break-all;
 font-size: 13px;
 color: #555;
 }
-.et-bh .task-main-status-border {
+.et-bh .et-b .task-main-status-border {
 border-left: 4px solid #CCC;
 text-align: center;
 }
-.et-bh .task-main-status-icon {
+.et-bh .et-b .task-main-status-icon {
 justify-content: flex-end;
 }
-.et-bh .task-id {
+.et-bh .et-b .task-id {
 justify-content: flex-start;
 }
 .task-status-running .task-main-status-border {
@@ -1445,17 +1476,20 @@ border-color: #C80000;
 .task-status-pending .task-main-status-border {
 border-color: #CCC;
 }
-.et-bh .task-main-status-icon .et-ci {
+.et-bh .et-b .task-main-status-icon .et-ci {
 padding: 0;
 }
-.et-bh .task-main-status-border .et-ci {
+.et-bh .et-b .task-main-status-border .et-ci {
 text-align: center;
 }
-.et-bh .task-main-status-border .et-ct {
+.et-bh .et-b .task-main-status-border .et-ct {
 color: #AAA;
 font-size: 10px;
 }
-.et-bh .task-main-status-border .et-ct::before {
+.et-bh .et-b .task-main-status-border .et-ct::before {
+display: none;
+}
+#pipeline-tekton-check .et-h {
 display: none;
 }
 #pipeline-tekton-check .et-r {
@@ -1601,85 +1635,7 @@ border-color: #E6E6E6;
 .task-status .et-ct {
 padding-top: 24px;
 }
-.task-status-list {
-position: relative;
-z-index: 0;
-margin: 4px 0 16px;
-}
-.task-status-list::after {
-content: '';
-display: block;
-position: absolute;
-left: -24px; top: 0;
-width: 16px; height: 100%;
-border: 2px solid #DDD;
-border-right: none;
-border-radius: 8px 0 0 8px;
-}
-.task-status-list::before {
-content: '';
-display: block;
-position: absolute;
-left: -48px; bottom: 50%;
-width: 24px; height: calc( 50% + 41px );
-border: 2px solid #DDD;
-border-top: none;
-border-right: none;
-border-radius: 0 0 0 8px;
-}
-.task-status-item {
-position: relative;
-z-index: 0;
-margin-bottom: 16px; padding: 0 8px 0 12px;
-background-color: #FFF;
-border: 1px solid #CCC;
-border-left-width: 4px;
-border-radius: 0 4px 4px 0;
-}
-.task-status-item:last-child {
-margin-bottom: 0;
-}
-.task-status-item::after {
-content: '';
-display: block;
-position: absolute;
-z-index: -1;
-left: 23px; bottom: 100%;
-width: 3px; height: 18px;
-background-color: #DDD;
-}
-.task-status-item:first-child::after {
-display: none;
-}
-.task-status-item.status-running {
-background-color: #F4F9F8;
-border-color: #1F8C78;
-}
-.task-status-item.status-running::after {
-background-color: #1F8C78;
-}
-.task-status-item.status-succeeded {
-background-color: #F7FCF3;
-border-color: #60C60D;
-}
-.task-status-item.status-succeeded::after {
-background-color: #60C60D;
-}
-.task-status-item.status-failed {
-background-color: #FCF2F2;
-border-color: #C80000;
-}
-.task-status-item.status-failed::after {
-background-color: #C80000;
-}
-.task-status-item.status-pending {
-background-color: #F2F2F2;
-border-color: #CCC;
-opacity: .5;
-}
-.task-status-item.status-pending::after {
-background-color: #CCC;
-}
+
 
 
 
@@ -1875,4 +1831,3 @@ cursor: not-allowed!important;
 .task-status-log-area {
 font-family: Consolas, "メイリオ", Meiryo, Osaka, "ＭＳ Ｐゴシック", "MS PGothic", "sans-serif";
 }
-

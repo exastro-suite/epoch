@@ -27,15 +27,6 @@ function modalFunction( modalJSON, valueJSON ){
     this.fn = new epochCommon();
 
     this.focusElements = 'input, button, textarea, a';
-    /* -------------------------------------------------- *\
-       モーダル用div
-    \* -------------------------------------------------- */
-    if ( !$('#modal-container').length ) {
-      $('body').append(
-          $('<div/>', {'id': 'modal-container'}),
-          $('<div/>', {'id': 'sub-modal-container'})
-      );
-  }
 }
 modalFunction.prototype = {
     /* -------------------------------------------------- *\
@@ -84,7 +75,7 @@ modalFunction.prototype = {
         if ( type === 'object') {
           result = this.searchValue( values[key], targetKey );
           if ( result !== undefined ) return result;
-        } else if ( type === 'string' || type === 'number' || type === 'null') {
+        } else if ( type === 'string' || type === 'number' || type === 'null' || type === 'array') {
           if ( targetKey === key ) {
             return values[key];
           }
@@ -97,22 +88,36 @@ modalFunction.prototype = {
     \* -------------------------------------------------- */
     'open': function( target, funcs, width, type ){
         const modal = this;
+        modal.$body = $('body');
         
-        if ( type === undefined ) type = 'main';
-        modal.type = type;
+        /* -------------------------------------------------- *\
+           modal container
+        \* -------------------------------------------------- */
+        if ( !$('#modal-container').length ) {
+            $('body').append(
+                $('<div/>', {'id': 'modal-container'})
+            );
+            modal.focusOn();
+            modal.$body.addClass('modal-open');
+        }
         
-        const $modal = modal.createMain( modal.modalJSON[target], width );
+        modal.$container = $('#modal-container');
+        modal.index = modal.$container.find('.modal').length + 1;
+        modal.type = ( type )? type: 'main';
+        modal.width = width;
+        
+        modal.$container.find('.modal-active').removeClass('modal-active');
+        
+        // モーダルを作成
+        const $modal = modal.createMain( modal.modalJSON[target] );
+
         if ( modal.$modal !== undefined ) {
             alert('modal error');
             return;
         }
         modal.$modal = $modal;
+        modal.$container.append( $modal );
         
-        if ( type === 'main') {
-
-          $('body').addClass('modal-open');
-          $('#modal-container').html( $modal ).css('display','flex');
-          
           // ボタン
           $modal.find('.modal-menu-button, .modal-close-button').on('click', function(){
             const buttonType = $( this ).attr('data-button');
@@ -125,36 +130,7 @@ modalFunction.prototype = {
 
           // タブ
           if ( $modal.find('.modal-tab-block').length ) {
-            $modal.find('.modal-tab-block').each(function(){
-              const $tabBlock = $( this );
-
-              // タブ切り替え、幅調整
-              $tabBlock.on({
-                'keydown': function(e){
-                  if ( e.keyCode === 13 ) {
-                    const $tab = $(this);
-                    if ( !$tab.is('.open') ) {
-                      modal.openTab( $tab );
-                    }
-                  }
-                },
-                'click': function(){
-                  const $tab = $(this);
-                  if ( !$tab.is('.open') ) {
-                    modal.openTab( $tab );
-                  }
-                },
-                'mouseenter': function(){
-                  modal.tabSize( $(this) );
-                },
-                'mouseleave': function(){
-                  const $item = $( this );
-                  if ( !$item.is('.open') ) {
-                    $( this ).css('width', 'auto');
-                  }
-                }
-              }, '.modal-tab-item');
-            });
+            modal.tabEvent();
           }
           
           // 入力欄Radioセレクト
@@ -167,41 +143,14 @@ modalFunction.prototype = {
               modal.inputErrorCheck();
             });
           }
-          
-          modal.focusOn('#modal-container', '#container');
-          
-        } else if ( type === 'sub' || type == 'progress') {
-          $('#container').off('focusin.modal');
-          $('body').addClass('sub-modal-open');
-          $('#sub-modal-container').html( $modal ).css('display','flex');
-          
-          modal.focusOn('#sub-modal-container', '#container, #modal-container');
-          
-          $modal.find('.modal-menu-button, .modal-close-button').on('click', function(){
-            const buttonType = $( this ).attr('data-button');
-            if ( funcs[buttonType] !== undefined && modal.typeJudgment(funcs[buttonType]) === 'function') {
-              funcs[buttonType]();
-            } else {
-              modal.subClose();
-            }
-          });
-        }
+
         // 入力チェック
         modal.inputErrorCheck();
         
         if ( funcs.callback !== undefined ) {
-          funcs.callback();
+          funcs.callback.call( modal );
         }
-
-
-        // モーダルを開いた際、.modal-bodyの最初の要素をフォーカスする
-        const $modalBodyInput = $modal.find('.modal-body').find( modal.focusElements );
-        if ( $modalBodyInput.length ) {
-          $modalBodyInput.eq(0).focus();
-        } else {
-          $modal.find('.modal-footer').find( modal.focusElements ).eq(0).focus();
-        }
-
+        modal.focus();
     },
     'pikupInput': function( $check ){
       const $itemBlock = $check.closest('.modal-item'),
@@ -213,49 +162,132 @@ modalFunction.prototype = {
       $itemBlock.find('.input-pickup-' + target ).closest('.item-block').show();
     },
     /* -------------------------------------------------- *\
-       モーダル外にフォーカスが移動したら ON
+       アクティブモーダル内のinputなどにフォーカス
     \* -------------------------------------------------- */
-    'focusOn': function( focusTarget, outTarget ){
+    'focus': function(){
+      const modal = this,
+            $activeModal = modal.$container.find('.modal-active');
+            
+      const $modalBodyInput = $activeModal.find('.modal-body').find( modal.focusElements );
+      if ( $modalBodyInput.length ) {
+          $modalBodyInput.eq(0).focus();
+      } else {
+          const $footerButton = $activeModal.find('.modal-footer').find( modal.focusElements ).eq(0);
+          // dangerボタンの場合はフォーカスしない
+          if ( !$footerButton.is('.danger') ) {
+              $footerButton.focus();
+          }
+      }
+    },
+
+    /* -------------------------------------------------- *\
+       モーダル内にフォーカス移動を限定する
+    \* -------------------------------------------------- */
+    'focusOn': function(){
       const modal = this;
-      $( outTarget ).on('focusin.modal', function(){
-        $( focusTarget ).find( modal.focusElements ).eq(0).focus();
+      let outIndex = 0;
+      
+      const focusIndex = function(){
+        return $( modal.focusElements ).index( this );         
+      };
+      
+      modal.$body.on('focusout.modal', modal.focusElements, function(){
+        outIndex = focusIndex.call(this);
+      });
+      
+      modal.$body.on('focusin.modal', modal.focusElements, function( e ){
+        if ( !$( e.target ).closest('.modal-active').length ){
+          const target = modal.$container.find('.modal-active').find( modal.focusElements );
+          if ( focusIndex.call(this) === outIndex - 1 ) {
+            target.last().focus();
+          } else {
+            target.first().focus();
+          }
+        }
       });
     },
     /* -------------------------------------------------- *\
-       モーダル外にフォーカスが移動したら OFF
+       モーダル内にフォーカス移動を限定する 解除
     \* -------------------------------------------------- */
-    'focusOff': function( outTarget ){
-      $( outTarget ).off('focusin.modal');
+    'focusOff': function(){
+      this.$body.off('focusin.modal');
     },
     /* -------------------------------------------------- *\
        モーダルを閉じる
     \* -------------------------------------------------- */
     'close': function(){
-      this.focusOff('#container');
-      this.$modal = undefined;
-      $('#modal-container').empty().css('display','none');
-      $('body').removeClass('modal-open');
-    },
-    /* -------------------------------------------------- *\
-       サブモーダルを閉じる
-    \* -------------------------------------------------- */
-    'subClose': function(){
       const modal = this;
-      modal.focusOff('#container, #modal-container');
-      modal.focusOn('#modal-container', '#container');
-      $('#sub-modal-container').empty().css('display','none');
-      $('body').removeClass('sub-modal-open');
+      modal.$modal.remove();
       modal.$modal = undefined;
+      
+      if ( modal.index <= 1 ) {
+          modal.$container.remove();
+          modal.$body.removeClass('modal-open');
+          modal.focusOff();
+      } else {
+          const activeIndex = modal.index - 1;
+          modal.$container.find('.modal-overlay[data-index="' + activeIndex + '"]').addClass('modal-active');
+          modal.focus();
+      }
     },
     /* -------------------------------------------------- *\
        モーダルを切り替える
     \* -------------------------------------------------- */
-    'change': function( type, funcs, width ){
-      this.focusOff('#container');
-      this.$modal = undefined;
-      $('#modal-container').empty();
-      this.open( type, funcs, width );
+    'change': function( target, funcs, width ){
+      const modal = this;
+      modal.$modal.remove();
+      modal.$modal = undefined;
+      
+      modal.open( target, funcs, width );
     },
+    /* -------------------------------------------------- *\
+       Tab切り替えイベント
+    \* -------------------------------------------------- */
+    'tabEvent': function() {
+      const modal = this;
+      modal.$modal.find('.modal-tab-block').each(function(){
+        const $tabBlock = $( this );
+
+        // タブ切り替え、幅調整
+        $tabBlock.on({
+          'keydown': function(e){
+            if ( e.keyCode === 13 ) {
+              const $tab = $(this);
+              if ( !$tab.is('.open') ) {
+                modal.openTab( $tab );
+              }
+            }
+          },
+          'click': function(){
+            const $tab = $(this);
+            if ( !$tab.is('.open') ) {
+              modal.openTab( $tab );
+            }
+          },
+          'mouseenter': function(){
+            modal.tabSize( $(this) );
+          },
+          'mouseleave': function(){
+            const $item = $( this );
+            if ( !$item.is('.open') ) {
+              $( this ).css('width', 'auto');
+            }
+          }
+        }, '.modal-tab-item');
+      });
+    },
+    /* -------------------------------------------------- *\
+       アコーディオンイベント
+    \* -------------------------------------------------- */
+    'accordionEvent': function() {
+        const modal = this;
+        modal.$modal.on('click', '.item-accordion-button', function(){
+            const $accordion = $( this ).closest('.item-accordion');
+             $accordion.toggleClass('close');
+            $accordion.find('.item-area').stop(0,0).animate({ height: 'toggle' }, 200 );
+        });
+    },
+
     /* -------------------------------------------------- *\
        入力値をvalueJSONに入れる
     \* -------------------------------------------------- */
@@ -295,44 +327,86 @@ modalFunction.prototype = {
         setValue( key, JSON.stringify( free ));        
       });
     },
+    'getParameter': function( parentKey ){
+      const parameter = {},
+            modal = this,
+            inputTarget = 'input[type="text"], input[type="number"], input[type="password"], input[type="radio"]:checked, textarea, input[type="hidden"]';
+      
+      const setValue = function( key, value ){
+        if ( parentKey === undefined ) {
+          parameter[ key ] = value;
+        } else {
+          if ( parameter[ parentKey ] === undefined ) parameter[ parentKey ] = {};
+          parameter[ parentKey ][ key ] = value;
+        }      
+      };
+      modal.$modal.find( inputTarget ).each( function(){
+        const $input = $( this ),
+              key = $input.attr('name'),
+              value = $input.val();
+        // 自由項目は除く
+        if ( !$input.is('.item-freeitem-input') ) {
+          setValue( key, value );
+        }
+      });
+      
+      // 自由項目
+      modal.$modal.find('.item-freeitem').each( function(){
+        const $free = $( this ),
+              key = $free.attr('name'),
+              free = {};
+        $free.find('.item-freeitem-item').each( function(){
+          const $item = $( this ),
+                key = $item.find('.item-freeitem-input.name').val(),
+                value = $item.find('.item-freeitem-input.content').val();
+          free[key] = value;
+        });
+        setValue( key, JSON.stringify( free ));        
+      });
+      
+      return parameter;      
+    },
     /* -------------------------------------------------- *\
        main
     \* -------------------------------------------------- */
-    'createMain': function createModal( main, width ){
+    'createMain': function createModal( main ){
       const modal = this;
-      if ( width === undefined ) width = 800;
-      if ( main.class === undefined ) main.class = '';
-      if ( !main.footer ) main.class += ' no-footer'
-      const $modal = $('<div/>', {
-        'id': main.id,
-        'data-modal': 'modal-' + modal.getUniqueID(),
-        'data-type': modal.type,
-        'class': 'modal ' + main.class,
-        'style': ( width === 'none')? 'max-width: none': 'max-width:' + width + 'px'
-      });
+      if ( !modal.width ) modal.width = 800;
+      if ( !main.class ) main.class = '';
+      if ( !main.footer ) main.class += ' no-footer';
       
-      $modal.append(
-        $('<div/>', {'class': 'modal-header'}).append(
-          $('<div/>', {'class': 'modal-title', 'text': main.title })
-        ),
-        $('<div/>', {'class': 'modal-main'}).append( modal.createBody( main.block ) )
+      const modalWidth = ( modal.width === 'none')? 'max-width: none;': 'max-width:' + modal.width + 'px';
+      const $modal = $('<div/>', {
+          'id': main.id,
+          'data-modal': 'modal-' + modal.getUniqueID(),
+          'data-type': modal.type,
+          'data-index': modal.index,
+          'class': 'modal-active modal-overlay ' + main.class,
+          'style': 'z-index:' + modal.index + ';padding:' + ( modal.index * 16 ) + 'px;'
+      }).append(
+          $('<div/>', {'class': 'modal', 'style': modalWidth }).append(
+              $('<div/>', {'class': 'modal-header'}).append(
+                $('<div/>', {'class': 'modal-title', 'text': main.title })
+              ),
+              $('<div/>', {'class': 'modal-main'}).append( modal.createBody( main.block ) )
+          )
       );
       if ( modal.type !== 'progress') {
-        $modal.find('.modal-header').append(
-          $('<div/>', {'class': 'modal-close'}).append(
-            $('<button/>', {
-              'class': 'modal-close-button',
-              'type': 'button',
-              'data-button': 'cancel'
-            })
+          $modal.find('.modal-header').append(
+              $('<div/>', {'class': 'modal-close'}).append(
+                  $('<button/>', {
+                      'class': 'modal-close-button',
+                      'type': 'button',
+                      'data-button': 'cancel'
+                  })
+              )
           )
-        )
       }
       if ( main.footer ) {
-        $modal.append(
-          $('<div/>', {'class': 'modal-footer'}).append( modal.createFooter( main.footer ) )
-        );
-      }
+          $modal.find('.modal').append(
+              $('<div/>', {'class': 'modal-footer'}).append( modal.createFooter( main.footer ) )
+          );
+      }      
       
       return $modal;
     },
@@ -687,6 +761,8 @@ modalFunction.prototype = {
               case 'reference': return modal.createReference( data, tabNumber );
               case 'freeitem': return modal.createFreeItem( data, tabNumber );
               case 'message': return modal.createMessage( data );
+              case 'string': return modal.createString( data );
+              case 'html': return modal.createHtml( data );
             }
           };
           $item.append( itemType( item[key] ) );
@@ -699,13 +775,35 @@ modalFunction.prototype = {
     \* -------------------------------------------------- */
     'createLoadingBlock': function( loading, tabNumber ){
       if ( loading !== undefined ) {
-        const $loading = $('<div/>', {
-          'id': ( tabNumber !== undefined )? tabNumber + '-' + loading.id: loading.id
-        }).append(
-          ( loading.text !== undefined )? $('<div/>', {'class': 'modal-progress-message', 'text': loading.text }): '',
-          $('<div/>', {'class': 'modal-loading-inner'})
-        );
-        return $loading;
+        
+        if ( loading.title !== undefined ) {
+        
+          const $loading = $('<dl/>', {'class': 'item-block'}),
+                className = ( loading.class !== undefined )? ' ' + loading.class: '';
+          $loading.append(
+            $('<dt/>', {'class': 'item-header', 'text': loading.title }),
+            $('<dd/>', {
+              'class': 'item-area ' + className,
+              'id': ( tabNumber !== undefined )? tabNumber + '-' + loading.id: loading.id
+            }).append(),
+            ( loading.note !== undefined )? $('<dd/>', {'class': 'item-note item-string-note', 'text':  loading.note }): ''
+          );
+      
+          return $loading;
+        
+        } else {
+
+          const $loading = $('<div/>', {
+            'id': ( tabNumber !== undefined )? tabNumber + '-' + loading.id: loading.id
+          }).append(
+            ( loading.text !== undefined )? $('<div/>', {'class': 'modal-progress-message', 'text': loading.text }): '',
+            $('<div/>', {'class': 'modal-loading-inner'})
+          );
+
+          return $loading;
+        
+        }
+
       }
     },
     /* -------------------------------------------------- *\
@@ -713,14 +811,17 @@ modalFunction.prototype = {
     \* -------------------------------------------------- */
     'createCommonItem': function( type, data, tab ){
       const modal = this,
-            $dl = $('<dl/>', {'class': 'item-' + type + '-block item-block'}),
+            mainClass = ( data.mainClass )? ' ' + data.mainClass: '',
+            $dl = $('<dl/>', {'class': 'item-' + type + '-block item-block' + mainClass }),
             title = ( data.title === undefined )? '': data.title;
       
       // Title
       if ( title !== '') {
         const $dt = $('<dt/>', {'class': 'item-' + type + '-header item-header'}).append(
           $('<span/>', {'class': 'item-header-cell item-title'}).append(
-            $('<span/>', {'class': 'item-title-text', 'text': title })
+            $('<span/>', {'class': 'item-title-text', 'text': title }).append(
+              (( data.help )? $('<span/>', {'class': 'item-title-help icon icon-Unknown epoch-popup', 'title': data.help }): '')
+            )
           )
         );
         // テキストとテキストエリアは入力文字数を表示する
@@ -747,12 +848,17 @@ modalFunction.prototype = {
         if ( data.required !== undefined ) {
           $dt.append('<span class="item-header-cell item-required"><span class="item-required-mark">必須</span></span>');
         }
+        // アコーディオン
+        if ( data.accordion !== undefined ) {
+          $dl.addClass('item-accordion');
+          $dt.append('<span class="item-header-cell item-accordion-button"></span>');
+        }
         
         $dl.append( $dt );
       }
       
       // Body
-      const $inputDD = $('<dd/>', {'class': 'item-' + type + '-area'});
+      const $inputDD = $('<dd/>', {'class': 'item-area item-' + type + '-area'});
       switch( type ) {
         case 'text':
         case 'textarea':
@@ -779,6 +885,10 @@ modalFunction.prototype = {
         case 'radio':
           $inputDD.append('<ul class="item-radio-list"></ul');
           break;
+        case 'html': {
+          const className = ( data.class )? ' ' + data.class: '';
+          $inputDD.html( '<span class="item-html' + className + '">' + data.html + '</span>' );
+          } break;
         default:
       }
       $dl.append( $inputDD );
@@ -1149,6 +1259,35 @@ modalFunction.prototype = {
       return $item;
     },
     /* -------------------------------------------------- *\
+       String
+    \* -------------------------------------------------- */
+    'createString': function( string ){
+      const mainClass = ( string.mainClass !== undefined )? ' ' + string.mainClass: '',
+            $input = $('<dl/>', {'class': 'item-string-block item-block' + mainClass }),
+            value = ( string.text !== undefined )? string.text: '',
+            className = ( string.class !== undefined )? ' ' + string.class: '';
+      $input.append(
+        $('<dt/>', {'class': 'item-string-title item-header', 'text': string.title }),
+        $('<dd/>', {'class': 'item-string-area item-area'}).append(
+          $('<span/>', {
+            'text': value,
+            'class': 'item-string' + className
+          }),
+          ( string.note !== undefined )? $('<dd/>', {'class': 'item-note item-string-note', 'text':  string.note }): ''
+        )
+      );
+      return $input;
+    },
+    /* -------------------------------------------------- *\
+       HTML
+    \* -------------------------------------------------- */
+    'createHtml': function( html ){
+      const modal = this,
+            $html = modal.createCommonItem('html', html );
+      
+      return $html;
+    },
+    /* -------------------------------------------------- *\
        Reference
     \* -------------------------------------------------- */
     'createReference': function( reference, tabNumber ){
@@ -1156,7 +1295,7 @@ modalFunction.prototype = {
             value = ( tabNumber !== undefined )? this.searchValue( this.valueJSON, tabNumber + '-' + reference.target ) : this.searchValue( this.valueJSON, reference.target ),
             className = ( reference.class !== undefined )? ' ' + reference.class: '';
       $input.append(
-        $('<dt/>', {'class': 'item-reference-title item-title', 'text': reference.title }),
+        $('<dt/>', {'class': 'item-reference-title item-header', 'text': reference.title }),
         $('<dd/>', {'class': 'item-reference-area'}).append(
           $('<span/>', {
             'text': value,
@@ -1426,15 +1565,19 @@ modalFunction.prototype = {
           // ボタンの有効・無効切り替え
           const $checkbox = $item.find('.item-radio'),
                 $button = $item.find('.item-list-select-button'),
-                $selectName = $item.find('.item-list-select');
+                $selectName = $item.find('.item-list-select'),
+                $selectID = $item.find('.item-list-select-id');
           $button.prop('disabled', true );
+          $selectID.prop('disabled', true );
           $selectName.removeClass('select-on');
           $checkbox.on('change', function(){
             if ( $( this ).is('.item-radio-select') ) {
               $button.prop('disabled', false );
+              $selectID.prop('disabled', false );
               $selectName.addClass('select-on');
             } else {
               $button.prop('disabled', true );
+              $selectID.prop('disabled', true );
               $selectName.removeClass('select-on');
             }
           });
@@ -1442,6 +1585,7 @@ modalFunction.prototype = {
             $checkbox.filter('#' + checked ).prop('checked', true );
             if ( $checkbox.filter('#' + checked ).is('.item-radio-select') ) {
               $button.prop('disabled', false );
+              $selectID.prop('disabled', false );
               $selectName.addClass('select-on');
             }
           } else {
@@ -1462,14 +1606,14 @@ modalFunction.prototype = {
        セレクトリストの作成
     \* -------------------------------------------------- */
     'createListSelectSetList': function( $target, id, list, col ){
+      if ( id === null ) id = '';
       const modal = this,
             idArray = id.split(',');
-
+      idArray.sort();
       const n = list.filter( function(f) {
-        if ( idArray.indexOf( String( f[0] )) !== -1 ) {
-          return f;
-        }
+        if ( idArray.indexOf( String( f[0] )) !== -1 ) return f;
       });
+      
       const nL = n.length;
       let listHTML = '';
       if ( nL !== 0 ) {
@@ -1482,7 +1626,7 @@ modalFunction.prototype = {
         listHTML += '<p class="item-list-select-empty">No data</p>';
       }
       $target.find('.item-list-select-name').html( listHTML );
-      $target.find('.item-list-select-id').val( id );
+      $target.find('.item-list-select-id').val( idArray.join() );
     },
     /* -------------------------------------------------- *\
        メッセージ

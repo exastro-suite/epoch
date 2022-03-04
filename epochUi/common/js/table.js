@@ -113,7 +113,7 @@ epochTable.prototype = {
         et.modal.c.error.block.block1.item.item1.text = message;
         et.modal.s.open('error',{
           'close': function(){
-            et.modal.s.subClose();
+            et.modal.s.close();
           }
         },'320','sub');
       };
@@ -128,11 +128,12 @@ epochTable.prototype = {
       if ( option.bodyHead !== undefined ) et.option.bodyHead = option.bodyHead;
       if ( option.callback !== undefined ) et.option.callback = option.callback;
       if ( option.download !== undefined ) et.option.download = option.download;
+      const optionClass = ( option.className !== undefined )? ' ' + option.className: '';
 
       // Table main
       et.$table = $('<div/>', {
-        'class': 'epoch-table-container',
-        'id': et.tableID
+        'class': 'epoch-table-container' + optionClass,
+        'id': et.tableID,
       });
 
       if ( et.option.bodyHead === 'on') et.$table.addClass('et-bh');
@@ -406,6 +407,12 @@ epochTable.prototype = {
           });
           et.setBodyHTML();
         });
+        // Enter
+        et.$filter.find('.etf-fb-i[type="text"]').keypress( function(e){
+          if ( e.keyCode === 13 ) {
+              et.$filter.find('.epoch-button[data-button="ok"]').click();
+          }
+        });
       }
 
       // ページング
@@ -616,200 +623,217 @@ epochTable.prototype = {
   },  
   // thead and style
   'setHeaderHTML': function(){
-      const et = this,
-            op = et.option,
-            th = et.th,
-            thLength = th.length;
-      if ( op.bodyHead !== 'on') {
-      let thHTML = '',
-          tStyle = '';
-      thHTML += '<tr class="et-r">';
-      for( let i = 0; i < thLength; i++ ) {
-          // HTML
-          const exclusionType = ['hoverMenu', 'class', 'attr']; // 表示しないタイプ
-          if ( exclusionType.indexOf( th[i].type ) === -1 ) {
-              thHTML += ''
-              + '<th class="et-c et-c-' + th[i].type + ' cn' + i + '">'
-                + '<div class="et-ci';
-              if ( th[i].type === 'checkbox') {
-                thHTML += '"><div class="et-cb-t">' + th[i].title;
-                if ( th[i].q !== undefined ) thHTML += '<span class="et-ht-q epoch-popup" title="' + th[i].q + '"><svg viewBox="0 0 64 64" class="et-ht-svg"><use href="#icon-header-question"></use></svg></span>';
-                thHTML += '</div><div class="et-cbw"><div class="et-cb-ca" data-col="' + i + '"><span></span></div></div></div>';
-              } else if ( th[i].type === 'rowCheck') {
-                thHTML += '"><div class="et-cbw"><div class="et-cb-ca" data-col="' + i + '"><span></span></div></div></div>';
-              } else {
-                if ( th[i].sort === 'on') thHTML += ' et-cs'; // Sort
-                thHTML += '" data-column-index="' + i + '"><div class="et-ht">' + th[i].title;
-                if ( th[i].q !== undefined ) thHTML += '<span class="et-ht-q epoch-popup" title="' + th[i].q + '"><svg viewBox="0 0 64 64" class="et-ht-svg"><use href="#icon-header-question"></use></svg></span>';
-                thHTML += '</div></div>';
-                if ( th[i].resize === 'on') thHTML += '<div class="et-cr"></div>'; // Resize
-              }
-              thHTML += '</th>';
-          }
-          // Style
-          const width = th[i].width,
-                align = th[i].align;
-          tStyle += '#' + et.tableID + ' .et-c.cn' + i + '{';
-          if ( width ) {
-              if ( width === 'auto') {
-                  tStyle += ''
-                  + 'max-width:none;'
-                  + 'flex: 1 1 auto;';
-              } else {
-                  tStyle += ''
-                  + 'max-width:' + width + ';'
-                  + 'flex: 0 0 ' + width + ';';
-              }
-          }
-          tStyle += 'z-index:' + ( thLength - i ) + ';'
-          tStyle += '}';
-          if ( align ) {
-              tStyle += '#' + et.tableID + ' .et-b .et-c.cn' + i + ' .et-ci{'
-              + 'text-align:' + align + ';'
-              + 'justify-content:' + align + ';'
-              + '}'
-          }
-      }
-      thHTML += '</tr>';
-      et.$thead.html( thHTML );
-      et.$style.html( tStyle );  
-      
-      // Sort
-      et.$thead.find('.et-cs').on('click', function(){
-          const sortType = function( s ) {
-              if ( s === 'asc' || s === undefined ) {
-                  s = 'desc';
-              } else if ( s === 'desc') {
-                  s = 'asc';
-              }
-              return s;
-          };
-          const $sort = $( this ),
-                sort = sortType( $sort.attr('data-sort') ),
-                index = $sort.attr('data-column-index');
+    const et = this,
+          th = et.th,
+          thLength = th.length;
+    
+    let thHTML = '',
+        tStyle = '';
+    thHTML += '<tr class="et-r">';
+    for( let i = 0; i < thLength; i++ ) {
+        // HTML
+        const exclusionType = ['hoverMenu', 'class', 'attr']; // 表示しないタイプ
+        if ( exclusionType.indexOf( th[i].type ) === -1 ) {
+            const className = `et-c et-c-${th[i].type} cn${i}`
+              + (( th[i].className !== undefined )? ` ${th[i].className}`: ``);
+            thHTML += ''
+            + `<th class="${className}">`
+              + '<div class="et-ci';
+            if ( th[i].type === 'checkbox') {
+              thHTML += '"><div class="et-cb-t">' + th[i].title;
+              if ( th[i].q !== undefined ) thHTML += '<span class="et-ht-q epoch-popup" title="' + th[i].q + '"><svg viewBox="0 0 64 64" class="et-ht-svg"><use href="#icon-header-question"></use></svg></span>';
+              thHTML += '</div><div class="et-cbw"><div class="et-cb-ca" data-col="' + i + '"><span></span></div></div></div>';
+            } else if ( th[i].type === 'rowCheck') {
+              thHTML += '"><div class="et-cbw"><div class="et-cb-ca" data-col="' + i + '"><span></span></div></div></div>';
+            } else {
+              // ----- 基本 -----
+              if ( th[i].sort === 'on') thHTML += ' et-cs'; // Sort
+              thHTML += '" data-column-index="' + i + '"><div class="et-ht">' + th[i].title;
+              if ( th[i].q !== undefined ) thHTML += '<span class="et-ht-q epoch-popup" title="' + th[i].q + '"><svg viewBox="0 0 64 64" class="et-ht-svg"><use href="#icon-header-question"></use></svg></span>';
+              thHTML += '</div></div>';
+              if ( th[i].resize === 'on') thHTML += '<div class="et-cr"></div>'; // Resize
+            }
+            thHTML += '</th>';
+        }
+        // Style
+        const width = th[i].width,
+              align = th[i].align;
+        tStyle += '#' + et.tableID + ' .et-c.cn' + i + '{';
+        if ( width ) {
+            if ( width === 'auto') {
+                tStyle += ''
+                + 'max-width:none;'
+                + 'flex: 1 1 auto;';
+            } else {
+                tStyle += ''
+                + 'max-width:' + width + ';'
+                + 'flex: 0 0 ' + width + ';';
+            }
+        }
+        tStyle += 'z-index:' + ( thLength - i ) + ';'
+        tStyle += '}';
+        if ( align ) {
+            tStyle += '#' + et.tableID + ' .et-b .et-c.cn' + i + ' .et-ci{'
+            + 'text-align:' + align + ';'
+            + 'justify-content:' + align + ';'
+            + '}'
+        }
+    }
+    thHTML += '</tr>';
+    et.$thead.html( thHTML );
+    et.$style.html( tStyle );  
+    
+    // Sort
+    et.$thead.find('.et-cs').on('click', function(){
+        const sortType = function( s ) {
+            if ( s === 'asc' || s === undefined ) {
+                s = 'desc';
+            } else if ( s === 'desc') {
+                s = 'asc';
+            }
+            return s;
+        };
+        const $sort = $( this ),
+              sort = sortType( $sort.attr('data-sort') ),
+              index = $sort.attr('data-column-index');
 
-          et.sort( index, sort );
-          et.setBodyHTML();
-      });
-      }
+        et.sort( index, sort );
+        et.setBodyHTML();
+    });      
   },
   // tbody
   'setBodyHTML': function(){
-      const et = this,
-            op = et.option,
-            th = et.th,
-            tb = et.tb,
-            na = tb.length; // 件数
-      
-      if ( na >= 1 ) {
-          et.$table.removeClass('et-nodata');
-          
-          const cp = et.pagingPage,
-                pn = et.pagingNumber,
-                ns = 1 + pn * ( cp - 1 ),
-                ne = ( na > ns + pn - 1 )? ns + pn - 1: na;
+    const et = this,
+          op = et.option,
+          th = et.th,
+          tb = et.tb,
+          na = tb.length; // 件数
+    
+    if ( na >= 1 ) {
+        et.$table.removeClass('et-nodata');
+        
+        const cp = et.pagingPage,
+              pn = et.pagingNumber,
+              ns = 1 + pn * ( cp - 1 ),
+              ne = ( na > ns + pn - 1 )? ns + pn - 1: na;
 
-          let tbHTML = '';
+        let tbHTML = '';
 
-          for( let i = ns - 1; i < ne; i++ ) {
-              let trHTML = '',
-                  idName = '',
-                  rowClassName = ['et-r'],
-                  attr = ['data-rows="' + i + '"'];
+        for( let i = ns - 1; i < ne; i++ ) {
+            let trHTML = '',
+                idName = '',
+                rowClassName = ['et-r'],
+                attr = ['data-rows="' + i + '"'];
 
-              const cLength = tb[i].length;
-              for( let j = 0; j < cLength; j++ ) {
-                  const thd = th[j],
-                        tbd = tb[i][j];
+            const cLength = tb[i].length;
+            for( let j = 0; j < cLength; j++ ) {
+                const thd = th[j],
+                      tbd = tb[i][j];
 
-                  // Type = [ id, class, attr ]
-                  if ( ['id','class','attr'].indexOf( thd.type ) !== -1 ) {
-                      if ( tbd !== null ) {
-                          switch( thd.type ){
-                              case 'id':
-                                  idName = tbd;
-                                  break;
-                              case 'class':
-                                  rowClassName.push( tbd );
-                                  break;
-                              case 'attr':
-                                  attr.push('data-' + thd.attr + '="' + tbd + '"' );
-                                  break;
-                              default:
-                          }
-                      }
-                  } else {
-                      let cellClassName = 'et-c cn' + j + ' et-c-' + thd.type;
-                      if ( thd.className !== undefined ) cellClassName += ' ' + thd.className;
+                // Type = [ id, class, attr ]
+                if ( ['id','class','attr'].indexOf( thd.type ) !== -1 ) {
+                    if ( tbd !== null ) {
+                        switch( thd.type ){
+                            case 'id':
+                                idName = tbd;
+                                break;
+                            case 'class':
+                                rowClassName.push( tbd );
+                                break;
+                            case 'attr':
+                                attr.push('data-' + thd.attr + '="' + tbd + '"' );
+                                break;
+                            default:
+                        }
+                    }
+                } else {
+                    let cellClassName = 'et-c cn' + j + ' et-c-' + thd.type;
+                    if ( thd.className !== undefined ) cellClassName += ' ' + thd.className;
 
-                      trHTML += '<td class="' + cellClassName + '">';
+                    trHTML += '<td class="' + cellClassName + '">';
 
-                      if ( op.bodyHead === 'on' && ['status','button'].indexOf( thd.type ) === -1 ) {
-                        trHTML += '<div class="et-ct">' + thd.title + '</div>';
-                      }
+                    if ( op.bodyHead === 'on' && ['status','button'].indexOf( thd.type ) === -1 ) {
+                      trHTML += '<div class="et-ct">' + thd.title + '</div>';
+                    }
 
-                      trHTML += '<div class="et-ci">';
-
-                      if ( tbd !== null ) {
-                          switch( thd.type ){
-                              case 'text':
-                              case 'list':
-                              case 'date':
-                              case 'number':
-                                  trHTML += et.fn.textEntities( tbd );
-                                  break;
-                              case 'url':
-                                  trHTML += '<a href="' + encodeURI(tbd) + '">' + et.fn.textEntities( tbd ) + '</a>';
-                                  break;
-                              case 'html':
-                                  trHTML += tbd;
-                                  break;
-                              case 'hoverMenu':
-                                  trHTML += et.hoverMenuListHTML( thd.menu, tbd );
-                                  break;
-                              case 'status':
-                                  trHTML += et.statusHTML( thd.list[tbd], tbd );
-                                  break;
-                              case 'button':
-                                  trHTML += et.buttonHTML( thd.title, thd.buttonClass );
-                                  break;
-                              case 'checkbox':
-                              case 'rowCheck': {
-                                  const inputID = et.tableID + '-' + thd.id,
-                                        checked = ( et.checkedList[inputID].indexOf( String( tbd )) !== -1  )? true: false;
-                                  trHTML += et.checkboxHTML( thd.id, tbd, checked, i, j, thd.type );
-                                  } break;
-                              case 'div':
-                                  trHTML += '<div class="' + thd.divClass + '"><span></span></div>'
-                                  break;
-                              case 'itemList': {
-                                  trHTML += et.itemListHTML( tbd, thd.item );
-                                  } break;
-                              case 'allCheck':
-                                  trHTML += '<div class="et-cbw"><div class="et-cb-ra"><span></span></div></div></div>';
-                                  break;                                  
-                              default:
-                          }
-                      }
-                      trHTML += ''
-                        + '</div>'
-                      + '</td>';
-                  }
-              }
-              tbHTML += '<tr id="' + idName + '" class="' + rowClassName.join(' ') + ' rn' + i + '" ' + attr.join(' ') + '>' + trHTML + '</tr>';
-          }
-          et.$tbody.html( tbHTML );
-      } else {
-          const noDataHTML = ''
-          + '<div class="et-nd"><div class="et-ndi">データがありません。</div></div>';
-          et.$table.addClass('et-nodata');
-          et.$tbody.html( noDataHTML );
-          et.pagingPage = 1;
-      }
-      
-      et.pagingStatus();
-      et.setCheckboxCheck();
-      if ( et.option.callback !== undefined ) et.option.callback();
+                    trHTML += '<div class="et-ci">';
+                    
+                    if ( tbd !== null ) {
+                        switch( thd.type ){
+                            case 'text':
+                            case 'list':
+                            case 'date':
+                            case 'number':
+                                if ( thd.filterOption && thd.filterOption.value ) {
+                                    const val = et.fn.textEntities( thd.filterOption.value ),
+                                          reg = new RegExp(`(${val})`, 'g');
+                                    trHTML += et.fn.textEntities( tbd ).replace( reg, '<span class="filter-highright">$1</span>');
+                                } else {
+                                    trHTML += et.fn.textEntities( tbd );
+                                }
+                                break;
+                            case 'link':
+                                trHTML += '<a href="' + encodeURI(tbd[0]) + '" target="_blank">' + et.fn.textEntities( tbd[1] ) + '</a>';
+                                break;
+                            case 'url':
+                                trHTML += '<a href="' + encodeURI(tbd) + '" target="_blank">' + et.fn.textEntities( tbd ) + '</a>';
+                                break;
+                            case 'html':
+                                trHTML += tbd;
+                                break;
+                            case 'menu':
+                                trHTML += et.menuListHTML( thd.menu, tbd );
+                                break;
+                            case 'hoverMenu':
+                                trHTML += et.hoverMenuListHTML( thd.menu, tbd );
+                                break;
+                            case 'status': {
+                                const iconClass = ( thd.iconClass )? thd.iconClass + tbd: '';
+                                trHTML += et.statusHTML( thd.list[tbd], iconClass, tbd );
+                            } break;
+                            case 'button':
+                                trHTML += et.buttonHTML( thd.title, thd.buttonClass, thd.popup, tbd );
+                                break;
+                            case 'checkbox':
+                            case 'rowCheck': {
+                                const inputID = et.tableID + '-' + thd.id,
+                                      checked = ( et.checkedList[inputID].indexOf( String( tbd )) !== -1  )? true: false;
+                                trHTML += et.checkboxHTML( thd.id, tbd, checked, i, j, thd.type );
+                                } break;
+                            case 'div':
+                                trHTML += '<div class="' + thd.divClass + '"><span></span></div>'
+                                break;
+                            case 'itemList': {
+                                trHTML += et.itemListHTML( tbd, thd.item );
+                                } break;
+                            case 'allCheck':
+                                trHTML += '<div class="et-cbw"><div class="et-cb-ra"><span></span></div></div></div>';
+                                break;
+                            case 'icon':
+                                trHTML += '<span class="icon icon-' + tbd + '"></span>';
+                                break;
+                            default:
+                        }
+                    }
+                    trHTML += ''
+                      + '</div>'
+                    + '</td>';
+                }
+            }
+            tbHTML += '<tr id="' + idName + '" class="' + rowClassName.join(' ') + ' rn' + i + '" ' + attr.join(' ') + '>' + trHTML + '</tr>';
+        }
+        et.$tbody.html( tbHTML );
+    } else {
+        const noDataHTML = ''
+        + '<div class="et-nd"><div class="et-ndi">データがありません。</div></div>';
+        et.$table.addClass('et-nodata');
+        et.$tbody.html( noDataHTML );
+        et.pagingPage = 1;
+    }
+    
+    et.pagingStatus();
+    et.setCheckboxCheck();
+    if ( et.option.callback !== undefined ) et.option.callback();
   },
   /* ------------------------------ *\
      Paging status
@@ -858,6 +882,24 @@ epochTable.prototype = {
     }
   },
   /* ------------------------------ *\
+     Menu HTML
+  \* ------------------------------ */  
+  'menuListHTML': function( menu, data ){
+    const l = menu.length;
+    let hoverMenuHTML = `<ul class="et-cm-l">`;
+    for ( let i = 0; i < l; i++ ) {
+      if ( data[i] !== '__none__') {
+        hoverMenuHTML += `<li class="et-cm-i`;
+        if ( menu[i]['separate'] === 'on') hoverMenuHTML += ' et-m-s';
+        hoverMenuHTML += `">`
+          + `<button class="table-button et-cm-b epoch-popup-m icon ${menu[i]['icon']}" title="${menu[i]['text']}" data-value="${data[i]}" data-button="${menu[i]['type']}"></button>`
+        + `</li>`;
+      }
+    }
+    hoverMenuHTML += `</ul>`;
+    return hoverMenuHTML;
+  },
+  /* ------------------------------ *\
      Hover Menu HTML
   \* ------------------------------ */  
   'hoverMenuListHTML': function( menu, idKey ){
@@ -876,22 +918,22 @@ epochTable.prototype = {
   /* ------------------------------ *\
      ステータスアイコン HTML
   \* ------------------------------ */  
-  'statusHTML': function( text, type, popup ) {
+  'statusHTML': function( text, className, type, popup ) {
     if ( popup === undefined ) popup = true;
     const popupClass = ( popup === true )? ' epoch-popup-m': '';
     return ''
-      + '<span class="et-si' + popupClass + '" title="' + text + '" data-type="' + type +'">'
+      + '<span class="et-si' + popupClass + ' ' + className + '" title="' + text + '" data-type="' + type +'">'
         + '<span class="et-sii"></span>'
       + '</span>';
   },
   /* ------------------------------ *\
      Button HTML
   \* ------------------------------ */  
-  'buttonHTML': function( text, className, popup ) {
+  'buttonHTML': function( text, className, popup, data ) {
     if ( popup === undefined ) popup = true;
     const popupClass = ( popup === true )? ' epoch-popup-m': '';
     return ''
-      + '<button class="et-bu ' + className + popupClass + '" title="' + text + '">'
+      + '<button class="et-bu ' + className + popupClass + '" title="' + text + '" data-button="' + data + '">'
         + '<span class="et-bui"></span>'
       + '</button>';
   },
@@ -996,6 +1038,7 @@ epochTable.prototype = {
           + '<div class="etf-fb">';
         switch( th[i].type ) {
         case 'url':
+        case 'link':
         case 'number':
         case 'text':
           filterHTML += ''
@@ -1051,12 +1094,13 @@ epochTable.prototype = {
         case 'status': {
           filterHTML += '<ul class="etf-fb-sl">';
           for ( const key in th[i].list ) {
+            const iconClass = ( th[i].iconClass )? th[i].iconClass + key: '';
             filterHTML += ''
             + '<li class="etf-fb-si">'
               + '<div class="etf-fb-sc">'
                 + '<input name="etf-fb-scb-' + nameID + '" id="' + et.tableID + '-etf-fb-scb-' + nameID + '-' + key + '" type="checkbox" class="etf-fb-scb" value="' + key + '">'
                 + '<label for="' + et.tableID + '-etf-fb-scb-' + nameID + '-' + key + '" class="etf-fb-scl">'
-                  + et.statusHTML( th[i].list[key], key, false ) + '<span class="etf-fb-st">' + th[i].list[key] + '</span>'
+                + et.statusHTML( th[i].list[key], iconClass, key, false ) + '<span class="etf-fb-st">' + th[i].list[key] + '</span>'
                 + '</label>'
               + '</div>'
             + '</li>'
@@ -1120,6 +1164,7 @@ epochTable.prototype = {
             });
             } break;
           case 'url':
+          case 'link':
           case 'number':
           case 'text': {
             let value = '',
@@ -1186,6 +1231,7 @@ epochTable.prototype = {
             }
             } break;
           case 'url':
+          case 'link':
           case 'number':
           case 'text': {
             const option = [];
@@ -1245,6 +1291,7 @@ epochTable.prototype = {
             }
             } break;
           case 'url':
+          case 'link':
           case 'number':
           case 'text':
             if ( filter.value !== undefined && filter.value !== '') {
@@ -1301,23 +1348,24 @@ epochTable.prototype = {
                 }
               }
               break;
-            case 'url': 
-            case 'number':
-            case 'text': { 
+            case 'link': 
+            case 'number': 
+            case 'text': {
+              const checkValue = ( th[i].type === 'link')? row[i][1]: row[i];
               const option = thfl.option,
-                    leterFlg = ( option.indexOf('l') !== -1 )? true: false,
-                    notFlg = ( option.indexOf('n') !== -1 )? true: false,
-                    regexFlg = ( option.indexOf('r') !== -1 )? true: false,
-                    matchFlg = ( option.indexOf('m') !== -1 )? true: false,
-                    trueFlag = ( notFlg === true )? 'false': 'true',
-                    falseFlag  = ( notFlg === true )? 'true': 'false';
+                  leterFlg = ( option.indexOf('l') !== -1 )? true: false,
+                  notFlg = ( option.indexOf('n') !== -1 )? true: false,
+                  regexFlg = ( option.indexOf('r') !== -1 )? true: false,
+                  matchFlg = ( option.indexOf('m') !== -1 )? true: false,
+                  trueFlag = ( notFlg === true )? 'false': 'true',
+                  falseFlag  = ( notFlg === true )? 'true': 'false';
               if ( thfl.value !== '') {
                 if ( regexFlg ) {
                   // 正規表現
                   const regex = ( leterFlg === true )? new RegExp( thfl.value, 'g'): new RegExp( thfl.value, 'gi');
-                  ( regex.test( row[i] ) )? matchFlag[i] = trueFlag: matchFlag[i] = falseFlag;
+                  ( regex.test( checkValue ) )? matchFlag[i] = trueFlag: matchFlag[i] = falseFlag;
                 } else {
-                  const value = ( leterFlg === true )? String( row[i] ): String( row[i] ).toLowerCase(),
+                  const value = ( leterFlg === true )? String( checkValue ): String( checkValue ).toLowerCase(),
                         filter = ( leterFlg === true )? String( thfl.value ): String( thfl.value ).toLowerCase();
                   if ( matchFlg ) {
                     // 完全一致
@@ -1445,7 +1493,7 @@ epochTable.prototype = {
               type = ( et.modal.d.downloadType !== undefined )? et.modal.d.downloadType: 'xlsx';
         et.download( name, type );
       }
-    });
+    }, '480');
   },
   /* ------------------------------ *\
      Download table
@@ -1471,7 +1519,7 @@ epochTable.prototype = {
             'stop': function(){
                 // WebWorker stop
                 ww.terminate();
-                et.modal.s.subClose();
+                et.modal.s.close();
             },
             'callback': function(){
                 // Progress message area
@@ -1489,15 +1537,15 @@ epochTable.prototype = {
                             a.click();
                             window.URL.revokeObjectURL( url );
                             document.body.removeChild( a );
-                            et.modal.s.subClose();
+                            et.modal.s.close();
                             et.modal.m.close();
                         } else {
-                            et.modal.s.subClose();
+                            et.modal.s.close();
                             et.modal.error('Blob error.');
                         }
                         ww.terminate();
                     } else if ( result.status === 400 ) {
-                        et.modal.s.subClose();
+                        et.modal.s.close();
                         et.modal.error( result.message );
                         ww.terminate();
                     } else if ( result.status === 0 ) {
