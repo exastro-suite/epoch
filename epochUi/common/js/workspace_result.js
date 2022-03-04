@@ -864,7 +864,7 @@ function wsRegiSerCheck() {
     // 表示データ
     ws.cmn.data = {
         'manifest': {
-            'url': '#resigry-service',
+            'url': workspace_api_conf.api.ci_pipeline.registry.get.replace('{workspace_id}', (new URLSearchParams(window.location.search)).get('workspace_id')),
             'target': '#registry-service',
             'header': [
                 {'className': 'image', 'title': 'イメージ名', 'type': 'link', 'width': '20%', 'sort': 'on', 'filter': 'on'},
@@ -882,11 +882,11 @@ function wsRegiSerCheck() {
                       length = data.length;
                 for ( let i = 0; i < length; i++ ) {
                     const d = data[i],
-                          size = Math.round( d.registroy.full_size / 1024 / 1024 * 100 ) / 100; 
+                          size = Math.round( d.registry.full_size / 1024 / 1024 * 100 ) / 100; 
                     body.push([
-                        [ d.registroy.url, d.registroy.name ], // イメージ名
-                        d.registroy.tag, // TAG
-                        ws.cmn.fn.formatDate( d.registroy.tag_last_pushed, 'yyyy/MM/dd HH:mm:ss'), // Push日時
+                        [ d.registry.url, d.registry.name ], // イメージ名
+                        d.registry.tag, // TAG
+                        ws.cmn.fn.formatDate( d.registry.tag_last_pushed, 'yyyy/MM/dd HH:mm:ss'), // Push日時
                         size + ' MB', // サイズ
                         [ d.repository.url, d.repository.name ], // ビルドリポジトリ名
                         d.repository.branch // ビルドブランチ
@@ -973,7 +973,7 @@ function wsArgocdCheck() {
     // 表示データ
     ws.cmn.data = {
         'argocd': {
-            'url': '#argocd-result',
+            'url': workspace_api_conf.api.cd_pipeline.argocd.get.replace('{workspace_id}', (new URLSearchParams(window.location.search)).get('workspace_id')),
             'target': '#argocd-result',
             'header': [
                 {'className': 'status-icon', 'iconClass': 'icon icon-', 'title': 'APP ST', 'type': 'status', 'align': 'center', 'sort': 'on', 'filter': 'on',
@@ -1239,7 +1239,7 @@ function wsItaCheck() {
     // 表示データ
     ws.cmn.data = {
         'ita_result': {
-            'url': '#ita',
+            'url': workspace_api_conf.api.cd_pipeline.ita.get.replace('{workspace_id}', (new URLSearchParams(window.location.search)).get('workspace_id')),
             'target': '#ita-result-check',
             'header': [
                 {'className': 'status-icon', 'title': '状態', 'type': 'status', 'align': 'center', 'sort': 'on', 'filter': 'on', 'list':{'Succeeded': '正常終了','Running':'実行中','reserve':'予約','Failed': 'エラー'}},
