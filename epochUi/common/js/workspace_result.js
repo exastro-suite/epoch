@@ -1641,12 +1641,28 @@ function wsItaCheck() {
         '.ita-status': d.cd_status_name,
         '.ita-environment': d.environment_name
       };
+
+      // (BEGIN) APIの結果に所定項目が無いときの対処
+      // (修正前)
+      //   const logData = {
+      //     '.exe-log': d.contents.ita_results.manifest_embedding.execute_logs.replace(/\\n/g, '<br>'),
+      //     '.exe-error-log': d.contents.ita_results.manifest_embedding.error_logs.replace(/\\n/g, '<br>'),
+      //     '.commit-log': d.contents.ita_results.manifest_commit_push.execute_logs.replace(/\\n/g, '<br>') ,
+      //     '.commit-error-log': d.contents.ita_results.manifest_commit_push.error_logs.replace(/\\n/g, '<br>')
+      //   };
+      // (修正後)
       const logData = {
-        '.exe-log': d.contents.ita_results.manifest_embedding.execute_logs.replace(/\\n/g, '<br>'),
-        '.exe-error-log': d.contents.ita_results.manifest_embedding.error_logs.replace(/\\n/g, '<br>'),
-        '.commit-log': d.contents.ita_results.manifest_commit_push.execute_logs.replace(/\\n/g, '<br>') ,
-        '.commit-error-log': d.contents.ita_results.manifest_commit_push.error_logs.replace(/\\n/g, '<br>')
-      };
+        '.exe-log': "",
+        '.exe-error-log': "",
+        '.commit-log': "",
+        '.commit-error-log': ""
+      }
+      try { logData['.exe-log'] = d.contents.ita_results.manifest_embedding.execute_logs.replace(/\\n/g, '<br>'); } catch {}
+      try { logData['.exe-error-log'] = d.contents.ita_results.manifest_embedding.error_logs.replace(/\\n/g, '<br>'); } catch {}
+      try { logData['.commit-log'] = d.contents.ita_results.manifest_commit_push.execute_logs.replace(/\\n/g, '<br>'); } catch {}
+      try { logData['.commit-error-log'] = d.contents.ita_results.manifest_commit_push.error_logs.replace(/\\n/g, '<br>'); } catch {}
+      // (END) APIの結果に所定項目が無いときの対処
+
       const $modal = ws.cmn.modal.sub.$modal;
       for ( const key in setData ) {
           $modal.find( key ).html( setData[key] );
