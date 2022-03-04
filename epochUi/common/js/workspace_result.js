@@ -526,91 +526,93 @@ function wsTektonCheck() {
       'new': {'header': commonDataHeader, 'option': commonDataOption, 'change': commonDataChange, 'detail': {} },
       'all': {'header': commonDataHeader, 'option': commonDataOption, 'change': commonDataChange, 'detail': {} }
   };
-  ws.cmn.data.new.url = '#new';
+
+  ws.cmn.data.new.url = workspace_api_conf.api.ciResult.pipelinerun.get.replace('{workspace_id}', (new URLSearchParams(window.location.search)).get('workspace_id')) + "?latest=True";
   ws.cmn.data.new.target = '#new-task';
-  ws.cmn.data.all.url = '#all';
+  ws.cmn.data.all.url = workspace_api_conf.api.ciResult.pipelinerun.get.replace('{workspace_id}', (new URLSearchParams(window.location.search)).get('workspace_id'));
   ws.cmn.data.all.target = '#all-task';
 
-  // ダミーデータ --------------------------------------------------
-  function dummyTaskListData( number ) {
-    const rows = [];
+// TODO:Sprint79 DELETE
+//   // ダミーデータ --------------------------------------------------
+//   function dummyTaskListData( number ) {
+//     const rows = [];
 
-    const resultData = ['Succeeded','Failed','Running','Pending'],
-          years = ['2021','2022','2023','2024','2025'];
+//     const resultData = ['Succeeded','Failed','Running','Pending'],
+//           years = ['2021','2022','2023','2024','2025'];
 
-    for ( let i = 1; i <= number; i++ ) {
+//     for ( let i = 1; i <= number; i++ ) {
 
-        const result1 = resultData[ Math.floor( Math.random() * resultData.length ) ],
-              result2 = resultData[ Math.floor( Math.random() * resultData.length ) ],
-              result3 = resultData[ Math.floor( Math.random() * resultData.length ) ],
-              result4 = resultData[ Math.floor( Math.random() * resultData.length ) ],
-              year = years[ Math.floor( Math.random() * years.length ) ];
+//         const result1 = resultData[ Math.floor( Math.random() * resultData.length ) ],
+//               result2 = resultData[ Math.floor( Math.random() * resultData.length ) ],
+//               result3 = resultData[ Math.floor( Math.random() * resultData.length ) ],
+//               result4 = resultData[ Math.floor( Math.random() * resultData.length ) ],
+//               year = years[ Math.floor( Math.random() * years.length ) ];
 
-        const d = new Date();
-        d.setSeconds(d.getSeconds() - i);
-        d.setMinutes(d.getMinutes() - i);
-        d.setHours(d.getHours() - i);
+//         const d = new Date();
+//         d.setSeconds(d.getSeconds() - i);
+//         d.setMinutes(d.getMinutes() - i);
+//         d.setHours(d.getHours() - i);
 
-        const date = ws.cmn.fn.formatDate( d, 'yyyy/MM/dd HH:mm:ss'),
-              taskrun_name_d = number - i + 1,
-              container_image = ws.cmn.fn.formatDate( d, 'yyyyMMdd-HHmmss');
-        rows[i-1] = {
-            "task_id": number - i + 1,
-            "pipeline_id": number - i + 1,
-            "pipelinerun_name": "pipeline-run-dummy-8nftm",
-            "repository_url": "https://github.com/",
-            "build_branch": "master",
-            "start_time": date,
-            "finish_time": date,
-            "status": result1,
-            "container_image": "xxx/xxx:master." + container_image ,
-            "tasks": [
-                {
-                    "name": "task-start",
-                    "taskrun_name": "pipeline-run-dummy-xxxxx-task-start-xxxxx" + taskrun_name_d,
-                    "start_time": date,
-                    "finish_time": "2021/09/13 04:54:43",
-                    "status": result2,
-                    'log': '123456789'
-                },
-                {
-                    "name": "task-git-clone",
-                    "taskrun_name": "pipeline-run-dummy-xxxxx-task-git-clone-xxxxx" + taskrun_name_d,
-                    "start_time": date,
-                    "finish_time": "2021/09/13 04:56:51",
-                    "status": result3,
-                    'log': '123456789'
-                },
-                {
-                    "name": "task-build-and-push",
-                    "taskrun_name": "pipeline-run-dummy-xxxxx-task-build-and-push-xxxxx" + taskrun_name_d,
-                    "start_time": date,
-                    "finish_time": "2021/09/13 04:57:17",
-                    "status": result4,
-                    'log': '123456789'
-                },
-                {
-                    "name": "task-complete",
-                    "taskrun_name": "pipeline-run-dummy-xxxxx-task-complete-xxxxx" + taskrun_name_d,
-                    "start_time": date,
-                    "finish_time": "2021/09/13 04:57:25",
-                    "status": result1,
-                    'log': '123456789'
-                }
-            ]
-        };
-    }
-    return rows;
-}
-  ws.cmn.dummy = {
-      'new': {
-        "rows": dummyTaskListData(5)
-      },
-      'all': {
-        "rows": dummyTaskListData(1000)
-      }
-    }
-    // --------------------------------------------------
+//         const date = ws.cmn.fn.formatDate( d, 'yyyy/MM/dd HH:mm:ss'),
+//               taskrun_name_d = number - i + 1,
+//               container_image = ws.cmn.fn.formatDate( d, 'yyyyMMdd-HHmmss');
+//         rows[i-1] = {
+//             "task_id": number - i + 1,
+//             "pipeline_id": number - i + 1,
+//             "pipelinerun_name": "pipeline-run-dummy-8nftm",
+//             "repository_url": "https://github.com/",
+//             "build_branch": "master",
+//             "start_time": date,
+//             "finish_time": date,
+//             "status": result1,
+//             "container_image": "xxx/xxx:master." + container_image ,
+//             "tasks": [
+//                 {
+//                     "name": "task-start",
+//                     "taskrun_name": "pipeline-run-dummy-xxxxx-task-start-xxxxx" + taskrun_name_d,
+//                     "start_time": date,
+//                     "finish_time": "2021/09/13 04:54:43",
+//                     "status": result2,
+//                     'log': '123456789'
+//                 },
+//                 {
+//                     "name": "task-git-clone",
+//                     "taskrun_name": "pipeline-run-dummy-xxxxx-task-git-clone-xxxxx" + taskrun_name_d,
+//                     "start_time": date,
+//                     "finish_time": "2021/09/13 04:56:51",
+//                     "status": result3,
+//                     'log': '123456789'
+//                 },
+//                 {
+//                     "name": "task-build-and-push",
+//                     "taskrun_name": "pipeline-run-dummy-xxxxx-task-build-and-push-xxxxx" + taskrun_name_d,
+//                     "start_time": date,
+//                     "finish_time": "2021/09/13 04:57:17",
+//                     "status": result4,
+//                     'log': '123456789'
+//                 },
+//                 {
+//                     "name": "task-complete",
+//                     "taskrun_name": "pipeline-run-dummy-xxxxx-task-complete-xxxxx" + taskrun_name_d,
+//                     "start_time": date,
+//                     "finish_time": "2021/09/13 04:57:25",
+//                     "status": result1,
+//                     'log': '123456789'
+//                 }
+//             ]
+//         };
+//     }
+//     return rows;
+// }
+//   ws.cmn.dummy = {
+//       'new': {
+//         "rows": dummyTaskListData(5)
+//       },
+//       'all': {
+//         "rows": dummyTaskListData(1000)
+//       }
+//     }
+//     // --------------------------------------------------
   
   ws.cmn.open( 800 );
   
