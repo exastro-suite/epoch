@@ -67,6 +67,11 @@ var workspace_api_conf = {
             "ita" : {
                 "get":  URL_BASE + "/api/workspace/{workspace_id}/cd/pipeline/it-automation"
             },
+            "git": {
+                "commits": {
+                    "get":     URL_BASE + "/api/workspace/{workspace_id}/cd/pipeline/git/commits",
+                },
+            },
             "argocd": {
                 "get":     URL_BASE + "/api/workspace/{workspace_id}/cd/pipeline/argocd",
 
