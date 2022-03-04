@@ -157,22 +157,30 @@ wsResultCommon.prototype = {
         const ws = this;
         const loadData = function( url, key ){ // keyはダミーデータ用
             return new window.Promise( function( resolve, reject ) {
-                // 取得（仮）
-                // --------------------------------------------------
-                setTimeout( function(){
-                  // 仮結果
-                  const result = {
-                    'status': 200,
-                    'data': ws.dummy[key] // ダミーデータを入れる
-                  }              
+                if(url.match(/^https/)) {
+                    $.ajax({ type:"GET", url: url })
+                    .done((data) => {
+                        resolve({ "data" : data });
+                    })
+                    .fail(() => {
+                        reject();
+                    })
+                } else {
+                    // TODO:Sprint79 DELETE
+                    setTimeout( function(){
+                    // 仮結果
+                    const result = {
+                        'status': 200,
+                        'data': ws.dummy[key] // ダミーデータを入れる
+                    }              
 
-                  if ( result.status === 200 ) {
-                      resolve( result );
-                  } else {
-                      reject('Failed to read the task list.');
-                  }
-                }, 500 );
-                // --------------------------------------------------
+                    if ( result.status === 200 ) {
+                        resolve( result );
+                    } else {
+                        reject('Failed to read the task list.');
+                    }
+                    }, 500 );
+                }
             });
         }
     
@@ -258,7 +266,7 @@ function wsAppCodeRepoCheck( gitService ) {
   // 表示データ
   ws.cmn.data = {
       'commit': {
-          'url': '#commitListURL',
+          'url': workspace_api_conf.api.ci_pipeline.git.commits.get.replace('{workspace_id}', (new URLSearchParams(window.location.search)).get('workspace_id')),
           'header': [
               {'className': 'repository rs', 'title': 'リポジトリ', 'type': 'text', 'sort': 'on', 'filter': 'on'},
               {'className': 'branch rs', 'title': 'ブランチ', 'type': 'text', 'sort': 'on', 'filter': 'on'},        
@@ -329,7 +337,7 @@ function wsAppCodeRepoCheck( gitService ) {
       }
       // Webhookテーブルデータ
       ws.cmn.data.webhook = {
-          'url': '#webhook',
+          'url': workspace_api_conf.api.ci_pipeline.git.hooks.get.replace('{workspace_id}', (new URLSearchParams(window.location.search)).get('workspace_id')),
           'target': '#webhook-application-code-repository',
           'header': [
               {'className': 'status-icon', 'title': '結果', 'type': 'status', 'align': 'center', 'list': {'Succeeded': '正常', 'Failed': '異常'}, 'sort': 'on', 'filter': 'on'},
@@ -371,54 +379,55 @@ function wsAppCodeRepoCheck( gitService ) {
       ws.cmn.modal.st.block.commit = commitBlock;
   }
 
-  // ダミーデータ --------------------------------------------------
-  ws.cmn.dummy = {
-      'commit': {
-        "rows": [
-          {
-            "repository": "epoch / sample-app", // ???
-            "branch": "master",
-            "commit_id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-            "name": "更新者",
-            "date": "2021-11-29T08:07:10Z",
-            "message": "メッセージメッセージメッセージメッセージメッセージ",
-            "html_url": "https://github.com/",
-          },
-          {
-            "repository": "epoch / sample-app-2", // ???
-            "branch": "master",
-            "commit_id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-            "name": "更新者",
-            "date": "2021-11-29T08:07:10Z",
-            "message": "メッセージメッセージメッセージメッセージメッセージ",
-            "html_url": "https://github.com/",
-          }
-        ]
-      },
-      'webhook': {
-        "rows": [
-          {
-            "repository": "epoch / sample-app", // ???
-            "branch": "master",
-            "url": "https://xxxxx/api/listener/2", //【Payload URL】
-            "date": "2021-11-30T02:09:25Z", // 【実行日時】
-            "status": "Succeeded", // 【ステータス】
-            "status_code": 202, // 【正常／異常コード】
-            "event": "push", // 【トリガー】
-          },
-          {
-            "repository": "epoch / sample-app-2", // ???
-            "branch": "master",
-            "url": "https://xxxxx/api/listener/2", // 【Payload URL】
-            "date": "2021-11-30T02:09:25Z", // 【実行日時】
-            "status": "failed to connect to host",  // 【ステータス】
-            "status_code": 502, // 【正常／異常コード】
-            "event": "push", // 【トリガー】
-          }
-        ]
-      }
-    }
-    // --------------------------------------------------
+// TODO:Sprint79 DELETE
+//   // ダミーデータ --------------------------------------------------
+//   ws.cmn.dummy = {
+//       'commit': {
+//         "rows": [
+//           {
+//             "repository": "epoch / sample-app", // ???
+//             "branch": "master",
+//             "commit_id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+//             "name": "更新者",
+//             "date": "2021-11-29T08:07:10Z",
+//             "message": "メッセージメッセージメッセージメッセージメッセージ",
+//             "html_url": "https://github.com/",
+//           },
+//           {
+//             "repository": "epoch / sample-app-2", // ???
+//             "branch": "master",
+//             "commit_id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+//             "name": "更新者",
+//             "date": "2021-11-29T08:07:10Z",
+//             "message": "メッセージメッセージメッセージメッセージメッセージ",
+//             "html_url": "https://github.com/",
+//           }
+//         ]
+//       },
+//       'webhook': {
+//         "rows": [
+//           {
+//             "repository": "epoch / sample-app", // ???
+//             "branch": "master",
+//             "url": "https://xxxxx/api/listener/2", //【Payload URL】
+//             "date": "2021-11-30T02:09:25Z", // 【実行日時】
+//             "status": "Succeeded", // 【ステータス】
+//             "status_code": 202, // 【正常／異常コード】
+//             "event": "push", // 【トリガー】
+//           },
+//           {
+//             "repository": "epoch / sample-app-2", // ???
+//             "branch": "master",
+//             "url": "https://xxxxx/api/listener/2", // 【Payload URL】
+//             "date": "2021-11-30T02:09:25Z", // 【実行日時】
+//             "status": "failed to connect to host",  // 【ステータス】
+//             "status_code": 502, // 【正常／異常コード】
+//             "event": "push", // 【トリガー】
+//           }
+//         ]
+//       }
+//     }
+//     // --------------------------------------------------
   
   ws.cmn.open( 960 );
   
