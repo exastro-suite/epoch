@@ -862,7 +862,7 @@ function wsRegiSerCheck() {
     // 表示データ
     ws.cmn.data = {
         'manifest': {
-            'url': '#resigry-service',
+            'url': workspace_api_conf.api.ci_pipeline.registry.get.replace('{workspace_id}', (new URLSearchParams(window.location.search)).get('workspace_id')),
             'target': '#registry-service',
             'header': [
                 {'className': 'image', 'title': 'イメージ名', 'type': 'link', 'width': '20%', 'sort': 'on', 'filter': 'on'},
@@ -971,7 +971,7 @@ function wsArgocdCheck() {
     // 表示データ
     ws.cmn.data = {
         'argocd': {
-            'url': '#argocd-result',
+            'url': workspace_api_conf.api.cd_pipeline.argocd.get.replace('{workspace_id}', (new URLSearchParams(window.location.search)).get('workspace_id')),
             'target': '#argocd-result',
             'header': [
                 {'className': 'status-icon', 'iconClass': 'icon icon-', 'title': 'APP ST', 'type': 'status', 'align': 'center', 'sort': 'on', 'filter': 'on',
