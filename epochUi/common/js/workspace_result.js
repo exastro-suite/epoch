@@ -758,14 +758,14 @@ function wsManiRepoCheck( environment ) {
   const commonOption = {
             'className': 'table-grid commit-status manifest', 'download': 'on'
           };
-  const commonChenge = function( data ) {
+  const commonChange = function( data ) {
       const body = [],
             length = data.length;
       for ( let i = 0; i < length; i++ ) {
         const d = data[i],
               cid = d.commit_id.slice( 0, 6 ),
               cDate = ws.cmn.fn.formatDate( d.date, 'yyyy/MM/dd HH:mm:ss');
-        body.push([['#', d.manifest_file ], d.branch, d.message, d.name, cDate, [ d.html_url, cid ] ]);
+        body.push([[d.git_url, d.manifest_file ], d.branch, d.message, d.name, cDate, [ d.html_url, cid ] ]);
       }
       return body;
   };
@@ -773,8 +773,9 @@ function wsManiRepoCheck( environment ) {
   // 環境の数だけタブを用意する
   ws.cmn.data = {};
   ws.cmn.dummy = {};
-  for ( const key in environment ) {
+for ( const key in environment ) {
       const repositoryName = environment[key][key + '-git-service-argo-repository-url'].replace(/^.+\/([^\/]+)\/([^\/]+).git$/, '$1 / $2');
+      const repository = environment[key][key + '-git-service-argo-repository-url'];
       ws.cmn.modal.st.block.tabBlock.tab.tabs[key] = {
           'title': environment[key].text,
           'item': {
@@ -792,34 +793,35 @@ function wsManiRepoCheck( environment ) {
       ws.cmn.data[key] = {
           'header': commonHeader,
           'option': commonOption,
-          'change': commonChenge,
-          'url': workspace_api_conf.api.cd_pipeline.git.commits.get.replace('{workspace_id}', (new URLSearchParams(window.location.search)).get('workspace_id')),
+          'change': commonChange,
+          'url': workspace_api_conf.api.cd_pipeline.git.commits.get.replace('{workspace_id}', (new URLSearchParams(window.location.search)).get('workspace_id')) + 
+                 "?git_url=" + encodeURI(repository),
           'target': '#' + key + '-manifest-repository'
       };
          
       // ダミーデータ ----------------------------------------
-      ws.cmn.dummy[key] = {
-        "rows": [
-          {
-            "branch": "master",
-            "manifest_file": key + ".yaml",
-            "commit_id": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", //【コミットID】
-            "name": '【更新者】',
-            "date": "2021-11-29T08:07:10Z", // 【実行日時】
-            "message": "メッセージメッセージメッセージメッセージメッセージ",
-            "html_url": "https://github.com/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", // 【コミット詳細のURL】
-          },
-          {
-            "branch": "master",
-            "manifest_file": "xxx2.yaml",
-            "commit_id": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",// 【コミットID】
-            "name": '【更新者】',
-            "date": "2021-11-29T08:07:10Z", // 【実行日時】
-            "message": "メッセージメッセージメッセージメッセージメッセージ",
-            "html_url": "https://github.com/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-          }
-        ]
-      };
+    //   ws.cmn.dummy[key] = {
+    //     "rows": [
+    //       {
+    //         "branch": "master",
+    //         "manifest_file": key + ".yaml",
+    //         "commit_id": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", //【コミットID】
+    //         "name": '【更新者】',
+    //         "date": "2021-11-29T08:07:10Z", // 【実行日時】
+    //         "message": "メッセージメッセージメッセージメッセージメッセージ",
+    //         "html_url": "https://github.com/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", // 【コミット詳細のURL】
+    //       },
+    //       {
+    //         "branch": "master",
+    //         "manifest_file": "xxx2.yaml",
+    //         "commit_id": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",// 【コミットID】
+    //         "name": '【更新者】',
+    //         "date": "2021-11-29T08:07:10Z", // 【実行日時】
+    //         "message": "メッセージメッセージメッセージメッセージメッセージ",
+    //         "html_url": "https://github.com/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+    //       }
+    //     ]
+    //   };
       // --------------------------------------------------
   }
 
