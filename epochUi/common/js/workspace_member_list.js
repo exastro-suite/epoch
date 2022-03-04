@@ -507,7 +507,7 @@ function workspaceMemberList( memberList ) {
         // 確認モーダル
         subModal.open('roleChangeCheck',{
           'ok': function(){
-            subModal.subClose();
+            subModal.close();
             subModal.open('roleChangeRunning', {
               'callback': function(){
                 // ロール変更処理
@@ -620,7 +620,7 @@ function workspaceMemberList( memberList ) {
         // 確認モーダル
         subModal.open('addMemberCheck',{
           'ok': function(){
-            subModal.subClose();
+            subModal.close();
             subModal.open('addMemberRunning', {
               'callback': function(){
                 // メンバー追加処理

@@ -2202,7 +2202,7 @@ const argoCdAddDeployMembersModal = function(){
           'ok': function(){
             const id = subModal.$modal.find('.et-cb-i').val();
             subModal.createListSelectSetList( $select, id, deployMembers.list, deployMembers.col );
-            subModal.subClose();
+            subModal.close();
           },
           'callback': function(){
             const et = new epochTable(),
