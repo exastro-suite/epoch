@@ -1833,7 +1833,8 @@ definitions:
                   "name": "タスク名", 
                   "start_time": "開始日時", 
                   "status": "タスクのステータス", 
-                  "taskrun_name": "task run名"
+                  "taskrun_name": "task run名",
+                  "log": "TEKTONのタスクラン実行ログ"
                 }
               ]
             }
@@ -1863,7 +1864,8 @@ definitions:
                   "name": "task-build-and-push", 
                   "start_time": "2022/02/14 17:13:14", 
                   "status": "Running", 
-                  "taskrun_name": "pipeline-run-1-8zrjt-task-build-and-push-7h2ck"
+                  "taskrun_name": "pipeline-run-1-8zrjt-task-build-and-push-7h2ck",
+                  "log": "task task-build-and-push has failed: ..."
                 }
               ]
             }
