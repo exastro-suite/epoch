@@ -1237,7 +1237,7 @@ function wsItaCheck() {
     // 表示データ
     ws.cmn.data = {
         'ita_result': {
-            'url': '#ita',
+            'url': workspace_api_conf.api.cd_pipeline.ita.get.replace('{workspace_id}', (new URLSearchParams(window.location.search)).get('workspace_id')),
             'target': '#ita-result-check',
             'header': [
                 {'className': 'status-icon', 'title': '状態', 'type': 'status', 'align': 'center', 'sort': 'on', 'filter': 'on', 'list':{'Succeeded': '正常終了','Running':'実行中','reserve':'予約','Failed': 'エラー'}},
