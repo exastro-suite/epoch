@@ -201,6 +201,7 @@ wsResultCommon.prototype = {
             })
             // 読み込み失敗
             .catch(function( error ){
+                alert("読み込みに失敗しました");
                 window.console.error( error );
             });
     },
@@ -792,7 +793,7 @@ function wsManiRepoCheck( environment ) {
           'header': commonHeader,
           'option': commonOption,
           'change': commonChenge,
-          'url': key,
+          'url': workspace_api_conf.api.cd_pipeline.git.commits.get.replace('{workspace_id}', (new URLSearchParams(window.location.search)).get('workspace_id')),
           'target': '#' + key + '-manifest-repository'
       };
          
