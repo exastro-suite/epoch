@@ -880,11 +880,11 @@ function wsRegiSerCheck() {
                       length = data.length;
                 for ( let i = 0; i < length; i++ ) {
                     const d = data[i],
-                          size = Math.round( d.registroy.full_size / 1024 / 1024 * 100 ) / 100; 
+                          size = Math.round( d.registry.full_size / 1024 / 1024 * 100 ) / 100; 
                     body.push([
-                        [ d.registroy.url, d.registroy.name ], // イメージ名
-                        d.registroy.tag, // TAG
-                        ws.cmn.fn.formatDate( d.registroy.tag_last_pushed, 'yyyy/MM/dd HH:mm:ss'), // Push日時
+                        [ d.registry.url, d.registry.name ], // イメージ名
+                        d.registry.tag, // TAG
+                        ws.cmn.fn.formatDate( d.registry.tag_last_pushed, 'yyyy/MM/dd HH:mm:ss'), // Push日時
                         size + ' MB', // サイズ
                         [ d.repository.url, d.repository.name ], // ビルドリポジトリ名
                         d.repository.branch // ビルドブランチ
