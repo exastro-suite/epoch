@@ -1182,6 +1182,7 @@ flex-wrap: nowrap;
 }
 .layout-tab-fixed .modal-item > div {
 height: 100%;
+min-height: 0;
 }
 .layout-tab-fixed .modal-main {
 overflow: hidden;

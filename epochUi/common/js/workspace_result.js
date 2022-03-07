@@ -1297,9 +1297,12 @@ function wsItaCheck() {
                               '正常終了': 'Succeeded'
                           },
                           status = statusList[d.cd_status_name],
-                          date = ws.cmn.fn.formatDate( d.contents.ita_results.CONDUCTOR_INSTANCE_INFO.TIME_START, 'yyyy/MM/dd HH:mm:ss'),
+                          // date = ws.cmn.fn.formatDate( d.contents.ita_results.CONDUCTOR_INSTANCE_INFO.TIME_START, 'yyyy/MM/dd HH:mm:ss'),
                           reserve = ( status === 'reserve')? d.trace_id: '__none__' ;
-                    
+
+                    let date = "";
+                    try { date = ws.cmn.fn.formatDate( d.contents.ita_results.CONDUCTOR_INSTANCE_INFO.TIME_START, 'yyyy/MM/dd HH:mm:ss'); } catch {}
+
                     body.push([
                         status, // 状態
                         date, // 実行開始日時
@@ -1634,8 +1637,15 @@ function wsItaCheck() {
 
     
      ws.cmn.data.ita_result.detail.update = function( d ){
-      const start = ws.cmn.fn.formatDate( d.contents.ita_results.CONDUCTOR_INSTANCE_INFO.TIME_START, 'yyyy/MM/dd HH:mm:ss'),
-            end = ws.cmn.fn.formatDate( d.contents.ita_results.CONDUCTOR_INSTANCE_INFO.TIME_END, 'yyyy/MM/dd HH:mm:ss');
+      // (BEGIN) APIの結果に所定項目が無いときの対処
+      // (修正前)
+      // const start = ws.cmn.fn.formatDate( d.contents.ita_results.CONDUCTOR_INSTANCE_INFO.TIME_START, 'yyyy/MM/dd HH:mm:ss'),
+      //       end = ws.cmn.fn.formatDate( d.contents.ita_results.CONDUCTOR_INSTANCE_INFO.TIME_END, 'yyyy/MM/dd HH:mm:ss');
+      // (修正後)
+      let start = "", end = "";
+      try { start = ws.cmn.fn.formatDate( d.contents.ita_results.CONDUCTOR_INSTANCE_INFO.TIME_START, 'yyyy/MM/dd HH:mm:ss'); } catch {}
+      try { end = ws.cmn.fn.formatDate( d.contents.ita_results.CONDUCTOR_INSTANCE_INFO.TIME_END, 'yyyy/MM/dd HH:mm:ss'); } catch {}
+      // (END) APIの結果に所定項目が無いときの対処
 
       // Manifestパラメータ
       const $manifest = ws.cmn.modal.sub.$modal.find('#tab01-ita-manifest-parameter'),
