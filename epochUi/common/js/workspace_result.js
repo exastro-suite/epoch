@@ -1643,7 +1643,9 @@ function wsItaCheck() {
       //       end = ws.cmn.fn.formatDate( d.contents.ita_results.CONDUCTOR_INSTANCE_INFO.TIME_END, 'yyyy/MM/dd HH:mm:ss');
       // (修正後)
       let start = "", end = "";
-      try { start = ws.cmn.fn.formatDate( d.contents.ita_results.CONDUCTOR_INSTANCE_INFO.TIME_START, 'yyyy/MM/dd HH:mm:ss'); } catch {}
+      try {
+          start = ws.cmn.fn.formatDate( d.contents.ita_results.CONDUCTOR_INSTANCE_INFO.TIME_START, 'yyyy/MM/dd HH:mm:ss');
+      } catch {}
       try { end = ws.cmn.fn.formatDate( d.contents.ita_results.CONDUCTOR_INSTANCE_INFO.TIME_END, 'yyyy/MM/dd HH:mm:ss'); } catch {}
       // (END) APIの結果に所定項目が無いときの対処
 
@@ -1765,8 +1767,9 @@ function wsItaCheck() {
                                               'type': 'string',
                                               'title': '実行開始日時',
                                               'mainClass': 'item-horizontal',
-                                              'text': ws.cmn.fn.formatDate( d.contents.ita_results.CONDUCTOR_INSTANCE_INFO.TIME_START, 'yyyy/MM/dd HH:mm:ss')
-                                          },
+                                              // 'text': ws.cmn.fn.formatDate( d.contents.ita_results.CONDUCTOR_INSTANCE_INFO.TIME_START, 'yyyy/MM/dd HH:mm:ss')
+                                              'text': ws.cmn.fn.formatDate( d.contents.ita_results.CONDUCTOR_INSTANCE_INFO.TIME_BOOK, 'yyyy/MM/dd HH:mm:ss')
+                                            },
                                           'traceId': {
                                               'type': 'string',
                                               'title': 'トレースID',
@@ -1779,7 +1782,22 @@ function wsItaCheck() {
                           }
                       }, {});
                  confirm.open('confirm', {
-                    'ok': function(){alert('キャンセルしました');}
+                    'ok': function(){
+                        $.ajax({
+                            "type": "DELETE",
+                            "url": workspace_api_conf.api.cdExecDesignation.delete.replace('{workspace_id}', (new URLSearchParams(window.location.search)).get('workspace_id')).replace('{trace_id}',d.trace_id),
+                        }).done(function(data) {
+                            // Success get - 取得成功
+                            console.log("[DONE] DELETE " + workspace_api_conf.api.cdExecDesignation.delete + " response\n" + JSON.stringify(data));
+                            alert("予約を取り消しました");
+                            confirm.close();
+                        }).fail(function(data) {
+                            // Failed get - 取得失敗
+                            console.log("[FAIL] DELETE " + workspace_api_conf.api.cdExecDesignation.delete + " response\n" + JSON.stringify(data));
+                            alert("予約を取り消しできませんでした");
+                            confirm.close();
+                        });
+                    }
                  }, '480');
             } break;
         }
