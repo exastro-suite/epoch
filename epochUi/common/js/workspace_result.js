@@ -970,6 +970,7 @@ function wsArgocdCheck() {
         }
     };
 
+    // console.log('wsArgocdCheck get');
     // 表示データ
     ws.cmn.data = {
         'argocd': {
@@ -1003,19 +1004,20 @@ function wsArgocdCheck() {
                 const body = [],
                       length = data.length;
                 for ( let i = 0; i < length; i++ ) {
+                    console.log('wsArgocdCheck data:' + data[i]);
                     const d = data[i],
-                          head = d.argocd_results.sync_status.revision.slice( 0, 6 );
+                             head = (d.sync_status === undefined)?"":d.sync_status.revision.slice( 0, 6 );
                     body.push([
-                        d.argocd_results.health.status, // Healthアイコン 
-                        d.argocd_results.sync_status.status, // Syncアイコン
-                        d.argocd_results.sync_status.status, // Sync
-                        [ d.argocd_results.sync_status.repo_url, head ], // Head
-                        ws.cmn.fn.formatDate( d.argocd_results.startedAt, 'yyyy/MM/dd HH:mm:ss'), // 同期開始日時
-                        ws.cmn.fn.formatDate( d.argocd_results.finishedAt, 'yyyy/MM/dd HH:mm:ss'), // 同期終了日時
+                        d.health.status, // Healthアイコン 
+                        d.sync_status.status, // Syncアイコン
+                        d.sync_status.status, // Sync
+                        [ d.sync_status.repo_url, head ], // Head
+                        ws.cmn.fn.formatDate( d.startedAt, 'yyyy/MM/dd HH:mm:ss'), // 同期開始日時
+                        ws.cmn.fn.formatDate( d.finishedAt, 'yyyy/MM/dd HH:mm:ss'), // 同期終了日時
                         d.environment_name, // 環境名
                         d.trace_id, // トレースID
                         d.trace_id, // ボタンID（トレースID）
-                        'health-status-' + d.argocd_results.health.status.toLowerCase() // 行クラス
+                        'health-status-' + d.health.status.toLowerCase() // 行クラス
                     ]);
                 }
                 return body;
@@ -1024,86 +1026,86 @@ function wsArgocdCheck() {
         }
     };
 
-    // ダミーデータ --------------------------------------------------
-    ws.cmn.dummy = {
-        'argocd': {
-            "rows": [
-                {
-                    "trace_id": "0000000010",
-                    "environment_name": "development",
-                    "namespace": "argo-test",
-                    "argocd_results": {
-                        "health": {
-                            "status": "Healthy"
-                        },
-                        "sync_status": {
-                            "status": "Synced",
-                            "repo_url": "https://github.com/",
-                            "server": "https://kubernetes.default.svc",
-                            "revision": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                        },
-                        "resource_status": [
-                            {
-                                "kind": "Rollout",
-                                "name": "api-app",
-                                "health_status": "Healty",
-                                "sync_status": "Synced",
-                                "message": "rollout.argoproj.io/api-app unchanged"
-                            },
-                            {
-                                "kind": "Rollout",
-                                "name": "ui-app",
-                                "health_status": "Progressing",
-                                "status": "Synced",
-                                "message": "rollout.argoproj.io/ui-app unchanged"
-                            }
-                        ],
-                        "startedAt": "2022-01-20T08:27:39Z",
-                        "finishedAt": "2022-01-20T08:27:49Z"
-                    } 
-                },
-                {
-                    "trace_id": "0000000011",
-                    "environment_name": "development2",
-                    "namespace": "argo-test2",
-                    "argocd_results": {
-                        "health": {
-                            "status": "Progressing"
-                        },
-                        "sync_status": {
-                            "status": "OutOfSync",
-                            "repo_url": "https://github.com/",
-                            "server": "https://kubernetes.default.svc",
-                            "revision": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                        },
-                        "resource_status": [
-                            {
-                                "kind": "Rollout",
-                                "name": "api-app",
-                                "health_status": "Degraded",
-                                "sync_status": "OutOfSync",
-                                "message": "rollout.argoproj.io/api-app unchanged"
-                            },
-                            {
-                                "kind": "Rollout",
-                                "name": "ui-app",
-                                "health_status": "Progressing",
-                                "status": "OutOfSync",
-                                "message": "rollout.argoproj.io/ui-app unchanged"
-                            }
-                        ],
-                        "startedAt": "2022-01-20T08:27:39Z",
-                        "finishedAt": "2022-01-20T08:27:49Z"
-                    } 
-                }
-            ]
-        }
-    };
+    // // ダミーデータ --------------------------------------------------
+    // ws.cmn.dummy = {
+    //     'argocd': {
+    //         "rows": [
+    //             {
+    //                 "trace_id": "0000000010",
+    //                 "environment_name": "development",
+    //                 "namespace": "argo-test",
+    //                 "argocd_results": {
+    //                     "health": {
+    //                         "status": "Healthy"
+    //                     },
+    //                     "sync_status": {
+    //                         "status": "Synced",
+    //                         "repo_url": "https://github.com/",
+    //                         "server": "https://kubernetes.default.svc",
+    //                         "revision": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    //                     },
+    //                     "resource_status": [
+    //                         {
+    //                             "kind": "Rollout",
+    //                             "name": "api-app",
+    //                             "health_status": "Healty",
+    //                             "sync_status": "Synced",
+    //                             "message": "rollout.argoproj.io/api-app unchanged"
+    //                         },
+    //                         {
+    //                             "kind": "Rollout",
+    //                             "name": "ui-app",
+    //                             "health_status": "Progressing",
+    //                             "status": "Synced",
+    //                             "message": "rollout.argoproj.io/ui-app unchanged"
+    //                         }
+    //                     ],
+    //                     "startedAt": "2022-01-20T08:27:39Z",
+    //                     "finishedAt": "2022-01-20T08:27:49Z"
+    //                 } 
+    //             },
+    //             {
+    //                 "trace_id": "0000000011",
+    //                 "environment_name": "development2",
+    //                 "namespace": "argo-test2",
+    //                 "argocd_results": {
+    //                     "health": {
+    //                         "status": "Progressing"
+    //                     },
+    //                     "sync_status": {
+    //                         "status": "OutOfSync",
+    //                         "repo_url": "https://github.com/",
+    //                         "server": "https://kubernetes.default.svc",
+    //                         "revision": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    //                     },
+    //                     "resource_status": [
+    //                         {
+    //                             "kind": "Rollout",
+    //                             "name": "api-app",
+    //                             "health_status": "Degraded",
+    //                             "sync_status": "OutOfSync",
+    //                             "message": "rollout.argoproj.io/api-app unchanged"
+    //                         },
+    //                         {
+    //                             "kind": "Rollout",
+    //                             "name": "ui-app",
+    //                             "health_status": "Progressing",
+    //                             "status": "OutOfSync",
+    //                             "message": "rollout.argoproj.io/ui-app unchanged"
+    //                         }
+    //                     ],
+    //                     "startedAt": "2022-01-20T08:27:39Z",
+    //                     "finishedAt": "2022-01-20T08:27:49Z"
+    //                 } 
+    //             }
+    //         ]
+    //     }
+    // };
     
     // 5秒後に変更する
     setTimeout( function(){
-        ws.cmn.dummy.argocd.rows[0].argocd_results.health.status = 'Degraded';
-        ws.cmn.dummy.argocd.rows[1].argocd_results.health.status = 'Healthy';
+        ws.cmn.dummy.argocd.rows[0].health.status = 'Degraded';
+        ws.cmn.dummy.argocd.rows[1].health.status = 'Healthy';
         console.log( ws.cmn.dummy )
     }, 5000 );
     
@@ -1153,11 +1155,11 @@ function wsArgocdCheck() {
     + '</div>');
     
      ws.cmn.data.argocd.detail.update = function( d ){
-      const mURL = d.argocd_results.sync_status.repo_url,
+      const mURL = d.sync_status.repo_url,
             manifest = `<a href="${encodeURI(mURL)}" taregt="_blank">${mURL}</a>`,
-            healthStatus = d.argocd_results.health.status,
-            syncStatus = d.argocd_results.sync_status.status,
-            headID = d.argocd_results.sync_status.revision.slice( 0, 6 ),
+            healthStatus = d.health.status,
+            syncStatus = d.sync_status.status,
+            headID = d.sync_status.revision.slice( 0, 6 ),
             health = `<span class="icon icon-${healthStatus}"></span>${healthStatus}`,
             sync = `<span class="icon icon-${syncStatus}"></span>${syncStatus}`,
             head = `from <a href="${encodeURI(mURL)}" target="_blank">HEAD(${headID})</a>`,
@@ -1174,15 +1176,15 @@ function wsArgocdCheck() {
           + `<div class="argocd-resource-message">${r.message}</div>`
         + `</li>`;
       };
-      for ( const key in d.argocd_results.resource_status ) {
-        resource.push( resourceRow( d.argocd_results.resource_status[key]) );
+      for ( const key in d.resource_status ) {
+        resource.push( resourceRow( d.resource_status[key]) );
       }
       
       const setData = [
         ['.status-trace-id-number', d.trace_id ],
         ['.argocd-environment', d.environment_name ],
         ['.argocd-argocd-manifest', manifest ],
-        ['.argocd-server', d.argocd_results.sync_status.server ],
+        ['.argocd-server', d.sync_status.server ],
         ['.argocd-namespace', d.namespace ],
         ['.argocd-health-status', health ],
         ['.argocd-sync-status', sync ],
@@ -1200,7 +1202,6 @@ function wsArgocdCheck() {
         ws.cmn.data.argocd.detail.traceid = $( this ).attr('data-button');
         ws.cmn.detail('argocd', 720 );
     });
-    
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
