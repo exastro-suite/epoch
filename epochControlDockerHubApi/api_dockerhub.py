@@ -87,7 +87,7 @@ def get_repositories(registry):
                     "name": registry,
                     "url":  link_url.format(registry),
                     "tag":  result["name"],
-                    "tag_last_pushed":  result["tag_last_pulled"],
+                    "tag_last_pushed":  result["tag_last_pushed"],
                     "full_size":    result["full_size"]
                 }
                 rows.append(row)
