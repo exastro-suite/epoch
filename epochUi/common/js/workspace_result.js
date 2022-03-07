@@ -1102,12 +1102,12 @@ function wsArgocdCheck() {
     //     }
     // };
     
-    // 5秒後に変更する
-    setTimeout( function(){
-        ws.cmn.dummy.argocd.rows[0].health.status = 'Degraded';
-        ws.cmn.dummy.argocd.rows[1].health.status = 'Healthy';
-        console.log( ws.cmn.dummy )
-    }, 5000 );
+    // // 5秒後に変更する
+    // setTimeout( function(){
+    //     ws.cmn.dummy.argocd.rows[0].health.status = 'Degraded';
+    //     ws.cmn.dummy.argocd.rows[1].health.status = 'Healthy';
+    //     console.log( ws.cmn.dummy )
+    // }, 5000 );
     
     
     // --------------------------------------------------
@@ -1196,12 +1196,38 @@ function wsArgocdCheck() {
       for ( let i = 0; i < setDataLength; i++ ) {
           ws.cmn.modal.sub.$modal.find( setData[i][0] ).html( setData[i][1] );
       }
+      ws.cmn.modal.sub.$modal.find('.argocd-sync-button').attr('data-traceid', d.trace_id );      
     };
     
     ws.cmn.modal.fn.$modal.on('click', '.execution-status-button', function(){
         ws.cmn.data.argocd.detail.traceid = $( this ).attr('data-button');
         ws.cmn.detail('argocd', 720 );
+        
+        // SYNCボタン
+        ws.cmn.modal.sub.$modal.find('.argocd-sync-button').on('click', function(){
+            const $b = $( this ),
+                traceid = $b.attr('data-traceid');
+
+            if (confirm(getText("EP010-0397", "sync実行しますか？"))){
+                console.log("[CALL] POST " + workspace_api_conf.api.cd_pipeline.argocd.sync.post.replace('{workspace_id}', workspace_id) + ", trace_id:" + traceid);
+                // Call argoCD sync processing - ArgoCD同期処理呼び出し
+                $.ajax({
+                    "type": "POST",
+                    "url": workspace_api_conf.api.cd_pipeline.argocd.sync.post.replace('{workspace_id}', workspace_id),
+                    data:JSON.stringify({'environment_id':traceid}),
+                    contentType: "application/json",
+                    dataType: "json",
+                }).done(function(data) {
+                    alert(getText("EP010-0395", "sync実行しました"));
+                    console.log("[DONE] POST " + workspace_api_conf.api.cd_pipeline.argocd.sync.post + " response\n" + JSON.stringify(data));
+                }).fail(function(data) {
+                    alert(getText("EP010-0396", "sync実行失敗"));
+                    console.log("[FAIL] POST " + workspace_api_conf.api.cd_pipeline.argocd.sync.post + " response\n" + JSON.stringify(data));
+                });
+            } 
+        });
     });
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
