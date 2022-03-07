@@ -1990,7 +1990,7 @@ const cdExecution = function(){
         $okButton = $modal.find('.modal-menu-button[data-button="ok"]');
         
   $okButton.prop('disabled', true );
-  $okButton.on('click',cdRunning);
+  $okButton.on('click', cdRunning );
 
   // CD execution environment information processing - CD実行環境情報処理
   new Promise((resolve, reject) =>{
@@ -2061,12 +2061,17 @@ const cdExecution = function(){
         const value = $( this ).val();
         if ( value === 'dateset') {
           $executionDateInput.prop('disabled', false ).focus();
+          wsDataJSON['cd-execution-param']['preserve-datetime'] = $executionDateInput.val();
         } else {
           $executionDateInput.prop('disabled', true );
+          wsDataJSON['cd-execution-param']['preserve-datetime'] = "";
         }
       });
       
-      
+      $executionDateInput.on('change', () => {
+        wsDataJSON['cd-execution-param']['preserve-datetime'] = $executionDateInput.val();
+      });
+
       // 選択されていません。
       const notSelected = function(){
         return '<div class="modal-empty-block">環境が選択されていません。</div>';
@@ -2251,6 +2256,8 @@ const cdRunning = function(){
     reqbody['operationSearchKey'] = wsDataJSON['cd-execution-param']['operation-search-key'];
     reqbody['environmentName'] = wsDataJSON['cd-execution-param']['environment-name'];
     reqbody['preserveDatetime'] = wsDataJSON['cd-execution-param']['preserve-datetime'];
+
+    console.log("EXEC wsDataJSON:" + JSON.stringify(wsDataJSON));
 
     console.log("CALL : CD実行開始");
     api_param = {
