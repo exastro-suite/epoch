@@ -1301,7 +1301,13 @@ function wsItaCheck() {
                           reserve = ( status === 'reserve')? d.trace_id: '__none__' ;
 
                     let date = "";
-                    try { date = ws.cmn.fn.formatDate( d.contents.ita_results.CONDUCTOR_INSTANCE_INFO.TIME_START, 'yyyy/MM/dd HH:mm:ss'); } catch {}
+                    try {
+                        if ( d.contents.ita_results.CONDUCTOR_INSTANCE_INFO.TIME_START != null ) {
+                            date = ws.cmn.fn.formatDate( d.contents.ita_results.CONDUCTOR_INSTANCE_INFO.TIME_START, 'yyyy/MM/dd HH:mm:ss');
+                        } else {
+                            date = ws.cmn.fn.formatDate( d.contents.ita_results.CONDUCTOR_INSTANCE_INFO.TIME_BOOK, 'yyyy/MM/dd HH:mm:ss');
+                        }
+                    } catch {}
 
                     body.push([
                         status, // 状態
@@ -1644,7 +1650,11 @@ function wsItaCheck() {
       // (修正後)
       let start = "", end = "";
       try {
-          start = ws.cmn.fn.formatDate( d.contents.ita_results.CONDUCTOR_INSTANCE_INFO.TIME_START, 'yyyy/MM/dd HH:mm:ss');
+          if (d.contents.ita_results.CONDUCTOR_INSTANCE_INFO.TIME_START != null) {
+            start = ws.cmn.fn.formatDate( d.contents.ita_results.CONDUCTOR_INSTANCE_INFO.TIME_START, 'yyyy/MM/dd HH:mm:ss');
+          } else {
+            start = ws.cmn.fn.formatDate( d.contents.ita_results.CONDUCTOR_INSTANCE_INFO.TIME_BOOK, 'yyyy/MM/dd HH:mm:ss');
+          }
       } catch {}
       try { end = ws.cmn.fn.formatDate( d.contents.ita_results.CONDUCTOR_INSTANCE_INFO.TIME_END, 'yyyy/MM/dd HH:mm:ss'); } catch {}
       // (END) APIの結果に所定項目が無いときの対処
