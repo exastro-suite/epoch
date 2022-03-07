@@ -1186,6 +1186,7 @@ $workspaceFooter.on('click', '.workspace-footer-menu-button', function(){
         'ok': function(){
           // 作成処理
           // alert('作成しました。');
+          modal.close();
           apply_workspace();
         }
       }, '1200');
@@ -1204,6 +1205,7 @@ $workspaceFooter.on('click', '.workspace-footer-menu-button', function(){
           // 更新処理
           console.log( compareFlag ); // 変更箇所
           // alert('更新しました。');
+          modal.close();
           apply_workspace();
         }
       }, '1200');
