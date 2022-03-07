@@ -314,6 +314,7 @@ def get_git_commits(workspace_id):
         workspace_info = ret["rows"][0]
 
         git_token = workspace_info["ci_config"]["pipelines_common"]["git_repositry"]["token"]
+        git_user = workspace_info["ci_config"]["pipelines_common"]["git_repositry"]["user"]
 
         # ヘッダ情報 header info.
         post_headers_in_token = {
@@ -365,6 +366,7 @@ def get_git_commits(workspace_id):
 
                         row = {
                             "git_url": git_url,
+                            "repository": "{}/{}".format(git_user, re.search('([^/]+?)(?=.git)', git_url).group()),
                             "branch": branch_row["name"],
                             "commit_id": git_row["id"],
                             "name": git_row["committer_name"],
@@ -409,6 +411,7 @@ def get_git_commits(workspace_id):
                     for git_row in ret_git_commit["rows"]:
                         row = {
                             "git_url": git_url,
+                            "repository": "{}/{}".format(git_user, re.search('([^/]+?)(?=.git)', git_url).group()),
                             "branch": branch_row["name"],
                             "commit_id": git_row["sha"],
                             "name": git_row["commit"]["committer"]["name"],
@@ -466,7 +469,8 @@ def get_git_hooks(workspace_id):
         # 取得したworkspace情報をパラメータとして受け渡す Pass the acquired workspace information as a parameter
         workspace_info = ret["rows"][0]
 
-        git_token = workspace_info["cd_config"]["environments_common"]["git_repositry"]["token"]
+        git_token = workspace_info["ci_config"]["pipelines_common"]["git_repositry"]["token"]
+        git_user = workspace_info["ci_config"]["pipelines_common"]["git_repositry"]["user"]
 
         # ヘッダ情報 header info.
         post_headers_in_token = {
@@ -518,6 +522,7 @@ def get_git_hooks(workspace_id):
                         if deliveries_row["event"].lower() == "push":
                             row = {
                                 "git_url": git_url,
+                                "repository": "{}/{}".format(git_user, re.search('([^/]+?)(?=.git)', git_url).group()),
                                 "branch": "",
                                 "url": hooks_row["config"]["url"],
                                 "date": deliveries_row["delivered_at"],
