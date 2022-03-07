@@ -580,6 +580,8 @@ def get_registry(workspace_id):
             globals.logger.debug(error_detail)
             raise common.UserException(error_detail)
 
+        git_user = workspace_json["rows"][0]["ci_config"]["pipelines_common"]["git_repositry"]["user"]
+
         # Request header for getting container registry information
         # コンテナレジストリ情報取得用 リクエストヘッダ
         request_headers = {
@@ -596,7 +598,7 @@ def get_registry(workspace_id):
         # Get CI result information ― CI結果情報取得
         response = requests.get(api_url)
         ci_result_json = json.loads(response.text)
-        
+
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0088", "CI結果情報の取得に失敗しました")
             globals.logger.debug(error_detail)
@@ -633,7 +635,7 @@ def get_registry(workspace_id):
                         {
                             "registry": registry,
                             "repository": {
-                                "name": ci_result["container_registry_image"],
+                                "name": "{}/{}".format(git_user, re.search('([^/]+?)(?=.git)', ci_result["git_repository_url"]).group()),
                                 "url": ci_result["git_repository_url"],
                                 "branch": ci_result["git_branch"]
                             }
