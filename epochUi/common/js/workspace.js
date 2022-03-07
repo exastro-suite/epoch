@@ -2402,6 +2402,7 @@ $('#content').find('.modal-open').on('click', function(e){
       funcs.ok = function(){
         setParameterData();
         workspaceImageUpdate();
+        apply_manifest();
         modal.close();
       };
       funcs.callback = inputParameter;

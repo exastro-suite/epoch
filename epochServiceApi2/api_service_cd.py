@@ -449,9 +449,29 @@ def get_git_commits(workspace_id):
         else:
             raise Exception("gir_url parameter not found")
 
+        # manifest get
+        api_url = "{}://{}:{}/workspace/{}/manifests".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+                                                    os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                    os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                    workspace_id)
+        response = requests.get(api_url)
+
+        if response.status_code != 200:
+            error_detail = multi_lang.get_text("EP020-0091", "manifest情報の取得に失敗しました")
+            globals.logger.debug(error_detail)
+            raise common.UserException(error_detail)
+
+        ret = json.loads(response.text)
+        manifest_info = ret["rows"]
+
+        # 取得したmanifest情報分繰り返す Repeat for the acquired manifest information
         manifest_files = ""
-        for manifest in workspace_info["ci_config"]["environments"][0]["manifests"]:
-            manifest_files += manifest["file"] + "\n"
+        for manifest in manifest_info:
+            manifest_files += manifest["file_name"] + ", "
+
+        # カンマ区切りの最後を調整 Adjust the end of the comma delimiter
+        if len(manifest_files) > 2: 
+            manifest_files = manifest_files[:-2]
 
         globals.logger.debug(f"manifest_files:[{manifest_files}]")
 
