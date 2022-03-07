@@ -700,6 +700,12 @@ def get_ci_pipeline_result(workspace_id):
         # globals.logger.debug(f'rows:{ret["rows"]}')
         for row in ret["rows"]:
             tasks = []
+
+            if row is None:
+                continue
+            if not "tasks" in row:
+                continue
+
             for task in row["tasks"]:
                 # globals.logger.debug(f'tasks:{task}')
 
