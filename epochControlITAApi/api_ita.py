@@ -526,9 +526,17 @@ def settings_ita(workspace_id):
             json_data = json.dumps(data)
 
             start_time = time.time()
+
             while True:
                 globals.logger.debug("monitoring...")
                 time.sleep(3)
+
+                # timeout
+                current_time = time.time()
+                if (current_time - start_time) > WAIT_SEC_ITA_IMPORT:
+                    globals.logger.debug("ITA menu import Time out")
+                    error_detail = "IT-Automation 初期設定でタイムアウトしました。再度、実行してください。"
+                    raise common.UserException(error_detail)
 
                 # リクエスト送信
                 dialog_response = requests.post('http://' + host + '/default/menu/07_rest_api_ver1.php?no=2100000213', headers=header, data=json_data)
@@ -536,7 +544,9 @@ def settings_ita(workspace_id):
                     globals.logger.error("no=2100000213 error:{}".format(dialog_response.status_code))
                     globals.logger.error(dialog_response.text)
                     error_detail = "IT-Automation 初期設定が失敗しました。再度、実行してください。"
-                    raise common.UserException(error_detail)
+                    # タイミングによって500応答が返されるため継続
+                    # raise common.UserException(error_detail)
+                    continue
 
                 # ファイルがあるメニューのため、response.textをデバッグ出力すると酷い目にあう
                 # print(dialog_response.text)
@@ -555,13 +565,6 @@ def settings_ita(workspace_id):
                     raise common.UserException(error_detail)
                 if record[3] == u"完了":
                     break
-
-                # timeout
-                current_time = time.time()
-                if (current_time - start_time) > WAIT_SEC_ITA_IMPORT:
-                    globals.logger.debug("ITA menu import Time out")
-                    error_detail = "IT-Automation 初期設定でタイムアウトしました。再度、実行してください。"
-                    raise common.UserException(error_detail)
 
         error_detail = "IT-Automation 初期設定のパスワード初期化に失敗しました。"
         # *-*-*-* パスワード変更 *-*-*-*
