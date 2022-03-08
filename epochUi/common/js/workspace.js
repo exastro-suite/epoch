@@ -1159,8 +1159,33 @@ const setFotter = function( workspaceType ) {
           disabled = ( footerButton[i].disabled )? ' disabled': '',
           separate = ( footerButton[i].separate )? ' separate': '',
           description = wsDescription.footer[button];
+    // ROLE制御
+    let display = "display:none";
+    const ws_id = (new URLSearchParams(window.location.search)).get('workspace_id');
+    switch(footerButton[i].buttonType) {
+        case "update":
+        case "reset":
+          if(currentUser != null && currentUser.data ) {
+            if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ws-name-update".replace('{ws_id}',ws_id)) != -1
+            || currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ws-ci-update".replace('{ws_id}',ws_id)) != -1
+            || currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ws-cd-update".replace('{ws_id}',ws_id)) != -1) {
+              display="";
+            }
+          }
+          break;
+        case "cdExecution":
+          if(currentUser != null && currentUser.data ) {
+            if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-cd-execute".replace('{ws_id}',ws_id)) != -1) {
+              display="";
+            }
+          }
+          break;
+        default:
+          display="";
+    }
+
     footerHTML += '<li class="workspace-footer-menu-item' + separate + '">'
-    + '<button class="epoch-button epoch-popup workspace-footer-menu-button ' + type + '" data-button="' + button + '"' + disabled + ' title="' + description + '">' + text + '</button>';
+    + '<button class="epoch-button epoch-popup workspace-footer-menu-button ' + type + '" data-button="' + button + '"' + disabled + ' title="' + description + '" + style="' + display + '">' + text + '</button>';
   }
   footerHTML += '</ul>';
 
@@ -3814,8 +3839,11 @@ const compareInfo = function( modalID, compareData ){
       if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ws-name-update".replace('{ws_id}',ws_id)) != -1
       || currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ws-ci-update".replace('{ws_id}',ws_id)) != -1
       || currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ws-cd-update".replace('{ws_id}',ws_id)) != -1) {
-        $('#apply-workspace-button').css("display","");
-        $('#reset-button').css("display","");
+        $('.workspace-footer-menu-button[data-button="update"]').css("display","");
+        $('.workspace-footer-menu-button[data-button="reset"]').css("display","");
+      }
+      if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-cd-execute".replace('{ws_id}',ws_id)) != -1) {
+        $('.workspace-footer-menu-button[data-button="cdExecution"]').css("display","");
       }
 
       // Set the buttons for the workspace name modal dialog - ワークスペース名モーダルダイアログのボタンを設定する
@@ -3876,9 +3904,9 @@ const compareInfo = function( modalID, compareData ){
       }
 
       // Set the button to run the CD - CD実行のボタンを設定する
-      if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-cd-execute".replace('{ws_id}',ws_id)) != -1) {
-        $('#cdExecutionButtonArea').css("display","");
-      }
+      // if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-cd-execute".replace('{ws_id}',ws_id)) != -1) {
+      //   $('#cdExecutionButtonArea').css("display","");
+      // }
       
       // Set the manifest upload button - マニフェストアップロードのボタンを設定する
       if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-manifest-upload".replace('{ws_id}',ws_id)) != -1) {
