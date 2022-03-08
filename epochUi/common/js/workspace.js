@@ -40,28 +40,28 @@ backgroundAurora();
 //{ type: { block: description }}
 const wsDescription = {
   'setting': {
-    'ws-git-service': 'アプリケーションコードリポジトリの説明アプリケーションコードリポジトリの説明アプリケーションコードリポジトリの説明',
-    'ws-pipeline-tekton': 'CIパイプラインの説明CIパイプラインの説明CIパイプラインの説明',
-    'ws-registry-service': 'レジストリサービスの説明レジストリサービスの説明レジストリサービスの説明',
-    'ws-pipeline-argo': 'CDパイプラインの説明CDパイプラインの説明CDパイプラインの説明',
-    'ws-git-argo': 'IaCリポジトリの説明IaCリポジトリの説明IaCリポジトリの説明'
+    'ws-git-service': getText('EP010-0291','１．アプリケーションコードリポジトリの情報を設定してください'),
+    'ws-pipeline-tekton': getText('EP010-0292','２．CDパイプライン(TEKTON)の情報を設定してください。'),
+    'ws-registry-service': getText('EP010-0293','３．レジストリサービスの情報を設定してください。'),
+    'ws-pipeline-argo': getText('EP010-0294','４．環境毎のCDパイプライン(ArgoCD)の情報を設定してください。'),
+    'ws-git-argo': getText('EP010-0295','５．manifestを格納するIaCリポジトリの情報を設定してください。')
   },
   'deploy': {
-    'ws-git-service': 'アプリケーションコードリポジトリの確認',
-    'ws-pipeline-tekton': 'CIパイプラインの確認',
-    'ws-registry-service': 'レジストリサービスの確認',
-    'ws-pipeline-argo': 'CDパイプラインの確認',
-    'ws-git-argo': 'Manifestリポジトリの確認',
-    'ws-kubernetes-manifest-template': 'Kubernetes Manifestテンプレートの登録',
-    'ws-ita-parameter': 'マニフェストパラメータの入力',
-    'ws-ita-check': 'ITAの確認',
-    'ws-cd-user': 'デプロイ'
+    'ws-git-service': getText('EP010-0600','アプリケーションコードリポジトリのCommitならびにWebHookの履歴を確認できます。'),
+    'ws-pipeline-tekton': getText('EP010-0601','CIパイプライン(TEKTON)の動作結果を確認できます。'),
+    'ws-registry-service': getText('EP010-0602','レジストリサービスの登録状況を確認できます。'),
+    'ws-pipeline-argo': getText('EP010-0603','デプロイ実行結果(ArgoCD)の動作結果を確認できます。'),
+    'ws-git-argo': getText('EP010-0604','IaCリポジトリのCommit履歴を確認できます。'),
+    'ws-kubernetes-manifest-template': getText('EP010-0605','６．Kubernetes Manifestテンプレートを登録します。'),
+    'ws-ita-parameter': getText('EP010-0606','７．Manifestパラメータを入力します。'),
+    'ws-ita-check': getText('EP010-0607','デプロイ実行結果(IT-Automation)の実行結果を確認できます。'),
+    'ws-cd-user': getText('EP010-0608','８．デプロイを実行開始します。')
   },
   'footer': {
-    'create': 'ワークスペースを作成します。',
-    'update': 'ワークスペースの変更点を確認・更新を行います。',
-    'reset': '入力値を変更する前の状態に戻します。',
-    'cdExecution': 'デプロイします。'
+    'create': getText('EP010-0296','ワークスペースを作成します。'),
+    'update': getText('EP010-0297','ワークスペースの変更点を確認・更新を行います。'),
+    'reset': getText('EP010-0298','入力値を変更する前の状態に戻します。'),
+    'cdExecution': getText('EP010-0608','８．デプロイを実行開始します。')
   }
 };
 

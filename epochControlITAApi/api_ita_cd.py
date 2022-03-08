@@ -459,7 +459,7 @@ def cd_result_logs_get(workspace_id, conductor_id):
                 # Unzip the contents of each unzipped folder again
                 files = glob.glob(tempdir + "/**/*.zip")
                 for file in files:
-                    globals.logger.debug(f"file:{file}")
+                    # globals.logger.debug(f"file:{file}")
 
                     with zipfile.ZipFile(file) as log_zip:
                         for f in log_zip.namelist():
@@ -477,7 +477,7 @@ def cd_result_logs_get(workspace_id, conductor_id):
                                     # globals.logger.debug(f"logs:{error_logs}")
 
                     sub_dir_name = os.path.basename(os.path.dirname(file))
-                    globals.logger.debug(f"sub_dir_name:{sub_dir_name}")
+                    # globals.logger.debug(f"sub_dir_name:{sub_dir_name}")
                     if sub_dir_name == "0000000001":
                         # フォルダの1番目は、Manifest埋め込みのログ
                         # The first folder is the Manifest embedded log
@@ -495,7 +495,7 @@ def cd_result_logs_get(workspace_id, conductor_id):
 
             body_cnt += 1
 
-        globals.logger.debug(f"rows:{rows}")
+        # globals.logger.debug(f"rows:{rows}")
 
         # 正常終了 normal end
         ret_status = 200
