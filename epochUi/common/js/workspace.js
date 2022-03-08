@@ -3814,8 +3814,9 @@ const compareInfo = function( modalID, compareData ){
       //
 
       // Show all buttons - 全てのボタンを表示する
-      $('#apply-workspace-button').css("display","");
-      $('#reset-button').css("display","");
+      $('.workspace-footer-menu-button[data-button="update"]').css("display","");
+      $('.workspace-footer-menu-button[data-button="reset"]').css("display","");
+      $('.workspace-footer-menu-button[data-button="cdExecution"]').css("display","");
 
       $('#gitServiceCheckButton').css("display","");
       $('#pipelineTektonCheckButton').css("display","");
