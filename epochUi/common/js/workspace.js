@@ -1224,7 +1224,12 @@ $workspaceFooter.on('click', '.workspace-footer-menu-button', function(){
           for ( const key in compareData.html ) {
             html.push( compareData.html[key] );
           }
-          modal.$modal.find('#compare-list').html( html.join('') );
+          // 更新が無いときの表示
+          if(html.join('') === "") {
+            modal.$modal.find('#compare-list').html('変更した項目はありません');
+          } else {
+            modal.$modal.find('#compare-list').html( html.join('') );
+          }
         },
         'ok': function(){
           // 更新処理
@@ -2629,11 +2634,15 @@ const workspaceImageUpdate = function( ) {
     
     // 作成・更新ボタン
     const createF = ( inputF === false && compareF === true )? false: true;
-    $workspaceFooter.find('.workspace-footer-menu-button[data-button="create"], .workspace-footer-menu-button[data-button="update"]').prop('disabled', createF );
+    // 現段階では常に押下可能に
+    //$workspaceFooter.find('.workspace-footer-menu-button[data-button="create"], .workspace-footer-menu-button[data-button="update"]').prop('disabled', createF );
+    $workspaceFooter.find('.workspace-footer-menu-button[data-button="create"], .workspace-footer-menu-button[data-button="update"]').prop('disabled', false );
     
     // リセットボタン
     const resetF = ( compareF === true )? false: true;
-    $workspaceFooter.find('.workspace-footer-menu-button[data-button="reset"]').prop('disabled', resetF );
+    // 現段階では常に押下可能に
+    // $workspaceFooter.find('.workspace-footer-menu-button[data-button="reset"]').prop('disabled', resetF );
+    $workspaceFooter.find('.workspace-footer-menu-button[data-button="reset"]').prop('disabled', false );
     
   } else if ( type === 'deploy') {
     const manifestTemp = ( tempNumber > 0 )? done: unentered;
