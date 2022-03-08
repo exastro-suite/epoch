@@ -129,7 +129,7 @@ metadata:
   labels:
     name: ita-worker
 spec:
-  type: NodePort
+  type: ClusterIP
   ports:
   - name: ssh
     port: 22
