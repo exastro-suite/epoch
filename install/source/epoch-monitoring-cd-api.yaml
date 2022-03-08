@@ -42,7 +42,7 @@ spec:
           name: epoch-monitoring-cd-api-conf
       containers:
       - name: epoch-monitoring-cd-api
-        image: exastro/epoch-monitoring-cd-api:0.3.1_20220221_1640
+        image: exastro/epoch-monitoring-cd-api:0.3.1_20220308_1600
         env:
         - name: CONFIG_API_MONITORING_CD_PATH
           value: "/etc/epoch/epochMonitoringCdApi/api_monitoring_cd.conf"

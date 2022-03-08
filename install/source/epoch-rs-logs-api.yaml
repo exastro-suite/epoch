@@ -49,7 +49,7 @@ spec:
           name: epoch-rs-logs-conf
       containers:
       - name: epoch-rs-logs-api
-        image: exastro/epoch-rs-logs-api:0.3.1_20220221_1640
+        image: exastro/epoch-rs-logs-api:0.3.1_20220308_1600
         env:
         - name: CONFIG_API_LOGS_PATH
           value: "/etc/epoch/epochRsLogsApi/api_logs.conf"
