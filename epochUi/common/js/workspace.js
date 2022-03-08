@@ -2392,39 +2392,6 @@ $('#content').find('.modal-open').on('click', function(e){
       };
     } break;
     
-    // ここからCD実行画面
-
-    // TODO:Sprint79 DELETE
-    // アプリケーションコード結果一覧
-    // case 'gitServiceCheck': {
-    //   callback = aplicationCodeResultList;
-    // } break;
-    // // レジストリ結果一覧
-    // case 'registryServiceCheck': {
-    //   callback = registryResultList;
-    // } break;
-
-    // TODO:Sprint79 DELETE
-    // CD実行
-    // case 'cdExecution': {
-    //   // ok = function( $modal ){
-    //   //   if($modal.find('input:radio[name="execution-date"]:checked').val() == 'dateset') {
-    //   //     wsDataJSON['cd-execution-param']['preserve-datetime'] = $modal.find('.execution-date-input').val();
-    //   //   } else {
-    //   //     wsDataJSON['cd-execution-param']['preserve-datetime'] = '';
-    //   //   }
-    //   ok = function(){
-    //     if(modal.$modal.find('input:radio[name="execution-date"]:checked').val() == 'dateset') {
-    //       wsDataJSON['cd-execution-param']['preserve-datetime'] = modal.$modal.find('.execution-date-input').val();
-    //     } else {
-    //       wsDataJSON['cd-execution-param']['preserve-datetime'] = '';
-    //     }
-
-    //     cdRunning();
-    //   };
-    //   callback = cdExecution;
-    // } break;
-
     // Kubernetes Manifest テンプレート
     case 'kubernetesManifestTemplate': {
       funcs.callback = templateFileList;
@@ -2445,33 +2412,6 @@ $('#content').find('.modal-open').on('click', function(e){
   }
 
   modal.open( target, funcs, width );
-  
-  // TODO:Sprint79 DELETE
-  // console.log($('.modal-block-main'));
-  // switch(target) {
-  //   case 'gitServiceCheck':
-  //     break;
-  //   case 'gitServiceArgoCheck':
-  //     var link = "";
-  //     const $commitList = $('#commit-list');
-  //     $commitList.html('');
-  //     for(var env in wsDataJSON['environment']) {
-  //       link = wsDataJSON['environment'][env][env + '-git-service-argo-repository-url'];
-  //       link = link.replace(".git","") + "/commits";
-
-  //       // EPOCH_LINK
-  //       $commitList.append('<a href="' + link + '" target="_blank">' + link + '</a><br />')
-  //     };
-  //     break;
-  //   case 'registryServiceCheck':
-  //     // $('.modal-block-main').html('<a href="' + workspace_api_conf.links.registry + '" target="_blank">確認</a>');
-  //     break;
-  //   case 'arogCdResultCheck':
-  //     break;
-  //   case 'exastroItAutomationResultCheck':
-  //     //$('.modal-block-main').html('<a href="' + workspace_client_urls.ita + '" target="_blank">確認</a>');
-  //     break;
-  // }
 });
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2986,21 +2926,6 @@ const compareInfo = function( modalID, compareData ){
 
   // window onloadイベント
   $(document).ready(function(){ getWorksapce(); });
-
-  // TODO:Sprint79 DELETE
-  //$(document).ready(function(){
-  // リセットボタン処理
-  // $('#reset-button').on('click', function(){
-  //   // 確認メッセージ
-  //   if (confirm("入力値をリセットしてもよろしいですか？"))
-  //     if(workspace_id == null) {
-  //       // 新規のときは画面リロード
-  //       top.location.reload();        
-  //     } else {
-  //       // ワークスペース情報の読み込み
-  //       getWorksapce();
-  //     }
-  // });
 
   // ワークスペース情報の読み込み
   function getWorksapce(){
