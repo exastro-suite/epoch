@@ -416,7 +416,7 @@ def cd_result_logs_get(workspace_id, conductor_id):
             return jsonify({"result": ret_status, "rows": rows}), ret_status
 
         resp_data = json.loads(exec_response.text)
-        globals.logger.debug(f"resp_data:{resp_data}")
+        # globals.logger.debug(f"resp_data:{resp_data}")
 
         if resp_data["status"] != "SUCCEED":
             globals.logger.error("no={} status:{}".format(ite_menu_conductor_exec, resp_data["status"]))
