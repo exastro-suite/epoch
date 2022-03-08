@@ -182,6 +182,18 @@ def cd_execute(workspace_id):
             error_detail = multi_lang.get_text("EP034-0002", "CD実行の呼び出しに失敗しました ita-status:{0} resultdata:{1}".format(resp_data["status"], resp_data["resultdata"]), resp_data["status"], resp_data["resultdata"])
             raise common.UserException(error_detail)
 
+        if resp_data["status"] != "SUCCEED":
+            globals.logger.error("no={} status:{}".format(ite_menu_conductor_exec, resp_data["status"]))
+            error_detail = multi_lang.get_text("EP034-0002", "CD実行の呼び出しに失敗しました ita-status:{0} resultdata:{1}".format(resp_data["status"], resp_data["resultdata"]), resp_data["status"], resp_data["resultdata"])
+            raise common.UserException(error_detail)
+
+        # 戻り値が"000"以外の場合は、エラーを返す
+        # If the return value is other than "000", an error is returned.
+        if resp_data["resultdata"]["RESULTCODE"] != "000":
+            globals.logger.error("RESULTCODE error: resultdata:{}".format(resp_data["resultdata"]))
+            error_detail = resp_data["resultdata"]["RESULTINFO"]
+            raise common.UserException(error_detail)
+
         # 作業IDを退避
         cd_result_id = resp_data["resultdata"]["CONDUCTOR_INSTANCE_ID"]
 
