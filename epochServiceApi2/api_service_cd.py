@@ -659,19 +659,23 @@ def get_cd_pipeline_argocd(workspace_id):
                 for status_resources in argocd_result["result"]["status"]["resources"]:
                     for sync_result_resources in argocd_result["result"]["status"]["operationState"]["syncResult"]["resources"]:
                         
-                        if str(status_resources["kind"]) == str(sync_result_resources["kind"]) \
-                        and str(status_resources["name"]) == str(sync_result_resources["name"]): 
-                            # In the acquisition result of ArgoCD, the result "resources" is divided into two places, so "kind" and "name" merge the resource information with the same name
-                            # ArgoCDの取得結果では、結果の"resources"が2か所に分かれているため、"kind", "name"が同名のリソース情報をマージ
-                            resource_status.append(
-                                {
-                                    "kind": status_resources["kind"],
-                                    "name": status_resources["name"],
-                                    "health_status": status_resources["health"]["status"],
-                                    "sync_status": sync_result_resources["status"],
-                                    "message": sync_result_resources["message"]
-                                }
-                            )
+                        # 項目が存在する場合のみマージチェックを実施
+                        # Perform merge check only if item exists
+                        if "kind" in status_resources and "name" in status_resources \
+                        and "kind" in sync_result_resources and "name" in sync_result_resources:
+                            if str(status_resources["kind"]) == str(sync_result_resources["kind"]) \
+                            and str(status_resources["name"]) == str(sync_result_resources["name"]): 
+                                # ArgoCDの取得結果では、結果の"resources"が2か所に分かれているため、"kind", "name"が同名のリソース情報をマージ
+                                # In the acquisition result of ArgoCD, the result "resources" is divided into two places, so "kind" and "name" merge the resource information with the same name
+                                resource_status.append(
+                                    {
+                                        "kind": status_resources["kind"],
+                                        "name": status_resources["name"],
+                                        "health_status": status_resources["health"]["status"],
+                                        "sync_status": sync_result_resources["status"],
+                                        "message": sync_result_resources["message"]
+                                    }
+                                )
             # argocdの結果があるかチェック
             # Check for argocd result
             if "result" not in argocd_result or \
