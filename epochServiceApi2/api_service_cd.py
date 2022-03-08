@@ -367,7 +367,7 @@ def get_cd_pipeline_ita(workspace_id):
             elif data_row["cd_status"] == const.CD_STATUS_CANCEL:
                 cd_status_name = multi_lang.get_text("EP020-0084", "予約キャンセル")
 
-            globals.logger.debug(f"data_row:{data_row}")
+            # globals.logger.debug(f"data_row:{data_row}")
 
             # 基本のROW生成 Basic ROW generation
             row = {
