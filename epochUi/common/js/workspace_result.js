@@ -269,7 +269,7 @@ function wsAppCodeRepoCheck( gitService ) {
       'commit': {
           'url': workspace_api_conf.api.ci_pipeline.git.commits.get.replace('{workspace_id}', (new URLSearchParams(window.location.search)).get('workspace_id')),
           'header': [
-              {'className': 'repository rs', 'title': 'リポジトリ', 'type': 'text', 'sort': 'on', 'filter': 'on'},
+              {'className': 'repository rs', 'title': 'リポジトリ', 'type': 'link', 'sort': 'on', 'filter': 'on'},
               {'className': 'branch rs', 'title': 'ブランチ', 'type': 'text', 'sort': 'on', 'filter': 'on'},        
               {'className': 'message lb rs', 'title': 'メッセージ', 'type': 'text', 'sort': 'on', 'filter': 'on'},        
               {'className': 'changer lb rs', 'title': '更新者', 'type': 'text', 'sort': 'on', 'filter': 'on'},        
@@ -286,7 +286,7 @@ function wsAppCodeRepoCheck( gitService ) {
                 const d = data[i],
                       cid = d.commit_id.slice( 0, 6 ),
                       cDate = ws.cmn.fn.formatDate( d.date, 'yyyy/MM/dd HH:mm:ss');
-                body.push([d.repository, d.branch, d.message, d.name, cDate, [ d.html_url, cid ] ]);
+                body.push([ [ d.git_url, d.repository ], d.branch, d.message, d.name, cDate, [ d.html_url, cid ] ]);
               }
               return body;
           }
@@ -342,9 +342,9 @@ function wsAppCodeRepoCheck( gitService ) {
           'target': '#webhook-application-code-repository',
           'header': [
               {'className': 'status-icon', 'title': '結果', 'type': 'status', 'align': 'center', 'list': {'Succeeded': '正常', 'Failed': '異常'}, 'sort': 'on', 'filter': 'on'},
-              {'className': 'repository lb rs', 'title': 'リポジトリ', 'type': 'text', 'sort': 'on', 'filter': 'on'},
+              {'className': 'repository lb rs', 'title': 'リポジトリ', 'type': 'link', 'sort': 'on', 'filter': 'on'},
               {'className': 'branch lb rs', 'title': 'ブランチ', 'type': 'text', 'sort': 'on', 'filter': 'on'},        
-              {'className': 'payload lb rs','title': 'Payload URL', 'type': 'link', 'sort': 'on', 'filter': 'on'},        
+              {'className': 'payload lb rs','title': 'Payload URL', 'type': 'text', 'sort': 'on', 'filter': 'on'},        
               {'className': 'trigger lb rs','title': 'トリガー', 'type': 'text', 'sort': 'on', 'filter': 'on'},        
               {'className': 'status lb rs','title': 'ステータス', 'type': 'text', 'sort': 'on', 'filter': 'on'},        
               {'className': 'update lb rs','title': '更新日時', 'type': 'date', 'sort': 'on', 'filter': 'on'},
@@ -360,9 +360,9 @@ function wsAppCodeRepoCheck( gitService ) {
                         s = (  d.status_code === 202 )? 'Succeeded': 'Failed';
                   body.push([
                       s,
-                      d.repository,
+                      [d.git_url, d.repository],
                       d.branch,
-                      [d.url,d.url],
+                      d.url,
                       d.event,
                       d.status,
                       ws.cmn.fn.formatDate( d.date, 'yyyy/MM/dd HH:mm:ss'),
