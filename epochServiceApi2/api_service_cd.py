@@ -879,7 +879,7 @@ def cd_execute(workspace_id):
         response = requests.get(api_url)
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0009", "ユーザーロール情報の取得に失敗しました")
-            globals.logger.debug(error_detail)
+            globals.logger.error(error_detail)
             raise common.UserException("{} Error user role get status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
 
         ret_roles = json.loads(response.text)
@@ -897,7 +897,7 @@ def cd_execute(workspace_id):
         # 権限がない場合はエラーとする If you do not have permission, an error will occur.
         if not exist_role:
             error_detail = multi_lang.get_text("EP020-0020", "CD実行権限がありません")
-            globals.logger.debug(error_detail)
+            globals.logger.error(error_detail)
             raise common.AuthException(error_detail)
 
 
@@ -911,7 +911,7 @@ def cd_execute(workspace_id):
         # 取得できなかった場合は、終了する If it cannot be obtained, it will end.
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0013", "ワークスペース情報の取得に失敗しました")
-            globals.logger.debug(error_detail)
+            globals.logger.error(error_detail)
             raise common.UserException("{} Error workspace info get status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
 
         # 取得したJSON結果が正常でない場合、例外を返す If the JSON result obtained is not normal, an exception will be returned.
@@ -940,7 +940,7 @@ def cd_execute(workspace_id):
         # 最終的に実行可能かチェックする Check if it is finally feasible
         if not found_user:
             error_detail = multi_lang.get_text("EP020-0020", "CD実行権限がありません")
-            globals.logger.debug(error_detail)
+            globals.logger.error(error_detail)
             raise common.AuthException(error_detail)
 
         api_url = "{}://{}:{}/{}/user/{}".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
@@ -979,7 +979,7 @@ def cd_execute(workspace_id):
         if common.is_json_format(request_response.text):
             ret = json.loads(request_response.text)
         else:
-            globals.logger.debug("cd/operations:response:{}".format(request_response.text))
+            globals.logger.error("cd/operations:response:{}".format(request_response.text))
             error_detail = multi_lang.get_text("EP020-0021", "CD実行に失敗しました")
             raise common.UserException(error_detail)
 
@@ -992,10 +992,11 @@ def cd_execute(workspace_id):
         # 引数のgit urlをもとにオペレーションIDを取得 get operation id for git-url
         ope_id = search_opration_id(ret_ita['resultdata']['CONTENTS']['BODY'], column_indexes_opelist, request_json['operationSearchKey'])
         if ope_id is None:
-            globals.logger.debug("Operation ID Not found!")
+            globals.logger.error("Operation ID Not found!")
             error_detail = "Operation ID Not found!"
             raise common.UserException(error_detail)
 
+        globals.logger.debug("preserveDatetime: {}".format(request_json["preserveDatetime"]))
         # CD実行の引数を設定 paramater of cd execute 
         post_data = {
             "operation_id" : ope_id,
@@ -1007,8 +1008,8 @@ def cd_execute(workspace_id):
         # CD実行(ITA) cd execute ita
         response = requests.post(apiInfo + "/cd/execute", headers=post_headers, data=post_data)
         # 正常終了したか確認 Check if it ended normally
-        if response.status_code != 200:  
-            globals.logger.debug("status error: ita/execute:response:{}".format(response.text))
+        if response.status_code != 200:
+            globals.logger.error("status error: ita/execute:response:{}".format(response.text))
             error_detail = multi_lang.get_text("EP020-0028", "CD実行に失敗しました")
             raise common.UserException(error_detail)
 
@@ -1040,7 +1041,7 @@ def cd_execute(workspace_id):
         response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0029", "CD実行結果の登録に失敗しました")
-            globals.logger.debug(error_detail)
+            globals.logger.error(error_detail)
             raise common.UserException("{} Error cd result registration status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
 
 
@@ -1064,7 +1065,7 @@ def cd_execute(workspace_id):
         response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0023", "ログ出力に失敗しました")
-            globals.logger.debug(error_detail)
+            globals.logger.error(error_detail)
             raise common.UserException("{} Error log output status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
 
         # 正常終了 normal return code
