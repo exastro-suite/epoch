@@ -740,6 +740,11 @@ def get_cd_pipeline_argocd(workspace_id):
                     else:
                         finishedAt = argocd_result["result"]["status"]["operationState"]["finishedAt"]
 
+            if sync_status_repo_url[-4:] == ".git":
+                html_url = "{}/commit/{}".format(sync_status_repo_url[:-4], sync_status_revision)
+            else:
+                html_url = "{}/commit/{}".format(sync_status_repo_url, sync_status_revision)
+
             # Format the entire result JSON - 結果JSONの全体を整形
             rows.append(
                 {
@@ -755,6 +760,7 @@ def get_cd_pipeline_argocd(workspace_id):
                         "repo_url": sync_status_repo_url,
                         "server": sync_status_server,
                         "revision": sync_status_revision,
+                        "html_url": html_url,
                     },
                     "resource_status": resource_status,
                     "startedAt": startedAt,

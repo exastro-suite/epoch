@@ -656,7 +656,7 @@ function wsTektonCheck() {
   const update = function( d, k ) {
       const setData = {
         '.status-trace-id-number': d.task_id,
-        '.repository': `<a href="${encodeURI(d.repository_url)}" taregt="_blank">${d.repository_url}</a>`,
+        '.repository': `<a href="${encodeURI(d.repository_url)}" target="_blank">${d.repository_url}</a>`,
         '.image': d.container_image,
         '.date': d.start_time,
         '.branch': d.build_branch,
@@ -668,23 +668,21 @@ function wsTektonCheck() {
       const taskLength = d.tasks.length;
       
       // タスク一覧
-      if ( $modal.find('.task-detail-list').is(':empty') ) {
-          let taskHTML = '';
-          for ( let i = 0; i < taskLength; i++ ) {
-              taskHTML += `<li class="task-detail-item">`
-                + `<div class="task-detail-status"></div>`
-                + `<div class="task-detail-name">${d.tasks[i].name}</div>`
-                + `<div class="task-detail-date"></div>`
-                + `<div class="task-detail-log-open"><button class="et-bu task-status-open epoch-popup-m" title="ログ"><span class="et-bui"></span></button></div>`
-                + `<div class="task-detail-log"></div>`
-              + `</li>`;
-          }
-          $modal.find('.task-detail-list').html(taskHTML);
-          $modal.find('.task-status-open').on('click', function(){
-              const $task = $(this).closest('.task-detail-item');
-              $task.toggleClass('task-status-show').find('.task-detail-log').stop(0,0).animate({ height: 'toggle' }, 200 );
-          });
+      let taskHTML = '';
+      for ( let i = 0; i < taskLength; i++ ) {
+          taskHTML += `<li class="task-detail-item">`
+            + `<div class="task-detail-status"></div>`
+            + `<div class="task-detail-name">${d.tasks[i].name}</div>`
+            + `<div class="task-detail-date"></div>`
+            + `<div class="task-detail-log-open"><button class="et-bu task-status-open epoch-popup-m" title="ログ"><span class="et-bui"></span></button></div>`
+            + `<div class="task-detail-log"></div>`
+          + `</li>`;
       }
+      $modal.find('.task-detail-list').html(taskHTML);
+      $modal.find('.task-status-open').on('click', function(){
+          const $task = $(this).closest('.task-detail-item');
+          $task.toggleClass('task-status-show').find('.task-detail-log').stop(0,0).animate({ height: 'toggle' }, 200 );
+      });
       
       const list = ws.cmn.data[k].header[0].list;
       for ( let i = 0; i < taskLength; i++ ) {
@@ -1011,7 +1009,7 @@ function wsArgocdCheck() {
                         d.health.status, // Healthアイコン 
                         d.sync_status.status, // Syncアイコン
                         d.sync_status.status, // Sync
-                        [ d.sync_status.repo_url, head ], // Head
+                        [ d.sync_status.html_url, head ], // Head
                         ws.cmn.fn.formatDate( d.startedAt, 'yyyy/MM/dd HH:mm:ss'), // 同期開始日時
                         ws.cmn.fn.formatDate( d.finishedAt, 'yyyy/MM/dd HH:mm:ss'), // 同期終了日時
                         d.environment_name, // 環境名
@@ -1156,13 +1154,14 @@ function wsArgocdCheck() {
     
      ws.cmn.data.argocd.detail.update = function( d ){
       const mURL = d.sync_status.repo_url,
-            manifest = `<a href="${encodeURI(mURL)}" taregt="_blank">${mURL}</a>`,
+            headURL = d.sync_status.html_url,
+            manifest = `<a href="${encodeURI(mURL)}" target="_blank">${mURL}</a>`,
             healthStatus = d.health.status,
             syncStatus = d.sync_status.status,
             headID = d.sync_status.revision.slice( 0, 6 ),
             health = `<span class="icon icon-${healthStatus}"></span>${healthStatus}`,
             sync = `<span class="icon icon-${syncStatus}"></span>${syncStatus}`,
-            head = `from <a href="${encodeURI(mURL)}" target="_blank">HEAD(${headID})</a>`,
+            head = `from <a href="${encodeURI(headURL)}" target="_blank">HEAD(${headID})</a>`,
             resource = [];
       
       const resourceRow = function( r ){
@@ -1664,25 +1663,20 @@ function wsItaCheck() {
             manifests = d.contents.workspace_info.ci_config.environments[0].manifests,
             manifestLength = manifests.length;
       
-      if ( $manifest.find('.modal-loading-inner').length ) {
-        ws.cmn.modal.sub.tabEvent();
-        ws.cmn.modal.sub.accordionEvent();
-        
-        $manifest.empty();
-        for ( let i = 0; i < manifestLength; i++ ) {
-          const parameters = manifests[i].parameters;
-          let parameterHTML = '<table class="c-table"><tbody>';
-          for ( const key in parameters ) {
-              parameterHTML += `<tr class="c-table-row">`
-                + `<th class="c-table-col c-table-col-header"><div class="c-table-ci">${key}</div></th>`
-                + `<td class="c-table-col"><div class="c-table-ci">${parameters[key]}</div></td>`
-              + `</tr>`;
-          }       
-          parameterHTML += '</tbody></table>';
-           $manifest.append(ws.cmn.modal.sub.createHtml({
-              'type': 'html', 'title': manifests[i].file, 'accordion': 'on', 'html': parameterHTML
-           }));
-        }
+      $manifest.empty();
+      for ( let i = 0; i < manifestLength; i++ ) {
+        const parameters = manifests[i].parameters;
+        let parameterHTML = '<table class="c-table"><tbody>';
+        for ( const key in parameters ) {
+            parameterHTML += `<tr class="c-table-row">`
+              + `<th class="c-table-col c-table-col-header"><div class="c-table-ci">${key}</div></th>`
+              + `<td class="c-table-col"><div class="c-table-ci">${parameters[key]}</div></td>`
+            + `</tr>`;
+        }       
+        parameterHTML += '</tbody></table>';
+         $manifest.append(ws.cmn.modal.sub.createHtml({
+            'type': 'html', 'title': manifests[i].file, 'accordion': 'on', 'html': parameterHTML
+         }));
       }
     
       const setData = {
@@ -1755,6 +1749,8 @@ function wsItaCheck() {
             case 'exe-status':
                 ws.cmn.data.ita_result.detail.traceid = id;
                 ws.cmn.detail('ita_result', 800 );
+                ws.cmn.modal.sub.tabEvent();
+                ws.cmn.modal.sub.accordionEvent();
             break;
             case 'cancel': {
                 const r = ws.cmn.result.ita_result.rows;
