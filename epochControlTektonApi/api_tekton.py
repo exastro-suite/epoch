@@ -103,6 +103,7 @@ def post_tekton_pipeline(workspace_id):
     """
     globals.logger.debug('CALL post_tekton_pipeline:{}'.format(workspace_id))
 
+
     try:
         access_data = get_access_info(workspace_id)
 
@@ -162,7 +163,9 @@ def post_tekton_pipeline(workspace_id):
             elif len(pipeline['build']['branch']) == 0:
                 pipeline['build_refs'] = None
             else:
-                pipeline['build_refs'] = '[{}]'.format(','.join(map(lambda x: '\'refs/heads/'+x+'\'', pipeline['build']['branch'])))
+                # Since whitespace characters are not required when concatenating strings, all whitespace characters are deleted from the string.
+                # 文字列結合の際に空白文字は不要なので、文字列から空白文字は全て削除する
+                pipeline['build_refs'] = '[{}]'.format(','.join(map(lambda x: '\'refs/heads/'+x.replace("　", "").replace(" ", "")+'\'', pipeline['build']['branch'])))
 
             # sonarqube用
             pipeline['sonar_project_name'] = re.sub('\\.git$', '', re.sub('^https?://[^/][^/]*/', '', pipeline["git_repositry"]["url"]))
