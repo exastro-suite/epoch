@@ -2715,14 +2715,17 @@ const wsDataCompare = function(){
     // 比較
     const compare = function( a, b ){
         if ( b === undefined ) {
-            return [ compareStatus.add, b, a ];
+            if ( a === undefined ) {
+              return [ compareStatus.equal, b, a ];
+            } else {
+              return [ compareStatus.add, b, a ];
+            }
         } else if ( b === null || b === '') {
-          return [ compareStatus.add, b, a ];
-          // if( a === null || a === '' ) {
-          //   return [ compareStatus.equal, b, a ];
-          // } else {
-          //     return [ compareStatus.add, b, a ];
-          // }
+          if ( a === null || a === '' ) {
+            return [ compareStatus.equal, b, a ];
+          } else {
+            return [ compareStatus.add, b, a ];
+          }
         } else if ( a === b ) {
             return [ compareStatus.equal, b, a ];
         } else {
