@@ -573,7 +573,9 @@ const wsModalJSON = {
               'title': 'Namespace',
               'name': 'environment-namespace',
               'class': 'input-pickup input-pickup-external input-pickup-internal',
-              'placeholder': '実行環境のNamespaceを入力してください'
+              'placeholder': '実行環境のNamespaceを入力してください',
+              'validation': '^[a-z0-9]([-a-z0-9]*[a-z0-9])?$',
+              'inputError': '実行環境のNamespaceの形式が正しくありません',
             },
             'environmentToken': {
               'type': 'input',
