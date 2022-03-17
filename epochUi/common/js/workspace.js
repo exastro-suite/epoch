@@ -3429,6 +3429,21 @@ const compareInfo = function( modalID, compareData ){
         },
         'static_analysis' : {
           'interface' :       (wsDataJSON['application-code'][i][i+'-pipeline-tekton-static-analysis']? wsDataJSON['application-code'][i][i+'-pipeline-tekton-static-analysis'] : ""),
+        },
+        'unit_test' : {
+          'enable' :       "true",
+          'image' :        "python:3",
+          'command' :      "./unit-test.epoch.sh",
+          'directory' :    "/app",
+          'params' : [
+            {
+              'DB_HOST' :  "pytest-postgres.default.svc",
+              'DB_PORT' :  "5432",
+              'DB_NAME' :  "pytest",
+              'DB_USER' :  "testuser",
+              'DB_PASSWORD' :  "test"
+            }
+          ]
         }
       }
     }
