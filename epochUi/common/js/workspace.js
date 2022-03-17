@@ -3435,15 +3435,13 @@ const compareInfo = function( modalID, compareData ){
           'image' :        "python:3",
           'command' :      "./unit-test.epoch.sh",
           'directory' :    "/app",
-          'params' : [
-            {
-              'DB_HOST' :  "pytest-postgres.default.svc",
-              'DB_PORT' :  "5432",
-              'DB_NAME' :  "pytest",
-              'DB_USER' :  "testuser",
-              'DB_PASSWORD' :  "test"
-            }
-          ]
+          'params' : {
+            'DB_HOST' :  "pytest-postgres.default.svc",
+            'DB_PORT' :  "5432",
+            'DB_NAME' :  "pytest",
+            'DB_USER' :  "testuser",
+            'DB_PASSWORD' :  "test"
+          }
         }
       }
     }
