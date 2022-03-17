@@ -1,0 +1,77 @@
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#{% for item in param.ci_config.pipelines %}---
+#{% if item.unit_test.enable == "true" %}
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: pipeline-task-unit-test-{{ loop.index }}
+  namespace: {{ param.ci_config.pipeline_namespace }}
+  labels:
+    app.kubernetes.io/version: "0.1"
+  annotations:
+    tekton.dev/pipelines.minVersion: "0.12.1"
+    tekton.dev/tags: unit-test
+    tekton.dev/displayName: "unit-test"
+spec:
+  params:
+    - name: clone_source_dir
+    - name: working_dir
+      default: "{{ item.unit_test.directory }}"
+  workspaces:
+  - name: source
+  steps:
+  - name: unit-test
+    image: {{ item.unit_test.image }}
+    env:
+    - name: HTTP_PROXY
+      value: "{{ param.proxy.http }}"
+    - name: http_proxy
+      value: "{{ param.proxy.http }}"
+    - name: HTTPS_PROXY
+      value: "{{ param.proxy.https }}"
+    - name: https_proxy
+      value: "{{ param.proxy.https }}"
+    - name: NO_PROXY
+      value: "{{ param.proxy.no_proxy }}"
+    - name: no_proxy
+      value: "{{ param.proxy.no_proxy }}"
+      #{% for ut_param_name, ut_param_value in item.unit_test.params.items() %}
+    - name: {{ ut_param_name }}
+      value: "{{ ut_param_value }}"
+      #{% endfor %}
+    script: |
+        #!/bin/sh
+        # Unit test pre-processing
+        mkdir -p "$(params.working_dir)"
+        if [ $? -ne 0 ]; then
+            echo "[ERROR] command exit not zero : mkdir $(params.working_dir)"
+            exit 1
+        fi
+        cp -r $(params.clone_source_dir)/* $(params.clone_source_dir)/.[^\.]* $(params.working_dir)/.
+        if [ $? -ne 0 ]; then
+            echo "[ERROR] command exit not zero : cp $(params.working_dir)"
+            exit 1
+        fi
+        cd $(params.working_dir)
+        if [ $? -ne 0 ]; then
+            echo "[ERROR] command exit not zero : cd $(params.working_dir)"
+            exit 1
+        fi
+        # Execute Unit Test
+        {{ item.unit_test.command }}
+        # TASK exit
+        exit $?
+{% endif %}
+{% endfor %}

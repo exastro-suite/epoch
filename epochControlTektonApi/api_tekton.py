@@ -50,6 +50,7 @@ templates = {
         'pipeline-task-start.yaml',
         'pipeline-task-git-clone.yaml',
         'pipeline-task-sonarqube-scanner.yaml',
+        'pipeline-task-unit-test.yaml',
         'pipeline-task-build-and-push.yaml',
         'pipeline-task-complete.yaml',
         'pipeline-build-and-push.yaml',

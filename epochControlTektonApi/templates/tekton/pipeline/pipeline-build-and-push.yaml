@@ -106,11 +106,30 @@ spec:
         - name: subdirectory
           value: $(context.pipelineRun.name)
     #{% endif %}
+    #{% if item.unit_test.enable == "true" %}
+    - name: task-unit-test
+      runAfter:
+      #{% if item.static_analysis.interface == "sonarQube" %}
+      - task-sonarqube-scanner
+      #{% else %}
+      - task-git-clone
+      #{% endif %}
+      taskRef:
+        name: pipeline-task-unit-test-{{ loop.index }}
+      workspaces:
+        - name: source
+          workspace: git-source
+      params:
+        - name: clone_source_dir
+          value: "$(workspaces.source.path)/$(context.pipelineRun.name)"
+    #{% endif %}
     - name: task-build-and-push
       taskRef:
         name: pipeline-task-build-and-push
       runAfter:
-        #{% if item.static_analysis.interface == "sonarQube" %}
+        #{% if item.unit_test.enable == "true" %}
+        - task-unit-test
+        #{% elif item.static_analysis.interface == "sonarQube" %}
         - task-sonarqube-scanner
         #{% else %}
         - task-git-clone

@@ -3414,6 +3414,10 @@ const compareInfo = function( modalID, compareData ){
   
     reqbody['ci_config']['pipelines'] = [];
     for(var i in wsDataJSON['application-code']) {
+      // TEST-CODE
+      console.log((wsDataJSON['application-code'][i][i+'-git-repository-url']).replace(/^.*\//,""));
+      // TEST-CODE
+
       reqbody['ci_config']['pipelines'][reqbody['ci_config']['pipelines'].length] = {
         'pipeline_id'   :  i,
         'git_repositry' :  {
@@ -3433,7 +3437,7 @@ const compareInfo = function( modalID, compareData ){
         'unit_test' : {
           'enable' :       "true",
           'image' :        "python:3",
-          'command' :      "./unit-test.epoch.sh",
+          'command' :      "./unittest.epoch.sh",
           'directory' :    "/app",
           'params' : {
             'DB_HOST' :  "pytest-postgres.default.svc",
