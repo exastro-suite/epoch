@@ -573,7 +573,9 @@ const wsModalJSON = {
               'title': 'Namespace',
               'name': 'environment-namespace',
               'class': 'input-pickup input-pickup-external input-pickup-internal',
-              'placeholder': '実行環境のNamespaceを入力してください'
+              'placeholder': '実行環境のNamespaceを入力してください',
+              'validation': '^[a-z0-9]([-a-z0-9]*[a-z0-9])?$',
+              'inputError': '実行環境のNamespaceの形式が正しくありません',
             },
             'environmentToken': {
               'type': 'input',
@@ -2713,9 +2715,17 @@ const wsDataCompare = function(){
     // 比較
     const compare = function( a, b ){
         if ( b === undefined ) {
-            return [ compareStatus.add, b, a ];
+            if ( a === undefined ) {
+              return [ compareStatus.equal, b, a ];
+            } else {
+              return [ compareStatus.add, b, a ];
+            }
         } else if ( b === null || b === '') {
+          if ( a === null || a === '' ) {
+            return [ compareStatus.equal, b, a ];
+          } else {
             return [ compareStatus.add, b, a ];
+          }
         } else if ( a === b ) {
             return [ compareStatus.equal, b, a ];
         } else {
@@ -3002,12 +3012,14 @@ const compareInfo = function( modalID, compareData ){
           wsDataJSON['environment'][item]['text']                         = data_environments[i]['name'];
           wsDataJSON['environment'][item][item + '-environment-name']     = data_environments[i]['name'];
           wsDataJSON['environment'][item][item + '-environment-deploy-select'] = data_environments[i]['deploy_destination']['cluster_kind'];
-          wsDataJSON['environment'][item][item + '-environment-url']      = data_environments[i]['deploy_destination']['cluster_url'];
+          //wsDataJSON['environment'][item][item + '-environment-url']      = data_environments[i]['deploy_destination']['cluster_url'];
           wsDataJSON['environment'][item][item + '-environment-namespace']= data_environments[i]['deploy_destination']['namespace'];
           if(data_environments[i]['deploy_destination']['cluster_kind'] == "external") {
+            wsDataJSON['environment'][item][item + '-environment-url']      = data_environments[i]['deploy_destination']['cluster_url'];
             wsDataJSON['environment'][item][item + '-environment-authentication-token']= data_environments[i]['deploy_destination']['authentication_token'];
             wsDataJSON['environment'][item][item + '-environment-certificate']= data_environments[i]['deploy_destination']['base64_encoded_certificate'];
           } else {
+            wsDataJSON['environment'][item][item + '-environment-url']      = null;
             wsDataJSON['environment'][item][item + '-environment-authentication-token']= null;
             wsDataJSON['environment'][item][item + '-environment-certificate']= null;
           }
@@ -3033,8 +3045,8 @@ const compareInfo = function( modalID, compareData ){
         // data_workspaceからwsDataJSONのマニフェストgitリポジトリ情報へ書き出す
         wsDataJSON['git-service-argo'] = {
           'git-service-argo-account-select' : data_workspace['cd_config']['environments_common']['git_repositry']['account_select'],
-          'git-service-argo-user' : data_workspace['cd_config']['environments_common']['git_repositry']['user'],
-          'git-service-argo-token' : data_workspace['cd_config']['environments_common']['git_repositry']['token'],
+          'git-service-argo-user' : data_workspace['cd_config']['environments_common']['git_repositry']['account_select'] == "applicationCode"? null : data_workspace['cd_config']['environments_common']['git_repositry']['user'],
+          'git-service-argo-token' : data_workspace['cd_config']['environments_common']['git_repositry']['account_select'] == "applicationCode"? null :data_workspace['cd_config']['environments_common']['git_repositry']['token'],
           'git-service-argo-select' : data_workspace['cd_config']['environments_common']['git_repositry']['housing'] == 'inner'? 'epoch': data_workspace['cd_config']['environments_common']['git_repositry']['interface'],
         };
 

@@ -404,6 +404,10 @@ function wsAppCodeRepoCheck( gitService ) {
 function wsTektonCheck() {
   const ws = this;
   ws.cmn = new wsResultCommon();
+
+  // ポーリング設定
+  ws.cmn.update = true;
+  ws.cmn.pollingTime = 3000;
   
   // モーダル構造
   ws.cmn.modal.st = {
@@ -536,22 +540,27 @@ function wsTektonCheck() {
       const taskLength = d.tasks.length;
       
       // タスク一覧
-      let taskHTML = '';
-      for ( let i = 0; i < taskLength; i++ ) {
-          taskHTML += `<li class="task-detail-item">`
-            + `<div class="task-detail-status"></div>`
-            + `<div class="task-detail-name">${d.tasks[i].name}</div>`
-            + `<div class="task-detail-date"></div>`
-            + `<div class="task-detail-log-open"><button class="et-bu task-status-open epoch-popup-m" title="ログ"><span class="et-bui"></span></button></div>`
-            + `<div class="task-detail-log"></div>`
-          + `</li>`;
+      if ( String( d.task_id ) !== $modal.find('.status-trace-id-number').text() ) {
+        let taskHTML = '';
+        for ( let i = 0; i < taskLength; i++ ) {
+            taskHTML += `<li class="task-detail-item">`
+              + `<div class="task-detail-status"></div>`
+              + `<div class="task-detail-name">${d.tasks[i].name}</div>`
+              + `<div class="task-detail-date"></div>`
+              + `<div class="task-detail-log-open"><button class="et-bu task-status-open epoch-popup-m" title="ログ"><span class="et-bui"></span></button></div>`
+              + `<div class="task-detail-log"></div>`
+            + `</li>`;
+        }
+        $modal.find('.task-detail-list').html(taskHTML);
       }
-      $modal.find('.task-detail-list').html(taskHTML);
-      $modal.find('.task-status-open').on('click', function(){
-          const $task = $(this).closest('.task-detail-item');
-          $task.toggleClass('task-status-show').find('.task-detail-log').stop(0,0).animate({ height: 'toggle' }, 200 );
-      });
-      
+      // clickイベント追加
+      if ( !$._data( $modal.get(0), 'events' ) ) {
+          $modal.on('click', '.task-status-open', function(){
+              const $task = $(this).closest('.task-detail-item');
+              $task.toggleClass('task-status-show').find('.task-detail-log').stop(0,0).animate({ height: 'toggle' }, 200 );
+          });
+      }
+
       const list = ws.cmn.data[k].header[0].list;
       for ( let i = 0; i < taskLength; i++ ) {
           const status = ( d.tasks[i].status )? d.tasks[i].status: 'Pending',
