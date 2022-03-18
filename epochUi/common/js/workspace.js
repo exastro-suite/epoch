@@ -3667,7 +3667,7 @@ const compareInfo = function( modalID, compareData ){
       $.ajax({
         "type": "GET",
         "url": workspace_api_conf.api.ciResult.pipelinerun.get.replace('{workspace_id}', workspace_id),
-        "data": {'latest': "True"}
+        "data": {'latest': "True", "log": "False"}
       }).done(function(response) {
         var current_pipelineruns = response.rows;
         var visibility = "hidden";

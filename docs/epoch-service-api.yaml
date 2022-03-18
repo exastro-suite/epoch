@@ -517,6 +517,7 @@ paths:
       parameters:
         - $ref: '#/definitions/parameters/Workspace_Id'
         - $ref: '#/definitions/parameters/Latest'
+        - $ref: '#/definitions/parameters/Log'
 
       # レスポンス結果
       responses:
@@ -978,6 +979,13 @@ definitions:
       name: latest
       in: string
       description: 最新情報取得(True or False)
+      schema:
+        type: string
+
+    Log:
+      name: log
+      in: string
+      description: タスクログ取得(True or False)
       schema:
         type: string
 
