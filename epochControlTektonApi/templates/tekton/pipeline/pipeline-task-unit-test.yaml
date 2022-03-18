@@ -35,22 +35,34 @@ spec:
   - name: unit-test
     image: {{ item.unit_test.image }}
     env:
+    #{% if not item.unit_test.params.HTTP_PROXY %}
     - name: HTTP_PROXY
       value: "{{ param.proxy.http }}"
+    #{% endif %}
+    #{% if not item.unit_test.params.http_proxy %}
     - name: http_proxy
       value: "{{ param.proxy.http }}"
+    #{% endif %}
+    #{% if not item.unit_test.params.HTTPS_PROXY %}
     - name: HTTPS_PROXY
       value: "{{ param.proxy.https }}"
+    #{% endif %}
+    #{% if not item.unit_test.params.https_proxy %}
     - name: https_proxy
       value: "{{ param.proxy.https }}"
+    #{% endif %}
+    #{% if not item.unit_test.params.NO_PROXY %}
     - name: NO_PROXY
       value: "{{ param.proxy.no_proxy }}"
+    #{% endif %}
+    #{% if not item.unit_test.params.no_proxy %}
     - name: no_proxy
       value: "{{ param.proxy.no_proxy }}"
-      #{% for ut_param_name, ut_param_value in item.unit_test.params.items() %}
+    #{% endif %}
+    #{% for ut_param_name, ut_param_value in item.unit_test.params.items() %}
     - name: {{ ut_param_name }}
       value: "{{ ut_param_value }}"
-      #{% endfor %}
+    #{% endfor %}
     script: |
         #!/bin/sh
         # Unit test pre-processing

@@ -3415,7 +3415,37 @@ const compareInfo = function( modalID, compareData ){
     reqbody['ci_config']['pipelines'] = [];
     for(var i in wsDataJSON['application-code']) {
       // TEST-CODE
-      console.log((wsDataJSON['application-code'][i][i+'-git-repository-url']).replace(/^.*\//,""));
+      let unit_test_params = null;
+      switch((wsDataJSON['application-code'][i][i+'-git-repository-url']).replace(/^.*\//,"")) {
+        case "pytest-sample01.git":
+          unit_test_params = {
+            "enable" : "true",
+            'image' :        "python:3",
+            'command' :      "./unittest.epoch.sh",
+            'directory' :    "/app",
+            'params' : {
+              'DB_HOST' :  "pytest-postgres.default.svc",
+              'DB_PORT' :  "5432",
+              'DB_NAME' :  "pytest",
+              'DB_USER' :  "testuser",
+              'DB_PASSWORD' :  "test"
+            }
+          };
+          break;
+        case "carts.git":
+          unit_test_params = {
+            "enable" : "true",
+            'image' :  "maven:3.6-jdk-8",
+            'command' : "./unittest.epoch.sh",
+            'directory' : "/usr/src/mymaven",
+            'params' : { }
+          };
+          break;
+        default:
+          unit_test_params = {
+            "enable" : "false"
+          };
+      }
       // TEST-CODE
 
       reqbody['ci_config']['pipelines'][reqbody['ci_config']['pipelines'].length] = {
@@ -3434,19 +3464,7 @@ const compareInfo = function( modalID, compareData ){
         'static_analysis' : {
           'interface' :       (wsDataJSON['application-code'][i][i+'-pipeline-tekton-static-analysis']? wsDataJSON['application-code'][i][i+'-pipeline-tekton-static-analysis'] : ""),
         },
-        'unit_test' : {
-          'enable' :       "true",
-          'image' :        "python:3",
-          'command' :      "./unittest.epoch.sh",
-          'directory' :    "/app",
-          'params' : {
-            'DB_HOST' :  "pytest-postgres.default.svc",
-            'DB_PORT' :  "5432",
-            'DB_NAME' :  "pytest",
-            'DB_USER' :  "testuser",
-            'DB_PASSWORD' :  "test"
-          }
-        }
+        'unit_test' : unit_test_params
       }
     }
 

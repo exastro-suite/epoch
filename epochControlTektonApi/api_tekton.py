@@ -309,21 +309,31 @@ def apply_tekton_pipeline(workspace_id, kind, param):
     """
     globals.logger.debug('start apply_tekton_pipeline_files workspace_id:{} kind:{}'.format(workspace_id, kind))
 
-    with dbconnector() as db, dbcursor(db) as cursor:
+    with tempfile.TemporaryDirectory() as tempdir, dbconnector() as db, dbcursor(db) as cursor:
 
         for template in templates[kind]:
             globals.logger.debug('* tekton pipeline apply start workspace_id:{} template:{}'.format(workspace_id, template))
 
             try:
+                yamltext = ""
+
+                # テンプレート毎の処理
+                if template == "pipeline-task-unit-test.yaml":
+                    # unit-testのenable件数が0件のときはskipする(yamlに何も定義が入らなくなる)
+                    if sum([pipeline['unit_test']['enable'] == "true" for pipeline in param['ci_config']['pipelines']]) == 0:
+                        globals.logger.debug(' skip apply')
+                        continue
+
                 # templateの展開
                 yamltext = render_template('tekton/{}/{}'.format(kind, template), param=param, workspace_id=workspace_id)
                 globals.logger.debug(' render_template finish')
 
                 # ディレクトリ作成
-                os.makedirs(dest_folder, exist_ok=True)
+                # os.makedirs(dest_folder, exist_ok=True)
 
                 # yaml一時ファイル生成
-                path_yamlfile = '{}/{}'.format(dest_folder, template)
+                # path_yamlfile = '{}/{}'.format(dest_folder, template)
+                path_yamlfile = '{}/{}'.format(tempdir, template)
                 with open(path_yamlfile, mode='w') as fp:
                     fp.write(yamltext)
 
@@ -331,6 +341,7 @@ def apply_tekton_pipeline(workspace_id, kind, param):
 
             except Exception as e:
                 globals.logger.error('tekton pipeline yamlfile create workspace_id:{} template:{}'.format(workspace_id, template))
+                globals.logger.debug('yaml text:\n' + yamltext)
                 raise
 
             # yaml情報の変数設定
@@ -353,6 +364,7 @@ def apply_tekton_pipeline(workspace_id, kind, param):
 
             except subprocess.CalledProcessError as e:
                 globals.logger.error('COMMAND ERROR RETURN:{}\n{}'.format(e.returncode, e.output.decode('utf-8')))
+                globals.logger.debug('yaml text:\n' + yamltext)
                 raise # 再スロー
 
 
