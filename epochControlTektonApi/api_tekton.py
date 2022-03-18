@@ -33,6 +33,9 @@ from dbconnector import dbconnector
 from dbconnector import dbcursor
 import da_tekton
 
+# Number of retrys to get TEKTON logs - TEKTONのログ取得のretry回数
+RETRY_GET_LOG=1
+
 # 設定ファイル読み込み・globals初期化
 app = Flask(__name__)
 app.config.from_envvar('CONFIG_API_TEKTON_PATH')
@@ -707,15 +710,24 @@ def get_tekton_taskrun_logs(workspace_id, taskrun_name):
     globals.logger.debug('CALL get_tekton_taskrun:{},{}'.format(workspace_id, taskrun_name))
 
     try:
-        result_kubectl = subprocess.check_output(
-            ['kubectl', 'tkn', 'taskrun', 'logs', taskrun_name,
-            '-n', tekton_pipeline_namespace(workspace_id),
-            ], stderr=subprocess.STDOUT)
-        
-        globals.logger.debug('COMMAAND SUCCEED: kubectl tkn taskrun logs')
+        # TEKTON log acquisition sometimes times out, so retry - TEKTONのログ取得がたまにtimeoutするのでリトライする
+        for i in range(RETRY_GET_LOG):
+            try:
+                result_kubectl = subprocess.check_output(
+                    ['kubectl', 'tkn', 'taskrun', 'logs', taskrun_name,
+                    '-n', tekton_pipeline_namespace(workspace_id),
+                    ], stderr=subprocess.STDOUT)
+                
+                globals.logger.debug('COMMAAND SUCCEED: kubectl tkn taskrun logs')
 
-        # 正常応答
-        return jsonify({"result": "200", "log" : result_kubectl.decode('utf-8')}), 200
+                # 正常応答
+                return jsonify({"result": "200", "log" : result_kubectl.decode('utf-8')}), 200
+
+            except Exception as e:
+                if i < RETRY_GET_LOG:
+                    globals.logger.debug('COMMAAND RETRY: kubectl tkn taskrun logs')
+                else:
+                    raise
 
     except Exception as e:
         return common.serverError(e)
