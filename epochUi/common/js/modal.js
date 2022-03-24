@@ -748,25 +748,38 @@ modalFunction.prototype = {
       if ( item !== undefined ) {
         const modal = this,
               $item = $('<div/>', {'class': 'modal-item'});
-        for ( const key in item ) {
-          const itemType = function( data ){
-            switch( data.type ) {
-              case 'input': return modal.createInput( data, tabNumber );
-              case 'number': return modal.createNumber( data, tabNumber );
-              case 'textarea': return modal.createTextarea( data, tabNumber );
-              case 'password': return modal.createPassword( data, tabNumber );
-              case 'radio': return modal.createRadio( data, tabNumber );
-              case 'listSelect': return modal.createListSelect( data, tabNumber );
-              case 'loading': return modal.createLoadingBlock( data, tabNumber );
-              case 'reference': return modal.createReference( data, tabNumber );
-              case 'freeitem': return modal.createFreeItem( data, tabNumber );
-              case 'message': return modal.createMessage( data );
-              case 'string': return modal.createString( data );
-              case 'html': return modal.createHtml( data );
-            }
-          };
-          $item.append( itemType( item[key] ) );
+        
+        const itemType = function( data ){
+          switch( data.type ) {
+            case 'input': return modal.createInput( data, tabNumber );
+            case 'number': return modal.createNumber( data, tabNumber );
+            case 'textarea': return modal.createTextarea( data, tabNumber );
+            case 'password': return modal.createPassword( data, tabNumber );
+            case 'radio': return modal.createRadio( data, tabNumber );
+            case 'listSelect': return modal.createListSelect( data, tabNumber );
+            case 'loading': return modal.createLoadingBlock( data, tabNumber );
+            case 'reference': return modal.createReference( data, tabNumber );
+            case 'freeitem': return modal.createFreeItem( data, tabNumber );
+            case 'message': return modal.createMessage( data );
+            case 'string': return modal.createString( data );
+            case 'html': return modal.createHtml( data );
+            case 'heading': return modal.createHeading( data );
+          }
+        };     
+        
+        const type = modal.typeJudgment( item );
+        if ( type === 'object' ) {
+          for ( const key in item ) {
+            $item.append( itemType( item[key] ) );
+          }
+        } else if ( type === 'array' ) {
+          const l = item.length;
+          for ( let i = 0; i < l; i++ ) {
+            $item.append( itemType( item[i] ) );
+          }
         }
+        
+
         return $item;
       }
     },
@@ -1288,6 +1301,13 @@ modalFunction.prototype = {
       return $html;
     },
     /* -------------------------------------------------- *\
+       Heaading
+    \* -------------------------------------------------- */
+    'createHeading': function( data ){
+      const $obj = $(`<div class="modal-item-heading">${data.title}</div>`);
+      return $obj;
+    },
+    /* -------------------------------------------------- *\
        Reference
     \* -------------------------------------------------- */
     'createReference': function( reference, tabNumber ){
@@ -1396,27 +1416,34 @@ modalFunction.prototype = {
             
       const name = ( tabNumber !== undefined )? tabNumber + '-' + free.name: free.name,
             freeVal = this.searchValue( this.valueJSON, name ),
-            list = ( freeVal === undefined )? {'':''}: JSON.parse( freeVal ),
-            className = ( free.class !== undefined )? ' ' + free.class: '';
-      
+            list = ( freeVal === undefined || freeVal === null )? {'p':[{'':''}]}: JSON.parse( freeVal ),
+            className = ( free.class !== undefined )? ' ' + free.class: '',
+            keyPh = ( free.keyPlaceholder !== undefined )? free.keyPlaceholder: '',
+            valPh = ( free.valuePlaceholder !== undefined )? free.valuePlaceholder: '';
+
       const addLine = function( key, value ){
         return ''
         + '<li class="item-freeitem-item">'
           + '<div class="item-freeitem-item-move"></div>'
-          + '<div class="item-freeitem-item-name"><input class="item-freeitem-input item-text name" type="text" value="' + key + '" placeholder="項目名を入力してください。"></div>'
-          + '<div class="item-freeitem-item-content"><input class="item-freeitem-input item-text content" type="text" value="' + value + '" placeholder="項目内容を入力してください。"></div>'
+          + `<div class="item-freeitem-item-name"><input class="item-freeitem-input item-text name" type="text" value="${key}" placeholder="${keyPh}"></div>`
+          + '<div class="item-freeitem-item-colon">:</div>'
+          + `<div class="item-freeitem-item-content"><input class="item-freeitem-input item-text content" type="text" value="${value}" placeholder="${valPh}"></div>`
           + '<div class="item-freeitem-item-delete"></div>'
         + '</li>';
       };
       
-      let inputHTML = '<ul class="item-freeitem-list">';
-      for ( const key in list ) {
-        inputHTML += addLine( key, list[key] );
-      }
-      inputHTML += '</ul>'
+      let inputHTML = ''
       + '<ul class="item-freeitem-menu-list">'
         + '<li class="item-freeitem-menu-item"><button class="epoch-button item-freeitem-add-button add" type="button">項目を追加する</button></li>'
-      + '</ul>';
+      + '</ul>'
+      + '<ul class="item-freeitem-list">';
+
+      const l = list.p.length;
+      for ( let i = 0; i < l; i++ ) {
+        const key = Object.keys( list.p[i] )[0];
+        inputHTML += addLine( key, list.p[i][key] );
+      }
+      inputHTML += '</ul>';
       
       $item.find('.item-freeitem-area').append(
         $('<div/>', {

@@ -566,6 +566,30 @@ epochCommon.prototype = {
   // isset
   'isset': function( data ) {
     return ( data === undefined || data === null || data === '')? false: true;
+  },
+  // ファイル名エスケープ
+  'escapeFileName': function( fileName, replaceSpace ) {
+      const symbols = ['/',':','\\*','\\?','\\|','<','>','\\\\','\\"'],
+            l = symbols.length;
+      for ( let i = 0; i < l; i++ ) {
+          const reg = new RegExp( symbols[i], 'g');
+          fileName = fileName.replace( reg, '');
+      }
+      if ( replaceSpace ) {
+          fileName = fileName.replace(/\s/g, replaceSpace );
+      }
+      return fileName;
+  },
+  // テキストファイルダウンロード
+  'textDownload': function( text, fileName ) {
+      const blob = new Blob([ text ], {'type': 'text/plain'}),
+            url = URL.createObjectURL( blob ),
+            a = document.createElement('a');
+      if ( !fileName ) fileName = 'text.txt';
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL( url );
   }
 };
 

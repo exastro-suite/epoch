@@ -376,34 +376,95 @@ const wsModalJSON = {
             'key2': 'text'
           },
           'emptyText': 'CIパイプラインの登録がありません。Gitサービスの設定からCIパイプラインを追加してください。',
-          'item': {
-            'gitRepositoryURL': {
+          'item': [
+            {
               'type': 'reference',
-              'title': 'Gitリポジトリ URL',
+              'title': 'Gitリポジトリ(ソース)　URL',
               'target': 'git-repository-url'
             },
-            'pipelineTektonBranch': {
+            {
+              'type': 'heading',
+              'title': 'ビルド設定'
+            },
+            {
               'type': 'input',
               'title': 'ビルド　ブランチ',
               'name': 'pipeline-tekton-branch',
-              'placeholder': 'ビルド　ブランチを入力してください（入力例：main,master）'
+              'placeholder': 'ビルド　ブランチを入力してください'
             },
-            'pipelineTektonDockerPath': {
+            // {
+            //   'type': 'input',
+            //   'title': 'ビルド　コンテキストパス',
+            //   'name': 'pipeline-tekton-context-path',
+            //   'placeholder': 'ビルド　コンテキストパスを入力してください'
+            // },
+            {
               'type': 'input',
               'title': 'ビルド　Dockerファイルパス',
               'name': 'pipeline-tekton-docker-path',
-              'placeholder': 'ビルド Dockerファイルパスを入力してください（入力例：./Dockerfile）'
+              'placeholder': 'ビルド　Dockerファイルパスを入力してください'
             },
-            'staticAnalysis': {
+            {
+              'type': 'heading',
+              'title': '静的解析設定'
+            },
+            {
               'type': 'radio',
-              'title': '静的解析',
+              'title': '静的解析選択',
               'name': 'pipeline-tekton-static-analysis',
               'item': {
                 'none': '使用しない',
                 'sonarQube': 'SonarQube'
               }
+            },
+            {
+              'type': 'heading',
+              'title': 'Unit test'
+            },
+            {
+              'type': 'radio',
+              'title': 'Unit test選択',
+              'name': 'unit-test-select',
+              'class': 'input-pickup-select',
+              'item': {
+                'execution': '実行する',
+                'none': '実行しない'
+              }
+            },
+            {
+              'type': 'input',
+              'title': 'Unit test起動コンテナイメージ',
+              'name': 'unit-test-image',
+              'class': 'input-pickup input-pickup-execution',
+              'placeholder': 'Unit test起動コンテナイメージを入力してください',
+              'note': '入力例： python:3'
+            },
+            {
+              'type': 'input',
+              'title': 'Unit test起動コマンド',
+              'name': 'unit-test-command',
+              'class': 'input-pickup input-pickup-execution',
+              'placeholder': 'Unit test起動コマンドを入力してください',
+              'note': '入力例： ./unit-test.sh'
+            },
+            {
+              'type': 'input',
+              'title': 'Unit testソースディレクトリ',
+              'name': 'unit-test-dir',
+              'class': 'input-pickup input-pickup-execution',
+              'placeholder': 'Unit testソースディレクトリを入力してください',
+              'note': '入力例：/app'
+            },
+            {
+              'type': 'freeitem',
+              'title': 'Unit testパラメータ',
+              'name': 'unit-test-parameter',
+              'class': 'input-pickup input-pickup-execution',
+              'note': 'Unit testで使用する環境変数のパラメータを設定してください。',
+              'keyPlaceholder': '変数名を入力してください',
+              'valuePlaceholder': '値を入力してください'
             }
-          }
+          ]
         }
       }      
     }
@@ -1273,7 +1334,7 @@ $workspaceFooter.on('click', '.workspace-footer-menu-button', function(){
 
 // モーダル内の入力データを wsDataJSON に入れる
 const setInputData = function( tabTarget, commonTarget ){
-  const inputTarget = 'input[type="text"], input[type="password"], input[type="radio"]:checked, textarea, input[type="hidden"]';
+  const inputTarget = 'input[type="text"], input[type="password"], input[type="radio"]:checked, textarea, input[type="hidden"], .item-freeitem';
   
   // タブリストの作成
   modal.$modal.find('.modal-tab-item').each( function(){
@@ -1287,25 +1348,46 @@ const setInputData = function( tabTarget, commonTarget ){
   modal.$modal.find( inputTarget ).each( function(){
     const $input = $( this ),
           name = $input.attr('name');
-    // タブの中か調べる
+    const setData = function() {
+        if ( !$input.is('.item-freeitem') ) {
+            if ( !$input.is('.item-freeitem-input') ) {
+                if ( $input.is(':disabled') ) {
+                    return null
+                } else {
+                    return $input.val();
+                }
+            }
+        } else {
+            // 自由項目
+            const free = {'p': []};
+            $input.find('.item-freeitem-item').each(function(){
+                const $item = $( this ),
+                      key = $item.find('.item-freeitem-input.name').val(),
+                      value = $item.find('.item-freeitem-input.content').val();
+                if ( key !== '') {
+                    const p = {};
+                    p[key] = value;
+                    free.p.push( p );
+                }
+            });
+            if ( Object.keys( free ).length ) {
+                return JSON.stringify( free );
+            } else {
+                return null;
+            }
+        }
+    };
+    // タブの中か？
     const $tabBlock = $input.closest('.modal-tab-body-block');
     if ( $tabBlock.length ) {
-      const tabID = $tabBlock.attr('id');
-      if ( wsDataJSON[ tabTarget ] === undefined ) wsDataJSON[ tabTarget ] = {};
-      if ( wsDataJSON[ tabTarget ][ tabID ] === undefined ) wsDataJSON[ tabTarget ][ tabID ] = {};
-      if ( $input.is(':disabled') ) {
-        wsDataJSON[ tabTarget ][ tabID ][ name ] = null
-      } else {
-        wsDataJSON[ tabTarget ][ tabID ][ name ] = $input.val();
-      }
+        const tabID = $tabBlock.attr('id');
+        if ( wsDataJSON[ tabTarget ] === undefined ) wsDataJSON[ tabTarget ] = {};
+        if ( wsDataJSON[ tabTarget ][ tabID ] === undefined ) wsDataJSON[ tabTarget ][ tabID ] = {};
+        wsDataJSON[ tabTarget ][ tabID ][ name ] = setData();
     } else {
-      if ( wsDataJSON[ commonTarget ] === undefined ) wsDataJSON[ commonTarget ] = {};
-      if ( $input.is(':disabled') ) {
-        wsDataJSON[ commonTarget ][ name ] = null
-      } else {
-        wsDataJSON[ commonTarget ][ name ] = $input.val();
-      }
-    }
+        if ( wsDataJSON[ commonTarget ] === undefined ) wsDataJSON[ commonTarget ] = {};
+        wsDataJSON[ commonTarget ][ name ] = setData();
+    }    
   });
 };
 
@@ -2714,18 +2796,12 @@ const wsDataCompare = function(){
     
     // 比較
     const compare = function( a, b ){
-        if ( b === undefined ) {
-            if ( a === undefined ) {
+        if ( b === undefined || b === null || b === '') {
+             if( a === undefined || a === null || a === '' ) {
               return [ compareStatus.equal, b, a ];
             } else {
               return [ compareStatus.add, b, a ];
             }
-        } else if ( b === null || b === '') {
-          if ( a === null || a === '' ) {
-            return [ compareStatus.equal, b, a ];
-          } else {
-            return [ compareStatus.add, b, a ];
-          }
         } else if ( a === b ) {
             return [ compareStatus.equal, b, a ];
         } else {
@@ -2798,6 +2874,7 @@ const wsDataCompare = function(){
       result.html[key] = info.html;
     }    
 
+    //console.log( result );
     return result;
 };
   
@@ -3002,8 +3079,13 @@ const compareInfo = function( modalID, compareData ){
           wsDataJSON['application-code'][item][item + '-pipeline-tekton-docker-path']         = data_pipelines[i]['build']['dockerfile_path'];
           wsDataJSON['application-code'][item][item + '-pipeline-tekton-static-analysis']     = data_pipelines[i]['static_analysis']['interface'];
           wsDataJSON['application-code'][item][item + '-registry-service-output-destination'] = data_pipelines[i]['container_registry']['image'];
+          wsDataJSON['application-code'][item][item + '-unit-test-select']  = (data_pipelines[i].unit_test.enable === "true"? "execution" : "none");
+          wsDataJSON['application-code'][item][item + '-unit-test-image']   = (data_pipelines[i].unit_test.image      !== undefined? data_pipelines[i].unit_test.image : null);
+          wsDataJSON['application-code'][item][item + '-unit-test-command'] = (data_pipelines[i].unit_test.command    !== undefined? data_pipelines[i].unit_test.command : null);
+          wsDataJSON['application-code'][item][item + '-unit-test-dir']     = (data_pipelines[i].unit_test.directory  !== undefined? data_pipelines[i].unit_test.directory : null);
+          wsDataJSON['application-code'][item][item + '-unit-test-parameter'] = (data_pipelines[i].unit_test.params  !== undefined? JSON.stringify({"p":data_pipelines[i].unit_test.params}) : null);
         }
-  
+    
         wsDataJSON['environment'] = {};
         data_environments = data_workspace['cd_config']['environments'];
         for(var i in data_environments) {
@@ -3122,8 +3204,6 @@ const compareInfo = function( modalID, compareData ){
     });
   }
 
-  // TODO:Sprint79 DELETE
-  // $('#apply-workspace-button').on('click',apply_workspace);
   function apply_workspace() {
   
     console.log('CALL apply_workspace()');
@@ -3414,58 +3494,34 @@ const compareInfo = function( modalID, compareData ){
   
     reqbody['ci_config']['pipelines'] = [];
     for(var i in wsDataJSON['application-code']) {
-      // TEST-CODE
-      let unit_test_params = null;
-      switch((wsDataJSON['application-code'][i][i+'-git-repository-url']).replace(/^.*\//,"")) {
-        case "pytest-sample01.git":
-          unit_test_params = {
-            "enable" : "true",
-            'image' :        "python:3",
-            'command' :      "./unittest.epoch.sh",
-            'directory' :    "/app",
-            'params' : {
-              'DB_HOST' :  "pytest-postgres.default.svc",
-              'DB_PORT' :  "5432",
-              'DB_NAME' :  "pytest",
-              'DB_USER' :  "testuser",
-              'DB_PASSWORD' :  "test"
-            }
-          };
-          break;
-        case "carts.git":
-          unit_test_params = {
-            "enable" : "true",
-            'image' :  "maven:3.6-jdk-8",
-            'command' : "./unittest.epoch.sh",
-            'directory' : "/usr/src/mymaven",
-            'params' : { }
-          };
-          break;
-        default:
-          unit_test_params = {
-            "enable" : "false"
-          };
+      const wsPipelineItem = wsDataJSON['application-code'][i];
+      const rqPipelineItem = {
+        "pipeline_id": i,
+        "git_repositry" : {
+          "url": (wsPipelineItem[i+'-git-repository-url']? wsPipelineItem[i+'-git-repository-url'] : ""),
+        },
+        "webhooks_url": "https://" + location.hostname,
+        "build" : {
+          "branch": (wsPipelineItem[i+'-pipeline-tekton-branch']? wsPipelineItem[i+'-pipeline-tekton-branch'].split(',') : []),
+          "dockerfile_path": (wsPipelineItem[i+'-pipeline-tekton-docker-path']? wsPipelineItem[i+'-pipeline-tekton-docker-path'] : ""),
+        },
+        "container_registry" : {
+          "image": (wsPipelineItem[i+'-registry-service-output-destination']? wsPipelineItem[i+'-registry-service-output-destination'] : ""),
+        },
+        "static_analysis" : {
+          "interface": (wsPipelineItem[i+'-pipeline-tekton-static-analysis']? wsPipelineItem[i+'-pipeline-tekton-static-analysis'] : ""),
+        },
+        "unit_test": {
+          "enable": (wsPipelineItem[i+'-unit-test-select'] === 'execution'? 'true': 'false'),
+        },
       }
-      // TEST-CODE
-
-      reqbody['ci_config']['pipelines'][reqbody['ci_config']['pipelines'].length] = {
-        'pipeline_id'   :  i,
-        'git_repositry' :  {
-          'url' :             (wsDataJSON['application-code'][i][i+'-git-repository-url']? wsDataJSON['application-code'][i][i+'-git-repository-url'] : ""),
-        },
-        'webhooks_url'   :  "https://" + location.hostname,
-        'build' : {
-          'branch' :          (wsDataJSON['application-code'][i][i+'-pipeline-tekton-branch']? wsDataJSON['application-code'][i][i+'-pipeline-tekton-branch'].split(','): []),
-          'dockerfile_path' : (wsDataJSON['application-code'][i][i+'-pipeline-tekton-docker-path']? wsDataJSON['application-code'][i][i+'-pipeline-tekton-docker-path'] : ""),
-        },
-        'container_registry' : {
-          'image' :           (wsDataJSON['application-code'][i][i+'-registry-service-output-destination']? wsDataJSON['application-code'][i][i+'-registry-service-output-destination'] : ""),
-        },
-        'static_analysis' : {
-          'interface' :       (wsDataJSON['application-code'][i][i+'-pipeline-tekton-static-analysis']? wsDataJSON['application-code'][i][i+'-pipeline-tekton-static-analysis'] : ""),
-        },
-        'unit_test' : unit_test_params
+      if (rqPipelineItem.unit_test.enable === 'true') {
+        rqPipelineItem.unit_test.image = wsPipelineItem[i+'-unit-test-image'];
+        rqPipelineItem.unit_test.command = wsPipelineItem[i+'-unit-test-command'];
+        rqPipelineItem.unit_test.directory = wsPipelineItem[i+'-unit-test-dir'];
+        rqPipelineItem.unit_test.params = (JSON.parse(wsPipelineItem[i+'-unit-test-parameter'])).p;
       }
+      reqbody['ci_config']['pipelines'][reqbody['ci_config']['pipelines'].length] = rqPipelineItem;
     }
 
     // パラメータ設定 - マニフェスト
