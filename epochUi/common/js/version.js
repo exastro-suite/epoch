@@ -13,4 +13,4 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 */
-var epoch_version="0.3.1";
+var epoch_version="0.4.0";
