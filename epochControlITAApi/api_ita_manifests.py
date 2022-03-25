@@ -857,9 +857,10 @@ def settings_manifest_templates(workspace_id):
                 # When BlueGreen is selected by Deploy method, the template is automatically converted to BlueGreen format.
                 if payload["deploy_method"] == "BlueGreen":
                     out_text = conv_yaml(req_data[i]["file_text"], payload["deploy_params"])
+                    globals.logger.debug(out_text)
                 else:
                     out_text = req_data[i]["file_text"]
-                globals.logger.debug(out_text)
+                # globals.logger.debug(out_text)
 
                 edit_data[str(i)] = tmp_data
                 edit_data["UPLOAD_FILE"].append({"4": base64.b64encode(req_data[i]["file_text"].encode()).decode()})
@@ -898,9 +899,10 @@ def settings_manifest_templates(workspace_id):
                 # When BlueGreen is selected by Deploy method, the template is automatically converted to BlueGreen format.
                 if payload["deploy_method"] == "BlueGreen":
                     out_text = conv_yaml(req_data[i]["file_text"], payload["deploy_params"])
+                    globals.logger.debug(out_text)
                 else:
                     out_text = req_data[i]["file_text"]
-                globals.logger.debug(out_text)
+                # globals.logger.debug(out_text)
 
                 edit_data[str(i)] = tmp_data
                 edit_data["UPLOAD_FILE"].append({"4": base64.b64encode(out_text.encode()).decode()})
