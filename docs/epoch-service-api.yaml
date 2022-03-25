@@ -1209,9 +1209,11 @@ definitions:
                         "image": "UnitTestで起動するコンテナイメージ",
                         "command": "UnitTestで起動するコマンド",
                         "directory": "UnitTestの対象となるソースディレクトリ",
-                        "params": {
-                            "任意の変数名": "任意の値"
-                        }
+                        "params": [
+                            {
+                                "任意の変数名": "任意の値"
+                            }
+                        ]
                     }
                   }
                 ],
@@ -1325,11 +1327,13 @@ definitions:
                       "image": "python:3",
                       "command": "./unit-test.sh",
                       "directory": "/app",
-                      "params": {
-                          "DB_HOST": "pytest-postgres.default.svc",
-                          "DB_PORT": "5432",
-                          "DB_NAME": "postgresdb"
-                      }
+                      "params": [
+                          {
+                              "DB_HOST": "pytest-postgres.default.svc",
+                              "DB_PORT": "5432",
+                              "DB_NAME": "postgresdb"
+                          }
+                      ]
                   }
                 }
               ],
@@ -1442,9 +1446,11 @@ definitions:
                     "image": "UnitTestで起動するコンテナイメージ",
                     "command": "UnitTestで起動するコマンド",
                     "directory": "UnitTestの対象となるソースディレクトリ",
-                    "params": {
-                        "任意の変数名": "任意の値"
-                    }
+                    "params": [
+                        {
+                            "任意の変数名": "任意の値"
+                        }
+                    ]
                 }
               }
             ],
@@ -1553,11 +1559,13 @@ definitions:
                     "image": "python:3",
                     "command": "./unit-test.sh",
                     "directory": "/app",
-                    "params": {
-                        "DB_HOST": "pytest-postgres.default.svc",
-                        "DB_PORT": "5432",
-                        "DB_NAME": "postgresdb"
-                    }
+                    "params": [
+                        {
+                            "DB_HOST": "pytest-postgres.default.svc",
+                            "DB_PORT": "5432",
+                            "DB_NAME": "postgresdb"
+                        }
+                    ]
                 }
               }
             ],
