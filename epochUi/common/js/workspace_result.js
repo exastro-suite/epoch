@@ -635,7 +635,7 @@ function wsTektonCheck() {
                       } break;
                       case 'clipboard':
                           if ( navigator.clipboard ) {
-                              navigator.clipboard.writeText( tlog ).then( function(){
+                              navigator.clipboard.writeText( t.log ).then( function(){
                                   alert('クリップボードにコピーしました。')
                               });
                           } else {
