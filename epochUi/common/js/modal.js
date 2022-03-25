@@ -235,7 +235,12 @@ modalFunction.prototype = {
     \* -------------------------------------------------- */
     'change': function( target, funcs, width ){
       const modal = this;
-      modal.$modal.remove();
+      // エラーになるケース(manifest upload → manifest list)があり$modalが存在するときのみ実行
+      // modal.$modal.remove();
+      if (modal.$modal !== undefined) {
+         modal.$modal.remove();
+      }
+      //
       modal.$modal = undefined;
       
       modal.open( target, funcs, width );

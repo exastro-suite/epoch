@@ -1608,7 +1608,8 @@ const templateFileList = function(){
     modal.change('kubernetesManifestTemplateUpload', {
       'cancel': function(){
         modal.change('kubernetesManifestTemplate', {
-          'callback': templateFileList
+          'callback': templateFileList,
+          'move': function(){}
         },
         1160 )
       },
@@ -1714,7 +1715,8 @@ const templateFileSelect = function( type ){
 
                     // 選択が終わったらテンプレート一覧を表示
                     modal.change('kubernetesManifestTemplate', {
-                      'callback': templateFileList
+                      'callback': templateFileList,
+                      'move': function(){}
                     },
                     1160 );
                   }
