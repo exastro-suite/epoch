@@ -853,6 +853,14 @@ def settings_manifest_templates(workspace_id):
                                 "VAR_param19:\n"\
                                 "VAR_param20:"
 
+                # Deploy方式でBlueGreenが選択された場合は、テンプレートをBlueGreen形式に自動変換する
+                # When BlueGreen is selected by Deploy method, the template is automatically converted to BlueGreen format.
+                if payload["deploy_method"] == "BlueGreen":
+                    out_text = conv_yaml(req_data[i]["file_text"], payload["deploy_params"])
+                else:
+                    out_text = req_data[i]["file_text"]
+                globals.logger.debug(out_text)
+
                 edit_data[str(i)] = tmp_data
                 edit_data["UPLOAD_FILE"].append({"4": base64.b64encode(req_data[i]["file_text"].encode()).decode()})
 
@@ -886,8 +894,16 @@ def settings_manifest_templates(workspace_id):
                             "VAR_param19:\n"\
                             "VAR_param20:"
 
+                # Deploy方式でBlueGreenが選択された場合は、テンプレートをBlueGreen形式に自動変換する
+                # When BlueGreen is selected by Deploy method, the template is automatically converted to BlueGreen format.
+                if payload["deploy_method"] == "BlueGreen":
+                    out_text = conv_yaml(req_data[i]["file_text"], payload["deploy_params"])
+                else:
+                    out_text = req_data[i]["file_text"]
+                globals.logger.debug(out_text)
+
                 edit_data[str(i)] = tmp_data
-                edit_data["UPLOAD_FILE"].append({"4": base64.b64encode(req_data[i]["file_text"].encode()).decode()})
+                edit_data["UPLOAD_FILE"].append({"4": base64.b64encode(out_text.encode()).decode()})
 
         # globals.logger.debug(edit_data)
 
@@ -907,3 +923,214 @@ def settings_manifest_templates(workspace_id):
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
     except Exception as e:
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+
+def get_keys_from_value(d, val):
+    """辞書情報Value値からKey値の取得
+        Obtaining the Key value from the dictionary information Value value
+
+    Args:
+        d (dict): 辞書情報 Dictionary information
+        val (obj): Value値 Value
+
+    Returns:
+        obj: 該当するキー値(ない場合はNone) Applicable key value (None if none)
+    """
+    ret = None
+    for k, v in d.items():
+        if v == val:
+            ret = k
+            break
+    return ret
+
+def conv_yaml(file_text, params):
+    """yamlファイルの解析変換 Parsing conversion of yaml file
+
+    Args:
+        file_text (str): 変換元yamlの内容 Contents of conversion source yaml
+        params (dic): BlueGreen Deploy時のパラメータ(オプション値) Parameters (option value) for BlueGreen Deploy
+
+    Returns:
+        str : 変換後の内容
+    """
+
+    try:
+
+        block_data = []
+        block_keys = {}
+        block_values = {}
+        idx = 0
+        split_text = file_text.split("\n")
+        # ファイルの読み込み Read file
+        for line in split_text:
+            # globals.logger.debug("line:{}".format(line))
+            # ":"を区切りとして要素と値に分ける
+            # Divide into elements and values ​​with ":" as a delimiter
+            split_line = line.split(":")
+            # 区切り文字ありの場合は、Keyと値に分けて格納する
+            # If there is a delimiter, store it separately as Key and value.
+            if len(split_line) < 2:
+                # globals.logger.debug(f"split_line:{split_line}")
+                # "---"を一区切りとしてブロックの情報とする
+                # Use "---" as a block information
+                if line.strip() == "---":
+                    block_data.append({"block": {"block_keys": block_keys,"block_values": block_values}})
+                    block_data.append({"separation": line})
+                    block_keys = {}
+                    block_values = {}
+                    idx = 0
+                else:
+                    # それ以外はそのまま格納
+                    # Use "---" as a block information
+                    block_data.append({"other": line})
+            else:
+                block_keys[idx] = split_line[0].rstrip() 
+                block_values[idx] = split_line[1] 
+                # globals.logger.debug(f"add block:{split_line}")
+                idx += 1
+            
+        if len(block_keys) > 0:
+            block_data.append({"block": {"block_keys": block_keys,"block_values": block_values}})
+
+        out_yaml = ""
+        # globals.logger.debug(f"block_data:{block_data}")
+        # 加工した情報をブロック単位で処理する
+        # Process processed information in block units
+        for idx, values in enumerate(block_data):
+            for key in values.keys():
+                if key == "other" or key == "separation":
+                    # globals.logger.debug(f"line:{values[key]}")
+                    out_yaml += "{}\n".format(values[key])
+                else:
+                    # 置き換え対象のkindを検索する
+                    # Search for the kind to be replaced
+                    f_Deployment = False
+                    f_Service = False
+                    service_idx = -1
+                    service_name = ""
+
+                    if "kind" in values[key]["block_keys"].values() and \
+                        "apiVersion" in values[key]["block_keys"].values() and \
+                        "metadata" in values[key]["block_keys"].values():
+
+                        kind_idx = get_keys_from_value(values[key]["block_keys"], "kind")
+                        api_ver_idx = get_keys_from_value(values[key]["block_keys"], "apiVersion")
+                        metadata_idx = get_keys_from_value(values[key]["block_keys"], "metadata")
+
+                        # globals.logger.debug(f"kind_idx:{kind_idx}")
+                        # globals.logger.debug(f"api_ver_idx:{api_ver_idx}")
+                        # globals.logger.debug(f"metadata_idx:{metadata_idx}")
+
+                        # globals.logger.debug("Kind:{}".format(values[key]["block_values"][kind_idx].strip()))
+                        # globals.logger.debug("apiVersion:{}".format(values[key]["block_values"][api_ver_idx].strip()))
+
+
+                        if values[key]["block_values"][kind_idx].strip() == "Deployment" and \
+                            values[key]["block_values"][api_ver_idx].strip() == "apps/v1":
+                            f_Deployment = True
+                            # pglobals.logger.debugrint("Hit!:kind:{} , apiVersion:{}".format(values[key]["block_values"][kind_idx], values[key]["block_values"][api_ver_idx]))
+
+                            deployment_name = values[key]["block_values"][metadata_idx + 1].strip()
+                            # globals.logger.debug(f"deployment_name:{deployment_name}")
+
+                            f_Service = False
+                            service_idx = -1
+                            service_name = ""
+                            # selector の appがDeployment nameと同じ内容を検索し、active面のサービスとして保存する
+                            # The selector app searches for the same content as the Deployment name and saves it as a service on the active side.
+                            for idx_svc, values_svc in enumerate(block_data):
+                                for key_svc in values_svc.keys():
+                                    if key_svc != "other" and key_svc != "separation":
+                                        kind_idx = get_keys_from_value(values_svc[key_svc]["block_keys"], "kind")
+                                        api_ver_idx = get_keys_from_value(values_svc[key_svc]["block_keys"], "apiVersion")
+                                        metadata_idx = get_keys_from_value(values_svc[key_svc]["block_keys"], "metadata")
+                                        selector_idx = get_keys_from_value(values_svc[key_svc]["block_keys"], "  selector")
+                                        # globals.logger.debug(f"kind_idx:{kind_idx}")
+                                        # globals.logger.debug(f"api_ver_idx:{api_ver_idx}")
+                                        # globals.logger.debug(f"metadata_idx:{metadata_idx}")
+                                        # globals.logger.debug(f"selector_idx:{selector_idx}")
+                                        # globals.logger.debug(values_svc[key_svc]["block_values"][selector_idx])
+
+                                        if values_svc[key_svc]["block_values"][kind_idx].strip() == "Service" and \
+                                            values_svc[key_svc]["block_values"][api_ver_idx].strip() == "v1" and \
+                                            values_svc[key_svc]["block_values"][selector_idx + 1].strip() == deployment_name:
+
+                                            service_idx = idx_svc
+                                            service_name = values_svc[key_svc]["block_values"][metadata_idx + 1].strip() 
+                                            f_Service = True
+                                            break
+
+                                if f_Service:
+                                    break
+
+                    # globals.logger.debug(f"service_name:{service_name}")
+                    service_name_preview = service_name + "-preview"
+
+                    # BlueGreen対応のyaml生成
+                    # BlueGreen compatible yaml generation
+                    for block_idx, block_key in values[key]["block_keys"].items():
+                        # deploymentの場合は、BlueGreenのyamlに置き換える
+                        # For deployment, replace with BlueGreen yaml
+                        if f_Deployment:
+                            if block_key == "kind":
+                                value = " Rollout"
+                            elif block_key == "apiVersion":
+                                value = " argoproj.io/v1alpha1"
+                            else:
+                                value = values[key]["block_values"][block_idx]
+                        else:
+                            value = values[key]["block_values"][block_idx]
+
+                        # globals.logger.debug(f"line:{block_key}:{value}")
+                        out_yaml += f"{block_key}:{value}\n"
+
+                    # Rolloutのオプション値設定
+                    # Rollout option value setting
+                    if f_Deployment:
+                        out_yaml += "  {}:\n".format("strategy")
+                        out_yaml += "    {}:\n".format("blueGreen")
+                        out_yaml += "      {}: {}\n".format("activeService", service_name)
+                        out_yaml += "      {}: {}\n".format("previewService", service_name_preview)
+                        for key, value in params.items():
+                            out_yaml += "      {}: {}\n".format(key, value)
+                        # out_yaml += "      {}: {}\n".format("scaleDownDelaySeconds", 120)
+
+                    # Serviceを複製し、service nameに"preview"を作成
+                    # Duplicate Service and create "preview" in service name
+                    if f_Service:
+                        bloak_service = block_data[service_idx]["block"]
+                        # globals.logger.debug(f"bloak_service:{bloak_service}")
+
+                        # preview面のサービスを追加
+                        # Added preview service
+
+                        out_yaml += "---\n"
+
+                        metadata_idx = get_keys_from_value(bloak_service["block_keys"], "metadata")
+                        for block_idx, block_key in bloak_service["block_keys"].items():
+
+                            if block_idx == (metadata_idx + 1):
+                                # preview面のサービス名設定
+                                # Service name setting on the preview side
+                                value = " " + service_name_preview
+                            elif block_key.strip() == "type" and bloak_service["block_values"][block_idx].strip() == "NodePort":
+                                # type:NodePortは、ClusterIPに置換
+                                # replace type: NodePort with ClusterI#
+                                value = " ClusterIP"
+                            elif block_key.strip() == "nodePort":
+                                # nodePortは冗長するので読み飛ばしする
+                                # Since nodePort is redundant, skip it.
+                                continue
+                            else:
+                                # 上述以外はすべてそのまま設定
+                                # All settings other than the above are set as they are
+                                value = bloak_service["block_values"][block_idx]
+
+                            # print(f"line:{block_key}:{value}")
+                            out_yaml += f"{block_key}:{value}\n"
+
+        globals.logger.debug(f"out_yaml:{out_yaml}")
+
+        return out_yaml
+    
+    except Exception as e:
+        raise
