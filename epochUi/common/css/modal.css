@@ -260,7 +260,27 @@ justify-content: space-between;
 width: 100%;
 }
 
-
+.modal-item-heading {
+position: relative;
+margin: 16px 0 8px; padding: 8px 16px 8px 20px;
+border-radius: 4px;
+letter-spacing: 0.025em;
+color: #4CA393;
+font-weight: bold;
+}
+.modal-item-heading:first-child {
+margin-top: 0;
+}
+.modal-item-heading::before {
+content: '';
+display: block;
+position: absolute;
+left: 0; top: 50%;
+transform: translateY(-50%);
+width: 8px; height: 20px;
+background-color: #1F8C78;
+border-radius: 4px;
+}
 
 .item-block {
 position: relative;
@@ -622,8 +642,12 @@ background-color: #1783BF;
 border-radius: 50%;
 }
 
-
+.item-freeitem-header {
+float: left;
+width: auto;
+}
 .item-freeitem-list {
+clear: both;
 position: relative;
 z-index: 0;
 }
@@ -638,6 +662,7 @@ cursor: grabbing!important;
 display: flex;
 margin-bottom: 4px;
 border: 1px solid #DDD;
+align-items: center;
 }
 .item-freeitem-item.move {
 position: absolute;
@@ -662,6 +687,12 @@ user-select: none;
 -moz-user-select: none;
 -webkit-user-select: none;
 -ms-user-select: none;
+}
+.item-freeitem-item-colon {
+display: flex;
+align-items: center;
+justify-content: center;
+width: 16px;
 }
 .item-freeitem-item-move {
 border-right: 1px solid #EEE;
@@ -713,23 +744,21 @@ background-color: #EEE!important;
 }
 .item-freeitem-item-name,
 .item-freeitem-item-content {
-width: calc( 50% - 40px );
+width: calc( 50% - 48px );
 }
 
 .item-freeitem-item {
 background-color: #FFF;
 }
-.item-freeitem-item-name {
-padding: 4px 4px 4px 8px;
-}
+.item-freeitem-item-name,
 .item-freeitem-item-content {
-padding: 4px 8px 4px 4px;
+padding: 4px 0;
 }
 .item-freeitem-item-input {
 width: 100%;
 }
 .item-freeitem-menu-list {
-padding-top: 4px;
+padding-bottom: 8px;
 letter-spacing: -0.4em;
 text-align: right;
 }
@@ -916,7 +945,11 @@ display: none;
 }
 
 .modal-tab-menu {
+position: sticky;
+top: 0;
+z-index: 10;
 width: 100%;
+background-color: #F8F8F8;
 border-bottom: 1px solid #DDD;
 }
 .modal-tab-list {
@@ -952,6 +985,7 @@ border-color: #0070FF;
 }
 .open .modal-tab-name {
 background-color: #FFF!important;
+background-image: linear-gradient( #FFF, #F6F6F6 );
 color: #333;
 cursor: default;
 }
@@ -1028,6 +1062,7 @@ background-color: #D00
 
 .modal-tab-body {
 padding: 8px;
+background-color: #F6F6F6;
 border: 1px solid #DDD;
 border-top: none;
 border-radius: 0 0 4px 4px;

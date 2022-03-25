@@ -672,6 +672,7 @@ def get_ci_pipeline_result(workspace_id):
 
         # Get Query Parameter
         latest = request.args.get('latest', default='False')
+        getlog = request.args.get('log', default='True')
 
         # ヘッダ情報
         post_headers = {
@@ -714,29 +715,31 @@ def get_ci_pipeline_result(workspace_id):
                 if "taskrun_name" in task:
                     taskrun_name = task["taskrun_name"]
 
-                    # epoch-control-tekton-api の呼び先設定
-                    api_url_tekton = "{}://{}:{}/workspace/{}/tekton/taskrun/{}/logs".format(
-                                                                                    os.environ["EPOCH_CONTROL_TEKTON_PROTOCOL"], 
-                                                                                    os.environ["EPOCH_CONTROL_TEKTON_HOST"], 
-                                                                                    os.environ["EPOCH_CONTROL_TEKTON_PORT"],
-                                                                                    workspace_id,
-                                                                                    taskrun_name)
-                    # TEKTONタスク実行ログ情報取得
-                    exec_stat = "taskrunログ情報取得"
-                    request_response = requests.get(api_url_tekton, params={"latest": latest})
+                    if getlog == 'True':
 
-                    ret = json.loads(request_response.text)
+                        # epoch-control-tekton-api の呼び先設定
+                        api_url_tekton = "{}://{}:{}/workspace/{}/tekton/taskrun/{}/logs".format(
+                                                                                        os.environ["EPOCH_CONTROL_TEKTON_PROTOCOL"], 
+                                                                                        os.environ["EPOCH_CONTROL_TEKTON_HOST"], 
+                                                                                        os.environ["EPOCH_CONTROL_TEKTON_PORT"],
+                                                                                        workspace_id,
+                                                                                        taskrun_name)
+                        # TEKTONタスク実行ログ情報取得
+                        exec_stat = "taskrunログ情報取得"
+                        request_response = requests.get(api_url_tekton, params={"latest": latest})
 
-                    if request_response.status_code != 200:
-                        if "errorDetail" in ret:
-                            error_detail = ret["errorDetail"]
-                        else:
-                            error_detail = ""
-                        raise common.UserException(error_detail)
+                        ret = json.loads(request_response.text)
 
-                    # 取得したログをtaskの"log"として追加
-                    # Add the acquired log as "log" of task
-                    task["log"] = ret["log"]
+                        if request_response.status_code != 200:
+                            if "errorDetail" in ret:
+                                error_detail = ret["errorDetail"]
+                            else:
+                                error_detail = ""
+                            raise common.UserException(error_detail)
+
+                        # 取得したログをtaskの"log"として追加
+                        # Add the acquired log as "log" of task
+                        task["log"] = ret["log"]
 
                 tasks.append(task)
 

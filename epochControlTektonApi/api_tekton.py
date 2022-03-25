@@ -12,6 +12,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+from asyncio.log import logger
 from flask import Flask, request, abort, jsonify, render_template, Response
 from datetime import datetime
 import os
@@ -33,6 +34,9 @@ from dbconnector import dbconnector
 from dbconnector import dbcursor
 import da_tekton
 
+# Number of retrys to get TEKTON logs - TEKTONのログ取得のretry回数
+RETRY_GET_LOG=1
+
 # 設定ファイル読み込み・globals初期化
 app = Flask(__name__)
 app.config.from_envvar('CONFIG_API_TEKTON_PATH')
@@ -50,6 +54,7 @@ templates = {
         'pipeline-task-start.yaml',
         'pipeline-task-git-clone.yaml',
         'pipeline-task-sonarqube-scanner.yaml',
+        'pipeline-task-unit-test.yaml',
         'pipeline-task-build-and-push.yaml',
         'pipeline-task-complete.yaml',
         'pipeline-build-and-push.yaml',
@@ -169,6 +174,16 @@ def post_tekton_pipeline(workspace_id):
 
             # sonarqube用
             pipeline['sonar_project_name'] = re.sub('\\.git$', '', re.sub('^https?://[^/][^/]*/', '', pipeline["git_repositry"]["url"]))
+
+            # unit-test用(Proxy変数の有無の格納)
+            if pipeline['unit_test']['enable'] == 'true':
+                pipeline['unit_test']['defined_var_http_proxy'] = not (next(filter(lambda param: ('HTTP_PROXY' in param or 'http_proxy' in param), pipeline['unit_test']['params']), None) is None)
+                pipeline['unit_test']['defined_var_https_proxy'] = not (next(filter(lambda param: ('HTTPS_PROXY' in param or 'https_proxy' in param), pipeline['unit_test']['params']), None) is None)
+                pipeline['unit_test']['defined_var_no_proxy'] = not (next(filter(lambda param: ('NO_PROXY' in param or 'no_proxy' in param), pipeline['unit_test']['params']), None) is None)
+
+        globals.logger.debug("-- pipeline params --")
+        globals.logger.debug(param)
+        globals.logger.debug("-- pipeline params --")
         #
         # TEKTON pipelineの削除
         #
@@ -308,21 +323,31 @@ def apply_tekton_pipeline(workspace_id, kind, param):
     """
     globals.logger.debug('start apply_tekton_pipeline_files workspace_id:{} kind:{}'.format(workspace_id, kind))
 
-    with dbconnector() as db, dbcursor(db) as cursor:
+    with tempfile.TemporaryDirectory() as tempdir, dbconnector() as db, dbcursor(db) as cursor:
 
         for template in templates[kind]:
             globals.logger.debug('* tekton pipeline apply start workspace_id:{} template:{}'.format(workspace_id, template))
 
             try:
+                yamltext = ""
+
+                # テンプレート毎の処理
+                if template == "pipeline-task-unit-test.yaml":
+                    # unit-testのenable件数が0件のときはskipする(yamlに何も定義が入らなくなる)
+                    if sum([pipeline['unit_test']['enable'] == "true" for pipeline in param['ci_config']['pipelines']]) == 0:
+                        globals.logger.debug(' skip apply')
+                        continue
+
                 # templateの展開
                 yamltext = render_template('tekton/{}/{}'.format(kind, template), param=param, workspace_id=workspace_id)
                 globals.logger.debug(' render_template finish')
 
                 # ディレクトリ作成
-                os.makedirs(dest_folder, exist_ok=True)
+                # os.makedirs(dest_folder, exist_ok=True)
 
                 # yaml一時ファイル生成
-                path_yamlfile = '{}/{}'.format(dest_folder, template)
+                # path_yamlfile = '{}/{}'.format(dest_folder, template)
+                path_yamlfile = '{}/{}'.format(tempdir, template)
                 with open(path_yamlfile, mode='w') as fp:
                     fp.write(yamltext)
 
@@ -330,6 +355,7 @@ def apply_tekton_pipeline(workspace_id, kind, param):
 
             except Exception as e:
                 globals.logger.error('tekton pipeline yamlfile create workspace_id:{} template:{}'.format(workspace_id, template))
+                globals.logger.debug('yaml text:\n' + yamltext)
                 raise
 
             # yaml情報の変数設定
@@ -352,6 +378,7 @@ def apply_tekton_pipeline(workspace_id, kind, param):
 
             except subprocess.CalledProcessError as e:
                 globals.logger.error('COMMAND ERROR RETURN:{}\n{}'.format(e.returncode, e.output.decode('utf-8')))
+                globals.logger.debug('yaml text:\n' + yamltext)
                 raise # 再スロー
 
 
@@ -694,15 +721,24 @@ def get_tekton_taskrun_logs(workspace_id, taskrun_name):
     globals.logger.debug('CALL get_tekton_taskrun:{},{}'.format(workspace_id, taskrun_name))
 
     try:
-        result_kubectl = subprocess.check_output(
-            ['kubectl', 'tkn', 'taskrun', 'logs', taskrun_name,
-            '-n', tekton_pipeline_namespace(workspace_id),
-            ], stderr=subprocess.STDOUT)
-        
-        globals.logger.debug('COMMAAND SUCCEED: kubectl tkn taskrun logs')
+        # TEKTON log acquisition sometimes times out, so retry - TEKTONのログ取得がたまにtimeoutするのでリトライする
+        for i in range(RETRY_GET_LOG):
+            try:
+                result_kubectl = subprocess.check_output(
+                    ['kubectl', 'tkn', 'taskrun', 'logs', taskrun_name,
+                    '-n', tekton_pipeline_namespace(workspace_id),
+                    ], stderr=subprocess.STDOUT)
+                
+                globals.logger.debug('COMMAAND SUCCEED: kubectl tkn taskrun logs')
 
-        # 正常応答
-        return jsonify({"result": "200", "log" : result_kubectl.decode('utf-8')}), 200
+                # 正常応答
+                return jsonify({"result": "200", "log" : result_kubectl.decode('utf-8')}), 200
+
+            except Exception as e:
+                if i < RETRY_GET_LOG:
+                    globals.logger.debug('COMMAAND RETRY: kubectl tkn taskrun logs')
+                else:
+                    raise
 
     except Exception as e:
         return common.serverError(e)

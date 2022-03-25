@@ -517,6 +517,7 @@ paths:
       parameters:
         - $ref: '#/definitions/parameters/Workspace_Id'
         - $ref: '#/definitions/parameters/Latest'
+        - $ref: '#/definitions/parameters/Log'
 
       # レスポンス結果
       responses:
@@ -981,6 +982,13 @@ definitions:
       schema:
         type: string
 
+    Log:
+      name: log
+      in: string
+      description: タスクログ取得(True or False)
+      schema:
+        type: string
+
     Processing:
       name: processing
       in: string
@@ -1195,6 +1203,17 @@ definitions:
                     },
                     "static_analysis": {
                         "interface": "静的解析有の場合 sonarQube固定"
+                    },
+                    "unit_test": {
+                        "enable": "実行する場合 true固定, 実行しない場合 false固定",
+                        "image": "UnitTestで起動するコンテナイメージ",
+                        "command": "UnitTestで起動するコマンド",
+                        "directory": "UnitTestの対象となるソースディレクトリ",
+                        "params": [
+                            {
+                                "任意の変数名": "任意の値"
+                            }
+                        ]
                     }
                   }
                 ],
@@ -1302,6 +1321,19 @@ definitions:
                   },
                   "static_analysis": {
                       "interface": "sonarQube"
+                  },
+                  "unit_test": {
+                      "enable": "true",
+                      "image": "python:3",
+                      "command": "./unit-test.sh",
+                      "directory": "/app",
+                      "params": [
+                          {
+                              "DB_HOST": "pytest-postgres.default.svc",
+                              "DB_PORT": "5432",
+                              "DB_NAME": "postgresdb"
+                          }
+                      ]
                   }
                 }
               ],
@@ -1408,6 +1440,17 @@ definitions:
                 },
                 "static_analysis": {
                     "interface": "静的解析有の場合 sonarQube固定"
+                },
+                "unit_test": {
+                    "enable": "実行する場合 true固定, 実行しない場合 false固定",
+                    "image": "UnitTestで起動するコンテナイメージ",
+                    "command": "UnitTestで起動するコマンド",
+                    "directory": "UnitTestの対象となるソースディレクトリ",
+                    "params": [
+                        {
+                            "任意の変数名": "任意の値"
+                        }
+                    ]
                 }
               }
             ],
@@ -1510,6 +1553,19 @@ definitions:
                 },
                 "static_analysis": {
                     "interface": "sonarQube"
+                },
+                "unit_test": {
+                    "enable": "true",
+                    "image": "python:3",
+                    "command": "./unit-test.sh",
+                    "directory": "/app",
+                    "params": [
+                        {
+                            "DB_HOST": "pytest-postgres.default.svc",
+                            "DB_PORT": "5432",
+                            "DB_NAME": "postgresdb"
+                        }
+                    ]
                 }
               }
             ],
