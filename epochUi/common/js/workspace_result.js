@@ -47,6 +47,9 @@ function wsResultCommon(){
   ws.pollingTime = 0;
 }
 wsResultCommon.prototype = {
+    's': {
+        
+    },
     'open': function( width ){
         const ws = this;
         if ( ws.modal.st.block.tabBlock !== undefined ) {
@@ -506,12 +509,6 @@ function wsTektonCheck() {
     detailInfo.push(ws.cmn.item( detailInfoList[i][0], detailInfoList[i][1], '', ''));
   }
   
-  const taskHTML = function( tasks ){
-    let task = '';
-    
-  };
-  
-  
   const $detail = $(''
   + ws.cmn.traceIdSelecter('TASK ID')
   + detailInfo.join('')
@@ -543,13 +540,29 @@ function wsTektonCheck() {
       if ( String( d.task_id ) !== $modal.find('.status-trace-id-number').text() ) {
         let taskHTML = '';
         for ( let i = 0; i < taskLength; i++ ) {
-            taskHTML += `<li class="task-detail-item">`
-              + `<div class="task-detail-status"></div>`
-              + `<div class="task-detail-name">${d.tasks[i].name}</div>`
-              + `<div class="task-detail-date"></div>`
-              + `<div class="task-detail-log-open"><button class="et-bu task-status-open epoch-popup-m" title="ログ"><span class="et-bui"></span></button></div>`
-              + `<div class="task-detail-log"></div>`
-            + `</li>`;
+              taskHTML += `<li class="task-detail-item">`
+                + `<div class="task-detail-status"></div>`
+                // Sonarcube Link
+                //+ `<div class="task-detail-name">${d.tasks[i].name}</div>`
+                + `<div class="task-detail-name">${d.tasks[i].name}`
+                    + (
+                        d.tasks[i].name === "task-sonarqube-scanner" && workspace_client_urls.sonarqube !== null?
+                        `<a href="${workspace_client_urls.sonarqube}" style="margin-left:20px;" target="_blank">解析結果</a>`:
+                        ``
+                    )
+                + `</div>`
+                // Sonarcube Link
+                + `<div class="task-detail-date"></div>`
+                + `<div class="task-detail-log-open"><button class="et-bu task-status-open epoch-popup-m" title="ログ"><span class="et-bui"></span></button></div>`
+                + `<div class="task-detail-log"></div>`
+                + `<div class="task-detail-menu">`
+                  + `<ul class="task-detail-menu-list">`
+                    + `<li class="task-detail-menu-item"><button class="task-log-button epoch-button modal-block-button" data-button="showLarge" data-type="${k}" data-id="${d.task_id}" data-num="${i}">大きく表示</button></li>`
+                    + `<li class="task-detail-menu-item"><button class="task-log-button epoch-button modal-block-button" data-button="download" data-type="${k}" data-id="${d.task_id}" data-num="${i}">ダウンロード</button></li>`
+                    + `<li class="task-detail-menu-item"><button class="task-log-button epoch-button modal-block-button" data-button="clipboard" data-type="${k}" data-id="${d.task_id}" data-num="${i}">クリップボードにコピー</button></li>`
+                  + `</ul>`
+                + `</div>`
+              + `</li>`;
         }
         $modal.find('.task-detail-list').html(taskHTML);
       }
@@ -558,6 +571,79 @@ function wsTektonCheck() {
           $modal.on('click', '.task-status-open', function(){
               const $task = $(this).closest('.task-detail-item');
               $task.toggleClass('task-status-show').find('.task-detail-log').stop(0,0).animate({ height: 'toggle' }, 200 );
+          });
+          
+          $modal.on('click', '.task-log-button ', function(){
+              const $b = $( this ),
+                    data = $b.data(),
+                    type = data.type,
+                    taskID = data.id;
+              
+              // タスクデータ取得
+              const getTask = function() {
+                  return ws.cmn.data[type].result.filter( function( v ){
+                      return v.task_id === taskID;
+                  }).shift();
+              };              
+              let task = getTask();
+              
+              if ( task ) {
+                  const t = task.tasks[data.num];
+                  switch ( data.button ) {
+                      case 'showLarge': {
+                          const logModal = new modalFunction({
+                              'log': {
+                                  'id': 'log',
+                                  'class': 'layout-tab-fixed',
+                                  'title': t.name,
+                                  'footer': {
+                                      'cancel': {'text': '閉じる', 'type': 'negative'}
+                                  },
+                                  'block': {
+                                      'log': {
+                                          'item': [{'type': 'loading', 'id': 'log-block'}]
+                                      }
+                                  }
+                              }
+                          });
+                          let modalTimer;
+                          logModal.open('log', {
+                              'cancel': function(){
+                                  clearTimeout( modalTimer );
+                                  logModal.close();
+                              },
+                              'callback': function(){
+                                  const $log = $(`<textarea class="log-textarea" readonly></textarea>`);
+                                  logModal.$modal.find('#log-block').html( $log );
+
+                                  const logUpdate = function(){
+                                      if ( ws.cmn.update && logModal.$modal !== undefined ) {
+                                          task = getTask();
+                                          $log.val( task.tasks[data.num].log );
+                                          modalTimer = setTimeout( function(){
+                                              logUpdate();
+                                          }, ws.cmn.pollingTime );
+                                      }
+                                  };
+                                  logUpdate();                              
+                              }
+                          }, 'none');
+                      } break;
+                      case 'download': {
+                        const fileName = ws.cmn.fn.escapeFileName( taskID + '_' + t.name + t.start_time + '.txt', '_');
+                        ws.cmn.fn.textDownload( t.log, fileName );
+                      } break;
+                      case 'clipboard':
+                          if ( navigator.clipboard ) {
+                              navigator.clipboard.writeText( t.log ).then( function(){
+                                  alert('クリップボードにコピーしました。')
+                              });
+                          } else {
+                              alert('お使いのブラウザは対応していません。');
+                          }
+                      break;
+              }
+              }
           });
       }
 
@@ -937,23 +1023,50 @@ function wsArgocdCheck() {
             const $b = $( this ),
                 traceid = $b.attr('data-traceid');
 
+            const progress = new modalFunction({
+                      'progress': {
+                          'id': 'progress',
+                          'title': traceid + '/ SYNC',
+                          'footer': {
+                              
+                          },
+                          'block': {
+                              'progress': {
+                                  'item': {
+                                      'date': {
+                                          'type': 'loading'
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  }, {});
+
             if (confirm(getText("EP010-0397", "sync実行しますか？"))){
-                console.log("[CALL] POST " + workspace_api_conf.api.cd_pipeline.argocd.sync.post.replace('{workspace_id}', workspace_id) + ", trace_id:" + traceid);
-                // Call argoCD sync processing - ArgoCD同期処理呼び出し
-                $.ajax({
-                    "type": "POST",
-                    "url": workspace_api_conf.api.cd_pipeline.argocd.sync.post.replace('{workspace_id}', workspace_id),
-                    data:JSON.stringify({'environment_id':traceid}),
-                    contentType: "application/json",
-                    dataType: "json",
-                }).done(function(data) {
-                    alert(getText("EP010-0395", "sync実行しました"));
-                    console.log("[DONE] POST " + workspace_api_conf.api.cd_pipeline.argocd.sync.post + " response\n" + JSON.stringify(data));
-                }).fail(function(data) {
-                    alert(getText("EP010-0396", "sync実行失敗"));
-                    console.log("[FAIL] POST " + workspace_api_conf.api.cd_pipeline.argocd.sync.post + " response\n" + JSON.stringify(data));
-                });
-            } 
+                progress.open('progress', {
+                    'callback': function(){
+                        progress.$modal.find('.modal-close').remove();
+                        
+                        console.log("[CALL] POST " + workspace_api_conf.api.cd_pipeline.argocd.sync.post.replace('{workspace_id}', workspace_id) + ", trace_id:" + traceid);
+                        // Call argoCD sync processing - ArgoCD同期処理呼び出し
+                        $.ajax({
+                            "type": "POST",
+                            "url": workspace_api_conf.api.cd_pipeline.argocd.sync.post.replace('{workspace_id}', workspace_id),
+                            data:JSON.stringify({'environment_id':traceid}),
+                            contentType: "application/json",
+                            dataType: "json",
+                        }).done(function(data) {
+                            progress.close();
+                            alert(getText("EP010-0395", "sync実行しました"));
+                            console.log("[DONE] POST " + workspace_api_conf.api.cd_pipeline.argocd.sync.post + " response\n" + JSON.stringify(data));
+                        }).fail(function(data) {
+                            progress.close();
+                            alert(getText("EP010-0396", "sync実行失敗"));
+                            console.log("[FAIL] POST " + workspace_api_conf.api.cd_pipeline.argocd.sync.post + " response\n" + JSON.stringify(data));
+                        });
+                    }
+                }, '480');
+            }
         });
     });
 
@@ -1114,7 +1227,7 @@ function wsItaCheck() {
     ws.cmn.data.ita_result.detail.$detail = $( $detailBody.html() );
 
     
-     ws.cmn.data.ita_result.detail.update = function( d ){
+    ws.cmn.data.ita_result.detail.update = function( d ){
       // (BEGIN) APIの結果に所定項目が無いときの対処
       // (修正前)
       // const start = ws.cmn.fn.formatDate( d.contents.ita_results.CONDUCTOR_INSTANCE_INFO.TIME_START, 'yyyy/MM/dd HH:mm:ss'),
@@ -1231,35 +1344,38 @@ function wsItaCheck() {
                     return v.trace_id === id;
                 }).shift();
 
+
+
                 const confirm = new modalFunction({
-                          'confirm': {
-                              'id': 'confirm',
-                              'title': '予約をキャンセルしますか？',
-                              'footer': {
-                                  'ok': {'text': '予約をキャンセルする', 'type': 'danger'},
-                                  'cancel': {'text': '閉じる', 'type': 'negative'}
-                              },
-                              'block': {
-                                  'confirm': {
-                                      'item': {
-                                          'date': {
-                                              'type': 'string',
-                                              'title': '実行開始日時',
-                                              'mainClass': 'item-horizontal',
-                                              // 'text': ws.cmn.fn.formatDate( d.contents.ita_results.CONDUCTOR_INSTANCE_INFO.TIME_START, 'yyyy/MM/dd HH:mm:ss')
-                                              'text': ws.cmn.fn.formatDate( d.contents.ita_results.CONDUCTOR_INSTANCE_INFO.TIME_BOOK, 'yyyy/MM/dd HH:mm:ss')
-                                            },
-                                          'traceId': {
-                                              'type': 'string',
-                                              'title': 'トレースID',
-                                              'mainClass': 'item-horizontal',
-                                              'text': d.trace_id
-                                          }
+                      'confirm': {
+                          'id': 'confirm',
+                          'title': '予約をキャンセルしますか？',
+                          'footer': {
+                              'ok': {'text': '予約をキャンセルする', 'type': 'danger'},
+                              'cancel': {'text': '閉じる', 'type': 'negative'}
+                          },
+                          'block': {
+                              'confirm': {
+                                  'item': {
+                                      'date': {
+                                          'type': 'string',
+                                          'title': '実行開始日時',
+                                          'mainClass': 'item-horizontal',
+                                          // 表示する日時の項目変更 TIME_START ⇒ TIME_BOOK
+                                          // 'text': ws.cmn.fn.formatDate( d.contents.ita_results.CONDUCTOR_INSTANCE_INFO.TIME_START, 'yyyy/MM/dd HH:mm:ss')
+                                          'text': ws.cmn.fn.formatDate( d.contents.ita_results.CONDUCTOR_INSTANCE_INFO.TIME_BOOK, 'yyyy/MM/dd HH:mm:ss')
+                                        },
+                                      'traceId': {
+                                          'type': 'string',
+                                          'title': 'トレースID',
+                                          'mainClass': 'item-horizontal',
+                                          'text': d.trace_id
                                       }
                                   }
                               }
                           }
-                      }, {});
+                      }
+                  }, {});
                  confirm.open('confirm', {
                     'ok': function(){
                         $.ajax({

@@ -35,33 +35,35 @@ spec:
   - name: unit-test
     image: {{ item.unit_test.image }}
     env:
-    #{% if not item.unit_test.params.HTTP_PROXY %}
+    #{% if not item.unit_test.defined_var_http_proxy %}
     - name: HTTP_PROXY
       value: "{{ param.proxy.http }}"
     #{% endif %}
-    #{% if not item.unit_test.params.http_proxy %}
+    #{% if not item.unit_test.defined_var_http_proxy %}
     - name: http_proxy
       value: "{{ param.proxy.http }}"
     #{% endif %}
-    #{% if not item.unit_test.params.HTTPS_PROXY %}
+    #{% if not item.unit_test.defined_var_https_proxy %}
     - name: HTTPS_PROXY
       value: "{{ param.proxy.https }}"
     #{% endif %}
-    #{% if not item.unit_test.params.https_proxy %}
+    #{% if not item.unit_test.defined_var_https_proxy %}
     - name: https_proxy
       value: "{{ param.proxy.https }}"
     #{% endif %}
-    #{% if not item.unit_test.params.NO_PROXY %}
+    #{% if not item.unit_test.defined_var_no_proxy %}
     - name: NO_PROXY
       value: "{{ param.proxy.no_proxy }}"
     #{% endif %}
-    #{% if not item.unit_test.params.no_proxy %}
+    #{% if not item.unit_test.defined_var_no_proxy %}
     - name: no_proxy
       value: "{{ param.proxy.no_proxy }}"
     #{% endif %}
-    #{% for ut_param_name, ut_param_value in item.unit_test.params.items() %}
+    #{% for ut_param in item.unit_test.params %}
+    #{% for ut_param_name, ut_param_value in ut_param.items() %}
     - name: {{ ut_param_name }}
       value: "{{ ut_param_value }}"
+    #{% endfor %}
     #{% endfor %}
     script: |
         #!/bin/sh

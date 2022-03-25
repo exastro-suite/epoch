@@ -12,6 +12,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+from asyncio.log import logger
 from flask import Flask, request, abort, jsonify, render_template, Response
 from datetime import datetime
 import os
@@ -173,6 +174,16 @@ def post_tekton_pipeline(workspace_id):
 
             # sonarqube用
             pipeline['sonar_project_name'] = re.sub('\\.git$', '', re.sub('^https?://[^/][^/]*/', '', pipeline["git_repositry"]["url"]))
+
+            # unit-test用(Proxy変数の有無の格納)
+            if pipeline['unit_test']['enable'] == 'true':
+                pipeline['unit_test']['defined_var_http_proxy'] = not (next(filter(lambda param: ('HTTP_PROXY' in param or 'http_proxy' in param), pipeline['unit_test']['params']), None) is None)
+                pipeline['unit_test']['defined_var_https_proxy'] = not (next(filter(lambda param: ('HTTPS_PROXY' in param or 'https_proxy' in param), pipeline['unit_test']['params']), None) is None)
+                pipeline['unit_test']['defined_var_no_proxy'] = not (next(filter(lambda param: ('NO_PROXY' in param or 'no_proxy' in param), pipeline['unit_test']['params']), None) is None)
+
+        globals.logger.debug("-- pipeline params --")
+        globals.logger.debug(param)
+        globals.logger.debug("-- pipeline params --")
         #
         # TEKTON pipelineの削除
         #

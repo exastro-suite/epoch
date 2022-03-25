@@ -18,6 +18,8 @@ import json
 
 import globals
 from kubernetes import client, config
+import subprocess
+import time
 
 class UserException(Exception):
     pass
@@ -180,3 +182,34 @@ def create_namespace(name):
     except Exception as e:
         globals.logger.debug("Except: %s" % (e))
         return None
+
+
+
+
+def subprocess_check_output_with_retry(command, stderr=None, retry_times=2, retry_interval=3):
+    """Subprocess.check_output with retry
+
+    Args:
+        command (array): command
+        stderr (file handle): stderr
+        retry_times (int, optional): command retry times. Defaults to 2.
+        retry_interval (int, optional): command retry interval. Defaults to 1.
+        command_name (str): log print
+
+    Returns:
+        subprocess.CompletedProcess: subprocess.check_output result
+    """
+    for i in range(retry_times):
+        try:
+            subprocess_result = subprocess.check_output(command, stderr=stderr)
+            return subprocess_result
+        except subprocess.CalledProcessError as e:
+            if i < retry_times:
+                # Retry so catch the exception - リトライするので例外をキャッチする
+                globals.logger.debug("RETRY command:{}".format(command[0]))
+                time.sleep(retry_interval)
+                pass
+            else:
+                # Throws an exception if the last retry fails - 最後のリトライで失敗したときは例外をスローする
+                globals.logger.debug("The number of retries has been exceeded : command:{}".format(command[0]))
+                raise
