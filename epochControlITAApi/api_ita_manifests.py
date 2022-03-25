@@ -1026,46 +1026,85 @@ def conv_yaml(file_text, params):
                         # globals.logger.debug("apiVersion:{}".format(values[key]["block_values"][api_ver_idx].strip()))
 
 
+
                         if values[key]["block_values"][kind_idx].strip() == "Deployment" and \
                             values[key]["block_values"][api_ver_idx].strip() == "apps/v1":
-                            f_Deployment = True
+                            # f_Deployment = True
                             # pglobals.logger.debugrint("Hit!:kind:{} , apiVersion:{}".format(values[key]["block_values"][kind_idx], values[key]["block_values"][api_ver_idx]))
 
+                            deployment_name_key = values[key]["block_keys"][metadata_idx + 1].strip()
                             deployment_name = values[key]["block_values"][metadata_idx + 1].strip()
+                            service_name = deployment_name
                             # globals.logger.debug(f"deployment_name:{deployment_name}")
 
-                            f_Service = False
-                            service_idx = -1
-                            service_name = ""
-                            # selector の appがDeployment nameと同じ内容を検索し、active面のサービスとして保存する
-                            # The selector app searches for the same content as the Deployment name and saves it as a service on the active side.
-                            for idx_svc, values_svc in enumerate(block_data):
-                                for key_svc in values_svc.keys():
-                                    if key_svc != "other" and key_svc != "separation":
-                                        kind_idx = get_keys_from_value(values_svc[key_svc]["block_keys"], "kind")
-                                        api_ver_idx = get_keys_from_value(values_svc[key_svc]["block_keys"], "apiVersion")
-                                        metadata_idx = get_keys_from_value(values_svc[key_svc]["block_keys"], "metadata")
-                                        selector_idx = get_keys_from_value(values_svc[key_svc]["block_keys"], "  selector")
-                                        # globals.logger.debug(f"kind_idx:{kind_idx}")
-                                        # globals.logger.debug(f"api_ver_idx:{api_ver_idx}")
-                                        # globals.logger.debug(f"metadata_idx:{metadata_idx}")
-                                        # globals.logger.debug(f"selector_idx:{selector_idx}")
-                                        # globals.logger.debug(values_svc[key_svc]["block_values"][selector_idx])
+                            # f_Service = False
+                            # service_idx = -1
+                            # service_name = ""
+                            ports_name = ""
+                            ports_port = ""
+                            ports_protocol = ""
 
-                                        if values_svc[key_svc]["block_values"][kind_idx].strip() == "Service" and \
-                                            values_svc[key_svc]["block_values"][api_ver_idx].strip() == "v1" and \
-                                            values_svc[key_svc]["block_values"][selector_idx + 1].strip() == deployment_name:
-
-                                            service_idx = idx_svc
-                                            service_name = values_svc[key_svc]["block_values"][metadata_idx + 1].strip() 
-                                            f_Service = True
+                            # portsセクションを見つけて、その配下にあるname, containerPort, protocolの要素を抽出する
+                            # Find the ports section and extract the name, containerPort, protocol elements under it
+                            for keys_index, keys_values in values[key]["block_keys"].items():
+                                if keys_values.strip() == "ports":
+                                    # globals.logger.debug("ports found!!")
+                                    # インデントの数をチェック
+                                    # Check the number of indent
+                                    leftspace = keys_values.rstrip().replace("ports", "")
+                                    idx = keys_index + 1
+                                    left_len = len(leftspace)
+                                    while idx < len(values[key]["block_keys"]):
+                                        # 子の項目判断
+                                        # Child item judgment
+                                        if values[key]["block_keys"][idx][left_len:left_len + 1] == "-" or \
+                                            values[key]["block_keys"][idx][left_len:left_len + 1] == " ":
+                                            if values[key]["block_keys"][idx][left_len + 2:].strip() == "name":
+                                                ports_name = values[key]["block_values"][idx].strip()
+                                            elif values[key]["block_keys"][idx][left_len + 2:].strip() == "containerPort":
+                                                f_Deployment = True
+                                                ports_port = values[key]["block_values"][idx].strip()
+                                            elif values[key]["block_keys"][idx][left_len + 2:].strip() == "protocol":
+                                                ports_protocol = values[key]["block_values"][idx].strip()
+                                        else:
                                             break
+                                        idx += 1
+                                    # globals.logger.debug(f"ports_name:{ports_name}")
+                                    # globals.logger.debug(f"ports_port:{ports_port}")
+                                    # globals.logger.debug(f"ports_protocol:{ports_protocol}")
 
-                                if f_Service:
-                                    break
 
-                    # globals.logger.debug(f"service_name:{service_name}")
-                    service_name_preview = service_name + "-preview"
+
+                            # # selector の appがDeployment nameと同じ内容を検索し、active面のサービスとして保存する
+                            # # The selector app searches for the same content as the Deployment name and saves it as a service on the active side.
+                            # for idx_svc, values_svc in enumerate(block_data):
+                            #     for key_svc in values_svc.keys():
+                            #         if key_svc != "other" and key_svc != "separation":
+                            #             kind_idx = get_keys_from_value(values_svc[key_svc]["block_keys"], "kind")
+                            #             api_ver_idx = get_keys_from_value(values_svc[key_svc]["block_keys"], "apiVersion")
+                            #             metadata_idx = get_keys_from_value(values_svc[key_svc]["block_keys"], "metadata")
+                            #             selector_idx = get_keys_from_value(values_svc[key_svc]["block_keys"], "  selector")
+                            #             # globals.logger.debug(f"kind_idx:{kind_idx}")
+                            #             # globals.logger.debug(f"api_ver_idx:{api_ver_idx}")
+                            #             # globals.logger.debug(f"metadata_idx:{metadata_idx}")
+                            #             # globals.logger.debug(f"selector_idx:{selector_idx}")
+                            #             # globals.logger.debug(values_svc[key_svc]["block_values"][selector_idx])
+
+                            #             if values_svc[key_svc]["block_values"][kind_idx].strip() == "Service" and \
+                            #                 values_svc[key_svc]["block_values"][api_ver_idx].strip() == "v1" and \
+                            #                 values_svc[key_svc]["block_values"][selector_idx + 1].strip() == deployment_name:
+
+                            #                 service_idx = idx_svc
+                            #                 service_name = values_svc[key_svc]["block_values"][metadata_idx + 1].strip() 
+                            #                 f_Service = True
+                            #                 break
+
+                            #     if f_Service:
+                            #         break
+
+                    if f_Deployment:
+                        # globals.logger.debug(f"service_name:{service_name}")
+                        service_name_preview = service_name + "-preview"
 
                     # BlueGreen対応のyaml生成
                     # BlueGreen compatible yaml generation
@@ -1096,41 +1135,34 @@ def conv_yaml(file_text, params):
                             out_yaml += "      {}: {}\n".format(key, value)
                         # out_yaml += "      {}: {}\n".format("scaleDownDelaySeconds", 120)
 
-                    # Serviceを複製し、service nameに"preview"を作成
-                    # Duplicate Service and create "preview" in service name
-                    if f_Service:
-                        bloak_service = block_data[service_idx]["block"]
-                        # globals.logger.debug(f"bloak_service:{bloak_service}")
-
                         # preview面のサービスを追加
                         # Added preview service
 
                         out_yaml += "---\n"
+                        out_yaml += "{}: {}\n".format("apiVersion", "v1")
+                        out_yaml += "{}: {}\n".format("kind", "Service")
+                        out_yaml += "{}:\n".format("metadata")
+                        out_yaml += "  {}: {}\n".format("name", service_name_preview)
+                        out_yaml += "  {}:\n".format("labels")
+                        out_yaml += "    {}: {}\n".format("name", service_name_preview)
+                        out_yaml += "{}:\n".format("spec")
+                        out_yaml += "  {}: {}\n".format("type", "ClusterIP")
+                        out_yaml += "  {}\n".format("ports")
+                        str_sep = "- "
+                        if ports_name:
+                            out_yaml += "  {}{}: {}\n".format(str_sep, "name", ports_name)
+                            str_sep = "  "
+                        if ports_port:
+                            out_yaml += "  {}{}: {}\n".format(str_sep, "port", ports_port)
+                            out_yaml += "  {}{}: {}\n".format(str_sep, "targetPort", ports_port)
+                            str_sep = "  "
+                        if ports_protocol:
+                            out_yaml += "  {}{}: {}\n".format(str_sep, "protocol", ports_protocol)
+                            str_sep = "  "
+                        out_yaml += "  {}\n".format("selector")
+                        out_yaml += "    {}: {}\n".format(deployment_name_key, deployment_name)
 
-                        metadata_idx = get_keys_from_value(bloak_service["block_keys"], "metadata")
-                        for block_idx, block_key in bloak_service["block_keys"].items():
-
-                            if block_idx == (metadata_idx + 1):
-                                # preview面のサービス名設定
-                                # Service name setting on the preview side
-                                value = " " + service_name_preview
-                            elif block_key.strip() == "type" and bloak_service["block_values"][block_idx].strip() == "NodePort":
-                                # type:NodePortは、ClusterIPに置換
-                                # replace type: NodePort with ClusterI#
-                                value = " ClusterIP"
-                            elif block_key.strip() == "nodePort":
-                                # nodePortは冗長するので読み飛ばしする
-                                # Since nodePort is redundant, skip it.
-                                continue
-                            else:
-                                # 上述以外はすべてそのまま設定
-                                # All settings other than the above are set as they are
-                                value = bloak_service["block_values"][block_idx]
-
-                            # print(f"line:{block_key}:{value}")
-                            out_yaml += f"{block_key}:{value}\n"
-
-        globals.logger.debug(f"out_yaml:{out_yaml}")
+        # globals.logger.debug(f"out_yaml:{out_yaml}")
 
         return out_yaml
     
