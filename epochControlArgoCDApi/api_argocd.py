@@ -252,7 +252,7 @@ def get_argocd_app(workspace_id, app_name):
         # argocd login
         #
         globals.logger.debug("argocd login :")
-        stdout_cd = subprocess.check_output(["argocd","login",argo_host,"--insecure","--username",argo_id,"--password",argo_password],stderr=subprocess.STDOUT)
+        stdout_cd = common.subprocess_check_output_with_retry(["argocd","login",argo_host,"--insecure","--username",argo_id,"--password",argo_password],stderr=subprocess.STDOUT)
         # globals.logger.debug(stdout_cd.decode('utf-8'))
 
         #
@@ -303,7 +303,7 @@ def post_argocd_sync(workspace_id, app_name):
         # argocd login
         #
         globals.logger.debug("argocd login :")
-        stdout_cd = subprocess.check_output(["argocd","login",argo_host,"--insecure","--username",argo_id,"--password",argo_password],stderr=subprocess.STDOUT)
+        stdout_cd = common.subprocess_check_output_with_retry(["argocd","login",argo_host,"--insecure","--username",argo_id,"--password",argo_password],stderr=subprocess.STDOUT)
         # globals.logger.debug(stdout_cd.decode('utf-8'))
 
         #
@@ -387,7 +387,7 @@ def argocd_settings(workspace_id):
         # argocd login
         #
         globals.logger.debug("argocd login :")
-        stdout_cd = subprocess.check_output(["argocd","login",argo_host,"--insecure","--username",argo_id,"--password",argo_password],stderr=subprocess.STDOUT)
+        stdout_cd = common.subprocess_check_output_with_retry(["argocd","login",argo_host,"--insecure","--username",argo_id,"--password",argo_password],stderr=subprocess.STDOUT)
         globals.logger.debug(stdout_cd.decode('utf-8'))
 
         #
