@@ -241,19 +241,19 @@ def conv_yaml(file_text, params):
                         out_yaml += "    {}: {}\n".format("name", service_name_preview)
                         out_yaml += "{}:\n".format("spec")
                         out_yaml += "  {}: {}\n".format("type", "ClusterIP")
-                        out_yaml += "  {}\n".format("ports")
+                        out_yaml += "  {}:\n".format("ports")
                         str_sep = "- "
                         if ports_name:
                             out_yaml += "  {}{}: {}\n".format(str_sep, "name", ports_name)
                             str_sep = "  "
                         if ports_port:
                             out_yaml += "  {}{}: {}\n".format(str_sep, "port", ports_port)
-                            out_yaml += "  {}{}: {}\n".format(str_sep, "targetPort", ports_port)
                             str_sep = "  "
+                            out_yaml += "  {}{}: {}\n".format(str_sep, "targetPort", ports_port)
                         if ports_protocol:
                             out_yaml += "  {}{}: {}\n".format(str_sep, "protocol", ports_protocol)
                             str_sep = "  "
-                        out_yaml += "  {}\n".format("selector")
+                        out_yaml += "  {}:\n".format("selector")
                         out_yaml += "    {}: {}\n".format(deployment_name_key, deployment_name)
 
         # globals.logger.debug(f"out_yaml:{out_yaml}")
