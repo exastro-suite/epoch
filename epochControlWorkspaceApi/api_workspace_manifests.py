@@ -114,7 +114,7 @@ def conv_yaml(file_text, params):
                     block_data.append({"other": line})
             else:
                 block_keys[idx] = split_line[0].rstrip() 
-                block_values[idx] = split_line[1] 
+                block_values[idx] = line[len(split_line[0]) + 1:]
                 # globals.logger.debug(f"add block:{split_line}")
                 idx += 1
             
@@ -137,6 +137,7 @@ def conv_yaml(file_text, params):
                     f_Service = False
                     service_idx = -1
                     service_name = ""
+                    ports_info = []
 
                     if "kind" in values[key]["block_keys"].values() and \
                         "apiVersion" in values[key]["block_keys"].values() and \
@@ -166,6 +167,7 @@ def conv_yaml(file_text, params):
                             ports_name = ""
                             ports_port = ""
                             ports_protocol = ""
+                            ports_first = True  # 1回目のPortかどうか判断用のフラグ Flag for determining whether it is the first port
 
                             # portsセクションを見つけて、その配下にあるname, containerPort, protocolの要素を抽出する
                             # Find the ports section and extract the name, containerPort, protocol elements under it
@@ -182,6 +184,29 @@ def conv_yaml(file_text, params):
                                         # Child item judgment
                                         if values[key]["block_keys"][idx][left_len:left_len + 1] == "-" or \
                                             values[key]["block_keys"][idx][left_len:left_len + 1] == " ":
+
+                                            if values[key]["block_keys"][idx][left_len:left_len + 1] == "-":
+                                                if ports_first:
+                                                    # 初回は格納しない
+                                                    # Do not store the first time
+                                                    ports_first = False
+                                                else:
+                                                    # Port番号の指定がある場合のみ
+                                                    # Only when the port number is specified
+                                                    if ports_port:
+                                                        # "-"を一区切りとしてPortsの情報を格納
+                                                        # Store Ports information with "-" as a delimiter
+                                                        ports_info.append(
+                                                            {
+                                                                "ports_name": ports_name,
+                                                                "ports_port": ports_port,
+                                                                "ports_protocol": ports_protocol,
+                                                            }
+                                                        )
+                                                    ports_name = ""
+                                                    ports_port = ""
+                                                    ports_protocol = ""
+
                                             if values[key]["block_keys"][idx][left_len + 2:].strip() == "name":
                                                 ports_name = values[key]["block_values"][idx].strip()
                                             elif values[key]["block_keys"][idx][left_len + 2:].strip() == "containerPort":
@@ -195,6 +220,25 @@ def conv_yaml(file_text, params):
                                     # globals.logger.debug(f"ports_name:{ports_name}")
                                     # globals.logger.debug(f"ports_port:{ports_port}")
                                     # globals.logger.debug(f"ports_protocol:{ports_protocol}")
+
+                                # 情報があれば格納する Store information if available
+                                if not ports_first:
+                                    # Port番号の指定がある場合のみ
+                                    # Only when the port number is specified
+                                    if ports_port:
+                                        ports_info.append(
+                                            {
+                                                "ports_name": ports_name,
+                                                "ports_port": ports_port,
+                                                "ports_protocol": ports_protocol,
+                                            }
+                                        )
+                                    ports_name = ""
+                                    ports_port = ""
+                                    ports_protocol = ""
+                                    ports_first = True
+
+                    globals.logger.debug(f"ports_info:{ports_info}")
 
                     if f_Deployment:
                         # globals.logger.debug(f"service_name:{service_name}")
@@ -242,17 +286,18 @@ def conv_yaml(file_text, params):
                         out_yaml += "{}:\n".format("spec")
                         out_yaml += "  {}: {}\n".format("type", "ClusterIP")
                         out_yaml += "  {}:\n".format("ports")
-                        str_sep = "- "
-                        if ports_name:
-                            out_yaml += "  {}{}: {}\n".format(str_sep, "name", ports_name)
-                            str_sep = "  "
-                        if ports_port:
-                            out_yaml += "  {}{}: {}\n".format(str_sep, "port", ports_port)
-                            str_sep = "  "
-                            out_yaml += "  {}{}: {}\n".format(str_sep, "targetPort", ports_port)
-                        if ports_protocol:
-                            out_yaml += "  {}{}: {}\n".format(str_sep, "protocol", ports_protocol)
-                            str_sep = "  "
+                        for port_info in ports_info:
+                            str_sep = "- "
+                            if port_info["ports_name"]:
+                                out_yaml += "  {}{}: {}\n".format(str_sep, "name", port_info["ports_name"])
+                                str_sep = "  "
+                            if port_info["ports_port"]:
+                                out_yaml += "  {}{}: {}\n".format(str_sep, "port", port_info["ports_port"])
+                                str_sep = "  "
+                                out_yaml += "  {}{}: {}\n".format(str_sep, "targetPort", port_info["ports_port"])
+                            if port_info["ports_protocol"]:
+                                out_yaml += "  {}{}: {}\n".format(str_sep, "protocol", port_info["ports_protocol"])
+                                str_sep = "  "
                         out_yaml += "  {}:\n".format("selector")
                         out_yaml += "    {}: {}\n".format(deployment_name_key, deployment_name)
 
