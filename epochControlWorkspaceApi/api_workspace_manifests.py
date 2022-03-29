@@ -28,6 +28,7 @@ from requests.auth import HTTPBasicAuth
 import traceback
 from datetime import timedelta, timezone
 import hashlib
+import yaml
 
 import globals
 import common
@@ -121,7 +122,13 @@ def conv_yaml(file_text, params):
         if len(block_keys) > 0:
             block_data.append({"block": {"block_keys": block_keys,"block_values": block_values}})
 
+        # ファイルの内容のテンプレートをいったん正規化してJson形式で変換する
+        # Once normalize the template of the contents of the file and convert it in Json format
+        json_yaml = [obj for obj in yaml.safe_load_all(re.sub("{{\s.*?\s}}", "x", file_text))]
+        # globals.logger.debug(f"json_yaml:{json_yaml}")
+
         out_yaml = ""
+        block_idx = 0
         # globals.logger.debug(f"block_data:{block_data}")
         # 加工した情報をブロック単位で処理する
         # Process processed information in block units
@@ -135,7 +142,6 @@ def conv_yaml(file_text, params):
                     # Search for the kind to be replaced
                     f_Deployment = False
                     f_Service = False
-                    service_idx = -1
                     service_name = ""
                     ports_info = []
 
@@ -164,6 +170,38 @@ def conv_yaml(file_text, params):
                             service_name = deployment_name
                             # globals.logger.debug(f"deployment_name:{deployment_name}")
 
+                            # port配下のインデント解決用 ただし、ports内に変数指定された場合の対処が必要なので、インデント固定化を有効化する
+                            # For indent resolution under port However, since it is necessary to deal with the case where a variable is specified in ports, enable indent fixation.
+                            # # containersまでの情報がそろっているかチェックする
+                            # # Check if the information up to containers is complete
+                            # if "spec" in json_yaml[block_idx] and \
+                            #     "template" in json_yaml[block_idx]["spec"] and \
+                            #     "spec" in json_yaml[block_idx]["spec"]["template"] and \
+                            #     "containers" in json_yaml[block_idx]["spec"]["template"]["spec"]:
+
+                            #     globals.logger.debug("containers:{}".format(json_yaml[block_idx]["spec"]["template"]["spec"]["containers"]))
+                            #     # Portsがあるかチェックする
+                            #     # Check for Ports
+                            #     for container in json_yaml[block_idx]["spec"]["template"]["spec"]["containers"]:
+                            #         if "ports" in container:
+                            #             for container_port in container["ports"]:
+                            #                 # containerPortが必須条件
+                            #                 # containerPort is a prerequisite
+                            #                 if "containerPort" in container_port:
+                            #                     # 一つでもPort指定がないとBlueGreenは作成対象外
+                            #                     # BlueGreen is not subject to creation unless even one Port is specified.
+                            #                     f_Deployment = True
+                            #                     # Portsの情報を格納
+                            #                     # Store Ports information
+                            #                     ports_info.append(
+                            #                         {
+                            #                             "ports_name": container_port.get("name",""),
+                            #                             "ports_port": container_port.get("containerPort",""),
+                            #                             "ports_protocol": container_port.get("protocol",""),
+                            #                         }
+                            #                     )
+                            #                     # globals.logger.debug("add ports:{}.{}.{}".format(container_port.get("name", ""), container_port.get("containerPort", ""), container_port.get("protocol", "")))
+
                             ports_name = ""
                             ports_port = ""
                             ports_protocol = ""
@@ -180,6 +218,7 @@ def conv_yaml(file_text, params):
                                     idx = keys_index + 1
                                     left_len = len(leftspace)
                                     while idx < len(values[key]["block_keys"]):
+
                                         # 子の項目判断
                                         # Child item judgment
                                         if values[key]["block_keys"][idx][left_len:left_len + 1] == "-" or \
@@ -237,6 +276,8 @@ def conv_yaml(file_text, params):
                                     ports_port = ""
                                     ports_protocol = ""
                                     ports_first = True
+                    
+                    block_idx += 1
 
                     globals.logger.debug(f"ports_info:{ports_info}")
 
