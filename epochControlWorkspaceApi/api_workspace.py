@@ -31,6 +31,7 @@ from datetime import timedelta, timezone
 import globals
 import common
 import api_kubernetes_call
+import api_workspace_manifests
 
 # 設定ファイル読み込み・globals初期化
 app = Flask(__name__)
@@ -64,6 +65,32 @@ def call_workspace(workspace_id):
         if request.method == 'POST':
             # workspace 生成
             return create_workspace(workspace_id)
+        else:
+            # エラー
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+
+@app.route('/workspace/<int:workspace_id>/manifest/templates', methods=['POST'])
+def call_manifest_templates(workspace_id):
+    """manifest/templates 呼び出し
+
+    Args:
+        workspace_id (int): ワークスペースID
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'POST':
+            # manifest テンプレートの設定
+            return api_workspace_manifests.settings_manifest_templates(workspace_id)
         else:
             # エラー
             raise Exception("method not support!")

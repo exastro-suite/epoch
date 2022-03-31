@@ -180,10 +180,38 @@ def post_manifest_template(workspace_id):
 
                 file_text += line.decode('utf-8')
 
+            # 画面でBlueGreenするが選択されたら
+            # If Blue Green is selected on the screen
+            # if  xx == "BlueGreen":
+            # BlueGreen Deployment 用に自動変換
+            post_data = {
+                # todo: test用データ
+                # "deploy_method": "BlueGreen",
+                "deploy_params": {
+                    "scaleDownDelaySeconds": "120",
+                },
+                "file_text": file_text,
+            }
+
+            api_control_workspace = "{}://{}:{}".format(os.environ['EPOCH_CONTROL_WORKSPACE_PROTOCOL'],
+                                                        os.environ['EPOCH_CONTROL_WORKSPACE_HOST'],
+                                                        os.environ['EPOCH_CONTROL_WORKSPACE_PORT'])
+
+            # BlueGreen Deploymentの自動変換
+            response = requests.post("{}/workspace/{}/manifest/templates".format(api_control_workspace, workspace_id), headers=post_headers, data=json.dumps(post_data))
+
+            # 戻り値が正常値以外の場合は、処理を終了
+            if response.status_code != 200:
+                error_detail = "manifestテンプレート変換失敗"
+                globals.logger.debug("CALL responseAPI /manifests Error")
+                raise common.UserException(error_detail)
+
+            ret_template = json.loads(response.text)
+
             # ファイル情報(manifest_data)
             manifest_data = {
                 "file_name": manifest_file.filename,
-                "file_text": file_text
+                "file_text": ret_template["file_text"],
             }
 
             # 同一ファイルがあるかファイルIDを取得
@@ -211,6 +239,7 @@ def post_manifest_template(workspace_id):
 
         # 更新は１件ずつ実施
         for upd in post_data_upd['manifests']:
+
             # JSON形式に変換
             post_data = json.dumps(upd)
 
@@ -379,7 +408,9 @@ def ita_registration(workspace_id):
     """
 
     try:
-        globals.logger.debug("CALL ita_registration")
+        globals.logger.debug('-' * 50)
+        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
+        globals.logger.debug('-' * 50)
 
         # post先のURL初期化
         resourceProtocol = os.environ['EPOCH_RS_WORKSPACE_PROTOCOL']
@@ -392,16 +423,17 @@ def ita_registration(workspace_id):
             'Content-Type': 'application/json',
         }
 
-        globals.logger.debug("CALL responseAPI : url:{}".format(apiurl))
-        # RsWorkspace API呼び出し
+        globals.logger.debug("CALL manifests get : url:{}".format(apiurl))
+        # RsWorkspace API呼び出し RsWorkspace API call
         response = requests.get(apiurl, headers=post_headers)
 #        print("CALL responseAPI : response:{}, text:{}".format(response, response.text))
 
         # 戻り値が正常値以外の場合は、処理を終了
+        # If the return value is other than the normal value, the process ends.
         if response.status_code != 200:
-            raise Exception("CALL responseAPI Error")
+            raise Exception("CALL manifests get Error")
 
-        # json形式変換
+        # json形式変換 json format conversion
         ret_manifests = json.loads(response.text)
         # print("--------------------------")
         # print("manifest Json")
@@ -410,13 +442,25 @@ def ita_registration(workspace_id):
 #        print(json.loads(manifest_data))
         # print("--------------------------")
 
-        # パラメータ情報(JSON形式)
+        # BlueGreen deploy方式を取得するためにワークスペース情報を取得
+        # Get workspace information to get the BlueGreen deploy method
+        apiurl = "{}://{}:{}/workspace/{}".format(resourceProtocol, resourceHost, resourcePort, workspace_id)
+        response = requests.get(apiurl, headers=post_headers)
+
+        # 戻り値が正常値以外の場合は、処理を終了
+        # If the return value is other than the normal value, the process ends.
+        if response.status_code != 200:
+            raise Exception("CALL workspace get Error")
+
+        ret_ws = json.loads(response.text)
+
+        # パラメータ情報(JSON形式) Parameter information (JSON format)
         ita_protocol = os.environ['EPOCH_CONTROL_ITA_PROTOCOL']
         ita_host = os.environ['EPOCH_CONTROL_ITA_HOST']
         ita_port = os.environ['EPOCH_CONTROL_ITA_PORT']
 
-        send_data = { "manifests": 
-            ret_manifests['rows']
+        send_data = {
+            "manifests": ret_manifests['rows'],
         }
         globals.logger.debug("--------------------------")
         globals.logger.debug("send_data:")
@@ -427,11 +471,12 @@ def ita_registration(workspace_id):
 
         apiurl = "{}://{}:{}/workspace/{}/it-automation/manifest/templates".format(ita_protocol, ita_host, ita_port, workspace_id)
 
-        # RsWorkspace API呼び出し
+        # RsWorkspace API呼び出し RsWorkspace API call
         response = requests.post(apiurl, headers=post_headers, data=send_data)
         globals.logger.debug("CALL it-automation/manifest/templates : status:{}".format(response.status_code))
 
         # 正常時はmanifest情報取得した内容を返却
+        # When normal, the acquired information is returned.
         if response.status_code == 200:
             return ret_manifests['rows']
         else:
