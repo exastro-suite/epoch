@@ -662,6 +662,27 @@ paths:
         500:
           $ref: '#/definitions/responses/CommonException'
 
+  /workspace/{workspace_id}/cd/pipeline/argocd/rollback:
+    post:
+      tags:
+        - CD Pipeline
+      summary: 
+        CDパイプライン(ArgoCD)ロールバック
+      description: 
+        指定したワークスペースIDに対して、実施したデプロイをロールバックする
+      parameters:
+        - $ref: '#/definitions/parameters/Workspace_Id'
+
+      requestBody: # リクエストボディ
+        $ref: '#/definitions/requestBodies/Cdpipeline_Argocd_Rollback'
+
+      # レスポンス結果
+      responses:
+        200:
+          $ref: '#/definitions/responses/200'
+        500:
+          $ref: '#/definitions/responses/CommonException'
+
   /workspace/{workspace_id}/cd/exec:
     post:
       tags:
@@ -2067,6 +2088,20 @@ definitions:
         }
 
     Cdpipeline_Argocd_Sync:
+      type: object # 型
+      example:
+        {
+          "environment_name": "staging"
+        }
+
+    Cdpipeline_Argocd_Rollback_Example:
+      type: object # 型
+      example:
+        {
+          "environment_name": "環境名"
+        }
+
+    Cdpipeline_Argocd_Rollback:
       type: object # 型
       example:
         {
