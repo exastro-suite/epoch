@@ -718,6 +718,11 @@ spec:
           value: "8000"
         - name: PYTHONIOENCODING
           value: utf-8
+        - name: EPOCH_HOSTNAME
+          valueFrom:
+            configMapKeyRef:
+              name: host-setting-config
+              key: EPOCH_HOSTNAME
         envFrom:
           - prefix: EPOCH_
             configMapRef:
@@ -7657,6 +7662,14 @@ data:
         exit 2
     fi
     logger "INFO" "CALL : kubectl rollout restart deploy -n epoch-system epoch-service-api2${LF}`cat ${CMD_RESULT}`"
+
+    kubectl rollout restart deploy -n epoch-system epoch-control-argocd-api &> "${CMD_RESULT}"
+    if [ $? -ne 0 ]; then
+        logger "ERROR" "CALL : kubectl rollout restart deploy -n epoch-system epoch-control-argocd-api${LF}`cat ${CMD_RESULT}`"
+        logger "ERROR" "rollout restart epoch-control-argocd-api"
+        exit 2
+    fi
+    logger "INFO" "CALL : kubectl rollout restart deploy -n epoch-system epoch-control-argocd-api${LF}`cat ${CMD_RESULT}`"
 
     kubectl rollout restart deploy -n epoch-system epoch-control-ita-api &> "${CMD_RESULT}"
     if [ $? -ne 0 ]; then

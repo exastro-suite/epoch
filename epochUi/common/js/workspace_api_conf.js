@@ -78,6 +78,9 @@ var workspace_api_conf = {
                 "sync": {
                     "post":     URL_BASE + "/api/workspace/{workspace_id}/cd/pipeline/argocd/sync",
                 },
+                "rollback": {
+                    "post":     URL_BASE + "/api/workspace/{workspace_id}/cd/pipeline/argocd/rollback",
+                },
             },
         },
         "manifestParameter": {

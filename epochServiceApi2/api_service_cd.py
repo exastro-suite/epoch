@@ -755,6 +755,7 @@ def get_cd_pipeline_argocd(workspace_id):
                     "trace_id": row["contents"]["trace_id"],
                     "cd_status": row["cd_status"],
                     "environment_name": row["contents"]["environment_name"],
+                    "environment_id": env_name_to_environment_id(row["contents"]["workspace_info"]["cd_config"]["environments"], row["contents"]["environment_name"]),
                     "namespace": row["contents"]["namespace"],
                     "health": {
                         "status": health_status,
@@ -782,7 +783,7 @@ def get_cd_pipeline_argocd(workspace_id):
 
 
 def post_cd_pipeline_argocd_sync(workspace_id):
-    """Get CD pipeline (ArgoCD) information - CDパイプライン(ArgoCD)情報取得
+    """Get CD pipeline (ArgoCD) sync - CDパイプライン(ArgoCD)sync
 
     Args:
         workspace_id (int): workspace ID
@@ -834,6 +835,59 @@ def post_cd_pipeline_argocd_sync(workspace_id):
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
 
 
+def post_cd_pipeline_argocd_rollback(workspace_id):
+    """Get CD pipeline (ArgoCD) rollback - CDパイプライン(ArgoCD)rollback
+
+    Args:
+        workspace_id (int): workspace ID
+
+    Returns:
+        Response: HTTP Respose
+    """
+
+    app_name = multi_lang.get_text("EP020-0034", "CD実行結果(ArgoCD):") 
+    exec_stat = multi_lang.get_text("EP020-0092", "CDパイプライン(ArgoCD)rollback実行")
+    error_detail = ""
+
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {} workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, workspace_id))
+        globals.logger.debug('#' * 50)
+
+        # ヘッダ情報
+        post_headers = {
+            'Content-Type': 'application/json',
+        }
+
+        # 状態をArgoCD同期中に変更
+        req_json = request.json.copy()
+        environment_id = req_json["environment_id"]
+
+
+        # ArgoCD Sync call 
+        api_url = "{}://{}:{}/workspace/{}/argocd/app/{}/rollback".format(os.environ['EPOCH_CONTROL_ARGOCD_PROTOCOL'],
+                                                os.environ['EPOCH_CONTROL_ARGOCD_HOST'],
+                                                os.environ['EPOCH_CONTROL_ARGOCD_PORT'],
+                                                workspace_id,
+                                                get_argo_app_name(workspace_id,environment_id))
+        response = requests.post(api_url, headers=post_headers)
+
+        if response.status_code != 200:
+            error_detail = multi_lang.get_text("EP020-0093", "CDパイプライン(ArgoCD)rollback実行に失敗しました")
+            globals.logger.debug(error_detail)
+            raise common.UserException(error_detail)
+
+        ret_status = 200
+
+        # 戻り値をそのまま返却        
+        return jsonify({"result": ret_status}), ret_status
+
+    except common.UserException as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+    except Exception as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+
+
 def get_argo_app_name(workspace_id,environment_id):
     """ArgoCD app name
 
@@ -846,6 +900,21 @@ def get_argo_app_name(workspace_id,environment_id):
     """
     return 'ws-{}-{}'.format(workspace_id,environment_id)
 
+def env_name_to_environment_id(environments, env_name):
+    """Get the app name of ArgoCD from the environment name - 環境名からArgoCDのapp nameを取得します
+
+    Args:
+        environments (arr): Environment information list of workspace - workspaceの環境情報リスト
+        env_name (str): enviroment name
+
+    Returns:
+        str: environment_id
+    """
+    for env in environments:
+        if env["name"] == env_name:
+            return env["environment_id"]
+
+    return None
 
 def cd_execute(workspace_id):
     """CD実行 cd execute

@@ -127,6 +127,33 @@ def call_argocd_app_sync(workspace_id, app_name):
         return common.server_error(e)
 
 
+@app.route('/workspace/<int:workspace_id>/argocd/app/<string:app_name>/rollback', methods=['POST'])
+def call_argocd_app_rollback(workspace_id, app_name):
+    """Call workspace/workspace_id/argocd/app/rollback
+
+    Args:
+        workspace_id (int): workspace id
+        app_name (str): app name (same environment name)
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'POST':
+            # post argocd rollback - ArgoCD rollback処理
+            return post_argocd_rollback(workspace_id, app_name)
+        else:
+            # エラー
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+
 def create_argocd(workspace_id):
     """ Create pod argocd - ArgoCD Pod 作成
 
@@ -201,12 +228,16 @@ def create_argocd(workspace_id):
                         "deployment/argocd-repo-server" ]
 
         # Proxyの設定値
+        no_proxy = os.environ['EPOCH_ARGOCD_NO_PROXY']
+        if 'EPOCH_HOSTNAME' in os.environ and os.environ['EPOCH_HOSTNAME'] != '':
+            no_proxy = no_proxy + ',' + os.environ['EPOCH_HOSTNAME']
+
         envs = [ "HTTP_PROXY=" + os.environ['EPOCH_HTTP_PROXY'],
                  "HTTPS_PROXY=" + os.environ['EPOCH_HTTPS_PROXY'],
                  "http_proxy=" + os.environ['EPOCH_HTTP_PROXY'],
                  "https_proxy=" + os.environ['EPOCH_HTTPS_PROXY'],
-                 "NO_PROXY=" + os.environ['EPOCH_ARGOCD_NO_PROXY'],
-                 "no_proxy=" + os.environ['EPOCH_ARGOCD_NO_PROXY'] ]
+                 "NO_PROXY=" + no_proxy,
+                 "no_proxy=" + no_proxy]
 
         # PROXYの設定を反映
         for deployment_name in deployments:
@@ -315,6 +346,7 @@ def post_argocd_sync(workspace_id, app_name):
             # globals.logger.debug(stdout_cd.decode('utf-8'))
         except subprocess.CalledProcessError as e:
             globals.logger.debug("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+            raise
 
         ret_status = 200
         
@@ -326,6 +358,57 @@ def post_argocd_sync(workspace_id, app_name):
     except Exception as e:
         return common.server_error(e)
 
+
+def post_argocd_rollback(workspace_id, app_name):
+    """post argocd rollback - ArgoCD rollback処理
+
+    Args:
+        workspace_id (int): workspace id
+        app_name (str): app name (same environment name)
+
+    Returns:
+        Response: HTTP Respose
+    """
+
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {} workspace_id[{}] app_name[{}]'.format(inspect.currentframe().f_code.co_name, workspace_id, app_name))
+        globals.logger.debug('#' * 50)
+
+        # ワークスペースアクセス情報取得 Get workspace access information
+        access_data = get_access_info(workspace_id)
+
+        argo_host = 'argocd-server.epoch-ws-{}.svc'.format(workspace_id)
+        argo_id = access_data['ARGOCD_USER']
+        argo_password = access_data['ARGOCD_PASSWORD']
+        
+        #
+        # argocd login
+        #
+        globals.logger.debug("argocd login :")
+        stdout_cd = common.subprocess_check_output_with_retry(["argocd","login",argo_host,"--insecure","--username",argo_id,"--password",argo_password],stderr=subprocess.STDOUT)
+        # globals.logger.debug(stdout_cd.decode('utf-8'))
+
+        #
+        # app rollback
+        #
+        globals.logger.debug("argocd app rollback :")
+        try:
+            stdout_cd = subprocess.check_output(["argocd","app","rollback",app_name],stderr=subprocess.STDOUT)
+            # globals.logger.debug(stdout_cd.decode('utf-8'))
+        except subprocess.CalledProcessError as e:
+            globals.logger.debug("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+            raise
+
+        ret_status = 200
+        
+        # 正常終了 normal end       
+        return jsonify({"result": ret_status}), ret_status
+
+    except common.UserException as e:
+        return common.server_error(e)
+    except Exception as e:
+        return common.server_error(e)
 
 @app.route('/workspace/<int:workspace_id>/argocd/settings', methods=['POST'])
 def call_argocd_settings(workspace_id):
@@ -473,8 +556,6 @@ def argocd_settings(workspace_id):
             # --path ./ \
             # --dest-server https://kubernetes.default.svc \
             # --dest-namespace [namespace] \
-            # --auto-prune \
-            # --sync-policy automated
             # アプリケーション作成
             globals.logger.debug("argocd app create :")
             stdout_cd = subprocess.check_output(["argocd","app","create",argo_app_name,
@@ -482,8 +563,8 @@ def argocd_settings(workspace_id):
                 "--path","./",
                 "--dest-server",cluster,
                 "--dest-namespace",namespace,
-                "--auto-prune",
-                "--sync-policy","automated",
+                #"--auto-prune",
+                #"--sync-policy","automated",
                 ],stderr=subprocess.STDOUT)
             globals.logger.debug(stdout_cd.decode('utf-8'))
 
