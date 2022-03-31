@@ -1257,6 +1257,8 @@ definitions:
               },
               "cd_config": {
                 "system_config": "one-namespace固定",
+                "deploy_method": "デプロイ方式(BlueGreen/RollingUpdate)",
+                "deploy_scale_down_delay_seconds": "BlueGreen切替待機時間(秒)",
                 "environments_common": {
                     "git_repositry": {
                         "account_select": "アプリケーションコードと同一アカウントの場合はapplicationCode、それ以外は入力指定",
@@ -1379,6 +1381,8 @@ definitions:
             },
             "cd_config": {
               "system_config": "one-namespace",
+              "deploy_method": "BlueGreen",
+              "deploy_scale_down_delay_seconds": "30",
               "environments_common": {
                   "git_repositry": {
                       "account_select": "applicationCode",
@@ -1494,6 +1498,8 @@ definitions:
           },
           "cd_config": {
             "system_config": "one-namespace固定",
+            "deploy_method": "デプロイ方式(BlueGreen/RollingUpdate)",
+            "deploy_scale_down_delay_seconds": "BlueGreen切替待機時間(秒)",
             "environments_common": {
                 "git_repositry": {
                     "account_select": "アプリケーションコードと同一アカウントの場合はapplicationCode、それ以外は入力指定",
@@ -1611,6 +1617,8 @@ definitions:
           },
           "cd_config": {
             "system_config": "one-namespace",
+            "deploy_method": "BlueGreen",
+            "deploy_scale_down_delay_seconds": "30",
             "environments_common": {
                 "git_repositry": {
                     "account_select": "applicationCode",
