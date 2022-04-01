@@ -233,6 +233,11 @@ def conv_yaml(file_text, params):
                                                     # Port番号の指定がある場合のみ
                                                     # Only when the port number is specified
                                                     if ports_port:
+                                                        # nameがない場合は、自動付与('name-'+Port番号)
+                                                        # If there is no name, it is automatically assigned ('name-' + Port number)
+                                                        if not ports_name:
+                                                            ports_name = f"name-{ports_port}"
+
                                                         # "-"を一区切りとしてPortsの情報を格納
                                                         # Store Ports information with "-" as a delimiter
                                                         ports_info.append(
@@ -265,6 +270,11 @@ def conv_yaml(file_text, params):
                                     # Port番号の指定がある場合のみ
                                     # Only when the port number is specified
                                     if ports_port:
+                                        # nameがない場合は、自動付与('name-'+Port番号)
+                                        # If there is no name, it is automatically assigned ('name-' + Port number)
+                                        if not ports_name:
+                                            ports_name = f"name-{ports_port}"
+
                                         ports_info.append(
                                             {
                                                 "ports_name": ports_name,

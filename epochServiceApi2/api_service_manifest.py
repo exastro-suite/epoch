@@ -188,7 +188,7 @@ def post_manifest_template(workspace_id):
                 # todo: test用データ
                 # "deploy_method": "BlueGreen",
                 "deploy_params": {
-                    "scaleDownDelaySeconds": "120",
+                    "scaleDownDelaySeconds": "{{ bluegreen_sdd_sec }}",
                 },
                 "file_text": file_text,
             }

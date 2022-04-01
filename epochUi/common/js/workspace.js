@@ -1709,7 +1709,31 @@ const templateFileSelect = function( type ){
                         'file_text':  data['rows'][fileidx]['file_text'],
                         'update_at':  data['rows'][fileidx]['update_at'],
                       };
+                      // BlueGreen支援ありの場合 With BlueGreen support
+                      if (true){
+                        for(var env in wsDataJSON['environment']) {
+                          file_id = data['rows'][fileidx]['id'];
+                          console.log('file_id:' + file_id);
+                          item_name = env + "-" + file_id + '-' + 'bluegreen_sdd_sec';
+                          if (!'parameter' in wsDataJSON['environment'][env]) 
+                          {
+                            wsDataJSON['environment'][env]['parameter'] = {}
+                          }
+                          if (!file_id in wsDataJSON['environment'][env]['parameter']) 
+                          {
+                            wsDataJSON['environment'][env]['parameter'][file_id] = {}
+                          }
+                          if (!item_name in wsDataJSON['environment'][env]['parameter'][file_id]) 
+                          {
+                            wsDataJSON['environment'][env]['parameter'][file_id][env + "-" + file_id + '-' + 'bluegreen_sdd_sec'] = 30;
+                          }
+                          console.log(wsDataJSON['environment'][env]['parameter'][file_id]);
+                          // wsDataJSON['environment'][env]['parameter'][file_id]['bluegreen_sdd_sec'] = '30';
+                        }
+                      }
                     }
+
+
                     // アップロードが完了したら
                     workspaceImageUpdate();
 
@@ -1943,7 +1967,8 @@ const inputParameter = function(){
     // 予約項目説明
     const itemFixedInfo = {
       'image': 'イメージ',
-      'image_tag': 'イメージタグ名'
+      'image_tag': 'イメージタグ名',
+      'bluegreen_sdd_sec': getText('EP010-0609','BlueGreen切替待機時間')
     };
     
     // 環境が登録済みか？
@@ -3567,6 +3592,8 @@ const compareInfo = function( modalID, compareData ){
     // パラメータ設定 - CD環境設定
     reqbody['cd_config'] = {
       'system_config' : 'one-namespace',
+      'deploy_method' : 'BlueGreen',
+      'deploy_scale_down_delay_seconds' : '30',
       'environments_common' : {
           'git_repositry' : {
             'account_select' : wsDataJSON['git-service-argo']['git-service-argo-account-select'],
