@@ -901,6 +901,18 @@ function wsArgocdCheck() {
             'change': function( data ) {
                 const body = [],
                       length = data.length;
+                // 最新の明細の取得処理
+                const latest_env = data.reduce((prev,item,index) => {
+                        if(prev[item.environment_id] === undefined)
+                            prev[item.environment_id] = { "index": index, "finishedAt": item.finishedAt };
+                        else if(prev[item.environment_id].finishedAt < item.finishedAt)
+                            prev[item.environment_id] = { "index": index, "finishedAt": item.finishedAt };
+                        return prev;
+                    }, {});
+                for(let key in latest_env) {
+                    data[latest_env[key].index].latest_item = true;
+                }
+                // 最新の明細の取得処理
                 for ( let i = 0; i < length; i++ ) {
                     console.log('wsArgocdCheck data:' + data[i]);
                     const d = data[i],
@@ -1016,11 +1028,21 @@ function wsArgocdCheck() {
       }
       ws.cmn.modal.sub.$modal.find('.argocd-sync-button').attr('data-traceid', d.trace_id );      
       ws.cmn.modal.sub.$modal.find('.argocd-sync-button').attr('data-environmentid', d.environment_id );      
-      ws.cmn.modal.sub.$modal.find('.argocd-sync-button').attr('data-environmentname', d.environment_name );      
+      ws.cmn.modal.sub.$modal.find('.argocd-sync-button').attr('data-environmentname', d.environment_name );
+      if (d.latest_item) {
+        ws.cmn.modal.sub.$modal.find('.argocd-sync-button').css('display', "");
+      } else {
+        ws.cmn.modal.sub.$modal.find('.argocd-sync-button').css('display', "none");
+      }
       // TEST RollBackボタン
       ws.cmn.modal.sub.$modal.find('.argocd-rollback-button').attr('data-traceid', d.trace_id );      
       ws.cmn.modal.sub.$modal.find('.argocd-rollback-button').attr('data-environmentid', d.environment_id );      
       ws.cmn.modal.sub.$modal.find('.argocd-rollback-button').attr('data-environmentname', d.environment_name );      
+      if (d.latest_item) {
+        ws.cmn.modal.sub.$modal.find('.argocd-rollback-button').css('display', "");
+      } else {
+        ws.cmn.modal.sub.$modal.find('.argocd-rollback-button').css('display', "none");
+      }
       // TEST RollBackボタン
     };
     
