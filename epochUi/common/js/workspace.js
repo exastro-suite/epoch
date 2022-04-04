@@ -1715,15 +1715,15 @@ const templateFileSelect = function( type ){
                           file_id = data['rows'][fileidx]['id'];
                           console.log('file_id:' + file_id);
                           item_name = env + "-" + file_id + '-' + 'bluegreen_sdd_sec';
-                          if (!'parameter' in wsDataJSON['environment'][env]) 
+                          if (!('parameter' in wsDataJSON['environment'][env])) 
                           {
                             wsDataJSON['environment'][env]['parameter'] = {}
                           }
-                          if (!file_id in wsDataJSON['environment'][env]['parameter']) 
+                          if (!(file_id in wsDataJSON['environment'][env]['parameter'])) 
                           {
                             wsDataJSON['environment'][env]['parameter'][file_id] = {}
                           }
-                          if (!item_name in wsDataJSON['environment'][env]['parameter'][file_id]) 
+                          if (!(item_name in wsDataJSON['environment'][env]['parameter'][file_id])) 
                           {
                             wsDataJSON['environment'][env]['parameter'][file_id][env + "-" + file_id + '-' + 'bluegreen_sdd_sec'] = 30;
                           }
