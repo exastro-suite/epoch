@@ -758,7 +758,7 @@ def settings_manifest_parameter(workspace_id):
                     {
                         str(column_indexes_common['method']) : param_value_method_delete,
                         str(column_indexes_common['record_no']) : row_param[column_indexes_common['record_no']],
-                        str(column_indexes_maniparam['lastupdate']) : row_param[column_indexes_maniparam['lastupdate']],
+                        str(column_indexes_bluegreen_param['lastupdate']) : row_param[column_indexes_bluegreen_param['lastupdate']],
                     }
                 )
 
