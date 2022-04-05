@@ -21,6 +21,7 @@ var workspace_client_urls = {
   "ita" : null,
   "sonarqube": null
 }
+var RefWsDataJSON = null;
 
 // function workspace()
 // ├ initWorkspaceType: 初期タブ
@@ -97,6 +98,7 @@ const wsDataJSON = {
     'preserve-datetime': ""
   }
 };
+RefWsDataJSON=wsDataJSON;
 
 const wsModalJSON = {
   'yamlPreview': {

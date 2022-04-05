@@ -845,6 +845,7 @@ function wsRegiSerCheck() {
 // 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 function wsArgocdCheck() {
+    const ws_id = (new URLSearchParams(window.location.search)).get('workspace_id');
     const ws = this;
     ws.cmn = new wsResultCommon();
     
@@ -1032,25 +1033,49 @@ function wsArgocdCheck() {
       ws.cmn.modal.sub.$modal.find('.argocd-sync-button').attr('data-traceid', d.trace_id );      
       ws.cmn.modal.sub.$modal.find('.argocd-sync-button').attr('data-environmentid', d.environment_id );      
       ws.cmn.modal.sub.$modal.find('.argocd-sync-button').attr('data-environmentname', d.environment_name );
-      if (d.latest_item) {
-        ws.cmn.modal.sub.$modal.find('.argocd-sync-button').css('display', "");
-      } else {
-        ws.cmn.modal.sub.$modal.find('.argocd-sync-button').css('display', "none");
+
+      // 環境毎のCD実行権限
+      const deployMember = RefWsDataJSON.environment[d.environment_id][d.environment_id+"-environment-deploy-member"];
+      const deployMemberId = RefWsDataJSON.environment[d.environment_id][d.environment_id+"-environment-deploy-member-id"];
+
+      // syncボタンの表示／非表示判定
+      let syncButtonDisplay = "none";
+      if(d.latest_item && currentUser != null && currentUser.data ) {
+        // 当該環境の最新の明細
+        // ユーザ情報（ロール）が取れている
+        if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-cd-execute".replace('{ws_id}',ws_id)) != -1) {
+            // CD実行権限がある
+            if(deployMember == "all" || deployMemberId.indexOf(currentUser.data.id) != -1) {
+                // 環境のCD実行権限が全員または指定メンバーに自分が含まれる
+                syncButtonDisplay = "";
+            }
+        }
       }
+      ws.cmn.modal.sub.$modal.find('.argocd-sync-button').css('display', syncButtonDisplay);
+
+
       // TEST RollBackボタン
       ws.cmn.modal.sub.$modal.find('.argocd-rollback-button').attr('data-traceid', d.trace_id );      
       ws.cmn.modal.sub.$modal.find('.argocd-rollback-button').attr('data-environmentid', d.environment_id );      
-      ws.cmn.modal.sub.$modal.find('.argocd-rollback-button').attr('data-environmentname', d.environment_name );      
-      if (d.latest_item) {
-        ws.cmn.modal.sub.$modal.find('.argocd-rollback-button').css('display', "");
-        if (d.sync_status.sync_status_now == "Synced" && ! (d.trace_id in rollback_execute_traceid)) {
-            ws.cmn.modal.sub.$modal.find('.argocd-rollback-button').prop('disabled', false);
-        } else {
-            ws.cmn.modal.sub.$modal.find('.argocd-rollback-button').prop('disabled', true);
+      ws.cmn.modal.sub.$modal.find('.argocd-rollback-button').attr('data-environmentname', d.environment_name );
+
+      // rollbackボタンの表示／非表示判定
+      let rollbackButtonDisplay = "none";
+      if(d.latest_item && currentUser != null && currentUser.data ) {
+        // 当該環境の最新の明細
+        // ユーザ情報（ロール）が取れている
+        if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-cd-execute".replace('{ws_id}',ws_id)) != -1) {
+            // CD実行権限がある
+            if(deployMember == "all" || deployMemberId.indexOf(currentUser.data.id) != -1) {
+                // 環境のCD実行権限が全員または指定メンバーに自分が含まれる
+                if (d.sync_status.sync_status_now == "Synced" && ! (d.trace_id in rollback_execute_traceid)) {
+                    // ArgoCDの現在の状態が"Synced"かつ指定のtrace_idでロールバックがされていない
+                    rollbackButtonDisplay = "";
+                }
+            }
         }
-      } else {
-        ws.cmn.modal.sub.$modal.find('.argocd-rollback-button').css('display', "none");
       }
+    　ws.cmn.modal.sub.$modal.find('.argocd-rollback-button').css('display', rollbackButtonDisplay);
       // TEST RollBackボタン
     };
     
@@ -1139,7 +1164,7 @@ function wsArgocdCheck() {
                   }, {});
 
             if (confirm("Rollbackを実行しますか？")){
-                $b.prop('disabled', true);
+                $b.css('display','none');
                 rollback_execute_traceid[traceid] = true;
                 progress.open('progress', {
                     'callback': function(){
