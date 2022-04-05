@@ -16,6 +16,9 @@
 
 // JavaScript Document
 
+// Rollback実行有無
+var rollback_execute_traceid = {};
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //   結果表示共通
@@ -1040,6 +1043,11 @@ function wsArgocdCheck() {
       ws.cmn.modal.sub.$modal.find('.argocd-rollback-button').attr('data-environmentname', d.environment_name );      
       if (d.latest_item) {
         ws.cmn.modal.sub.$modal.find('.argocd-rollback-button').css('display', "");
+        if (d.sync_status.sync_status_now == "Synced" && ! (d.trace_id in rollback_execute_traceid)) {
+            ws.cmn.modal.sub.$modal.find('.argocd-rollback-button').prop('disabled', false);
+        } else {
+            ws.cmn.modal.sub.$modal.find('.argocd-rollback-button').prop('disabled', true);
+        }
       } else {
         ws.cmn.modal.sub.$modal.find('.argocd-rollback-button').css('display', "none");
       }
@@ -1077,6 +1085,7 @@ function wsArgocdCheck() {
                   }, {});
 
             if (confirm(getText("EP010-0397", "sync実行しますか？"))){
+                delete rollback_execute_traceid[traceid];
                 progress.open('progress', {
                     'callback': function(){
                         progress.$modal.find('.modal-close').remove();
@@ -1130,6 +1139,8 @@ function wsArgocdCheck() {
                   }, {});
 
             if (confirm("Rollbackを実行しますか？")){
+                $b.prop('disabled', true);
+                rollback_execute_traceid[traceid] = true;
                 progress.open('progress', {
                     'callback': function(){
                         progress.$modal.find('.modal-close').remove();
