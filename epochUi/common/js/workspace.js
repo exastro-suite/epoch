@@ -1393,7 +1393,7 @@ const setInputData = function( tabTarget, commonTarget ){
 
 // 削除されたタブに合わせてデータも削除する
 const deleteTabData = function( target ){
-  const deleteData = modal.$modal.attr('data-tab-delete');
+  const deleteData = modal.$modal.find('.modal').attr('data-tab-delete');
   if ( deleteData !== undefined ) {
     const deleteArray = deleteData.split(','),
           deleteLength = deleteArray.length;
