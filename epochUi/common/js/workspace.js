@@ -3274,6 +3274,7 @@ const compareInfo = function( modalID, compareData ){
         }
         update_mode = "作成"; 
       } else {
+        created_workspace_id = workspace_id;
         api_param = {
           "type": "PUT",
           "url": workspace_api_conf.api.resource.put.replace('{workspace_id}', workspace_id),
@@ -3300,7 +3301,7 @@ const compareInfo = function( modalID, compareData ){
         console.log("FAIL : ワークスペース情報登録");
         console.log("RESPONSE:" + jqXHR.responseText);
         // 失敗
-        try { reject({"error_statement" : jqXHR.responseJSON.result.errorStatement, "error_detail": jqXHR.responseJSON.result.errorDetail}); } catch { reject(); }
+        try { reject({"error_statement" : jqXHR.responseJSON.errorStatement, "error_detail": jqXHR.responseJSON.errorDetail}); } catch { reject(); }
       });
     }).then(() => {
       //
@@ -3337,7 +3338,7 @@ const compareInfo = function( modalID, compareData ){
         console.log("FAIL : ワークスペース作成");
         console.log("RESPONSE:" + jqXHR.responseText);
         // 失敗
-        try { reject({"error_statement" : jqXHR.responseJSON.result.errorStatement, "error_detail": jqXHR.responseJSON.result.errorDetail}); } catch { reject(); }
+        try { reject({"error_statement" : jqXHR.responseJSON.errorStatement, "error_detail": jqXHR.responseJSON.errorDetail}); } catch { reject(); }
       });
     })}).then(() => {
       $('#progress_message').html('STEP 3/3 :   パイプラインを' + update_mode + 'しています');
@@ -3683,27 +3684,49 @@ const compareInfo = function( modalID, compareData ){
         console.log("--- data ----");
         console.log(JSON.stringify(data));
         if(data.result == '200') {
+          workspace_update_at = data.update_at;
+          console.log("update_at:" + workspace_update_at);
           // 成功
           resolve();
         } else {
           // 失敗
           reject();
         }
-      }).fail(function() {
+      }).fail((jqXHR, textStatus, errorThrown) => {
         console.log("FAIL : マニフェストパラメータ設定");
+        console.log("RESPONSE:" + jqXHR.responseText);
         // 失敗
-        reject();
+        try { reject({"error_statement" : jqXHR.responseJSON.errorStatement, "error_detail": jqXHR.responseJSON.errorDetail}); } catch { reject(); }
       });
 
     }).then(() => {
 
       console.log('Complete !!');
 
-    }).catch(() => {
+    }).catch((errorinfo) => {
       // 実行中ダイアログ表示
       $('#modal-progress-container').css('display','flex');
       $('#progress_message').html('ERROR :  マニフェストパラメータの設定に失敗しました');
-  
+
+      try {
+        if(errorinfo.error_statement) {
+          $('#error_statement').html('<br><hr>ERROR情報<br>　' + errorinfo.error_statement);
+        } else {
+          $('#error_statement').html('');
+        }
+      } catch {
+        $('#error_statement').html('');
+      }
+      try {
+        if(errorinfo.error_detail) {
+          $('#error_detail').html('　' + errorinfo.error_detail);
+        } else {
+          $('#error_detail').html('　上記の処理でエラーが発生しました');
+        }
+      } catch {
+        $('#error_detail').html('');
+      }
+
       $('#progress-message-ok').prop("disabled", false);
       console.log('Fail !!');
     });

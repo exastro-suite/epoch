@@ -53,6 +53,7 @@ def update_workspace(cursor, specification, workspace_id, update_at):
 
     sql = "UPDATE workspace" \
             " SET specification = %(specification)s"\
+            " , update_at = NOW()"\
             " WHERE workspace_id = %(workspace_id)s"\
             " AND update_at = %(update_at)s"
 
@@ -65,7 +66,7 @@ def update_workspace(cursor, specification, workspace_id, update_at):
         }
     )
     # 更新した件数をreturn
-    return upd_cnt
+    return cursor.rowcount
 
 def patch_workspace(cursor, workspace_id, update_items):
     """workspace情報更新パッチ
@@ -89,14 +90,17 @@ def patch_workspace(cursor, workspace_id, update_items):
         else:
             value = item.values()
 
-        set_update.append(f" AND {key} = %s")
+        set_update.append(f" , {key} = %s")
 
         # JSON整形 JSON formatting
         data.append(value)
 
+    # 無条件更新
+    set_update.append(f" , update_at = NOW()")
+
     # 設定値のはじめをSETに置き換え Replaced the beginning of the set value with SET
     if len(set_update) > 0:
-        set_update[0] = " SET" + set_update[0][4:]
+        set_update[0] = " SET" + set_update[0][2:]
 
     # 更新キー The update key
     set_update.append(" WHERE workspace_id = %s")
@@ -111,7 +115,7 @@ def patch_workspace(cursor, workspace_id, update_items):
     upd_cnt = cursor.execute(str_sql, data)
     
     # 更新した件数をreturn Return the number of updates
-    return upd_cnt
+    return cursor.rowcount
     
 
 def select_workspace_id(cursor, workspace_id):
