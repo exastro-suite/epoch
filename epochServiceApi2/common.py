@@ -24,6 +24,9 @@ import const
 class AuthException(Exception):
     pass
 
+class UpdateException(Exception):
+    pass
+
 class UserException(Exception):
     pass
 

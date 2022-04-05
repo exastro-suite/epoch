@@ -561,7 +561,7 @@ def update_manifestParameter(workspace_id):
         request_json = request.json.copy()
         update_at = request_json["update_at"]
         update_at = parser.parse(update_at)
-        globals.logger.debug("update_at:{}".format(update_at))
+        # globals.logger.debug("update_at:{}".format(update_at))
 
         # Requestからspecification項目を生成する
         specification = request_json
@@ -572,8 +572,8 @@ def update_manifestParameter(workspace_id):
 
             # workspace情報のmanifestParameter部を差し替え
             db_specification = json.loads(workspaceInfo[0]["specification"])
-            update_at = workspaceInfo[0]["update_at"]
-            globals.logger.debug("db_update_at:{}".format(update_at))
+            # update_at = workspaceInfo[0]["update_at"]
+            globals.logger.debug("update_at:{} - db_update_at:{}".format(update_at, workspaceInfo[0]["update_at"]))
 
             # 登録する配列用のindex
             i = 0
