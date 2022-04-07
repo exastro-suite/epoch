@@ -679,7 +679,8 @@ def get_cd_pipeline_argocd(workspace_id):
                                 # Get uid by referring to the value of nodes from kind, name, namespace
                                 if "namespace" in status_resources and "nodes" in argocd_result["result"]:
                                     for nodes in argocd_result["result"]["nodes"]:
-                                        if nodes["kind"] == status_resources["kind"] and \
+                                        if "uid" in nodes and \
+                                            nodes["kind"] == status_resources["kind"] and \
                                             nodes["name"] == status_resources["name"] and \
                                             nodes["namespace"] == status_resources["namespace"]:
                                             # globals.logger.debug("hit nodes uid:[{}]".format(nodes["uid"]))
@@ -783,15 +784,15 @@ def get_cd_pipeline_argocd(workspace_id):
                     sync_status = resp_argo_status["result"]["status"]["sync"]["status"]
                 except:
                     sync_status = "Undefined"
-                
-                try:
-                    nodes = resp_argo_status["result"]["nodes"]
-                except:
-                    nodes = []
 
                 argocd_status_now[argo_app_name] = {
                     "sync_status": sync_status
                 }
+                
+            try:
+                nodes = resp_argo_status["result"]["nodes"]
+            except:
+                nodes = []
 
             # Format the entire result JSON - 結果JSONの全体を整形
             rows.append(

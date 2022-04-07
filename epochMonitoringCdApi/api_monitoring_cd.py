@@ -105,126 +105,18 @@ def monitoring_argo_cd():
                     response = requests.post(api_url, headers=post_headers)
 
                     if response.status_code != 200:
-                        raise common.UserException("argocd sync post error:[{}]".format(response.status_code))
+                        globals.logger.error("argocd sync post error:[{}]".format(response.status_code))
+                        # 状態をArgoCD Failedに変更
+                        # Change state to ArgoCD Failed
+                        cd_status = const.CD_STATUS_ARGOCD_FAILED
+                    else:
+                        # 状態をArgoCD 同期中に変更
+                        # Change state during ArgoCD sync
+                        cd_status = const.CD_STATUS_ARGOCD_SYNC
 
                     # 状態をArgoCD同期中に変更
                     post_data = {
-                        "cd_status": const.CD_STATUS_ARGOCD_SYNC,
-                    }
-
-                    # cd-result put
-                    api_url = "{}://{}:{}/workspace/{}/cd/result/{}".format(os.environ['EPOCH_RS_CD_RESULT_PROTOCOL'],
-                                                            os.environ['EPOCH_RS_CD_RESULT_HOST'],
-                                                            os.environ['EPOCH_RS_CD_RESULT_PORT'],
-                                                            result_row["workspace_id"],
-                                                            result_row["cd_result_id"])
-                    response = requests.put(api_url, headers=post_headers, data=json.dumps(post_data))
-
-                    if response.status_code != 200:
-                        raise common.UserException("cd result put error:[{}]".format(response.status_code))
-
-                else:
-                    # ArgoCDの結果を取得して、状態を確認する
-                    # Get the result of ArgoCD and check the status
-                    contents = json.loads(result_row["contents"])
-
-                    # get argocd app name
-                    app_name = env_name_to_argo_app_name(
-                                result_row["workspace_id"],
-                                contents["workspace_info"]["cd_config"]["environments"],
-                                contents["environment_name"])
-
-                    # ArgoCD app get call 
-                    api_url = "{}://{}:{}/workspace/{}/argocd/app/{}".format(os.environ['EPOCH_CONTROL_ARGOCD_PROTOCOL'],
-                                                            os.environ['EPOCH_CONTROL_ARGOCD_HOST'],
-                                                            os.environ['EPOCH_CONTROL_ARGOCD_PORT'],
-                                                            result_row["workspace_id"],
-                                                            app_name)
-                    response = requests.get(api_url)
-
-                    if response.status_code != 200:
-                        raise common.UserException("argocd app get error:[{}]".format(response.status_code))
-
-                    # 戻り値を取得 Get the return value
-                    ret_argocd_app = json.loads(response.text)
-                    # globals.logger.debug("argocd result [{}]".format(ret_argocd_app))
-
-                    # 対象のオブジェクトがあるかどうかチェックする
-                    # Check if there is an object of interest
-                    if "sync" not in ret_argocd_app["result"]["status"]:
-                        continue
-                    if "revision" not in ret_argocd_app["result"]["status"]["sync"]:
-                        continue
-
-                    # manifestのrivisionを元に該当のトレースIDの履歴かチェックする 
-                    # Check if the history of the corresponding trace ID is based on the revision of the manifest
-                    revision = ret_argocd_app["result"]["status"]["sync"]["revision"]
-                    manifest_url = ret_argocd_app["result"]["status"]["sync"]["comparedTo"]["source"]["repoURL"]
-                    git_token = contents["workspace_info"]["cd_config"]["environments_common"]["git_repositry"]["token"]
-
-                    # ヘッダ情報 header info.
-                    post_headers_in_token = {
-                        'private-token': git_token,
-                        'Content-Type': 'application/json',
-                    }
-
-                    if contents["workspace_info"]["cd_config"]["environments_common"]["git_repositry"]["housing"] == const.HOUSING_INNER:
-                        # EPOCH内レジストリ Registry in EPOCH
-                        api_url = "{}://{}:{}/commits/{}?git_url={}".format(os.environ['EPOCH_CONTROL_INSIDE_GITLAB_PROTOCOL'],
-                                                                os.environ['EPOCH_CONTROL_INSIDE_GITLAB_HOST'],
-                                                                os.environ['EPOCH_CONTROL_INSIDE_GITLAB_PORT'],
-                                                                revision,
-                                                                urllib.parse.quote(manifest_url))
-                        response = requests.get(api_url, headers=post_headers_in_token)
-
-                        if response.status_code != 200:
-                            raise common.UserException("git commit get error:[{}]".format(response.status_code))
-
-                        ret_git_commit = json.loads(response.text)
-
-                        commit_message =  ret_git_commit["rows"]["message"]
-                    else:
-                        # GitHub commit get
-                        api_url = "{}://{}:{}/commits/{}?git_url={}".format(os.environ['EPOCH_CONTROL_GITHUB_PROTOCOL'],
-                                                                os.environ['EPOCH_CONTROL_GITHUB_HOST'],
-                                                                os.environ['EPOCH_CONTROL_GITHUB_PORT'],
-                                                                revision,
-                                                                urllib.parse.quote(manifest_url))
-                        response = requests.get(api_url, headers=post_headers_in_token)
-
-                        if response.status_code != 200:
-                            raise common.UserException("git commit get error:[{}]".format(response.status_code))
-
-                        ret_git_commit = json.loads(response.text)
-                        # globals.logger.debug("rows:[{}]".format(ret_git_commit["rows"]))
-
-                        commit_message =  ret_git_commit["rows"]["commit"]["message"]
-
-                    globals.logger.debug("trace_id:[{}] vs commit_message10[{}]".format(contents["trace_id"], commit_message[:10]))
-                    # 上10桁が一致している場合のみステータスのチェックを行う
-                    if contents["trace_id"] != commit_message[:10]:
-                        continue 
-
-                    # ArgoCDの戻り値が正常化どうかチェックして該当のステータスを設定
-                    # Check if the return value of ArgoCD is normal and set the corresponding status
-                    if ret_argocd_app["result"]["status"]["health"]["status"] == const.ARGOCD_HEALTH_STATUS_HEALTHY:
-                        cd_status = const.CD_STATUS_ARGOCD_SYNCED
-                    elif ret_argocd_app["result"]["status"]["health"]["status"] == const.ARGOCD_HEALTH_STATUS_DEGRADED:
-                        cd_status = const.CD_STATUS_ARGOCD_FAILED
-                    elif ret_argocd_app["result"]["status"]["health"]["status"] == const.ARGOCD_HEALTH_STATUS_PROGRESSING:
-                        cd_status = const.CD_STATUS_ARGOCD_PROCESSING
-                    elif ret_argocd_app["result"]["status"]["health"]["status"] == const.ARGOCD_HEALTH_STATUS_SUSPENDED:
-                        cd_status = const.CD_STATUS_ARGOCD_FAILED
-                    elif ret_argocd_app["result"]["status"]["health"]["status"] == const.ARGOCD_HEALTH_STATUS_MISSING:
-                        cd_status = const.CD_STATUS_ARGOCD_FAILED
-                    else:
-                        cd_status = const.CD_STATUS_ARGOCD_FAILED
-
-                    # 変更したい項目のみ設定（cd_statusは必須）
-                    # Set only the items you want to change (cd_status is required)
-                    post_data = {
                         "cd_status": cd_status,
-                        "argocd_results": ret_argocd_app,
                     }
 
                     # cd-result put
@@ -237,6 +129,121 @@ def monitoring_argo_cd():
 
                     if response.status_code != 200:
                         raise common.UserException("cd result put error:[{}]".format(response.status_code))
+
+                # else:
+                # ArgoCDの結果を取得して、状態を確認する
+                # Get the result of ArgoCD and check the status
+                contents = json.loads(result_row["contents"])
+
+                # get argocd app name
+                app_name = env_name_to_argo_app_name(
+                            result_row["workspace_id"],
+                            contents["workspace_info"]["cd_config"]["environments"],
+                            contents["environment_name"])
+
+                # ArgoCD app get call 
+                api_url = "{}://{}:{}/workspace/{}/argocd/app/{}".format(os.environ['EPOCH_CONTROL_ARGOCD_PROTOCOL'],
+                                                        os.environ['EPOCH_CONTROL_ARGOCD_HOST'],
+                                                        os.environ['EPOCH_CONTROL_ARGOCD_PORT'],
+                                                        result_row["workspace_id"],
+                                                        app_name)
+                response = requests.get(api_url)
+
+                if response.status_code != 200:
+                    raise common.UserException("argocd app get error:[{}]".format(response.status_code))
+
+                # 戻り値を取得 Get the return value
+                ret_argocd_app = json.loads(response.text)
+                # globals.logger.debug("argocd result [{}]".format(ret_argocd_app))
+
+                # 対象のオブジェクトがあるかどうかチェックする
+                # Check if there is an object of interest
+                if "sync" not in ret_argocd_app["result"]["status"]:
+                    continue
+                if "revision" not in ret_argocd_app["result"]["status"]["sync"]:
+                    continue
+
+                # manifestのrivisionを元に該当のトレースIDの履歴かチェックする 
+                # Check if the history of the corresponding trace ID is based on the revision of the manifest
+                revision = ret_argocd_app["result"]["status"]["sync"]["revision"]
+                manifest_url = ret_argocd_app["result"]["status"]["sync"]["comparedTo"]["source"]["repoURL"]
+                git_token = contents["workspace_info"]["cd_config"]["environments_common"]["git_repositry"]["token"]
+
+                # ヘッダ情報 header info.
+                post_headers_in_token = {
+                    'private-token': git_token,
+                    'Content-Type': 'application/json',
+                }
+
+                if contents["workspace_info"]["cd_config"]["environments_common"]["git_repositry"]["housing"] == const.HOUSING_INNER:
+                    # EPOCH内レジストリ Registry in EPOCH
+                    api_url = "{}://{}:{}/commits/{}?git_url={}".format(os.environ['EPOCH_CONTROL_INSIDE_GITLAB_PROTOCOL'],
+                                                            os.environ['EPOCH_CONTROL_INSIDE_GITLAB_HOST'],
+                                                            os.environ['EPOCH_CONTROL_INSIDE_GITLAB_PORT'],
+                                                            revision,
+                                                            urllib.parse.quote(manifest_url))
+                    response = requests.get(api_url, headers=post_headers_in_token)
+
+                    if response.status_code != 200:
+                        raise common.UserException("git commit get error:[{}]".format(response.status_code))
+
+                    ret_git_commit = json.loads(response.text)
+
+                    commit_message =  ret_git_commit["rows"]["message"]
+                else:
+                    # GitHub commit get
+                    api_url = "{}://{}:{}/commits/{}?git_url={}".format(os.environ['EPOCH_CONTROL_GITHUB_PROTOCOL'],
+                                                            os.environ['EPOCH_CONTROL_GITHUB_HOST'],
+                                                            os.environ['EPOCH_CONTROL_GITHUB_PORT'],
+                                                            revision,
+                                                            urllib.parse.quote(manifest_url))
+                    response = requests.get(api_url, headers=post_headers_in_token)
+
+                    if response.status_code != 200:
+                        raise common.UserException("git commit get error:[{}]".format(response.status_code))
+
+                    ret_git_commit = json.loads(response.text)
+                    # globals.logger.debug("rows:[{}]".format(ret_git_commit["rows"]))
+
+                    commit_message =  ret_git_commit["rows"]["commit"]["message"]
+
+                globals.logger.debug("trace_id:[{}] vs commit_message10[{}]".format(contents["trace_id"], commit_message[:10]))
+                # 上10桁が一致している場合のみステータスのチェックを行う
+                if contents["trace_id"] != commit_message[:10]:
+                    continue 
+
+                # ArgoCDの戻り値が正常化どうかチェックして該当のステータスを設定
+                # Check if the return value of ArgoCD is normal and set the corresponding status
+                if ret_argocd_app["result"]["status"]["health"]["status"] == const.ARGOCD_HEALTH_STATUS_HEALTHY:
+                    cd_status = const.CD_STATUS_ARGOCD_SYNCED
+                elif ret_argocd_app["result"]["status"]["health"]["status"] == const.ARGOCD_HEALTH_STATUS_DEGRADED:
+                    cd_status = const.CD_STATUS_ARGOCD_FAILED
+                elif ret_argocd_app["result"]["status"]["health"]["status"] == const.ARGOCD_HEALTH_STATUS_PROGRESSING:
+                    cd_status = const.CD_STATUS_ARGOCD_PROCESSING
+                elif ret_argocd_app["result"]["status"]["health"]["status"] == const.ARGOCD_HEALTH_STATUS_SUSPENDED:
+                    cd_status = const.CD_STATUS_ARGOCD_FAILED
+                elif ret_argocd_app["result"]["status"]["health"]["status"] == const.ARGOCD_HEALTH_STATUS_MISSING:
+                    cd_status = const.CD_STATUS_ARGOCD_FAILED
+                else:
+                    cd_status = const.CD_STATUS_ARGOCD_FAILED
+
+                # 変更したい項目のみ設定（cd_statusは必須）
+                # Set only the items you want to change (cd_status is required)
+                post_data = {
+                    "cd_status": cd_status,
+                    "argocd_results": ret_argocd_app,
+                }
+
+                # cd-result put
+                api_url = "{}://{}:{}/workspace/{}/cd/result/{}".format(os.environ['EPOCH_RS_CD_RESULT_PROTOCOL'],
+                                                        os.environ['EPOCH_RS_CD_RESULT_HOST'],
+                                                        os.environ['EPOCH_RS_CD_RESULT_PORT'],
+                                                        result_row["workspace_id"],
+                                                        result_row["cd_result_id"])
+                response = requests.put(api_url, headers=post_headers, data=json.dumps(post_data))
+
+                if response.status_code != 200:
+                    raise common.UserException("cd result put error:[{}]".format(response.status_code))
 
             except common.UserException as e:
                 error_exists = True
