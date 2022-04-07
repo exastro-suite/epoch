@@ -100,6 +100,16 @@
     kubectl exec -it deployment/epoch-setting-tools -n epoch-system -- bash /scripts/get-workspace-tools-account.sh [wowkspace_id]
     ```
 
+- IT-Automationのユーザ・パスワード取得方法:
+
+    ワークスペース作成後に、アドレスバーに表示されるworkspace_idの数値を引数として、次のコマンドを実行し、ツールのユーザ・パスワードを表示します
+
+    コマンドで表示した"ITA_USER","ITA_PASSWORD"の内容がユーザ・パスワードとなります
+
+    ```bash
+    kubectl exec -it deployment/epoch-setting-tools -n epoch-system -- bash /scripts/get-workspace-tools-account.sh [wowkspace_id]
+    ```
+
 - Keycloakのadminパスワード取得方法
 
     次のコマンドを実行してadminユーザのパスワードを表示します
