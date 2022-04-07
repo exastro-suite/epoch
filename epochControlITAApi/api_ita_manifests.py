@@ -32,6 +32,7 @@ import hashlib
 import globals
 import common
 import api_access_info
+import multi_lang
 
 # 設定ファイル読み込み・globals初期化 flask setting file read and globals initialize
 app = Flask(__name__)
@@ -50,6 +51,8 @@ ite_menu_operation = '2100000304'
 ita_menu_manifest_param = '0000000004'
 # マニフェスト変数管理 - マニフェスト登録先Git環境パラメータ
 ita_menu_gitenv_param = '0000000005'
+# マニフェスト変数管理 - BlueGreen支援パラメータ
+ita_menu_bluegreen_param = '0000000008'
 # Ansible共通 - テンプレート管理
 ita_menu_manifest_template = '2100040704'
 
@@ -104,6 +107,16 @@ column_names_manifest_param = {
     'param19' : 'パラメータ/汎用パラメータ/param19',
     'param20' : 'パラメータ/汎用パラメータ/param20',
     'template_name' : 'パラメータ/固定パラメータ/template_name',
+    'lastupdate' : '更新用の最終更新日時',
+}
+
+# 項目名リスト Item name list
+column_names_bluegreen_param = {
+    'host' : 'ホスト名',
+    'operation_id' : 'オペレーション/ID',
+    'operation' : 'オペレーション/オペレーション',
+    'indexes' : '代入順序',
+    'bluegreen_sdd_sec' : 'パラメータ/bluegreen_sdd_sec',
     'lastupdate' : '更新用の最終更新日時',
 }
 
@@ -447,23 +460,43 @@ def settings_manifest_parameter(workspace_id):
                 "NORMAL": "0"
             }
         }
-        maniparam_resp = requests.post(ita_restapi_endpoint + '?no=' + ita_menu_manifest_param, headers=filter_headers, data=json.dumps(content))
-        maniparam_json = json.loads(maniparam_resp.text)
+        response = requests.post(ita_restapi_endpoint + '?no=' + ita_menu_manifest_param, headers=filter_headers, data=json.dumps(content))
+        if response.status_code != 200:
+            globals.logger.error("call ita_menu_call error:{} menu_no:{}".format(response.status_code, ita_menu_manifest_param))
+            raise common.UserException(multi_lang.get_text("EP034-0009", "IT-Automation manifestパラメータ取得失敗"))
+
+        maniparam_json = json.loads(response.text)
         globals.logger.debug('---- Current Manifest Parameters ----')
-        # logger.debug(maniparam_resp.text)
+        # logger.debug(response.text)
         globals.logger.debug(maniparam_json)
 
-        # 項目位置の取得
+        # 項目位置の取得 Get item position
         column_indexes_maniparam = column_indexes(column_names_manifest_param, maniparam_json['resultdata']['CONTENTS']['BODY'][0])
         globals.logger.debug('---- Manifest Parameters Index ----')
         # logger.debug(column_indexes_maniparam)
 
-        # Responseデータの初期化
-        response = {"result":"200",}
+        response = requests.post(ita_restapi_endpoint + '?no=' + ita_menu_bluegreen_param, headers=filter_headers, data=json.dumps(content))
+        if response.status_code != 200:
+            globals.logger.error("call ita_menu_call error:{} menu_no:{}".format(response.status_code, ita_menu_bluegreen_param))
+            raise common.UserException(multi_lang.get_text("EP034-0010", "IT-Automation BlueGreen支援パラメータ取得失敗"))
+
+        bluegreen_param_json = json.loads(response.text)
+        globals.logger.debug('---- Current Bluegreen Parameters ----')
+        # logger.debug(response.text)
+        globals.logger.debug(bluegreen_param_json)
+
+        # BlueGreen支援項目位置の取得 Get item position
+        column_indexes_bluegreen_param = column_indexes(column_names_bluegreen_param, bluegreen_param_json['resultdata']['CONTENTS']['BODY'][0])
+        globals.logger.debug('---- Manifest Parameters Index ----')
+        globals.logger.debug(f"column_indexes_bluegreen_param:{column_indexes_bluegreen_param}")
+
+        # # Responseデータの初期化
+        # response = {"result":"200",}
 
         globals.logger.debug("opelist:{}".format(opelist_json['resultdata']['CONTENTS']['BODY']))
         # マニフェスト環境パラメータのデータ成型
         maniparam_edit = []
+        bluegreen_edit = []
         for environment in payload['ci_config']['environments']:
             
             idx_ope = -1
@@ -504,6 +537,7 @@ def settings_manifest_parameter(workspace_id):
                 param18 = None
                 param19 = None
                 param20 = None
+                bluegreen_sdd_sec = None
                 # parameters成型
                 for key, value in row_manifile['parameters'].items():
                     if key == 'image':
@@ -550,6 +584,8 @@ def settings_manifest_parameter(workspace_id):
                         param19 = value
                     elif key == 'param20':
                         param20 = value
+                    elif key == 'bluegreen_sdd_sec':
+                        bluegreen_sdd_sec = value
 
                 # 既存データ確認
                 maniparam_id = -1
@@ -635,17 +671,58 @@ def settings_manifest_parameter(workspace_id):
                     globals.logger.debug('---- Manifest Parameters Item(Update) ----')
                     globals.logger.debug(maniparam_edit[len(maniparam_edit) -1])
 
+                # 既存データ確認
+                bluegreen_param_id = -1
+                for idx, row in enumerate(bluegreen_param_json['resultdata']['CONTENTS']['BODY']):
+                    current_operation_id = row[column_indexes_bluegreen_param['operation_id']]
+                    current_include_index = row[column_indexes_bluegreen_param['indexes']]
+                    if current_operation_id == req_maniparam_operation_id and \
+                        current_include_index == str(idx_manifile + 1):
+                        bluegreen_param_id = row[column_indexes_common['record_no']]
+                        break
+
+                if bluegreen_param_id == -1:
+
+                    # BlueGreen用のパラメータも基本はparamと同様
+                    # The parameters for BlueGreen are basically the same as param.
+                    bluegreen_edit.append(
+                        {
+                            str(column_indexes_common['method']) : param_value_method_entry,
+                            str(column_indexes_bluegreen_param['host']) : param_value_host,
+                            str(column_indexes_bluegreen_param['operation']) : format_opration_info(opelist_json['resultdata']['CONTENTS']['BODY'][idx_ope], column_indexes_opelist),
+                            str(column_indexes_bluegreen_param['indexes']) : idx_manifile + 1,
+                            str(column_indexes_bluegreen_param['bluegreen_sdd_sec']) : bluegreen_sdd_sec,
+                        }
+                    )
+                else:
+                    globals.logger.debug("host idx:[{}]".format(column_indexes_bluegreen_param['host']))
+                    globals.logger.debug("bluegreen_param_id:[{}]".format(bluegreen_param_id))
+                    globals.logger.debug("host value:[{}]".format(bluegreen_param_json['resultdata']['CONTENTS']['BODY'][idx][column_indexes_bluegreen_param['host']]))
+                    # BlueGreen用のパラメータも基本はparamと同様
+                    # The parameters for BlueGreen are basically the same as param.
+                    bluegreen_edit.append(
+                        {
+                            str(column_indexes_common['method']) : param_value_method_update,
+                            str(column_indexes_common['record_no']) : bluegreen_param_id,
+                            str(column_indexes_bluegreen_param['host']) : bluegreen_param_json['resultdata']['CONTENTS']['BODY'][idx][column_indexes_bluegreen_param['host']],
+                            str(column_indexes_bluegreen_param['operation']) : bluegreen_param_json['resultdata']['CONTENTS']['BODY'][idx][column_indexes_bluegreen_param['operation']],
+                            str(column_indexes_bluegreen_param['indexes']) : bluegreen_param_json['resultdata']['CONTENTS']['BODY'][idx][column_indexes_bluegreen_param['indexes']],
+                            str(column_indexes_bluegreen_param['bluegreen_sdd_sec']) : bluegreen_sdd_sec,
+                            str(column_indexes_bluegreen_param['lastupdate']) : bluegreen_param_json['resultdata']['CONTENTS']['BODY'][idx][column_indexes_bluegreen_param['lastupdate']],
+                        }
+                    )
+
         globals.logger.debug('---- Deleting Manifest Parameters Setting ----')
-        # 既存データをすべて廃止する
-        for idx_maniparam, row_maniparam in enumerate(maniparam_json['resultdata']['CONTENTS']['BODY']):
+        # 既存データをすべて廃止する Abolish all existing data
+        for idx_param, row_param in enumerate(maniparam_json['resultdata']['CONTENTS']['BODY']):
             # 1行目無視する
-            if idx_maniparam == 0:
+            if idx_param == 0:
                 continue
             flgExists = False
             for idx_edit, row_edit in enumerate(maniparam_edit):
                 # 該当するrecord_noがあれば、チェックする
                 if str(column_indexes_common['record_no']) in row_edit:
-                    if row_edit[str(column_indexes_common['record_no'])] == row_maniparam[column_indexes_common['record_no']]:
+                    if row_edit[str(column_indexes_common['record_no'])] == row_param[column_indexes_common['record_no']]:
                         flgExists = True
                         break
             
@@ -655,23 +732,72 @@ def settings_manifest_parameter(workspace_id):
                 maniparam_edit.append(
                     {
                         str(column_indexes_common['method']) : param_value_method_delete,
-                        str(column_indexes_common['record_no']) : row_maniparam[column_indexes_common['record_no']],
-                        str(column_indexes_maniparam['lastupdate']) : row_maniparam[column_indexes_maniparam['lastupdate']],
+                        str(column_indexes_common['record_no']) : row_param[column_indexes_common['record_no']],
+                        str(column_indexes_maniparam['lastupdate']) : row_param[column_indexes_maniparam['lastupdate']],
+                    }
+                )
+
+        globals.logger.debug('---- Deleting BlueGreen Parameters Setting ----')
+        # 既存データをすべて廃止する Abolish all existing data
+        for idx_param, row_param in enumerate(bluegreen_param_json['resultdata']['CONTENTS']['BODY']):
+            # 1行目無視する
+            if idx_param == 0:
+                continue
+            flgExists = False
+            for idx_edit, row_edit in enumerate(bluegreen_edit):
+                # 該当するrecord_noがあれば、チェックする
+                if str(column_indexes_common['record_no']) in row_edit:
+                    if row_edit[str(column_indexes_common['record_no'])] == row_param[column_indexes_common['record_no']]:
+                        flgExists = True
+                        break
+            
+            # 該当するレコードがない場合は、廃止として追加する
+            if not flgExists:
+                # 削除用のデータ設定
+                bluegreen_edit.append(
+                    {
+                        str(column_indexes_common['method']) : param_value_method_delete,
+                        str(column_indexes_common['record_no']) : row_param[column_indexes_common['record_no']],
+                        str(column_indexes_bluegreen_param['lastupdate']) : row_param[column_indexes_bluegreen_param['lastupdate']],
                     }
                 )
 
         globals.logger.debug('---- Updating Manifest Parameters ----')
         # globals.logger.debug(json.dumps(maniparam_edit))
 
-        manuparam_edit_resp = requests.post(ita_restapi_endpoint + '?no=' + ita_menu_manifest_param, headers=edit_headers, data=json.dumps(maniparam_edit))
-        maniparam_json = json.loads(manuparam_edit_resp.text)
+        response = requests.post(ita_restapi_endpoint + '?no=' + ita_menu_manifest_param, headers=edit_headers, data=json.dumps(maniparam_edit))
+        if response.status_code != 200:
+            globals.logger.error("call ita_menu_call error:{} menu_no:{}".format(response.status_code, ita_menu_manifest_param))
+            raise common.UserException(multi_lang.get_text("EP034-0011", "IT-Automation manifestパラメータ更新失敗"))
+
+        maniparam_json = json.loads(response.text)
 
         globals.logger.debug('---- Manifest Parameters Post Response ----')
-        # logger.debug(manuparam_edit_resp.text)
+        # logger.debug(response.text)
         # globals.logger.debug(maniparam_json)
 
         if maniparam_json["status"] != "SUCCEED" or maniparam_json["resultdata"]["LIST"]["NORMAL"]["error"]["ct"] != 0:
-            raise common.UserException(manuparam_edit_resp.text.encode().decode('unicode-escape'))
+            raise common.UserException(response.text.encode().decode('unicode-escape'))
+
+        # BlueGreen支援パラメータの更新
+        # Update of BlueGreen support parameters
+
+        globals.logger.debug('---- Updating BlueGreen Parameters ----')
+        # globals.logger.debug(json.dumps(bluegreen_edit))
+
+        response = requests.post(ita_restapi_endpoint + '?no=' + ita_menu_bluegreen_param, headers=edit_headers, data=json.dumps(bluegreen_edit))
+        if response.status_code != 200:
+            globals.logger.error("call ita_menu_call error:{} menu_no:{}".format(response.status_code, ita_menu_bluegreen_param))
+            raise common.UserException(multi_lang.get_text("EP034-0012", "IT-Automation BlueGreen支援パラメータ更新失敗"))
+
+        bluegreen_param_json = json.loads(response.text)
+
+        globals.logger.debug('---- BlueGreen Parameters Post Response ----')
+        # logger.debug(response.text)
+        # globals.logger.debug(bluegreen_param_json)
+
+        if bluegreen_param_json["status"] != "SUCCEED" or bluegreen_param_json["resultdata"]["LIST"]["NORMAL"]["error"]["ct"] != 0:
+            raise common.UserException(response.text.encode().decode('unicode-escape'))
 
         # 正常終了
         ret_status = 200
@@ -851,7 +977,8 @@ def settings_manifest_templates(workspace_id):
                                 "VAR_param17:\n"\
                                 "VAR_param18:\n"\
                                 "VAR_param19:\n"\
-                                "VAR_param20:"
+                                "VAR_param20:\n"\
+                                "VAR_bluegreen_sdd_sec:"
 
                 edit_data[str(i)] = tmp_data
                 edit_data["UPLOAD_FILE"].append({"4": base64.b64encode(req_data[i]["file_text"].encode()).decode()})
@@ -884,7 +1011,8 @@ def settings_manifest_templates(workspace_id):
                             "VAR_param17:\n"\
                             "VAR_param18:\n"\
                             "VAR_param19:\n"\
-                            "VAR_param20:"
+                            "VAR_param20:\n"\
+                            "VAR_bluegreen_sdd_sec:"
 
                 edit_data[str(i)] = tmp_data
                 edit_data["UPLOAD_FILE"].append({"4": base64.b64encode(req_data[i]["file_text"].encode()).decode()})

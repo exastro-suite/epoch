@@ -16,6 +16,9 @@
 
 // JavaScript Document
 
+// Rollback実行有無
+var rollback_execute_traceid = {};
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //   結果表示共通
@@ -842,6 +845,7 @@ function wsRegiSerCheck() {
 // 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 function wsArgocdCheck() {
+    const ws_id = (new URLSearchParams(window.location.search)).get('workspace_id');
     const ws = this;
     ws.cmn = new wsResultCommon();
     
@@ -901,6 +905,18 @@ function wsArgocdCheck() {
             'change': function( data ) {
                 const body = [],
                       length = data.length;
+                // 最新の明細の取得処理
+                const latest_env = data.reduce((prev,item,index) => {
+                        if(prev[item.environment_id] === undefined)
+                            prev[item.environment_id] = { "index": index, "finishedAt": item.finishedAt };
+                        else if(prev[item.environment_id].finishedAt < item.finishedAt)
+                            prev[item.environment_id] = { "index": index, "finishedAt": item.finishedAt };
+                        return prev;
+                    }, {});
+                for(let key in latest_env) {
+                    data[latest_env[key].index].latest_item = true;
+                }
+                // 最新の明細の取得処理
                 for ( let i = 0; i < length; i++ ) {
                     console.log('wsArgocdCheck data:' + data[i]);
                     const d = data[i],
@@ -960,8 +976,11 @@ function wsArgocdCheck() {
         + '<div class="argocd-sync-title">SYNC STATUS</div>'
         + `<div class="argocd-sync-status"></div>`
         + '<div class="argocd-sync-head"></div>'
+        // + '<div class="argocd-sync-sync"><button class="argocd-sync-button"><span class="icon icon-Update"></span> SYNC</button></div>'
         + '<div class="argocd-sync-sync"><button class="argocd-sync-button"><span class="icon icon-Update"></span> SYNC</button></div>'
-      + '</div>'
+        + '<div class="argocd-rollback-rollback"><button class="argocd-rollback-button"><span class="icon icon-Update"></span> Rollback</button></div>'
+        //
+        + '</div>'
       + '<div class="argocd-resource">'
         + '<ul class="argocd-resource-list"></ul>'
       + '</div>'
@@ -1012,6 +1031,52 @@ function wsArgocdCheck() {
           ws.cmn.modal.sub.$modal.find( setData[i][0] ).html( setData[i][1] );
       }
       ws.cmn.modal.sub.$modal.find('.argocd-sync-button').attr('data-traceid', d.trace_id );      
+      ws.cmn.modal.sub.$modal.find('.argocd-sync-button').attr('data-environmentid', d.environment_id );      
+      ws.cmn.modal.sub.$modal.find('.argocd-sync-button').attr('data-environmentname', d.environment_name );
+
+      // 環境毎のCD実行権限
+      const deployMember = RefWsDataJSON.environment[d.environment_id][d.environment_id+"-environment-deploy-member"];
+      const deployMemberId = RefWsDataJSON.environment[d.environment_id][d.environment_id+"-environment-deploy-member-id"];
+
+      // syncボタンの表示／非表示判定
+      let syncButtonDisplay = "none";
+      if(d.latest_item && currentUser != null && currentUser.data ) {
+        // 当該環境の最新の明細
+        // ユーザ情報（ロール）が取れている
+        if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-cd-execute".replace('{ws_id}',ws_id)) != -1) {
+            // CD実行権限がある
+            if(deployMember == "all" || deployMemberId.indexOf(currentUser.data.id) != -1) {
+                // 環境のCD実行権限が全員または指定メンバーに自分が含まれる
+                syncButtonDisplay = "";
+            }
+        }
+      }
+      ws.cmn.modal.sub.$modal.find('.argocd-sync-button').css('display', syncButtonDisplay);
+
+
+      // TEST RollBackボタン
+      ws.cmn.modal.sub.$modal.find('.argocd-rollback-button').attr('data-traceid', d.trace_id );      
+      ws.cmn.modal.sub.$modal.find('.argocd-rollback-button').attr('data-environmentid', d.environment_id );      
+      ws.cmn.modal.sub.$modal.find('.argocd-rollback-button').attr('data-environmentname', d.environment_name );
+
+      // rollbackボタンの表示／非表示判定
+      let rollbackButtonDisplay = "none";
+      if(d.latest_item && currentUser != null && currentUser.data ) {
+        // 当該環境の最新の明細
+        // ユーザ情報（ロール）が取れている
+        if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-cd-execute".replace('{ws_id}',ws_id)) != -1) {
+            // CD実行権限がある
+            if(deployMember == "all" || deployMemberId.indexOf(currentUser.data.id) != -1) {
+                // 環境のCD実行権限が全員または指定メンバーに自分が含まれる
+                if (d.sync_status.sync_status_now == "Synced" && ! (d.trace_id in rollback_execute_traceid)) {
+                    // ArgoCDの現在の状態が"Synced"かつ指定のtrace_idでロールバックがされていない
+                    rollbackButtonDisplay = "";
+                }
+            }
+        }
+      }
+    　ws.cmn.modal.sub.$modal.find('.argocd-rollback-button').css('display', rollbackButtonDisplay);
+      // TEST RollBackボタン
     };
     
     ws.cmn.modal.fn.$modal.on('click', '.execution-status-button', function(){
@@ -1021,12 +1086,14 @@ function wsArgocdCheck() {
         // SYNCボタン
         ws.cmn.modal.sub.$modal.find('.argocd-sync-button').on('click', function(){
             const $b = $( this ),
-                traceid = $b.attr('data-traceid');
+                traceid = $b.attr('data-traceid'),
+                environmentid = $b.attr('data-environmentid'),
+                environmentname = $b.attr('data-environmentname');
 
             const progress = new modalFunction({
                       'progress': {
                           'id': 'progress',
-                          'title': traceid + '/ SYNC',
+                          'title': environmentname + ' / SYNC',
                           'footer': {
                               
                           },
@@ -1043,16 +1110,17 @@ function wsArgocdCheck() {
                   }, {});
 
             if (confirm(getText("EP010-0397", "sync実行しますか？"))){
+                delete rollback_execute_traceid[traceid];
                 progress.open('progress', {
                     'callback': function(){
                         progress.$modal.find('.modal-close').remove();
                         
-                        console.log("[CALL] POST " + workspace_api_conf.api.cd_pipeline.argocd.sync.post.replace('{workspace_id}', workspace_id) + ", trace_id:" + traceid);
+                        console.log("[CALL] POST " + workspace_api_conf.api.cd_pipeline.argocd.sync.post.replace('{workspace_id}', workspace_id) + ", environment_id:" + environmentid);
                         // Call argoCD sync processing - ArgoCD同期処理呼び出し
                         $.ajax({
                             "type": "POST",
                             "url": workspace_api_conf.api.cd_pipeline.argocd.sync.post.replace('{workspace_id}', workspace_id),
-                            data:JSON.stringify({'environment_id':traceid}),
+                            data:JSON.stringify({'environment_id':environmentid}),
                             contentType: "application/json",
                             dataType: "json",
                         }).done(function(data) {
@@ -1063,6 +1131,61 @@ function wsArgocdCheck() {
                             progress.close();
                             alert(getText("EP010-0396", "sync実行失敗"));
                             console.log("[FAIL] POST " + workspace_api_conf.api.cd_pipeline.argocd.sync.post + " response\n" + JSON.stringify(data));
+                        });
+                    }
+                }, '480');
+            }
+        });
+
+        // Rollbackボタン
+        ws.cmn.modal.sub.$modal.find('.argocd-rollback-button').on('click', function(){
+            const $b = $( this ),
+                traceid = $b.attr('data-traceid'),
+                environmentid = $b.attr('data-environmentid'),
+                environmentname = $b.attr('data-environmentname');
+
+            const progress = new modalFunction({
+                      'progress': {
+                          'id': 'progress',
+                          'title': environmentname + ' / Rollback',
+                          'footer': {
+                              
+                          },
+                          'block': {
+                              'progress': {
+                                  'item': {
+                                      'date': {
+                                          'type': 'loading'
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  }, {});
+
+            if (confirm("Rollbackを実行しますか？")){
+                $b.css('display','none');
+                rollback_execute_traceid[traceid] = true;
+                progress.open('progress', {
+                    'callback': function(){
+                        progress.$modal.find('.modal-close').remove();
+                        
+                        console.log("[CALL] POST " + workspace_api_conf.api.cd_pipeline.argocd.rollback.post.replace('{workspace_id}', workspace_id) + ", environment_id:" + environmentid);
+                        // Call argoCD Rollback processing - ArgoCD Rollback処理呼び出し
+                        $.ajax({
+                            "type": "POST",
+                            "url": workspace_api_conf.api.cd_pipeline.argocd.rollback.post.replace('{workspace_id}', workspace_id),
+                            data:JSON.stringify({'environment_id':environmentid}),
+                            contentType: "application/json",
+                            dataType: "json",
+                        }).done(function(data) {
+                            progress.close();
+                            alert("Rollbackを実行しました");
+                            console.log("[DONE] POST " + workspace_api_conf.api.cd_pipeline.argocd.rollback.post + " response\n" + JSON.stringify(data));
+                        }).fail(function(data) {
+                            progress.close();
+                            alert("Rollbackの要求に失敗しました");
+                            console.log("[FAIL] POST " + workspace_api_conf.api.cd_pipeline.argocd.rollback.post + " response\n" + JSON.stringify(data));
                         });
                     }
                 }, '480');

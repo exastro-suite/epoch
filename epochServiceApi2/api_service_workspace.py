@@ -852,6 +852,10 @@ def put_workspace(workspace_id):
         # 取得した情報をもとに、画面から送信された更新情報を権限毎に設定する
         # Based on the acquired information, set the update information sent from the screen for each authority.
 
+        # 更新日は無条件に画面に表示された内容を設定
+        # Set the update date unconditionally the content displayed on the screen
+        row["update_at"] = req_data["update_at"]
+
         #
         # ワークスペース更新(名称)有の場合 If workspace update (name) is available
         #

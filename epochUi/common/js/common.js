@@ -188,7 +188,7 @@ userInfo.prototype = {
         console.log("[TRACE] get user info response:" + JSON.stringify(data));
 
         u.data = {
-          "id": data["info"]["id"],
+          "id": data["info"]["user_id"],
           "username": data["info"]["username"],
           "enabled": data["info"]["enabled"],
           "firstName": data["info"]["firstName"],

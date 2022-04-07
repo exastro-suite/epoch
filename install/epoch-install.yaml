@@ -718,6 +718,11 @@ spec:
           value: "8000"
         - name: PYTHONIOENCODING
           value: utf-8
+        - name: EPOCH_HOSTNAME
+          valueFrom:
+            configMapKeyRef:
+              name: host-setting-config
+              key: EPOCH_HOSTNAME
         envFrom:
           - prefix: EPOCH_
             configMapRef:
@@ -2380,7 +2385,7 @@ data:
         ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/cd/pipeline
         AuthType openid-connect
         <Limit GET>
-            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-reference"
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-cd-execute-result"
         </Limit>
         <Limit POST PUT>
             Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-cd-update"
@@ -2404,6 +2409,21 @@ data:
             Require claim "epoch-role:ws-{{ param.workspace_id }}-role-cd-execute"
         </Limit>
         <LimitExcept GET POST DELETE>
+            Require all denied
+        </LimitExcept>
+      </Location>
+
+      <Location /api/workspace/{{ param.workspace_id }}/cd/argocd>
+        ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/cd/argocd retry=0 timeout=600
+        ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/cd/argocd
+        AuthType openid-connect
+        <Limit GET>
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-cd-execute-result"
+        </Limit>
+        <Limit POST>
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-cd-execute"
+        </Limit>
+        <LimitExcept GET POST>
             Require all denied
         </LimitExcept>
       </Location>
@@ -7657,6 +7677,14 @@ data:
         exit 2
     fi
     logger "INFO" "CALL : kubectl rollout restart deploy -n epoch-system epoch-service-api2${LF}`cat ${CMD_RESULT}`"
+
+    kubectl rollout restart deploy -n epoch-system epoch-control-argocd-api &> "${CMD_RESULT}"
+    if [ $? -ne 0 ]; then
+        logger "ERROR" "CALL : kubectl rollout restart deploy -n epoch-system epoch-control-argocd-api${LF}`cat ${CMD_RESULT}`"
+        logger "ERROR" "rollout restart epoch-control-argocd-api"
+        exit 2
+    fi
+    logger "INFO" "CALL : kubectl rollout restart deploy -n epoch-system epoch-control-argocd-api${LF}`cat ${CMD_RESULT}`"
 
     kubectl rollout restart deploy -n epoch-system epoch-control-ita-api &> "${CMD_RESULT}"
     if [ $? -ne 0 ]; then

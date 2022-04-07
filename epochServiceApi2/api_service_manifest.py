@@ -30,6 +30,7 @@ from datetime import timedelta, timezone
 
 import globals
 import common
+import multi_lang
 
 # 設定ファイル読み込み・globals初期化
 app = Flask(__name__)
@@ -68,7 +69,10 @@ def post_manifest_parameter(workspace_id):
         globals.logger.debug("workspace put call: worksapce_id:{}".format(workspace_id))
         request_response = requests.put( "{}/workspace/{}/manifestParameter".format(apiInfo, workspace_id), headers=post_headers, data=json.dumps(post_data))
         # エラーの際は処理しない
-        if request_response.status_code != 200:
+        if request_response.status_code == 404:
+            error_detail = multi_lang.get_text("EP000-0023", "対象の情報(workspace)が他で更新されたため、更新できません\n画面更新後、再度情報を入力・選択して実行してください", "workspace")
+            raise common.UpdateException("{} Exclusive check error".format(inspect.currentframe().f_code.co_name))
+        elif request_response.status_code != 200:
             globals.logger.error("call rs workspace error:{}".format(request_response.status_code))
             error_detail = "ワークスペース情報更新失敗"
             raise common.UserException(error_detail)
@@ -97,11 +101,32 @@ def post_manifest_parameter(workspace_id):
             error_detail = "IT-Automation パラメータ登録失敗"
             raise common.UserException(error_detail)
 
+        # 変更後のworkspace取得 Get workspace after change
+        api_url = "{}://{}:{}/workspace/{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+                                                    os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                    os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                    workspace_id)
+        response = requests.get(api_url)
+
+        # 正常以外はエラーを返す Returns an error if not normal
+        if response.status_code != 200:
+            if common.is_json_format(response.text):
+                ret = json.loads(response.text)
+                # 詳細エラーがある場合は詳細を設定
+                if ret["errorDetail"] is not None:
+                    error_detail = ret["errorDetail"]
+            raise common.UserException("{} Error put workspace db status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
+
+        rows = json.loads(response.text)
+        row = rows["rows"][0]
+
         # 正常終了 normal return code
         ret_status = 200
 
-        return jsonify({"result": ret_status}), ret_status
+        return jsonify({"result": ret_status, "update_at": row["update_at"]}), ret_status
 
+    except common.UpdateException as e:
+        return common.user_error_to_message(e, app_name + exec_stat, error_detail, 400)
     except common.UserException as e:
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
     except Exception as e:
@@ -188,7 +213,7 @@ def post_manifest_template(workspace_id):
                 # todo: test用データ
                 # "deploy_method": "BlueGreen",
                 "deploy_params": {
-                    "scaleDownDelaySeconds": "120",
+                    "scaleDownDelaySeconds": "{{ bluegreen_sdd_sec }}",
                 },
                 "file_text": file_text,
             }

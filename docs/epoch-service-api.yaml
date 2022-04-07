@@ -662,6 +662,27 @@ paths:
         500:
           $ref: '#/definitions/responses/CommonException'
 
+  /workspace/{workspace_id}/cd/pipeline/argocd/rollback:
+    post:
+      tags:
+        - CD Pipeline
+      summary: 
+        CDパイプライン(ArgoCD)ロールバック
+      description: 
+        指定したワークスペースIDに対して、実施したデプロイをロールバックする
+      parameters:
+        - $ref: '#/definitions/parameters/Workspace_Id'
+
+      requestBody: # リクエストボディ
+        $ref: '#/definitions/requestBodies/Cdpipeline_Argocd_Rollback'
+
+      # レスポンス結果
+      responses:
+        200:
+          $ref: '#/definitions/responses/200'
+        500:
+          $ref: '#/definitions/responses/CommonException'
+
   /workspace/{workspace_id}/cd/exec:
     post:
       tags:
@@ -1236,6 +1257,8 @@ definitions:
               },
               "cd_config": {
                 "system_config": "one-namespace固定",
+                "deploy_method": "デプロイ方式(BlueGreen/RollingUpdate)",
+                "deploy_scale_down_delay_seconds": "BlueGreen切替待機時間(秒)",
                 "environments_common": {
                     "git_repositry": {
                         "account_select": "アプリケーションコードと同一アカウントの場合はapplicationCode、それ以外は入力指定",
@@ -1358,6 +1381,8 @@ definitions:
             },
             "cd_config": {
               "system_config": "one-namespace",
+              "deploy_method": "BlueGreen",
+              "deploy_scale_down_delay_seconds": "30",
               "environments_common": {
                   "git_repositry": {
                       "account_select": "applicationCode",
@@ -1473,6 +1498,8 @@ definitions:
           },
           "cd_config": {
             "system_config": "one-namespace固定",
+            "deploy_method": "デプロイ方式(BlueGreen/RollingUpdate)",
+            "deploy_scale_down_delay_seconds": "BlueGreen切替待機時間(秒)",
             "environments_common": {
                 "git_repositry": {
                     "account_select": "アプリケーションコードと同一アカウントの場合はapplicationCode、それ以外は入力指定",
@@ -1590,6 +1617,8 @@ definitions:
           },
           "cd_config": {
             "system_config": "one-namespace",
+            "deploy_method": "BlueGreen",
+            "deploy_scale_down_delay_seconds": "30",
             "environments_common": {
                 "git_repositry": {
                     "account_select": "applicationCode",
@@ -2067,6 +2096,20 @@ definitions:
         }
 
     Cdpipeline_Argocd_Sync:
+      type: object # 型
+      example:
+        {
+          "environment_name": "staging"
+        }
+
+    Cdpipeline_Argocd_Rollback_Example:
+      type: object # 型
+      example:
+        {
+          "environment_name": "環境名"
+        }
+
+    Cdpipeline_Argocd_Rollback:
       type: object # 型
       example:
         {

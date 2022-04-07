@@ -12,6 +12,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+from jinja2 import environment
 from flask import Flask, request, abort, jsonify, render_template
 from datetime import datetime
 import inspect
@@ -634,7 +635,9 @@ def get_cd_pipeline_argocd(workspace_id):
         res_json = json.loads(response.text)
 
         ret_status = res_json["result"]
-        
+
+        argocd_status_now = {} # Current Argocd state - 現時点のargocdステータス
+
         rows = []
         for data_row in res_json["rows"]:
             row = data_row
@@ -749,18 +752,46 @@ def get_cd_pipeline_argocd(workspace_id):
             else:
                 html_url = "{}/commit/{}".format(sync_status_repo_url, sync_status_revision)
 
+            # ArgoCD最新情報取得
+            environment_id = env_name_to_environment_id(row["contents"]["workspace_info"]["cd_config"]["environments"], row["contents"]["environment_name"])
+            argo_app_name = get_argo_app_name(workspace_id, environment_id)
+            if not argo_app_name in argocd_status_now:
+                # Get if there is no latest result of argocd - argocdの最新の結果が無いときは取得する
+                argo_api_url = "{}://{}:{}/workspace/{}/argocd/app/{}".format(os.environ['EPOCH_CONTROL_ARGOCD_PROTOCOL'],
+                                                                        os.environ['EPOCH_CONTROL_ARGOCD_HOST'],
+                                                                        os.environ['EPOCH_CONTROL_ARGOCD_PORT'],
+                                                                        workspace_id,
+                                                                        argo_app_name)
+                resp_argo_status = requests.get(argo_api_url)
+
+                if resp_argo_status.status_code != 200:
+                    resp_argo_status = {"result": resp_argo_status.status_code, "result": {}}
+                else:
+                    resp_argo_status = json.loads(resp_argo_status.text)
+
+                try:
+                    sync_status = resp_argo_status["result"]["status"]["sync"]["status"]
+                except:
+                    sync_status = "Undefined"
+
+                argocd_status_now[argo_app_name] = {
+                    "sync_status": sync_status
+                }
+
             # Format the entire result JSON - 結果JSONの全体を整形
             rows.append(
                 {
                     "trace_id": row["contents"]["trace_id"],
                     "cd_status": row["cd_status"],
                     "environment_name": row["contents"]["environment_name"],
+                    "environment_id": environment_id,
                     "namespace": row["contents"]["namespace"],
                     "health": {
                         "status": health_status,
                     },
                     "sync_status": {
                         "status": sync_status_status,
+                        "sync_status_now": argocd_status_now[argo_app_name]["sync_status"],
                         "repo_url": sync_status_repo_url,
                         "server": sync_status_server,
                         "revision": sync_status_revision,
@@ -782,7 +813,7 @@ def get_cd_pipeline_argocd(workspace_id):
 
 
 def post_cd_pipeline_argocd_sync(workspace_id):
-    """Get CD pipeline (ArgoCD) information - CDパイプライン(ArgoCD)情報取得
+    """Get CD pipeline (ArgoCD) sync - CDパイプライン(ArgoCD)sync
 
     Args:
         workspace_id (int): workspace ID
@@ -834,6 +865,59 @@ def post_cd_pipeline_argocd_sync(workspace_id):
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
 
 
+def post_cd_pipeline_argocd_rollback(workspace_id):
+    """Get CD pipeline (ArgoCD) rollback - CDパイプライン(ArgoCD)rollback
+
+    Args:
+        workspace_id (int): workspace ID
+
+    Returns:
+        Response: HTTP Respose
+    """
+
+    app_name = multi_lang.get_text("EP020-0034", "CD実行結果(ArgoCD):") 
+    exec_stat = multi_lang.get_text("EP020-0092", "CDパイプライン(ArgoCD)rollback実行")
+    error_detail = ""
+
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {} workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, workspace_id))
+        globals.logger.debug('#' * 50)
+
+        # ヘッダ情報
+        post_headers = {
+            'Content-Type': 'application/json',
+        }
+
+        # 状態をArgoCD同期中に変更
+        req_json = request.json.copy()
+        environment_id = req_json["environment_id"]
+
+
+        # ArgoCD Sync call 
+        api_url = "{}://{}:{}/workspace/{}/argocd/app/{}/rollback".format(os.environ['EPOCH_CONTROL_ARGOCD_PROTOCOL'],
+                                                os.environ['EPOCH_CONTROL_ARGOCD_HOST'],
+                                                os.environ['EPOCH_CONTROL_ARGOCD_PORT'],
+                                                workspace_id,
+                                                get_argo_app_name(workspace_id,environment_id))
+        response = requests.post(api_url, headers=post_headers)
+
+        if response.status_code != 200:
+            error_detail = multi_lang.get_text("EP020-0093", "CDパイプライン(ArgoCD)rollback実行に失敗しました")
+            globals.logger.debug(error_detail)
+            raise common.UserException(error_detail)
+
+        ret_status = 200
+
+        # 戻り値をそのまま返却        
+        return jsonify({"result": ret_status}), ret_status
+
+    except common.UserException as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+    except Exception as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+
+
 def get_argo_app_name(workspace_id,environment_id):
     """ArgoCD app name
 
@@ -846,6 +930,21 @@ def get_argo_app_name(workspace_id,environment_id):
     """
     return 'ws-{}-{}'.format(workspace_id,environment_id)
 
+def env_name_to_environment_id(environments, env_name):
+    """Get the app name of ArgoCD from the environment name - 環境名からArgoCDのapp nameを取得します
+
+    Args:
+        environments (arr): Environment information list of workspace - workspaceの環境情報リスト
+        env_name (str): enviroment name
+
+    Returns:
+        str: environment_id
+    """
+    for env in environments:
+        if env["name"] == env_name:
+            return env["environment_id"]
+
+    return None
 
 def cd_execute(workspace_id):
     """CD実行 cd execute
