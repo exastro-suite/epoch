@@ -269,7 +269,7 @@ def get_argocd_app(workspace_id, app_name):
 
     try:
         globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
+        globals.logger.debug('CALL {} workspace_id:[{}], app_name:[{}]'.format(inspect.currentframe().f_code.co_name, workspace_id, app_name))
         globals.logger.debug('#' * 50)
 
         # ワークスペースアクセス情報取得 Get workspace access information
@@ -293,11 +293,60 @@ def get_argocd_app(workspace_id, app_name):
         stdout_cd = subprocess.check_output(["argocd","app","get", app_name, "-o","json"],stderr=subprocess.STDOUT)
         # globals.logger.debug(stdout_cd.decode('utf-8'))
 
-        # globals.logger.debug(stdout_cd)
-        ret_status = 200
-        
         result = json.loads(stdout_cd)
-        
+
+        # ヘッダ情報
+        post_headers = {
+            'Content-Type': 'application/json',
+        }
+
+        # argocd tree info get
+        api_info = "https://{}".format(argo_host)
+
+        post_data = {
+            "username" : argo_id,
+            "password" : argo_password,
+        }
+        from requests.packages.urllib3.exceptions import InsecureRequestWarning
+        requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+
+        # Toekn取得 get token
+        globals.logger.debug ("argocd token get call:")
+        response = requests.post( "{}/api/v1/session".format(api_info), headers=post_headers, data=json.dumps(post_data), verify=False)
+
+        # 正常時以外はExceptionを発行して終了する
+        # Exception is issued and ends except when it is normal.
+        if response.status_code != 200:
+            globals.logger.error(response.text)
+            error_detail = "argocd token get error : status_code:{}".format(response.status_code)
+            raise common.UserException(error_detail)
+
+        ret_token = json.loads(response.text)
+
+        post_headers = {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer {}'.format(ret_token["token"]),
+        }
+
+        # Node情報取得 get node information
+        globals.logger.debug ("argocd tree info get call:")
+        response = requests.get( "{}/api/v1/applications/{}/resource-tree".format(api_info, app_name), headers=post_headers, verify=False)
+
+        # 正常時以外はExceptionを発行して終了する
+        # Exception is issued and ends except when it is normal.
+        if response.status_code != 200:
+            globals.logger.error(response.text)
+            error_detail = "argocd tree info get error : status_code:{}".format(response.status_code)
+            raise common.UserException(error_detail)
+
+        ret_tree = json.loads(response.text)
+        # globals.logger.debug(ret_tree)
+
+        result.update(ret_tree)
+        # globals.logger.debug(result)
+
+        ret_status = 200
+
         # 戻り値をそのまま返却        
         return jsonify({"result": ret_status, "result": result}), ret_status
 

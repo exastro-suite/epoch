@@ -629,7 +629,7 @@ def get_cd_pipeline_argocd(workspace_id):
 
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0032", "CDパイプライン(ArgoCD)情報の取得に失敗しました")
-            globals.logger.debug(error_detail)
+            globals.logger.error(error_detail)
             raise common.UserException(error_detail)
 
         res_json = json.loads(response.text)
@@ -668,17 +668,27 @@ def get_cd_pipeline_argocd(workspace_id):
                         and "kind" in sync_result_resources and "name" in sync_result_resources:
                             if str(status_resources["kind"]) == str(sync_result_resources["kind"]) \
                             and str(status_resources["name"]) == str(sync_result_resources["name"]): 
+                                status_add = {
+                                    "kind": status_resources["kind"],
+                                    "name": status_resources["name"],
+                                    "health_status": status_resources["health"]["status"],
+                                    "sync_status": sync_result_resources["status"],
+                                    "message": sync_result_resources["message"],
+                                }
+                                # kind, name, namespaceからnodesの値を参照して uidを取得
+                                # Get uid by referring to the value of nodes from kind, name, namespace
+                                if "namespace" in status_resources and "nodes" in argocd_result["result"]:
+                                    for nodes in argocd_result["result"]["nodes"]:
+                                        if nodes["kind"] == status_resources["kind"] and \
+                                            nodes["name"] == status_resources["name"] and \
+                                            nodes["namespace"] == status_resources["namespace"]:
+                                            # globals.logger.debug("hit nodes uid:[{}]".format(nodes["uid"]))
+                                            status_add["uid"] = nodes["uid"]
+                                            break
+
                                 # ArgoCDの取得結果では、結果の"resources"が2か所に分かれているため、"kind", "name"が同名のリソース情報をマージ
                                 # In the acquisition result of ArgoCD, the result "resources" is divided into two places, so "kind" and "name" merge the resource information with the same name
-                                resource_status.append(
-                                    {
-                                        "kind": status_resources["kind"],
-                                        "name": status_resources["name"],
-                                        "health_status": status_resources["health"]["status"],
-                                        "sync_status": sync_result_resources["status"],
-                                        "message": sync_result_resources["message"]
-                                    }
-                                )
+                                resource_status.append(status_add)
             # argocdの結果があるかチェック
             # Check for argocd result
             if "result" not in argocd_result or \
@@ -773,6 +783,11 @@ def get_cd_pipeline_argocd(workspace_id):
                     sync_status = resp_argo_status["result"]["status"]["sync"]["status"]
                 except:
                     sync_status = "Undefined"
+                
+                try:
+                    nodes = resp_argo_status["result"]["nodes"]
+                except:
+                    nodes = []
 
                 argocd_status_now[argo_app_name] = {
                     "sync_status": sync_status
@@ -797,12 +812,15 @@ def get_cd_pipeline_argocd(workspace_id):
                         "revision": sync_status_revision,
                         "html_url": html_url,
                     },
+                    "nodes": nodes,
                     "resource_status": resource_status,
                     "startedAt": startedAt,
                     "finishedAt": finishedAt,
                 }
             )
             
+        # globals.logger.debug(rows)
+
         # 戻り値をそのまま返却 Return the return value as it is       
         return jsonify({"result": ret_status, "rows": rows}), ret_status
 
