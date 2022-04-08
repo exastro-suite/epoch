@@ -790,7 +790,7 @@ def get_cd_pipeline_argocd(workspace_id):
                 }
                 
             try:
-                nodes = resp_argo_status["result"]["nodes"]
+                nodes = argocd_result["result"]["nodes"]
             except:
                 nodes = []
 
