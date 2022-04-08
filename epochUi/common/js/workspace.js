@@ -609,8 +609,8 @@ const wsModalJSON = {
             'title': 'BlueGreenデプロイ完了後の古いPodのスケールダウンの待ち時間（秒）',
             'name': 'argocd-bluegreen-scaledown-wait',
             'class': 'input-pickup input-pickup-auto',
-            'min': 0,
-            'max': 3600,
+            'min': 1,
+            'max': 604800,
             'placeholder': '0',
             'note': '古いPodのスケールダウンの待ち時間（秒）を入力してください'
           },
