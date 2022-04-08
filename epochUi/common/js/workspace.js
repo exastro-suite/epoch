@@ -3894,9 +3894,9 @@ const compareInfo = function( modalID, compareData ){
         "data": {'processing': "True"}
       }).done(function(response) {
         var cdresult = response.rows;
-        console.log("DONE : cdresult");
-        console.log("--- data ----");
-        console.log(JSON.stringify(cdresult));
+        // console.log("DONE : cdresult");
+        // console.log("--- data ----");
+        // console.log(JSON.stringify(cdresult));
         var visibility = "hidden";
         for(let i = 0; i < cdresult.length; i++) {
           if(['ITA-Execute'].includes(cdresult[i].cd_status)) {
@@ -3941,9 +3941,9 @@ const compareInfo = function( modalID, compareData ){
         "data": {'processing': "True"}
       }).done(function(response) {
         var cdresult = response.rows;
-        console.log("DONE : cdresult");
-        console.log("--- data ----");
-        console.log(JSON.stringify(cdresult));
+        // console.log("DONE : cdresult");
+        // console.log("--- data ----");
+        // console.log(JSON.stringify(cdresult));
         var visibility = "hidden";
         for(let i = 0; i < cdresult.length; i++) {
           if(['ArgoCD-Sync', 'ArgoCD-Processing'].includes(cdresult[i].cd_status)) {
