@@ -1045,9 +1045,11 @@ function wsArgocdCheck() {
                     const child = ul( node.uid );
                     h.push('<li class="argocd-resource-item">' + resourceRow(node) + child + '</li>');
                 } else if ( !parentUid && !node.parentRefs ) {
-                    const resouce = result.resource_status.find(function(v){ return v.uid == node.uid; }),
-                          child = ul( node.uid );
-                    h.push('<li class="argocd-resource-item">' + resourceRow(node, resouce ) + child + '</li>');
+                    const resouce = result.resource_status.find(function(v){ return v.uid == node.uid; });
+                    if(node.uid !== undefined) {
+                        child = ul( node.uid );
+                        h.push('<li class="argocd-resource-item">' + resourceRow(node, resouce ) + child + '</li>');
+                    }
                 }
             }
             return ( h.length )? `<ul class="argocd-resource-list">${h.join('')}</ul>`: '';
