@@ -1053,7 +1053,7 @@ function wsArgocdCheck() {
                     if(node.uid === undefined) {
                         h.push('<li class="argocd-resource-item">' + resourceRow(node, resouce ) + '</li>');
                     } else {
-                        child = ul( node.uid );
+                        const child = ul( node.uid );
                         h.push('<li class="argocd-resource-item">' + resourceRow(node, resouce ) + child + '</li>');
                     }
                 }
