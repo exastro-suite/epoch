@@ -211,9 +211,11 @@ wsResultCommon.prototype = {
                 window.console.error( error );
             });
     },
-    'item': function( className, title, text, url ) {
+    'item': function( className, title, text, url, horizontal ) {
+        const c = ['item-block'];
+        if ( horizontal === undefined ) horizontal = c.push('item-horizontal');
         text = ( url !== '')? `<a href="${encodeURI(url)}" target="_blank">${text}</a>`: text;
-        return `<dl class="item-block item-horizontal">`
+        return `<dl class="${c.join(' ')}">`
         + `<dt class="item-header">${title}</dt>`
         + `<dd class="item-area ${className}">${text}</dd></dl>`;
     },
@@ -584,10 +586,10 @@ function wsTektonCheck() {
               
               // タスクデータ取得
               const getTask = function() {
-                  return ws.cmn.data[type].result.filter( function( v ){
-                      return v.task_id === taskID;
-                  }).shift();
-              };              
+                return ws.cmn.data[type].result.find( function( v ){
+                    return v.task_id === taskID;
+                });
+            };              
               let task = getTask();
               
               if ( task ) {
@@ -939,6 +941,7 @@ function wsArgocdCheck() {
             'detail': {}
         }
     };
+    ws.cmn.modal.de.class = 'argocd-detail-modal';
 
     // --------------------------------------------------
 
@@ -954,245 +957,260 @@ function wsArgocdCheck() {
       ['argocd-environment','環境名'],
       ['argocd-argocd-manifest','Manifestリポジトリ'],
       ['argocd-server','Kubernetes API Server URL'],
-      ['argocd-namespace','Namespace']
+      ['argocd-namespace','Namespace'],
+      ['argocd-start','同期開始日時'],
+      ['argocd-end','同期終了日時']
     ];
     
     const detailInfoLength = detailInfoList.length;
     for ( let i = 0; i < detailInfoLength; i++ ) {
-      detailInfo.push(ws.cmn.item( detailInfoList[i][0], detailInfoList[i][1], '', ''));
+      detailInfo.push(ws.cmn.item( detailInfoList[i][0], detailInfoList[i][1], '', '', false));
     }
     
     ws.cmn.data.argocd.detail.$detail = $(''
     + ws.cmn.traceIdSelecter()
-    + detailInfo.join('')
-    + '<div class="item-block">'
-    + '<div class="item-header">ArgoCD 実行状況</div>'
-    + '<div class="argocd-exe-info">'
-      + '<div class="argocd-health">'
-        + `<div class="argocd-health-title">APP HEALTH</div>`
-        + '<div class="argocd-health-status"></div>'
+    + '<div class="argocd-detail">'
+      + '<div class="argocd-data">'
+        + detailInfo.join('')
       + '</div>'
-      + '<div class="argocd-sync">'
-        + '<div class="argocd-sync-title">SYNC STATUS</div>'
-        + `<div class="argocd-sync-status"></div>`
-        + '<div class="argocd-sync-head"></div>'
-        // + '<div class="argocd-sync-sync"><button class="argocd-sync-button"><span class="icon icon-Update"></span> SYNC</button></div>'
-        + '<div class="argocd-sync-sync"><button class="argocd-sync-button"><span class="icon icon-Update"></span> SYNC</button></div>'
-        + '<div class="argocd-rollback-rollback"><button class="argocd-rollback-button"><span class="icon icon-Update"></span> Rollback</button></div>'
-        //
+      + '<div class="argocd-exe-figure">'
+        + '<div class="argocd-status">'
+          + '<div class="argocd-health">'
+            + `<div class="argocd-health-title">APP HEALTH</div>`
+            + '<div class="argocd-health-status"></div>'
+          + '</div>'
+          + '<div class="argocd-sync">'
+            + '<div class="argocd-sync-title">SYNC STATUS</div>'
+            + `<div class="argocd-sync-status"></div>`
+            + '<div class="argocd-sync-head"></div>'
+          + '</div>'
+          + '<div class="argocd-menu">'
+            + '<ul class="argocd-menu-list">'
+              + '<li class="argocd-menu-item"><button class="argocd-menu-button" data-button="sync"><span class="icon icon-Update"></span> SYNC</button></li>'
+              + '<li class="argocd-menu-item"><button class="argocd-menu-button" data-button="rollback"><span class="icon icon-Rollback"></span> Rollback</button></li>'
+            + '</ul>'
+          + '</div>'
         + '</div>'
-      + '<div class="argocd-resource">'
-        + '<ul class="argocd-resource-list"></ul>'
+        + '<div class="argocd-resource">'
+        + '</div>'
       + '</div>'
-    + '</div>'
     + '</div>');
-    
+
      ws.cmn.data.argocd.detail.update = function( d ){
       const mURL = d.sync_status.repo_url,
-            headURL = d.sync_status.html_url,
-            manifest = `<a href="${encodeURI(mURL)}" target="_blank">${mURL}</a>`,
+            manifest = `<a href="${encodeURI(mURL)}" taregt="_blank">${mURL}</a>`,
             healthStatus = d.health.status,
             syncStatus = d.sync_status.status,
             headID = d.sync_status.revision.slice( 0, 6 ),
             health = `<span class="icon icon-${healthStatus}"></span>${healthStatus}`,
             sync = `<span class="icon icon-${syncStatus}"></span>${syncStatus}`,
-            head = `from <a href="${encodeURI(headURL)}" target="_blank">HEAD(${headID})</a>`,
-            resource = [];
-      
-      const resourceRow = function( r ){
-        const rHealth = '<span class="icon icon-' + r.health_status + '"></span>' + r.health_status,
-              rSync = '<span class="icon icon-' + r.sync_status + '"></span>' + r.sync_status;
-        return `<li class="argocd-resource-item">`
-          + `<div class="argocd-resource-kind">${r.kind}</div>`
-          + `<div class="argocd-resource-name">${r.name}</div>`
-          + `<div class="argocd-resource-health_status status-${r.health_status}">${rHealth}</div>`
-          + `<div class="argocd-resource-sync_status status-${r.sync_status}">${rSync}</div>`
-          + `<div class="argocd-resource-message">${r.message}</div>`
-        + `</li>`;
-      };
-      for ( const key in d.resource_status ) {
-        resource.push( resourceRow( d.resource_status[key]) );
-      }
-      
-      const setData = [
-        ['.status-trace-id-number', d.trace_id ],
-        ['.argocd-environment', d.environment_name ],
-        ['.argocd-argocd-manifest', manifest ],
-        ['.argocd-server', d.sync_status.server ],
-        ['.argocd-namespace', d.namespace ],
-        ['.argocd-health-status', health ],
-        ['.argocd-sync-status', sync ],
-        ['.argocd-sync-head', head ],
-        ['.argocd-resource-list', resource.join('') ]
-      ];
-      const setDataLength = setData.length;
-    
-      for ( let i = 0; i < setDataLength; i++ ) {
-          ws.cmn.modal.sub.$modal.find( setData[i][0] ).html( setData[i][1] );
-      }
-      ws.cmn.modal.sub.$modal.find('.argocd-sync-button').attr('data-traceid', d.trace_id );      
-      ws.cmn.modal.sub.$modal.find('.argocd-sync-button').attr('data-environmentid', d.environment_id );      
-      ws.cmn.modal.sub.$modal.find('.argocd-sync-button').attr('data-environmentname', d.environment_name );
+            head = `from <a href="${encodeURI(mURL)}" target="_blank">HEAD(${headID})</a>`;
 
-      // 環境毎のCD実行権限
-      const deployMember = RefWsDataJSON.environment[d.environment_id][d.environment_id+"-environment-deploy-member"];
-      const deployMemberId = RefWsDataJSON.environment[d.environment_id][d.environment_id+"-environment-deploy-member-id"];
-
-      // syncボタンの表示／非表示判定
-      let syncButtonDisplay = "none";
-      if(d.latest_item && currentUser != null && currentUser.data ) {
-        // 当該環境の最新の明細
-        // ユーザ情報（ロール）が取れている
-        if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-cd-execute".replace('{ws_id}',ws_id)) != -1) {
-            // CD実行権限がある
-            if(deployMember == "all" || deployMemberId.indexOf(currentUser.data.id) != -1) {
-                // 環境のCD実行権限が全員または指定メンバーに自分が含まれる
-                syncButtonDisplay = "";
+        const result = d,
+              nl = result.nodes.length;
+        
+        const resourceRow = function( n, r ){
+            const node = [];
+            
+            if ( n.name ) node.push(`<div class="argocd-resource-name">${n.name}</div>`);
+            
+            // status
+            if ( r ) {
+                if ( r.health_status ) {
+                    const rHealth = '<span class="icon icon-' + r.health_status + '"></span>' + r.health_status;
+                    node.push(`<div class="argocd-resource-health_status status-${r.health_status}">${rHealth}</div>`);
+                }
+                if ( r.sync_status ) {
+                    const rSync = '<span class="icon icon-' + r.sync_status + '"></span>' + r.sync_status;
+                    node.push(`<div class="argocd-resource-sync_status status-${r.sync_status}">${rSync}</div>`);
+                }
+                if ( r.message ) node.push(`<div class="argocd-resource-message">${r.message}</div>`);
+            } else {
+                if ( n.health && n.health.status ) {
+                    const rHealth = '<span class="icon icon-' + n.health.status + '"></span>' + n.health.status;
+                    node.push(`<div class="argocd-resource-health_status status-${n.health.status}">${rHealth}</div>`);
+                }
             }
+
+            return '<dl class="argocd-resource-node">'
+            + `<dt class="argocd-resource-kind">${n.kind}</dt>`
+            + `<dd class="argocd-resource-meta">${node.join('')}</dd></dl>`;
+        };
+      
+        const ul = function( parentUid ) {
+            const h = [];
+            for ( let i = 0; i < nl; i++ ) {
+                const node = result.nodes[i];
+                if ( parentUid && node.parentRefs && parentUid === node.parentRefs[0].uid ) {
+                    const child = ul( node.uid );
+                    h.push('<li class="argocd-resource-item">' + resourceRow(node) + child + '</li>');
+                } else if ( !parentUid && !node.parentRefs ) {
+                    const resouce = result.resource_status.find(function(v){ return v.uid == node.uid; }),
+                          child = ul( node.uid );
+                    h.push('<li class="argocd-resource-item">' + resourceRow(node, resouce ) + child + '</li>');
+                }
+            }
+            return ( h.length )? `<ul class="argocd-resource-list">${h.join('')}</ul>`: '';
         }
-      }
-      ws.cmn.modal.sub.$modal.find('.argocd-sync-button').css('display', syncButtonDisplay);
+        const resource = ul();
+      
+        const setData = [
+          ['.status-trace-id-number', d.trace_id ],
+          ['.argocd-environment', d.environment_name ],
+          ['.argocd-argocd-manifest', manifest ],
+          ['.argocd-server', d.sync_status.server ],
+          ['.argocd-namespace', d.namespace ],
+          ['.argocd-start', ws.cmn.fn.formatDate( d.startedAt, 'yyyy/MM/dd HH:mm:ss') ],
+          ['.argocd-end', ws.cmn.fn.formatDate( d.finishedAt, 'yyyy/MM/dd HH:mm:ss') ],
+          ['.argocd-health-status', health ],
+          ['.argocd-sync-status', sync ],
+          ['.argocd-sync-head', head ],
+          ['.argocd-resource', resource ]
+        ];        
+        
+        const setDataLength = setData.length;
 
+        for ( let i = 0; i < setDataLength; i++ ) {
+            ws.cmn.modal.sub.$modal.find( setData[i][0] ).html( setData[i][1] );
+        }
+        ws.cmn.modal.sub.$modal.find('.argocd-menu-button').attr('data-traceid', d.trace_id );
+        // API用データ設定
+        ws.cmn.modal.sub.$modal.find('.argocd-menu-button').attr('data-environmentid', d.environment_id );
+        ws.cmn.modal.sub.$modal.find('.argocd-menu-button').attr('data-environmentname', d.environment_name );
+        //
 
-      // TEST RollBackボタン
-      ws.cmn.modal.sub.$modal.find('.argocd-rollback-button').attr('data-traceid', d.trace_id );      
-      ws.cmn.modal.sub.$modal.find('.argocd-rollback-button').attr('data-environmentid', d.environment_id );      
-      ws.cmn.modal.sub.$modal.find('.argocd-rollback-button').attr('data-environmentname', d.environment_name );
+        // 環境毎のCD実行権限
+        const deployMember = RefWsDataJSON.environment[d.environment_id][d.environment_id+"-environment-deploy-member"];
+        const deployMemberId = RefWsDataJSON.environment[d.environment_id][d.environment_id+"-environment-deploy-member-id"];
 
-      // rollbackボタンの表示／非表示判定
-      let rollbackButtonDisplay = "none";
-      if(d.latest_item && currentUser != null && currentUser.data ) {
-        // 当該環境の最新の明細
-        // ユーザ情報（ロール）が取れている
-        if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-cd-execute".replace('{ws_id}',ws_id)) != -1) {
-            // CD実行権限がある
-            if(deployMember == "all" || deployMemberId.indexOf(currentUser.data.id) != -1) {
-                // 環境のCD実行権限が全員または指定メンバーに自分が含まれる
-                if (d.sync_status.sync_status_now == "Synced" && ! (d.trace_id in rollback_execute_traceid)) {
-                    // ArgoCDの現在の状態が"Synced"かつ指定のtrace_idでロールバックがされていない
-                    rollbackButtonDisplay = "";
+        // syncボタンの表示／非表示判定
+        let syncButtonDisplay = "none";
+        if(d.latest_item && currentUser != null && currentUser.data ) {
+            // 当該環境の最新の明細
+            // ユーザ情報（ロール）が取れている
+            if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-cd-execute".replace('{ws_id}',ws_id)) != -1) {
+                // CD実行権限がある
+                if(deployMember == "all" || deployMemberId.indexOf(currentUser.data.id) != -1) {
+                    // 環境のCD実行権限が全員または指定メンバーに自分が含まれる
+                    syncButtonDisplay = "";
                 }
             }
         }
-      }
-    　ws.cmn.modal.sub.$modal.find('.argocd-rollback-button').css('display', rollbackButtonDisplay);
-      // TEST RollBackボタン
+        ws.cmn.modal.sub.$modal.find('.argocd-menu-button[data-button="sync"]').css('display',syncButtonDisplay);
+
+        // rollbackボタンの表示／非表示
+        let rollbackButtonDisplay = "none";
+        if(d.latest_item && currentUser != null && currentUser.data ) {
+            // 当該環境の最新の明細
+            // ユーザ情報（ロール）が取れている
+            if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-cd-execute".replace('{ws_id}',ws_id)) != -1) {
+                // CD実行権限がある
+                if(deployMember == "all" || deployMemberId.indexOf(currentUser.data.id) != -1) {
+                    // 環境のCD実行権限が全員または指定メンバーに自分が含まれる
+                    if (d.sync_status.sync_status_now == "Synced" && ! (d.trace_id in rollback_execute_traceid)) {
+                        // ArgoCDの現在の状態が"Synced"かつ指定のtrace_idでロールバックがされていない
+                        rollbackButtonDisplay = "";
+                    }
+                }
+            }
+        }
+        ws.cmn.modal.sub.$modal.find('.argocd-menu-button[data-button="rollback"]').css('display',rollbackButtonDisplay);
     };
-    
+
+
     ws.cmn.modal.fn.$modal.on('click', '.execution-status-button', function(){
         ws.cmn.data.argocd.detail.traceid = $( this ).attr('data-button');
-        ws.cmn.detail('argocd', 720 );
+        ws.cmn.detail('argocd', 'none');
         
         // SYNCボタン
-        ws.cmn.modal.sub.$modal.find('.argocd-sync-button').on('click', function(){
+        ws.cmn.modal.sub.$modal.find('.argocd-menu-button').on('click', function(){
             const $b = $( this ),
-                traceid = $b.attr('data-traceid'),
-                environmentid = $b.attr('data-environmentid'),
-                environmentname = $b.attr('data-environmentname');
+                  type = $b.attr('data-button'),
+                  traceid = $b.attr('data-traceid');
+                  // 環境ID/環境名
+                  environmentid = $b.attr('data-environmentid'),
+                  environmentname = $b.attr('data-environmentname');
 
             const progress = new modalFunction({
-                      'progress': {
-                          'id': 'progress',
-                          'title': environmentname + ' / SYNC',
-                          'footer': {
-                              
-                          },
-                          'block': {
-                              'progress': {
-                                  'item': {
-                                      'date': {
-                                          'type': 'loading'
-                                      }
-                                  }
-                              }
-                          }
-                      }
-                  }, {});
+                    'progress': {
+                        'id': 'progress',
+                        'title': environmentname + '/ ' + type.toUpperCase(),
+                        'footer': {
 
-            if (confirm(getText("EP010-0397", "sync実行しますか？"))){
-                delete rollback_execute_traceid[traceid];
-                progress.open('progress', {
-                    'callback': function(){
-                        progress.$modal.find('.modal-close').remove();
-                        
-                        console.log("[CALL] POST " + workspace_api_conf.api.cd_pipeline.argocd.sync.post.replace('{workspace_id}', workspace_id) + ", environment_id:" + environmentid);
-                        // Call argoCD sync processing - ArgoCD同期処理呼び出し
-                        $.ajax({
-                            "type": "POST",
-                            "url": workspace_api_conf.api.cd_pipeline.argocd.sync.post.replace('{workspace_id}', workspace_id),
-                            data:JSON.stringify({'environment_id':environmentid}),
-                            contentType: "application/json",
-                            dataType: "json",
-                        }).done(function(data) {
-                            progress.close();
-                            alert(getText("EP010-0395", "sync実行しました"));
-                            console.log("[DONE] POST " + workspace_api_conf.api.cd_pipeline.argocd.sync.post + " response\n" + JSON.stringify(data));
-                        }).fail(function(data) {
-                            progress.close();
-                            alert(getText("EP010-0396", "sync実行失敗"));
-                            console.log("[FAIL] POST " + workspace_api_conf.api.cd_pipeline.argocd.sync.post + " response\n" + JSON.stringify(data));
-                        });
+                        },
+                        'block': {
+                            'progress': {
+                                'item': {
+                                    'date': {
+                                        'type': 'loading'
+                                    }
+                                }
+                            }
+                        }
                     }
-                }, '480');
-            }
-        });
+                }, {});
 
-        // Rollbackボタン
-        ws.cmn.modal.sub.$modal.find('.argocd-rollback-button').on('click', function(){
-            const $b = $( this ),
-                traceid = $b.attr('data-traceid'),
-                environmentid = $b.attr('data-environmentid'),
-                environmentname = $b.attr('data-environmentname');
-
-            const progress = new modalFunction({
-                      'progress': {
-                          'id': 'progress',
-                          'title': environmentname + ' / Rollback',
-                          'footer': {
-                              
-                          },
-                          'block': {
-                              'progress': {
-                                  'item': {
-                                      'date': {
-                                          'type': 'loading'
-                                      }
-                                  }
-                              }
-                          }
-                      }
-                  }, {});
-
-            if (confirm("Rollbackを実行しますか？")){
-                $b.css('display','none');
-                rollback_execute_traceid[traceid] = true;
-                progress.open('progress', {
-                    'callback': function(){
-                        progress.$modal.find('.modal-close').remove();
-                        
-                        console.log("[CALL] POST " + workspace_api_conf.api.cd_pipeline.argocd.rollback.post.replace('{workspace_id}', workspace_id) + ", environment_id:" + environmentid);
-                        // Call argoCD Rollback processing - ArgoCD Rollback処理呼び出し
-                        $.ajax({
-                            "type": "POST",
-                            "url": workspace_api_conf.api.cd_pipeline.argocd.rollback.post.replace('{workspace_id}', workspace_id),
-                            data:JSON.stringify({'environment_id':environmentid}),
-                            contentType: "application/json",
-                            dataType: "json",
-                        }).done(function(data) {
-                            progress.close();
-                            alert("Rollbackを実行しました");
-                            console.log("[DONE] POST " + workspace_api_conf.api.cd_pipeline.argocd.rollback.post + " response\n" + JSON.stringify(data));
-                        }).fail(function(data) {
-                            progress.close();
-                            alert("Rollbackの要求に失敗しました");
-                            console.log("[FAIL] POST " + workspace_api_conf.api.cd_pipeline.argocd.rollback.post + " response\n" + JSON.stringify(data));
-                        });
+            switch ( type ) {
+              case 'rollback':
+                if (confirm(getText("EP010-0397", "ROLLBACKを実行しますか？",type.toUpperCase()))){
+                    rollback_execute_traceid[traceid] = true;
+                    $b.css('display','none');
+                    progress.open('progress', {
+                        'callback': function(){
+                            progress.$modal.find('.modal-close').remove();
+                            
+                            console.log("[CALL] POST " + workspace_api_conf.api.cd_pipeline.argocd.rollback.post.replace('{workspace_id}', workspace_id) + ", environment_id:" + environmentid);
+                            // Call argoCD Rollback processing - ArgoCD同期処理呼び出し
+                            $.ajax({
+                                "type": "POST",
+                                "url": workspace_api_conf.api.cd_pipeline.argocd.rollback.post.replace('{workspace_id}', workspace_id),
+                                data:JSON.stringify({'environment_id':environmentid}),
+                                contentType: "application/json",
+                                dataType: "json",
+                            }).done(function(data) {
+                                progress.close();
+                                alert(getText("EP010-0395", "ROLLBACKを実行しました" ,type.toUpperCase()));
+                                console.log("[DONE] POST " + workspace_api_conf.api.cd_pipeline.argocd.rollback.post + " response\n" + JSON.stringify(data));
+                            }).fail(function(data) {
+                                progress.close();
+                                alert(getText("EP010-0396", "ROLLBACKの実行に失敗しました",type.toUpperCase()));
+                                console.log("[FAIL] POST " + workspace_api_conf.api.cd_pipeline.argocd.rollback.post + " response\n" + JSON.stringify(data));
+                            });
+                        }
+                    }, '480');
+                }
+              break;
+              case 'sync':
+                    if (confirm(getText("EP010-0397", "SYNCを実行しますか？",type.toUpperCase()))){
+                        delete rollback_execute_traceid[traceid];
+                        progress.open('progress', {
+                            'callback': function(){
+                                progress.$modal.find('.modal-close').remove();
+                                
+                                console.log("[CALL] POST " + workspace_api_conf.api.cd_pipeline.argocd.sync.post.replace('{workspace_id}', workspace_id) + ", environment_id:" + environmentid);
+                                // Call argoCD sync processing - ArgoCD同期処理呼び出し
+                                $.ajax({
+                                    "type": "POST",
+                                    "url": workspace_api_conf.api.cd_pipeline.argocd.sync.post.replace('{workspace_id}', workspace_id),
+                                    data:JSON.stringify({'environment_id':environmentid}),
+                                    contentType: "application/json",
+                                    dataType: "json",
+                                }).done(function(data) {
+                                    progress.close();
+                                    alert(getText("EP010-0395", "SYNCを実行しました",type.toUpperCase()));
+                                    console.log("[DONE] POST " + workspace_api_conf.api.cd_pipeline.argocd.sync.post + " response\n" + JSON.stringify(data));
+                                }).fail(function(data) {
+                                    progress.close();
+                                    alert(getText("EP010-0396", "SYNCの実行に失敗しました",type.toUpperCase()));
+                                    console.log("[FAIL] POST " + workspace_api_conf.api.cd_pipeline.argocd.sync.post + " response\n" + JSON.stringify(data));
+                                });
+                            }
+                        }, '480');
                     }
-                }, '480');
-            }
+                break;
+              }
         });
     });
-
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -72,6 +72,9 @@ const wsDataJSON = {
   },
   'workspace': {
   },
+  'argocd': {
+    'argocd-bluegreen': 'auto'
+  },
   'environment' : {
   },
   'application-code': {
@@ -588,6 +591,31 @@ const wsModalJSON = {
       },
     },
     'block': {
+      'deploy': {
+        'title': 'Deploy方式',
+        'item': [
+          {
+            'type': 'radio',
+              'title': 'manifestテンプレート変換',
+              'name': 'argocd-bluegreen',
+              'class': 'input-pickup-select',
+              'item': {
+                'auto': 'BlueGreen自動変換',
+                'none': '変換しない'
+              }
+          },
+          {
+            'type': 'number',
+            'title': 'BlueGreenデプロイ完了後の古いPodのスケールダウンの待ち時間（秒）',
+            'name': 'argocd-bluegreen-scaledown-wait',
+            'class': 'input-pickup input-pickup-auto',
+            'min': 0,
+            'max': 3600,
+            'placeholder': '0',
+            'note': '古いPodのスケールダウンの待ち時間（秒）を入力してください'
+          },
+        ]
+      },
       'environmentList': {
         'title': '環境一覧',
         'button': {
@@ -809,6 +837,17 @@ const wsModalJSON = {
       }
     },
     'block': {
+      // ITA Link
+      'cdExecutionITALink': {
+        'title': 'デプロイJob',
+        'item': {
+          'cdExecutionITALinkBlock': {
+            'type': 'loading',
+            'id': 'cd-execution-italink'            
+          }
+        }
+      },
+      // ITA Link
       'cdExecutionCondition': {
         'title': '実行条件',
         'item': {
@@ -1336,7 +1375,8 @@ $workspaceFooter.on('click', '.workspace-footer-menu-button', function(){
 
 // モーダル内の入力データを wsDataJSON に入れる
 const setInputData = function( tabTarget, commonTarget ){
-  const inputTarget = 'input[type="text"], input[type="password"], input[type="radio"]:checked, textarea, input[type="hidden"], .item-freeitem';
+  //const inputTarget = 'input[type="text"], input[type="password"], input[type="radio"]:checked, textarea, input[type="hidden"], .item-freeitem';
+  const inputTarget = 'input[type="text"], input[type="password"], input[type="radio"]:checked, textarea, input[type="hidden"], input[type="number"], .item-freeitem';
   
   // タブリストの作成
   modal.$modal.find('.modal-tab-item').each( function(){
@@ -1656,6 +1696,14 @@ const templateFileSelect = function( type ){
       + '<p class="item-file-droparea-text">ここにファイルをドロップ または クリック</p>'
     + '</div>'
   + '</div>';
+
+  if ( wsDataJSON.argocd && wsDataJSON.argocd["argocd-bluegreen"] === 'auto') {
+    uploadHtml += '<ul class="upload-attention-list">'
+    + '<li class="upload-attention-item">※BlueGreen自動変換するmanifestテンプレートは、kind: Deployment内に、metadata指定、ならびにportsのcontainerPort指定が必要となります。</li>'
+    + '<li class="upload-attention-item">※BlueGreen自動変換ができない場合は、アップロードされたmanifestテンプレートのままとなります。</li>'
+    + '</ul>';
+  }
+
   $file.html( uploadHtml );
 
   // ファイル選択リストを表示する
@@ -1712,7 +1760,7 @@ const templateFileSelect = function( type ){
                         'update_at':  data['rows'][fileidx]['update_at'],
                       };
                       // BlueGreen支援ありの場合 With BlueGreen support
-                      if (true){
+                      if (wsDataJSON['argocd']['argocd-bluegreen'] === "auto"){
                         for(var env in wsDataJSON['environment']) {
                           file_id = data['rows'][fileidx]['id'];
                           console.log('file_id:' + file_id);
@@ -1727,7 +1775,11 @@ const templateFileSelect = function( type ){
                           }
                           if (!(item_name in wsDataJSON['environment'][env]['parameter'][file_id])) 
                           {
-                            wsDataJSON['environment'][env]['parameter'][file_id][env + "-" + file_id + '-' + 'bluegreen_sdd_sec'] = 30;
+                            if(wsDataJSON['argocd']['argocd-bluegreen-scaledown-wait'] === undefined || wsDataJSON['argocd']['argocd-bluegreen-scaledown-wait'] === "") {
+                              wsDataJSON['environment'][env]['parameter'][file_id][item_name] = "0";
+                            } else {
+                              wsDataJSON['environment'][env]['parameter'][file_id][item_name] = wsDataJSON['argocd']['argocd-bluegreen-scaledown-wait'];
+                            }
                           }
                           console.log(wsDataJSON['environment'][env]['parameter'][file_id]);
                           // wsDataJSON['environment'][env]['parameter'][file_id]['bluegreen_sdd_sec'] = '30';
@@ -2134,7 +2186,14 @@ const cdExecution = function(){
         $manifest = $('#cd-execution-manifest-parameter'), // Manifestパラメータ
         $argo = $('#cd-execution-argo'), // ArgoCDパイプライン
         $okButton = $modal.find('.modal-menu-button[data-button="ok"]');
-        
+
+  // ITA Link
+  const $italink = $('#cd-execution-italink');
+  if(workspace_client_urls.ita !== null) {
+    $italink.html('IT-Automation : <a href="' + workspace_client_urls.ita + '" target="_blank">確認・編集</a>');
+  }
+  // ITA Link
+
   $okButton.prop('disabled', true );
 
   // CD execution environment information processing - CD実行環境情報処理
@@ -2484,7 +2543,7 @@ $('#content').find('.modal-open').on('click', function(e){
     // Argo CD
     case 'pipelineArgo': {
       funcs.ok = function(){
-        setInputData('environment', '');
+        setInputData('environment', 'argocd');
         deleteTabData('environment');
         wsDataCompare();
         workspaceImageUpdate();
@@ -3114,7 +3173,12 @@ const compareInfo = function( modalID, compareData ){
           wsDataJSON['application-code'][item][item + '-unit-test-dir']     = (data_pipelines[i].unit_test.directory  !== undefined? data_pipelines[i].unit_test.directory : null);
           wsDataJSON['application-code'][item][item + '-unit-test-parameter'] = (data_pipelines[i].unit_test.params  !== undefined? JSON.stringify({"p":data_pipelines[i].unit_test.params}) : null);
         }
-    
+
+        wsDataJSON['argocd']['argocd-bluegreen'] = ( data_workspace.cd_config.deploy_method === "BlueGreen"? "auto": "none" );
+        if ( data_workspace.cd_config.deploy_method === "BlueGreen" ) {
+          wsDataJSON['argocd']['argocd-bluegreen-scaledown-wait'] = data_workspace.cd_config.deploy_scale_down_delay_seconds;
+        }
+
         wsDataJSON['environment'] = {};
         data_environments = data_workspace['cd_config']['environments'];
         for(var i in data_environments) {
@@ -3606,6 +3670,13 @@ const compareInfo = function( modalID, compareData ){
       },
       'environments' : [],
     }
+    if(wsDataJSON['argocd']['argocd-bluegreen'] === "none") {
+      reqbody['cd_config'].deploy_method = "RollingUpdate";
+    } else {
+      reqbody['cd_config'].deploy_method = "BlueGreen";
+      reqbody['cd_config'].deploy_scale_down_delay_seconds = wsDataJSON['argocd']['argocd-bluegreen-scaledown-wait'];
+    }
+
     if(wsDataJSON['git-service-argo']['git-service-argo-account-select'] == "applicationCode") {
       reqbody['cd_config'].environments_common.git_repositry.user = wsDataJSON['git-service']['git-service-user'];
       reqbody['cd_config'].environments_common.git_repositry.password = wsDataJSON['git-service']['git-service-token'];

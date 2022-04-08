@@ -104,9 +104,10 @@ function initialScreen() {
                 tL = $target.offset().left,
                 tT = $target.offset().top,
                 pW = $popup.outerWidth(),
-                pH = $popup.outerHeight();
+                pH = $popup.outerHeight(),
+                wsL = $window.scrollLeft();
 
-          let l = ( tL + tW / 2 ) - ( pW / 2 ),
+          let l = ( tL + tW / 2 ) - ( pW / 2 ) - wsL,
               t = tT - pH - m;
           
           // Windowサイズを超える場合は調整
@@ -126,9 +127,28 @@ function initialScreen() {
             'top': t
           });
 
-              // 矢印の位置
-              const aL = ( tL + ( tW / 2 )) - l;
-              $arrow.css('left', aL );
+          // 矢印の位置
+          let aL = 0;
+          if ( tL - wsL + tW > wW ) {
+              const twW = tW - ( tL - wsL + tW - wW );
+              if ( twW > pW || wW < twW ) {
+                  aL = pW / 2;
+              } else {
+                  aL = pW - ( twW / 2 );
+                  if ( pW - aL < 20 ) aL = pW - 20;
+              }    
+          } else if ( tL < wsL ) {
+              const twW = tL + tW - wsL;
+              if ( twW > pW ) {
+                  aL = pW / 2;
+              } else {
+                  aL = twW / 2;
+                  if (aL < 20 ) aL = 20;
+              }
+          } else {
+              aL = ( tL + ( tW / 2 )) - l - wsL;
+          }
+          $arrow.css('left', aL );
 
           $target.on({
             'mouseleave.popup ': function(){

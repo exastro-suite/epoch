@@ -1404,6 +1404,15 @@ background-color: #E7F6DB;
 color: #3A7708;
 }
 
+.upload-attention-list {
+margin-top: 16px;
+}
+.upload-attention-item {
+margin-bottom: .25em; padding-left: 1em;
+line-height: 1.75;
+letter-spacing: .025em;
+text-indent: -1em;
+}
 
 .execution-date-select,
 .execution-date {

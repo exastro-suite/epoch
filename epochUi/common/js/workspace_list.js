@@ -81,7 +81,7 @@ const tableHeader = [
         'separate': 'on'
       },
       'leave': {
-        'icon': 'icon-trash',
+        'icon': 'icon-move-out',
         'text': 'ワークスペース退去'
       },
       // 'delete': {
