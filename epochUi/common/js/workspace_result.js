@@ -1042,11 +1042,17 @@ function wsArgocdCheck() {
             for ( let i = 0; i < nl; i++ ) {
                 const node = result.nodes[i];
                 if ( parentUid && node.parentRefs && parentUid === node.parentRefs[0].uid ) {
-                    const child = ul( node.uid );
-                    h.push('<li class="argocd-resource-item">' + resourceRow(node) + child + '</li>');
+                    if(node.uid === undefined) {
+                        h.push('<li class="argocd-resource-item">' + resourceRow(node) + '</li>');
+                    } else {
+                        const child = ul( node.uid );
+                        h.push('<li class="argocd-resource-item">' + resourceRow(node) + child + '</li>');
+                    }
                 } else if ( !parentUid && !node.parentRefs ) {
                     const resouce = result.resource_status.find(function(v){ return v.uid == node.uid; });
-                    if(node.uid !== undefined) {
+                    if(node.uid === undefined) {
+                        h.push('<li class="argocd-resource-item">' + resourceRow(node, resouce ) + '</li>');
+                    } else {
                         child = ul( node.uid );
                         h.push('<li class="argocd-resource-item">' + resourceRow(node, resouce ) + child + '</li>');
                     }
