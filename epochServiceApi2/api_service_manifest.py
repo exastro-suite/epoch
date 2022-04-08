@@ -181,7 +181,21 @@ def post_manifest_template(workspace_id):
             ]
         }
 
-        # RsWorkspace API呼び出し(全件取得)
+        # RsWorkspace API呼び出し(workspace情報取得)
+        # Call RsWorkspace API (Get workspace information
+        response = requests.get("{}/workspace/{}".format(apiInfo, workspace_id), headers=post_headers)
+
+        # 戻り値が正常値以外の場合は、処理を終了
+        if response.status_code != 200:
+            error_detail = multi_lang.get_text("EP020-0013", "ワークスペース情報の取得に失敗しました")
+            globals.logger.error(error_detail)
+            raise common.UserException(error_detail)
+
+        ret_workspace = json.loads(response.text)
+        workspace_info = ret_workspace["rows"][0]
+        # globals.logger.debug(workspace_info)
+
+        # RsWorkspace API呼び出し(manifests取得)
         response = requests.get("{}/workspace/{}/manifests".format(apiInfo, workspace_id), headers=post_headers)
 
         # 戻り値が正常値以外の場合は、処理を終了
@@ -202,16 +216,12 @@ def post_manifest_template(workspace_id):
 
             # ↓ 2重改行になっているので、変更するかも ↓
             for line in manifest_file:
-
                 file_text += line.decode('utf-8')
 
-            # 画面でBlueGreenするが選択されたら
-            # If Blue Green is selected on the screen
-            # if  xx == "BlueGreen":
-            # BlueGreen Deployment 用に自動変換
             post_data = {
-                # todo: test用データ
-                # "deploy_method": "BlueGreen",
+                # 現状はBlueGreenのオプションのみ設定
+                # Currently, only the Blue Green option is set.
+                "deploy_method": workspace_info["cd_config"]["deploy_method"],
                 "deploy_params": {
                     "scaleDownDelaySeconds": "{{ bluegreen_sdd_sec }}",
                 },

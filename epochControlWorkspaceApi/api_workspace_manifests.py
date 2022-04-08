@@ -57,9 +57,13 @@ def settings_manifest_templates(workspace_id):
         # パラメータ情報(JSON形式) prameter 
         payload = request.json.copy()
 
-        # BlueGreen manifest template変換
-        # BlueGreen manifest template conversion
-        ret_text = conv_yaml(payload["file_text"], payload["deploy_params"])
+        if payload['deploy_method'] == "BlueGreen":
+            # BlueGreen manifest template変換
+            # BlueGreen manifest template conversion
+            ret_text = conv_yaml(payload["file_text"], payload["deploy_params"])
+        else:
+            # 無変換 no convert
+            ret_text = payload["file_text"]
 
         # 正常終了 normal termination
         ret_status = 200
