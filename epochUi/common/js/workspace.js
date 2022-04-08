@@ -3659,8 +3659,6 @@ const compareInfo = function( modalID, compareData ){
     // パラメータ設定 - CD環境設定
     reqbody['cd_config'] = {
       'system_config' : 'one-namespace',
-      'deploy_method' : 'BlueGreen',
-      'deploy_scale_down_delay_seconds' : '30',
       'environments_common' : {
           'git_repositry' : {
             'account_select' : wsDataJSON['git-service-argo']['git-service-argo-account-select'],
