@@ -209,23 +209,47 @@ def monitoring_argo_cd():
 
                 globals.logger.debug("trace_id:[{}] vs commit_message10[{}]".format(contents["trace_id"], commit_message[:10]))
                 # 上10桁が一致している場合のみステータスのチェックを行う
+                # Check the status only if the first 10 digits match
                 if contents["trace_id"] != commit_message[:10]:
-                    continue 
+                    # commit番号が変わったら、別なmanifestを処理しているので終了
+                    # If the commit number changes, you're processing another commit, so you're done
+                    cd_status = const.CD_STATUS_ARGOCD_FAILED
+                    try:
+                        # 処理がなくなるので強制的にMISSINGに変更
+                        # Forcibly change to MISSING because there is no processing
+                        # globals.logger.debug("result_row:[{}]".format(result_row))
+                        ret_argocd_app = contents["argocd_results"]
+                        globals.logger.debug("health_status before:[{}]".format(ret_argocd_app["result"]["status"]["health"]["status"]))
+                        ret_argocd_app["result"]["status"]["health"]["status"] = const.ARGOCD_HEALTH_STATUS_MISSING
+                        globals.logger.debug("health_status after:[{}]".format(ret_argocd_app["result"]["status"]["health"]["status"]))
+                    except:
+                        # 以前の情報がない場合は、ステータスだけ作成
+                        # If there is no previous information, just create the status
+                        ret_argocd_app = {
+                            "result": {
+                                "status": {
+                                    "health": {
+                                        "status": const.ARGOCD_HEALTH_STATUS_MISSING,
+                                    }
+                                }
+                            }
+                        }
 
-                # ArgoCDの戻り値が正常化どうかチェックして該当のステータスを設定
-                # Check if the return value of ArgoCD is normal and set the corresponding status
-                if ret_argocd_app["result"]["status"]["health"]["status"] == const.ARGOCD_HEALTH_STATUS_HEALTHY:
-                    cd_status = const.CD_STATUS_ARGOCD_SYNCED
-                elif ret_argocd_app["result"]["status"]["health"]["status"] == const.ARGOCD_HEALTH_STATUS_DEGRADED:
-                    cd_status = const.CD_STATUS_ARGOCD_FAILED
-                elif ret_argocd_app["result"]["status"]["health"]["status"] == const.ARGOCD_HEALTH_STATUS_PROGRESSING:
-                    cd_status = const.CD_STATUS_ARGOCD_PROCESSING
-                elif ret_argocd_app["result"]["status"]["health"]["status"] == const.ARGOCD_HEALTH_STATUS_SUSPENDED:
-                    cd_status = const.CD_STATUS_ARGOCD_FAILED
-                elif ret_argocd_app["result"]["status"]["health"]["status"] == const.ARGOCD_HEALTH_STATUS_MISSING:
-                    cd_status = const.CD_STATUS_ARGOCD_FAILED
-                else:
-                    cd_status = const.CD_STATUS_ARGOCD_FAILED
+                else: 
+                    # ArgoCDの戻り値が正常化どうかチェックして該当のステータスを設定
+                    # Check if the return value of ArgoCD is normal and set the corresponding status
+                    if ret_argocd_app["result"]["status"]["health"]["status"] == const.ARGOCD_HEALTH_STATUS_HEALTHY:
+                        cd_status = const.CD_STATUS_ARGOCD_SYNCED
+                    elif ret_argocd_app["result"]["status"]["health"]["status"] == const.ARGOCD_HEALTH_STATUS_DEGRADED:
+                        cd_status = const.CD_STATUS_ARGOCD_FAILED
+                    elif ret_argocd_app["result"]["status"]["health"]["status"] == const.ARGOCD_HEALTH_STATUS_PROGRESSING:
+                        cd_status = const.CD_STATUS_ARGOCD_PROCESSING
+                    elif ret_argocd_app["result"]["status"]["health"]["status"] == const.ARGOCD_HEALTH_STATUS_SUSPENDED:
+                        cd_status = const.CD_STATUS_ARGOCD_FAILED
+                    elif ret_argocd_app["result"]["status"]["health"]["status"] == const.ARGOCD_HEALTH_STATUS_MISSING:
+                        cd_status = const.CD_STATUS_ARGOCD_FAILED
+                    else:
+                        cd_status = const.CD_STATUS_ARGOCD_FAILED
 
                 # 変更したい項目のみ設定（cd_statusは必須）
                 # Set only the items you want to change (cd_status is required)
