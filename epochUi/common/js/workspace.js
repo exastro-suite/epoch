@@ -2301,7 +2301,7 @@ const cdExecution = function(){
               nKey = envID + '-environment-namespace',
               sKey = envID + '-environment-deploy-select',
               uKey = envID + '-environment-url',
-              uDefault = 'https://Kubernetes.default.svc';
+              uDefault = 'https://kubernetes.default.svc';
         
         console.log('cd-execution-environment-select change');
         if ( envID !== 'none') {
