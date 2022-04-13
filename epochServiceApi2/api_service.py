@@ -37,6 +37,8 @@ import api_service_cd
 import api_service_member
 import api_service_current
 
+import exastro_logging
+
 # 設定ファイル読み込み・globals初期化
 app = Flask(__name__)
 app.config.from_envvar('CONFIG_API_SERVICE_PATH')
@@ -288,9 +290,7 @@ def call_cd_pipeline(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
 
         if request.method == 'POST':
             # CDパイプライン情報設定
@@ -314,9 +314,7 @@ def call_cd_pipeline_argocd(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
 
         if request.method == 'GET':
             # Get CD pipeline (ArgoCD) information - CDパイプライン(ArgoCD)情報取得
@@ -340,9 +338,7 @@ def call_cd_pipeline_ita(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
 
         if request.method == 'GET':
             # Get CD pipeline (ArgoCD) information - CDパイプライン(ArgoCD)情報取得
@@ -367,9 +363,7 @@ def call_cd_pipeline_git_commits(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
 
         if request.method == 'GET':
             return api_service_cd.get_git_commits(workspace_id)
@@ -391,9 +385,7 @@ def call_cd_pipeline_argocd_sync(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
 
         if request.method == 'POST':
             # Post CD pipeline (ArgoCD) sync - CDパイプライン(ArgoCD)同期
@@ -417,9 +409,7 @@ def call_cd_pipeline_argocd_rollback(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
 
         if request.method == 'POST':
             # Post CD pipeline (ArgoCD) Rollback - CDパイプライン(ArgoCD)Rollback
@@ -525,9 +515,7 @@ def call_cd_exec(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
 
         if request.method == 'POST':
             # cd execute (post)
@@ -553,9 +541,7 @@ def call_cd_exec_trace_id(workspace_id, trace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}] trace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id, trace_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('CALL {}:from[{}] workspace_id[{}] trace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id, trace_id))
 
         if request.method == 'DELETE':
             # cd execute (post)
@@ -579,9 +565,7 @@ def call_cd_environment(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
 
         if request.method == 'GET':
             # cd execute (post)
