@@ -433,9 +433,7 @@ def call_manifest_parameter(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
 
         if request.method == 'POST':
             # manifest parameter setting (post)
@@ -459,9 +457,7 @@ def call_manifest_template(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
 
         if request.method == 'POST':
             # manifest template setting (post)
@@ -607,9 +603,7 @@ def call_user_current():
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}]'.format(inspect.currentframe().f_code.co_name, request.method))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('CALL {}:from[{}]'.format(inspect.currentframe().f_code.co_name, request.method))
 
         if request.method == 'GET':
             # all users get
