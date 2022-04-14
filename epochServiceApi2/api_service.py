@@ -60,9 +60,7 @@ def call_workspace():
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}: method[{}]'.format(inspect.currentframe().f_code.co_name, request.method))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('CALL {}: method[{}]'.format(inspect.currentframe().f_code.co_name, request.method))
 
         if request.method == 'POST':
             # ワークスペース情報作成へリダイレクト
@@ -86,9 +84,7 @@ def call_workspace_by_id(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
 
         if request.method == 'GET':
             # ワークスペース情報取得 Workspace info. get
@@ -141,9 +137,7 @@ def call_ci_pipeline(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
 
         if request.method == 'POST':
             # CIパイプライン情報設定
@@ -167,9 +161,7 @@ def call_git_commits(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
 
         if request.method == 'GET':
             return api_service_ci.get_git_commits(workspace_id)
@@ -190,9 +182,7 @@ def call_git_hooks(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
 
         if request.method == 'GET':
             return api_service_ci.get_git_hooks(workspace_id)
@@ -213,9 +203,7 @@ def call_registry(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
 
         if request.method == 'GET':
             # Get container registry information - コンテナレジストリ情報取得
@@ -237,9 +225,7 @@ def call_ci_result(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
 
         if request.method == 'GET':
             # CIパイプライン結果取得
@@ -262,9 +248,7 @@ def call_ci_result_logs(workspace_id, taskrun_name):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}] taskrun_name[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id, taskrun_name))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('CALL {}:from[{}] workspace_id[{}] taskrun_name[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id, taskrun_name))
 
         if request.method == 'GET':
             # CIパイプライン結果取得
@@ -648,9 +632,7 @@ def call_workspace_member(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
 
         if request.method == 'GET':
             # all workspace members get
@@ -676,9 +658,7 @@ def call_workspace_member_cdexec(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
 
         if request.method == 'GET':
             # cdexec members get
@@ -701,9 +681,7 @@ def call_workspace_leave(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
 
 
         return api_service_member.leave_workspace(workspace_id)
