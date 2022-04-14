@@ -29,9 +29,30 @@ spec:
         app: sonarqube
     spec:
       hostname: sonarqube
+      volumes:
+      - name: sonar-volume
+        persistentVolumeClaim:
+          claimName: pipeline-sonarqube-pvc
       containers:
       - name: sonarqube
         image: sonarqube
+        env:
+        - name: SONAR_JDBC_URL
+          value: jdbc:postgresql://sonarqube-db:5432/sonar
+        - name: SONAR_JDBC_USERNAME
+          value: sonar
+        - name: SONAR_JDBC_PASSWORD
+          value: password
+        volumeMounts:
+        - name: sonar-volume
+          subPath: sonarqube-data
+          mountPath: /opt/sonarqube/data
+        - name: sonar-volume
+          subPath: sonarqube-extensions
+          mountPath: /opt/sonarqube/extensions
+        - name: sonar-volume
+          subPath: sonarqube-logs
+          mountPath: /opt/sonarqube/logs
 
 ---
 apiVersion: v1
@@ -50,3 +71,58 @@ spec:
     port: 9000
     targetPort: 9000
 
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sonarqube-db
+  labels:
+    app: sonarqube-db
+  namespace: {{ param.ci_config.pipeline_namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sonarqube-db
+  template:
+    metadata:
+      labels:
+        app: sonarqube-db
+    spec:
+      hostname: sonarqube-db
+      volumes:
+      - name: sonar-db-volume
+        persistentVolumeClaim:
+          claimName: pipeline-sonarqube-db-pvc
+      containers:
+      - name: sonarqube-db
+        image: postgres:12
+        env:
+        - name: POSTGRES_USER
+          value: sonar
+        - name: POSTGRES_PASSWORD
+          value: password
+        volumeMounts:
+        - name: sonar-db-volume
+          subPath: postgresql
+          mountPath: /var/lib/postgresql
+        - name: sonar-db-volume
+          subPath: postgresql-data
+          mountPath: /var/lib/postgresql/data
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sonarqube-db
+  labels:
+    app: sonarqube-db
+  namespace: {{ param.ci_config.pipeline_namespace }}
+spec:
+  type: ClusterIP
+  selector:
+    app: sonarqube-db
+  ports:
+  - name: postgres
+    port: 5432
+    targetPort: 5432
