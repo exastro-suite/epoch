@@ -121,6 +121,334 @@ data:
   HTTP_PROXY: ""
   HTTPS_PROXY: ""
 
+#---- epoch-system-pv-create-script.yaml
+---
+#   Copyright 2022 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+data:
+  epoch-pv-creator.sh: |
+    #!/bin/bash
+
+    echo "[INFO] START: $(basename $0)"
+
+    SCRIPT_PATH=$(dirname $0)
+
+    kubectl get pod -n "${PRM_NAMESPACE}" "${HOSTNAME}" &> /dev/null
+    if [ $? -ne 0 ]; then
+        echo "[ERROR] Not Found Pod : namespace=${PRM_NAMESPACE} jobname=${PRM_JOBNAME} hostname=${HOSTNAME}"
+        exit 1
+    fi
+
+    WORKER_NODE_NAME=$(kubectl get pod -n "${PRM_NAMESPACE}" "${HOSTNAME}" -o jsonpath="{.spec.nodeName}")
+    echo "WORKER_NODE_NAME:${WORKER_NODE_NAME}"
+
+    if [ -z "${WORKER_NODE_NAME}" ]; then
+        echo "[ERROR] Could not get the node name : namespace=${PRM_NAMESPACE} jobname=${PRM_JOBNAME}"
+        exit 1
+    fi
+
+    sed -e "s/#WORKER-NODE-NAME#/${WORKER_NODE_NAME}/g" "${SCRIPT_PATH}/${PRM_PV_TEMPLATE}" | \
+    kubectl apply -f -
+    if [ $? -ne 0 ]; then
+        echo "[ERROR] Failed to create Persistent Volume : namespace=${PRM_NAMESPACE} jobname=${PRM_JOBNAME}"
+        exit 1
+    fi
+
+    kubectl delete job -n "${PRM_NAMESPACE}" "${PRM_JOBNAME}"
+  epoch-system-pv-template.yaml: |+
+    apiVersion: storage.k8s.io/v1
+    kind: StorageClass
+    metadata:
+      name: epoch-system-sc
+    provisioner: kubernetes.io/no-provisioner
+    volumeBindingMode: WaitForFirstConsumer
+    allowVolumeExpansion: true
+
+    ---
+    apiVersion: v1
+    kind: PersistentVolume
+    metadata:
+      name: epoch-tekton-pipeline-db
+      labels:
+        type: local
+      annotations:
+        pv.kubernetes.io/bound-by-controller: "yes"
+    spec:
+      storageClassName: epoch-system-sc
+      capacity:
+        storage: 500Mi
+      accessModes:
+        - ReadWriteOnce
+      persistentVolumeReclaimPolicy: Retain
+      hostPath:
+        path: /var/data/epoch/epoch-tekton-pipeline-db
+        type: DirectoryOrCreate
+      nodeAffinity:
+        required:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+              - #WORKER-NODE-NAME#
+
+    ---
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: epoch-tekton-pipeline-db
+      namespace: epoch-system
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 500Mi
+      storageClassName: epoch-system-sc
+      volumeMode: Filesystem
+      volumeName: epoch-tekton-pipeline-db
+
+    ---
+    apiVersion: v1
+    kind: PersistentVolume
+    metadata:
+      name: epoch-rs-cd-result-db
+      labels:
+        type: local
+      annotations:
+        pv.kubernetes.io/bound-by-controller: "yes"
+    spec:
+      storageClassName: epoch-system-sc
+      capacity:
+        storage: 4Gi
+      accessModes:
+        - ReadWriteOnce
+      persistentVolumeReclaimPolicy: Retain
+      hostPath:
+        path: /var/data/epoch/epoch-rs-cd-result-db
+        type: DirectoryOrCreate
+      nodeAffinity:
+        required:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+              - #WORKER-NODE-NAME#
+
+    ---
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: epoch-rs-cd-result-db
+      namespace: epoch-system
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 4Gi
+      storageClassName: epoch-system-sc
+      volumeMode: Filesystem
+      volumeName: epoch-rs-cd-result-db
+
+    ---
+    apiVersion: v1
+    kind: PersistentVolume
+    metadata:
+      name: epoch-tekton-pipelinerun-db
+      labels:
+        type: local
+      annotations:
+        pv.kubernetes.io/bound-by-controller: "yes"
+    spec:
+      storageClassName: epoch-system-sc
+      capacity:
+        storage: 4Gi
+      accessModes:
+        - ReadWriteOnce
+      persistentVolumeReclaimPolicy: Retain
+      hostPath:
+        path: /var/data/epoch/epoch-tekton-pipelinerun-db
+        type: DirectoryOrCreate
+      nodeAffinity:
+        required:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+              - #WORKER-NODE-NAME#
+
+    ---
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: epoch-tekton-pipelinerun-db
+      namespace: epoch-system
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 4Gi
+      storageClassName: epoch-system-sc
+      volumeMode: Filesystem
+      volumeName: epoch-tekton-pipelinerun-db
+
+
+    ---
+    apiVersion: v1
+    kind: PersistentVolume
+    metadata:
+      name: epoch-rs-logs-db
+      labels:
+        type: local
+      annotations:
+        pv.kubernetes.io/bound-by-controller: "yes"
+    spec:
+      storageClassName: epoch-system-sc
+      capacity:
+        storage: 4Gi
+      accessModes:
+        - ReadWriteMany
+      persistentVolumeReclaimPolicy: Retain
+      hostPath:
+        path: /var/data/epoch/epoch-rs-logs-db
+        type: DirectoryOrCreate
+      nodeAffinity:
+        required:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+              - #WORKER-NODE-NAME#
+
+    ---
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: epoch-rs-logs-db
+      namespace: epoch-system
+    spec:
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: 4Gi
+      storageClassName: epoch-system-sc
+      volumeMode: Filesystem
+      volumeName: epoch-rs-logs-db
+
+    ---
+    apiVersion: v1
+    kind: PersistentVolume
+    metadata:
+      name: epoch-workspace-db
+      labels:
+        type: local
+      annotations:
+        pv.kubernetes.io/bound-by-controller: "yes"
+    spec:
+      storageClassName: epoch-system-sc
+      capacity:
+        storage: 500Mi
+      accessModes:
+        - ReadWriteMany
+      persistentVolumeReclaimPolicy: Retain
+      hostPath:
+        path: /var/data/epoch/epoch-workspace-db
+        type: DirectoryOrCreate
+      nodeAffinity:
+        required:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+              - #WORKER-NODE-NAME#
+
+    ---
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: epoch-workspace-db
+      namespace: epoch-system
+    spec:
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: 500Mi
+      storageClassName: epoch-system-sc
+      volumeMode: Filesystem
+      volumeName: epoch-workspace-db
+
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: epoch-system-pv-create-script
+  namespace: epoch-system
+
+#---- epoch-system-pv-create.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: epoch-system-pv-create
+  namespace: epoch-system
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      volumes:
+      - name: script
+        configMap:
+          name: epoch-system-pv-create-script
+      containers:
+      - name: pv-creator
+        image: exastro/epoch-kube-command:0.1.5_20211026_1600
+        env:
+        - name: PRM_JOBNAME
+          value: epoch-system-pv-create
+        - name: PRM_NAMESPACE
+          value: epoch-system
+        - name: PRM_PV_TEMPLATE
+          value: epoch-system-pv-template.yaml
+        volumeMounts:
+        - mountPath: /job-script
+          name: script
+        command: ["sh", "-c"]
+        args:
+          - |
+            bash /job-script/epoch-pv-creator.sh
+
 #---- epoch-control-api-config.yaml
 ---
 #   Copyright 2019 NEC Corporation
@@ -1126,25 +1454,12 @@ spec:
       labels:
         name: workspace-db
     spec:
-      volumes:
-      - name: mysqlconf-volume
-        configMap:
-          name: workspace-db-myconf
-      # COMMENT OUT:Persistent data retention
-      #- name: mysqldata
-      #  hostPath:
-      #    path: /var/data/epoch/workspace_db/mysql
-      #    type: DirectoryOrCreate
-      - name: mysqlinitdb-volume
-        configMap:
-          name: workspace-db-initdb
       containers:
       - name: mysql
         image: mysql
         volumeMounts:
-        # COMMENT OUT:Persistent data retention
-        #- name: mysqldata
-        #  mountPath: /var/lib/mysql
+        - name: mysql-persistent-storage
+          mountPath: /var/lib/mysql
         - name: mysqlconf-volume
           mountPath: /etc/mysql
         - name: mysqlinitdb-volume
@@ -1152,6 +1467,16 @@ spec:
         env:
         - name: MYSQL_ROOT_PASSWORD
           value: password
+      volumes:
+      - name: mysqlconf-volume
+        configMap:
+          name: workspace-db-myconf
+      - name: mysql-persistent-storage
+        persistentVolumeClaim:
+          claimName: epoch-workspace-db
+      - name: mysqlinitdb-volume
+        configMap:
+          name: workspace-db-initdb
 
 ---
 apiVersion: v1
@@ -1333,25 +1658,12 @@ spec:
       labels:
         name: tekton-pipelinerun-db
     spec:
-      volumes:
-      - name: mysqlconf-volume
-        configMap:
-          name: tekton-pipelinerun-db-myconf
-      # COMMENT OUT:Persistent data retention
-      #- name: mysqldata
-      #  hostPath:
-      #    path: /var/data/epoch/tekton_pipelinerun_db/mysql
-      #    type: DirectoryOrCreate
-      - name: mysqlinitdb-volume
-        configMap:
-          name: tekton-pipelinerun-db-initdb
       containers:
       - name: mysql
         image: mysql
         volumeMounts:
-        # COMMENT OUT:Persistent data retention
-        #- name: mysqldata
-        #  mountPath: /var/lib/mysql
+        - name: mysql-persistent-storage
+          mountPath: /var/lib/mysql
         - name: mysqlconf-volume
           mountPath: /etc/mysql
         - name: mysqlinitdb-volume
@@ -1361,6 +1673,16 @@ spec:
           value: password
         - name: TZ
           value: "Asia/Tokyo"
+      volumes:
+      - name: mysqlconf-volume
+        configMap:
+          name: tekton-pipelinerun-db-myconf
+      - name: mysql-persistent-storage
+        persistentVolumeClaim:
+          claimName: epoch-tekton-pipelinerun-db
+      - name: mysqlinitdb-volume
+        configMap:
+          name: tekton-pipelinerun-db-initdb
 
 ---
 apiVersion: v1
@@ -1534,25 +1856,12 @@ spec:
       labels:
         name: rs-cd-result-db
     spec:
-      volumes:
-      - name: mysqlconf-volume
-        configMap:
-          name: rs-cd-result-db-myconf
-      # COMMENT OUT:Persistent data retention
-      #- name: mysqldata
-      #  hostPath:
-      #    path: /var/data/epoch/rs_cd_result_db/mysql
-      #    type: DirectoryOrCreate
-      - name: mysqlinitdb-volume
-        configMap:
-          name: rs-cd-result-db-initdb
       containers:
       - name: mysql
         image: mysql
         volumeMounts:
-        # COMMENT OUT:Persistent data retention
-        #- name: mysqldata
-        #  mountPath: /var/lib/mysql
+        - name: mysql-persistent-storage
+          mountPath: /var/lib/mysql
         - name: mysqlconf-volume
           mountPath: /etc/mysql
         - name: mysqlinitdb-volume
@@ -1560,6 +1869,16 @@ spec:
         env:
         - name: MYSQL_ROOT_PASSWORD
           value: password
+      volumes:
+      - name: mysqlconf-volume
+        configMap:
+          name: rs-cd-result-db-myconf
+      - name: mysql-persistent-storage
+        persistentVolumeClaim:
+          claimName: epoch-rs-cd-result-db
+      - name: mysqlinitdb-volume
+        configMap:
+          name: rs-cd-result-db-initdb
 
 ---
 apiVersion: v1
@@ -1731,25 +2050,12 @@ spec:
       labels:
         name: rs-logs-db
     spec:
-      volumes:
-      - name: mysqlconf-volume
-        configMap:
-          name: rs-logs-db-myconf
-      # COMMENT OUT:Persistent data retention
-      #- name: mysqldata
-      #  hostPath:
-      #    path: /var/data/epoch/rs_logs_db/mysql
-      #    type: DirectoryOrCreate
-      - name: mysqlinitdb-volume
-        configMap:
-          name: rs-logs-db-initdb
       containers:
       - name: mysql
         image: mysql
         volumeMounts:
-        # COMMENT OUT:Persistent data retention
-        #- name: mysqldata
-        #  mountPath: /var/lib/mysql
+        - name: mysql-persistent-storage
+          mountPath: /var/lib/mysql
         - name: mysqlconf-volume
           mountPath: /etc/mysql
         - name: mysqlinitdb-volume
@@ -1757,6 +2063,16 @@ spec:
         env:
         - name: MYSQL_ROOT_PASSWORD
           value: password
+      volumes:
+      - name: mysqlconf-volume
+        configMap:
+          name: rs-logs-db-myconf
+      - name: mysql-persistent-storage
+        persistentVolumeClaim:
+          claimName: epoch-rs-logs-db
+      - name: mysqlinitdb-volume
+        configMap:
+          name: rs-logs-db-initdb
 
 ---
 apiVersion: v1
@@ -2149,6 +2465,9 @@ data:
   EXASTRO_KEYCLOAK_HOST: ""
   EXASTRO_KEYCLOAK_PROTOCOL: "https"
   EXASTRO_KEYCLOAK_PORT: "31182"
+  KEYCLOAK_DB_VENDOR: "mariadb"
+  KEYCLOAK_DB_HOST: "keycloak-db"
+  KEYCLOAK_DB_DATABASE: "keycloak"
 
 #---- authentication-infra-secret.yaml
 ---
@@ -2175,8 +2494,125 @@ stringData:
   KEYCLOAK_USER:  "admin"
   KEYCLOAK_PASSWORD: "admin"
   EPOCH_PASSWORD: ""
+  KEYCLOAK_DB_USER: "keycloak"
+  KEYCLOAK_DB_PASSWORD: "password"
+  KEYCLOAK_DB_ROOT_PASSWORD: "password"
+
+#---- keycloak-db.yaml
+---
+#   Copyright 2022 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak-db
+  namespace: exastro-platform-authentication-infra
+spec:
+  ports:
+  - port: 3306
+  selector:
+    app: keycloak-db
+  clusterIP: None
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak-db
+  namespace: exastro-platform-authentication-infra
+spec:
+  selector:
+    matchLabels:
+      app: keycloak-db
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: keycloak-db
+    spec:
+      containers:
+        - image: mariadb:10.4.8
+          name: keycloak-db
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: exastro-platform-authentication-infra-secret
+                  key: KEYCLOAK_DB_ROOT_PASSWORD
+            - name: MYSQL_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: exastro-platform-authentication-infra-env
+                  key: KEYCLOAK_DB_DATABASE
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: exastro-platform-authentication-infra-secret
+                  key: KEYCLOAK_DB_USER
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: exastro-platform-authentication-infra-secret
+                  key: KEYCLOAK_DB_PASSWORD
+          ports:
+            - containerPort: 3306
+              name: keycloak-db
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/mysql
+          livenessProbe:
+            exec:
+              command:
+                - /bin/bash
+                - -ec
+                - >-
+                  mysqladmin -h localhost --user=root --password=${MYSQL_ROOT_PASSWORD} ping
+            initialDelaySeconds: 5
+            periodSeconds: 30
+            timeoutSeconds: 5
+          readinessProbe:
+            exec:
+              command:
+                - /bin/bash
+                - -ec
+                - >-
+                  mysql -h localhost --user=root --password=${MYSQL_ROOT_PASSWORD} -e "SELECT 1"
+            initialDelaySeconds: 5
+            periodSeconds: 30
+            timeoutSeconds: 5
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: exastro-platform-authentication-infra-keycloak-db
+
 #---- keycloak.yaml
 ---
+#   Copyright 2022 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
 apiVersion: v1
 kind: Service
 metadata:
@@ -2220,6 +2656,31 @@ spec:
       - name: keycloak
         image: jboss/keycloak:15.0.2
         env:
+        - name: DB_VENDOR
+          valueFrom:
+            configMapKeyRef:
+              name: exastro-platform-authentication-infra-env
+              key: KEYCLOAK_DB_VENDOR
+        - name: DB_ADDR
+          valueFrom:
+            configMapKeyRef:
+              name: exastro-platform-authentication-infra-env
+              key: KEYCLOAK_DB_HOST
+        - name: DB_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              name: exastro-platform-authentication-infra-env
+              key: KEYCLOAK_DB_DATABASE
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: exastro-platform-authentication-infra-secret
+              key: KEYCLOAK_DB_USER
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: exastro-platform-authentication-infra-secret
+              key: KEYCLOAK_DB_PASSWORD
         - name: KEYCLOAK_USER
           valueFrom:
             secretKeyRef:
@@ -2244,6 +2705,19 @@ spec:
 
 #---- gateway-conf-template.yaml
 ---
+#   Copyright 2022 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
 apiVersion: v1
 data:
   epoch-system-template.conf: "Listen {{ epoch_port }}\n<VirtualHost *:{{ epoch_port
@@ -2755,6 +3229,19 @@ spec:
 
 #---- gateway-httpd-pv-create-script.yaml
 ---
+#   Copyright 2022 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
 apiVersion: v1
 data:
   epoch-pv-creator.sh: |
@@ -2793,6 +3280,8 @@ data:
       name: exastro-authentication-infra-sc
     provisioner: kubernetes.io/no-provisioner
     volumeBindingMode: WaitForFirstConsumer
+    allowVolumeExpansion: true
+
     ---
     apiVersion: v1
     kind: PersistentVolume
@@ -2808,7 +3297,7 @@ data:
         storage: 500Mi
       accessModes:
         - ReadWriteMany
-      persistentVolumeReclaimPolicy: Recycle
+      persistentVolumeReclaimPolicy: Retain
       hostPath:
         path: /var/data/epoch/authc-httpd/conf
         type: DirectoryOrCreate
@@ -2836,6 +3325,50 @@ data:
       storageClassName: exastro-authentication-infra-sc
       volumeMode: Filesystem
       volumeName: exastro-authentication-infra-httpd-conf
+
+    ---
+    apiVersion: v1
+    kind: PersistentVolume
+    metadata:
+      name: exastro-platform-authentication-infra-keycloak-db
+      labels:
+        type: local
+      annotations:
+        pv.kubernetes.io/bound-by-controller: "yes"
+    spec:
+      storageClassName: exastro-authentication-infra-sc
+      capacity:
+        storage: 500Mi
+      accessModes:
+        - ReadWriteMany
+      persistentVolumeReclaimPolicy: Retain
+      hostPath:
+        path: /var/data/epoch/authc-httpd/keycloak-db
+        type: DirectoryOrCreate
+      nodeAffinity:
+        required:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+              - #WORKER-NODE-NAME#
+
+    ---
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: exastro-platform-authentication-infra-keycloak-db
+      namespace: exastro-platform-authentication-infra
+    spec:
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: 500Mi
+      storageClassName: exastro-authentication-infra-sc
+      volumeMode: Filesystem
+      volumeName: exastro-platform-authentication-infra-keycloak-db
 kind: ConfigMap
 metadata:
   creationTimestamp: null
@@ -2890,7 +3423,7 @@ spec:
 
 #---- tekton-installer-script.yaml
 ---
-#   Copyright 2019 NEC Corporation
+#   Copyright 2022 NEC Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -7516,404 +8049,216 @@ data:
 
     logger "INFO" "configuration was successful"
     exit 0
-  set-host.sh: |
-    #!/bin/bash
-    #   Copyright 2021 NEC Corporation
-    #
-    #   Licensed under the Apache License, Version 2.0 (the "License");
-    #   you may not use this file except in compliance with the License.
-    #   You may obtain a copy of the License at
-    #
-    #       http://www.apache.org/licenses/LICENSE-2.0
-    #
-    #   Unless required by applicable law or agreed to in writing, software
-    #   distributed under the License is distributed on an "AS IS" BASIS,
-    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    #   See the License for the specific language governing permissions and
-    #   limitations under the License.
-
-
-    BASENAME=$(basename "$0")
-    CMD_RESULT="/tmp/result.$$"
-    LF='
-    '
-    source "`dirname $0`/common-import-logger.sh" "${BASENAME}"
-
-    logger "INFO" "START : ${BASENAME}"
-
-    #
-    # Initialize variables
-    #
-    STEP=0
-    ALLSTEPS=5
-
-    #
-    # check parameter
-    #
-    if [ $# -ne 1 ]; then
-        logger "ERROR" "Usage : ${BASENAME} [hostname or IPaddress]"
-        logger "ERROR" "Check the parameters and try again"
-        exit 1
-    fi
-
-    PRM_MY_HOST="$1"
-    logger "INFO" "PARAM PRM_MY_HOST : ${PRM_MY_HOST}"
-
-    #
-    # Initialize Setting Parameter
-    #
-    STEP=$(expr ${STEP} + 1)
-    logger "INFO" "**** STEP : ${STEP} / ${ALLSTEPS} : Initialize Setting Parameter ..."
-
-    OIDC_PASSPHRASE=$(< /dev/urandom tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq)
-    if [ $? -ne 0 -o -z "${OIDC_PASSPHRASE}" ]; then
-        logger "ERROR" "Generate OIDC_PASSPHRASE"
-        exit 2
-    fi
-
-    OIDC_PASSPHRASE_B64=$(echo -n "${OIDC_PASSPHRASE}" | base64)
-    if [ $? -ne 0 -o -z "${OIDC_PASSPHRASE_B64}" ]; then
-        logger "ERROR" "Generate OIDC_PASSPHRASE_B64"
-        exit 2
-    fi
-
-    KEYCLOAK_ADMIN_PASSW=$(< /dev/urandom tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq)
-    if [ $? -ne 0 -o -z "${KEYCLOAK_ADMIN_PASSW}" ]; then
-        logger "ERROR" "Generate KEYCLOAK_ADMIN_PASSW"
-        exit 2
-    fi
-
-    KEYCLOAK_ADMIN_PASSW_B64=$(echo -n "${KEYCLOAK_ADMIN_PASSW}" | base64)
-    if [ $? -ne 0 -o -z "${KEYCLOAK_ADMIN_PASSW_B64}" ]; then
-        logger "ERROR" "Generate KEYCLOAK_ADMIN_PASSW_B64"
-        exit 2
-    fi
-
-    EPOCH_ADMIN_PASSWD=$(< /dev/urandom tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq)
-    if [ $? -ne 0 -o -z "${EPOCH_ADMIN_PASSWD}" ]; then
-        logger "ERROR" "Generate EPOCH_ADMIN_PASSWD"
-        exit 2
-    fi
-
-    EPOCH_ADMIN_PASSWD_B64=$(echo -n "${EPOCH_ADMIN_PASSWD}" | base64)
-    if [ $? -ne 0 -o -z "${EPOCH_ADMIN_PASSWD_B64}" ]; then
-        logger "ERROR" "Generate EPOCH_ADMIN_PASSWD_B64"
-        exit 2
-    fi
-
-    #
-    # Set parameter to configmap
-    #
-    STEP=$(expr ${STEP} + 1)
-    logger "INFO" "**** STEP : ${STEP} / ${ALLSTEPS} : Set Parameter To Configmap"
-
-    kubectl patch configmap -n epoch-system host-setting-config -p "\
-    {\
-        \"data\" : {\
-            \"EPOCH_HOSTNAME\" : \"${PRM_MY_HOST}\"\
-        }\
-    }" &> "${CMD_RESULT}"
-    if [ $? -ne 0 ]; then
-        logger "ERROR" "CALL : kubectl patch configmap -n epoch-system host-setting-config${LF}`cat ${CMD_RESULT}`"
-        logger "ERROR" "patch configmap host-setting-config"
-        exit 2
-    fi
-    logger "INFO" "CALL : kubectl patch configmap -n epoch-system host-setting-config${LF}`cat ${CMD_RESULT}`"
-
-
-    kubectl patch configmap -n exastro-platform-authentication-infra exastro-platform-authentication-infra-env -p "\
-    {\
-        \"data\" : {\
-            \"EXASTRO_KEYCLOAK_HOST\" : \"${PRM_MY_HOST}\"\
-        }\
-    }" &> "${CMD_RESULT}"
-    if [ $? -ne 0 ]; then
-        logger "ERROR" "CALL : kubectl patch configmap -n exastro-platform-authentication-infra exastro-platform-authentication-infra-env${LF}`cat ${CMD_RESULT}`"
-        logger "ERROR" "patch configmap exastro-platform-authentication-infra-env"
-        exit 2
-    fi
-    logger "INFO" "CALL : kubectl patch configmap -n exastro-platform-authentication-infra exastro-platform-authentication-infra-env${LF}`cat ${CMD_RESULT}`"
-
-
-    kubectl patch configmap -n epoch-system epoch-service-api-config -p "\
-    {\
-        \"data\" : {\
-            \"EPOCH_EPAI_HOST\" : \"${PRM_MY_HOST}\"\
-        }\
-    }" &> "${CMD_RESULT}"
-    if [ $? -ne 0 ]; then
-        logger "ERROR" "CALL : kubectl patch configmap -n epoch-system epoch-service-api-config${LF}`cat ${CMD_RESULT}`"
-        logger "ERROR" "patch configmap epoch-service-api-config"
-        exit 2
-    fi
-    logger "INFO" "CALL : kubectl patch configmap -n epoch-system epoch-service-api-config${LF}`cat ${CMD_RESULT}`"
-
-
-    kubectl patch secret -n exastro-platform-authentication-infra exastro-platform-authentication-infra-secret -p "\
-    {\
-        \"data\" : {\
-            \"GATEWAY_CRYPTO_PASSPHRASE\" : \"${OIDC_PASSPHRASE_B64}\",\
-            \"KEYCLOAK_PASSWORD\" : \"${KEYCLOAK_ADMIN_PASSW_B64}\",\
-            \"EPOCH_PASSWORD\" : \"${EPOCH_ADMIN_PASSWD_B64}\"\
-        }\
-    }" &> "${CMD_RESULT}"
-    if [ $? -ne 0 ]; then
-        logger "ERROR" "CALL : kubectl patch secret -n exastro-platform-authentication-infra exastro-platform-authentication-infra-secret${LF}`cat ${CMD_RESULT}`"
-        logger "ERROR" "patch secret exastro-platform-authentication-infra-secret"
-        exit 2
-    fi
-    logger "INFO" "CALL : kubectl patch secret -n exastro-platform-authentication-infra exastro-platform-authentication-infra-secret${LF}`cat ${CMD_RESULT}`"
-
-    #
-    # restart to reflect the settings
-    #
-    STEP=$(expr ${STEP} + 1)
-    logger "INFO" "**** STEP : ${STEP} / ${ALLSTEPS} : restart to reflect the settings ..."
-
-    kubectl rollout restart deploy -n epoch-system epoch-service-api2 &> "${CMD_RESULT}"
-    if [ $? -ne 0 ]; then
-        logger "ERROR" "CALL : kubectl rollout restart deploy -n epoch-system epoch-service-api2${LF}`cat ${CMD_RESULT}`"
-        logger "ERROR" "rollout restart epoch-service-api2"
-        exit 2
-    fi
-    logger "INFO" "CALL : kubectl rollout restart deploy -n epoch-system epoch-service-api2${LF}`cat ${CMD_RESULT}`"
-
-    kubectl rollout restart deploy -n epoch-system epoch-control-argocd-api &> "${CMD_RESULT}"
-    if [ $? -ne 0 ]; then
-        logger "ERROR" "CALL : kubectl rollout restart deploy -n epoch-system epoch-control-argocd-api${LF}`cat ${CMD_RESULT}`"
-        logger "ERROR" "rollout restart epoch-control-argocd-api"
-        exit 2
-    fi
-    logger "INFO" "CALL : kubectl rollout restart deploy -n epoch-system epoch-control-argocd-api${LF}`cat ${CMD_RESULT}`"
-
-    kubectl rollout restart deploy -n epoch-system epoch-control-ita-api &> "${CMD_RESULT}"
-    if [ $? -ne 0 ]; then
-        logger "ERROR" "CALL : kubectl rollout restart deploy -n epoch-system epoch-control-ita-api${LF}`cat ${CMD_RESULT}`"
-        logger "ERROR" "rollout restart epoch-control-ita-api"
-        exit 2
-    fi
-    logger "INFO" "CALL : kubectl rollout restart deploy -n epoch-system epoch-control-ita-api${LF}`cat ${CMD_RESULT}`"
-
-    while true; do
-        sleep 5;
-        RESTART_BERFORE_API_POD=$(kubectl get pod --selector "name=authentication-infra-api" -n exastro-platform-authentication-infra -o jsonpath="{range .items[*]}{@.metadata.name}{\"\n\"}{end}" 2> /dev/null)
-        if [ $? -eq 0 ]; then
-            logger "DEBUG" "RESTART_BERFORE_API_POD=${RESTART_BERFORE_API_POD}"
-            break;
-        fi
-    done
-
-    kubectl rollout restart deploy -n exastro-platform-authentication-infra authentication-infra-api &> "${CMD_RESULT}"
-    if [ $? -ne 0 ]; then
-        logger "ERROR" "CALL : kubectl rollout restart deploy -n exastro-platform-authentication-infra authentication-infra-api${LF}`cat ${CMD_RESULT}`"
-        logger "ERROR" "rollout restart authentication-infra-api"
-        exit 2
-    fi
-    logger "INFO" "CALL : kubectl rollout restart deploy -n exastro-platform-authentication-infra authentication-infra-api${LF}`cat ${CMD_RESULT}`"
-
-    while true; do
-        sleep 5;
-        RESTART_BERFORE_KEYCLOAK_POD=$(kubectl get pod --selector "app=keycloak" -n exastro-platform-authentication-infra -o jsonpath="{range .items[*]}{@.metadata.name}{\"\n\"}{end}" 2> /dev/null)
-        if [ $? -eq 0 ]; then
-            logger "DEBUG" "RESTART_BERFORE_KEYCLOAK_POD=${RESTART_BERFORE_KEYCLOAK_POD}"
-            break;
-        fi
-    done
-    kubectl rollout restart deploy -n exastro-platform-authentication-infra keycloak &> "${CMD_RESULT}"
-    if [ $? -ne 0 ]; then
-        logger "ERROR" "CALL : kubectl rollout restart deploy -n exastro-platform-authentication-infra keycloak${LF}`cat ${CMD_RESULT}`"
-        logger "ERROR" "rollout restart keycloak"
-        exit 2
-    fi
-    logger "INFO" "CALL : kubectl rollout restart deploy -n exastro-platform-authentication-infra keycloak${LF}`cat ${CMD_RESULT}`"
-
-    #
-    # wait for restart
-    #
-    STEP=$(expr ${STEP} + 1)
-    logger "INFO" "**** STEP : ${STEP} / ${ALLSTEPS} : wait for restart ..."
-
-    echo -n "waiting ..."
-    while true; do
-        sleep 5;
-        echo -n ".";
-        NOT_READY_COUNT=$(
-            kubectl get pod -n exastro-platform-authentication-infra -o json 2> /dev/null | \
-            jq -r ".items[].status.containerStatuses[].ready" 2> /dev/null | sed -e "/true/d" | wc -l
-        )
-        if [ $? -ne 0 ]; then
-            continue
-        fi
-        if [ ${NOT_READY_COUNT} -ne 0 ]; then
-            logger "DEBUG" "STILL: containerStatuses[].ready=false"
-            continue;
-        fi
-        NOT_READY_COUNT=$(
-            kubectl get pod -n exastro-platform-authentication-infra -o jsonpath='{range .items[*]}{@.status.phase}{"\n"}' | \
-            sed -e "/Running/d" -e "/Succeeded/d" -e "/^$/d" | \
-            wc -l
-        )
-        if [ $? -ne 0 ]; then
-            continue
-        fi
-        if [ ${NOT_READY_COUNT} -ne 0 ]; then
-            logger "DEBUG" "STILL: status.phase=Not Running/Succeeded"
-            continue;
-        fi
-
-        RESTART_AFTER_API_POD=$(kubectl get pod --selector "name=authentication-infra-api" -n exastro-platform-authentication-infra -o jsonpath="{range .items[*]}{@.metadata.name}{\"\n\"}{end}" 2> /dev/null)
-        if [ $? -ne 0 ]; then
-            continue
-        fi
-        if [ `echo "${RESTART_AFTER_API_POD}" | wc -l` -gt 1 ]; then
-            logger "DEBUG" "STILL: RESTART_AFTER_API_POD COUNT > 1"
-            continue;
-        fi
-        if [ "${RESTART_BERFORE_API_POD}" = "${RESTART_AFTER_API_POD}" ]; then
-            logger "DEBUG" "STILL: NOT CHANGE API POD"
-            continue;
-        fi
-
-        RESTART_AFTER_KEYCLOAK_POD=$(kubectl get pod --selector "app=keycloak" -n exastro-platform-authentication-infra -o jsonpath="{range .items[*]}{@.metadata.name}{\"\n\"}{end}" 2> /dev/null)
-        if [ $? -ne 0 ]; then
-            continue
-        fi
-        if [ `echo "${RESTART_AFTER_KEYCLOAK_POD}" | wc -l` -gt 1 ]; then
-            logger "DEBUG" "STILL: RESTART_AFTER_KEYCLOAK_POD COUNT > 1"
-            continue;
-        fi
-        if [ "${RESTART_BERFORE_KEYCLOAK_POD}" = "${RESTART_AFTER_KEYCLOAK_POD}" ]; then
-            logger "DEBUG" "STILL: NOT CHANGE KEYCLOAK POD"
-            continue;
-        fi
-
-        echo "";
-        break;
-    done;
-
-    logger "DEBUG" "RESTART_AFTER_API_POD=${RESTART_AFTER_API_POD}"
-    logger "DEBUG" "RESTART_AFTER_KEYCLOAK_POD=${RESTART_AFTER_KEYCLOAK_POD}"
-
-    #
-    # Setting api call
-    #
-    STEP=$(expr ${STEP} + 1)
-    logger "INFO" "**** STEP : ${STEP} / ${ALLSTEPS} : Setting api call ..."
-
-    API_RESPONSE="/tmp/${BASENAME}-infra-setting.$$"
-
-    curl \
-        -X POST \
-        -H  'content-type: application/json'    \
-        -d  @- \
-        -Ss \
-        -o "${API_RESPONSE}" \
-        http://authentication-infra-api.exastro-platform-authentication-infra.svc:8000/settings \
-        << EOF
-        {
-            "realm_name": "exastroplatform",
-            "realm_option": {
-                "displayName": "Exastro Platform",
-                "enabled": "True",
-                "registrationAllowed": "True"
-            },
-            "realm_roles": [
-                "epoch-user",
-                "epoch-system"
-            ],
-            "groups": [
-                {
-                    "parent_group": "",
-                    "group_name": "epoch-user"
-                }
-            ],
-            "group_mappings": [
-                {
-                    "role_name": "epoch-user",
-                    "group_name": "epoch-user"
-                }
-            ],
-            "default_group_name": "epoch-user",
-            "users": [
-            ],
-            "admin_users": [
-                {
-                    "user_name": "epoch-admin",
-                    "user_password": "${EPOCH_ADMIN_PASSWD}",
-                    "user_groups": [],
-                    "user_realm_roles": [],
-                    "user_option": {
-                        "enabled": "True"
-                    }
-                }
-            ],
-            "clients": [
-                {
-                    "id": "epoch-system",
-                    "protocol": "openid-connect",
-                    "publicClient": "false",
-                    "redirectUris": [
-                        "https://${PRM_MY_HOST}:30443/oidc-redirect/",
-                        "https://${PRM_MY_HOST}:30443/"
-                    ],
-                    "baseUrl": "https://${PRM_MY_HOST}:30443/oidc-redirect/",
-                    "webOrigins": [],
-                    "protocolMappers": [
-                        {
-                            "name": "epoch-system-client-map-role",
-                            "protocol": "openid-connect",
-                            "protocolMapper": "oidc-usermodel-client-role-mapper",
-                            "config": {
-                                "id.token.claim": "true",
-                                "access.token.claim": "true",
-                                "claim.name": "epoch-role",
-                                "multivalued": "true",
-                                "userinfo.token.claim": "true",
-                                "usermodel.clientRoleMapping.clientId": "epoch-system"
-                            }
-                        },
-                        {
-                            "name": "epoch-system-map-role",
-                            "protocol": "openid-connect",
-                            "protocolMapper": "oidc-usermodel-realm-role-mapper",
-                            "config": {
-                                "id.token.claim": "true",
-                                "access.token.claim": "true",
-                                "claim.name": "epoch-role",
-                                "multivalued": "true",
-                                "userinfo.token.claim": "true"
-                            }
-                        }
-                    ]
-                }
-            ],
-            "conf_template": "epoch-system-template.conf",
-            "token_user": "admin",
-            "token_password": "${KEYCLOAK_ADMIN_PASSW}",
-            "token_realm_name": "master"
-        }
-    EOF
-    if [ $? -ne 0 ]; then
-        logger "ERROR" "Setting api call"
-        exit 2
-    fi
-
-    API_RESULT=$(cat "${API_RESPONSE}" | jq -r ".result")
-    if [ $? -ne 0 ]; then
-        logger "ERROR" "Setting api response:\n`cat ${API_RESPONSE}`"
-        logger "ERROR" "Api Logs:\n`kubectl logs deploy/authentication-infra-api -n exastro-platform-authentication-infra`"
-        logger "ERROR" "Setting api"
-        exit 2
-    fi
-    if [ "${API_RESULT}" != "200" ]; then
-        logger "ERROR" "Setting api response:\n`cat ${API_RESPONSE}`"
-        logger "ERROR" "Api Logs:\n`kubectl logs deploy/authentication-infra-api -n exastro-platform-authentication-infra`"
-        logger "ERROR" "Setting api"
-        exit 2
-    fi
-
-    logger "INFO" "**** ${BASENAME} completed successfully ****"
-    exit 0
+  set-host.sh: "#!/bin/bash\n#   Copyright 2021 NEC Corporation\n#\n#   Licensed under
+    the Apache License, Version 2.0 (the \"License\");\n#   you may not use this file
+    except in compliance with the License.\n#   You may obtain a copy of the License
+    at\n#\n#       http://www.apache.org/licenses/LICENSE-2.0\n#\n#   Unless required
+    by applicable law or agreed to in writing, software\n#   distributed under the
+    License is distributed on an \"AS IS\" BASIS,\n#   WITHOUT WARRANTIES OR CONDITIONS
+    OF ANY KIND, either express or implied.\n#   See the License for the specific
+    language governing permissions and\n#   limitations under the License.\n\n\nBASENAME=$(basename
+    \"$0\")\nCMD_RESULT=\"/tmp/result.$$\"\nLF='\n'\nsource \"`dirname $0`/common-import-logger.sh\"
+    \"${BASENAME}\"\n\nlogger \"INFO\" \"START : ${BASENAME}\"\n\n#\n# Initialize
+    variables\n#\nSTEP=0\nALLSTEPS=7\nREST_HOST=\"http://keycloak.exastro-platform-authentication-infra.svc:8080/\"\nREALM=\"master\"\n\n#\n#
+    check parameter\n#\nif [ $# -ne 1 ]; then\n    logger \"ERROR\" \"Usage : ${BASENAME}
+    [hostname or IPaddress]\"\n    logger \"ERROR\" \"Check the parameters and try
+    again\"\n    exit 1\nfi\n\nPRM_MY_HOST=\"$1\"\nlogger \"INFO\" \"PARAM PRM_MY_HOST
+    : ${PRM_MY_HOST}\"\n\n#\n# Initial password check\n#\nCUR_PASS=$(kubectl get secret
+    exastro-platform-authentication-infra-secret -n exastro-platform-authentication-infra
+    -o json | jq -r \".data.KEYCLOAK_PASSWORD\" | base64 -d)\nif [ \"${CUR_PASS}\"
+    != \"admin\" ]; then\n    logger \"ERROR\" \"Cannot initialize because it is already
+    set\"\n    exit 1\nfi\n\n#\n# get token check\n#\nBEAR=$(curl -k -s \\\n    -d
+    \"client_id=admin-cli\" \\\n    -d \"username=admin\" \\\n    -d \"password=${CUR_PASS}\"
+    \\\n    -d \"grant_type=password\" \\\n    \"${REST_HOST}auth/realms/${REALM}/protocol/openid-connect/token\"
+    | jq -r \".access_token\")\nif [ \"${BEAR}\" = \"\" ]; then\n    logger \"ERROR\"
+    \"Cannot initialize because it is already set\"\n    exit 1\nfi\n\n\n#\n# Initialize
+    Setting Parameter\n#\nSTEP=$(expr ${STEP} + 1)\nlogger \"INFO\" \"**** STEP :
+    ${STEP} / ${ALLSTEPS} : Initialize Setting Parameter ...\"\n\nOIDC_PASSPHRASE=$(<
+    /dev/urandom tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq)\nif [
+    $? -ne 0 -o -z \"${OIDC_PASSPHRASE}\" ]; then\n    logger \"ERROR\" \"Generate
+    OIDC_PASSPHRASE\"\n    exit 2\nfi\n\nOIDC_PASSPHRASE_B64=$(echo -n \"${OIDC_PASSPHRASE}\"
+    | base64)\nif [ $? -ne 0 -o -z \"${OIDC_PASSPHRASE_B64}\" ]; then\n    logger
+    \"ERROR\" \"Generate OIDC_PASSPHRASE_B64\"\n    exit 2\nfi\n\nKEYCLOAK_ADMIN_PASSW=$(<
+    /dev/urandom tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq)\nif [
+    $? -ne 0 -o -z \"${KEYCLOAK_ADMIN_PASSW}\" ]; then\n    logger \"ERROR\" \"Generate
+    KEYCLOAK_ADMIN_PASSW\"\n    exit 2\nfi\n\nKEYCLOAK_ADMIN_PASSW_B64=$(echo -n \"${KEYCLOAK_ADMIN_PASSW}\"
+    | base64)\nif [ $? -ne 0 -o -z \"${KEYCLOAK_ADMIN_PASSW_B64}\" ]; then\n    logger
+    \"ERROR\" \"Generate KEYCLOAK_ADMIN_PASSW_B64\"\n    exit 2\nfi\n\nEPOCH_ADMIN_PASSWD=$(<
+    /dev/urandom tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq)\nif [
+    $? -ne 0 -o -z \"${EPOCH_ADMIN_PASSWD}\" ]; then\n    logger \"ERROR\" \"Generate
+    EPOCH_ADMIN_PASSWD\"\n    exit 2\nfi\n\nEPOCH_ADMIN_PASSWD_B64=$(echo -n \"${EPOCH_ADMIN_PASSWD}\"
+    | base64)\nif [ $? -ne 0 -o -z \"${EPOCH_ADMIN_PASSWD_B64}\" ]; then\n    logger
+    \"ERROR\" \"Generate EPOCH_ADMIN_PASSWD_B64\"\n    exit 2\nfi\n\n#\n# wait for
+    keycloak pod\n#\nSTEP=$(expr ${STEP} + 1)\nlogger \"INFO\" \"**** STEP : ${STEP}
+    / ${ALLSTEPS} : wait for keycloak pod ...\"\n\necho -n \"waiting ...\"\nwhile
+    true; do\n    sleep 3;\n    echo -n \".\";\n    NOT_READY_COUNT=$(\n        kubectl
+    get pod -n exastro-platform-authentication-infra -o json 2> /dev/null | \\\n        jq
+    -r \".items[].status.containerStatuses[].ready\" 2> /dev/null | sed -e \"/true/d\"
+    | wc -l\n    )\n    if [ $? -ne 0 ]; then\n        continue;\n    fi\n    if [
+    ${NOT_READY_COUNT} -ne 0 ]; then\n        logger \"DEBUG\" \"STILL: containerStatuses[].ready=false\"\n
+    \       continue;\n    fi\n\n    NOT_READY_COUNT=$(\n        kubectl get pod -n
+    exastro-platform-authentication-infra -o jsonpath='{range .items[*]}{@.status.phase}{\"\\n\"}'
+    | \\\n        sed -e \"/Running/d\" -e \"/Succeeded/d\" -e \"/^$/d\" | \\\n        wc
+    -l\n    )\n    if [ $? -ne 0 ]; then\n        continue;\n    fi\n    if [ ${NOT_READY_COUNT}
+    -ne 0 ]; then\n        logger \"DEBUG\" \"STILL: status.phase=Not Running/Succeeded\"\n
+    \       continue;\n    fi\n\n    RESTART_AFTER_KEYCLOAK_POD=$(kubectl get pod
+    --selector \"app=keycloak\" -n exastro-platform-authentication-infra -o jsonpath=\"{range
+    .items[*]}{@.metadata.name}{\\\"\\n\\\"}{end}\" 2> /dev/null)\n    if [ $? -ne
+    0 ]; then\n        continue;\n    fi\n    if [ `echo \"${RESTART_AFTER_KEYCLOAK_POD}\"
+    | wc -l` -gt 1 ]; then\n        logger \"DEBUG\" \"STILL: RESTART_AFTER_KEYCLOAK_POD
+    COUNT > 1\"\n        continue;\n    fi\n\n    echo \"\";\n    break;\ndone;\n\n#\n#
+    Set parameter to configmap\n#\nSTEP=$(expr ${STEP} + 1)\nlogger \"INFO\" \"****
+    STEP : ${STEP} / ${ALLSTEPS} : Set Parameter To Configmap\"\n\nkubectl patch configmap
+    -n epoch-system host-setting-config -p \"\\\n{\\\n    \\\"data\\\" : {\\\n        \\\"EPOCH_HOSTNAME\\\"
+    : \\\"${PRM_MY_HOST}\\\"\\\n    }\\\n}\" &> \"${CMD_RESULT}\"\nif [ $? -ne 0 ];
+    then\n    logger \"ERROR\" \"CALL : kubectl patch configmap -n epoch-system host-setting-config${LF}`cat
+    ${CMD_RESULT}`\"\n    logger \"ERROR\" \"patch configmap host-setting-config\"\n
+    \   exit 2\nfi\nlogger \"INFO\" \"CALL : kubectl patch configmap -n epoch-system
+    host-setting-config${LF}`cat ${CMD_RESULT}`\"\n\n\nkubectl patch configmap -n
+    exastro-platform-authentication-infra exastro-platform-authentication-infra-env
+    -p \"\\\n{\\\n    \\\"data\\\" : {\\\n        \\\"EXASTRO_KEYCLOAK_HOST\\\" :
+    \\\"${PRM_MY_HOST}\\\"\\\n    }\\\n}\" &> \"${CMD_RESULT}\"\nif [ $? -ne 0 ];
+    then\n    logger \"ERROR\" \"CALL : kubectl patch configmap -n exastro-platform-authentication-infra
+    exastro-platform-authentication-infra-env${LF}`cat ${CMD_RESULT}`\"\n    logger
+    \"ERROR\" \"patch configmap exastro-platform-authentication-infra-env\"\n    exit
+    2\nfi\nlogger \"INFO\" \"CALL : kubectl patch configmap -n exastro-platform-authentication-infra
+    exastro-platform-authentication-infra-env${LF}`cat ${CMD_RESULT}`\"\n\n\nkubectl
+    patch configmap -n epoch-system epoch-service-api-config -p \"\\\n{\\\n    \\\"data\\\"
+    : {\\\n        \\\"EPOCH_EPAI_HOST\\\" : \\\"${PRM_MY_HOST}\\\"\\\n    }\\\n}\"
+    &> \"${CMD_RESULT}\"\nif [ $? -ne 0 ]; then\n    logger \"ERROR\" \"CALL : kubectl
+    patch configmap -n epoch-system epoch-service-api-config${LF}`cat ${CMD_RESULT}`\"\n
+    \   logger \"ERROR\" \"patch configmap epoch-service-api-config\"\n    exit 2\nfi\nlogger
+    \"INFO\" \"CALL : kubectl patch configmap -n epoch-system epoch-service-api-config${LF}`cat
+    ${CMD_RESULT}`\"\n\n\nkubectl patch secret -n exastro-platform-authentication-infra
+    exastro-platform-authentication-infra-secret -p \"\\\n{\\\n    \\\"data\\\" :
+    {\\\n        \\\"GATEWAY_CRYPTO_PASSPHRASE\\\" : \\\"${OIDC_PASSPHRASE_B64}\\\",\\\n
+    \       \\\"KEYCLOAK_PASSWORD\\\" : \\\"${KEYCLOAK_ADMIN_PASSW_B64}\\\",\\\n        \\\"EPOCH_PASSWORD\\\"
+    : \\\"${EPOCH_ADMIN_PASSWD_B64}\\\"\\\n    }\\\n}\" &> \"${CMD_RESULT}\"\nif [
+    $? -ne 0 ]; then\n    logger \"ERROR\" \"CALL : kubectl patch secret -n exastro-platform-authentication-infra
+    exastro-platform-authentication-infra-secret${LF}`cat ${CMD_RESULT}`\"\n    logger
+    \"ERROR\" \"patch secret exastro-platform-authentication-infra-secret\"\n    exit
+    2\nfi\nlogger \"INFO\" \"CALL : kubectl patch secret -n exastro-platform-authentication-infra
+    exastro-platform-authentication-infra-secret${LF}`cat ${CMD_RESULT}`\"\n\n#\n#
+    restart to reflect the settings\n#\nSTEP=$(expr ${STEP} + 1)\nlogger \"INFO\"
+    \"**** STEP : ${STEP} / ${ALLSTEPS} : restart to reflect the settings ...\"\n\nkubectl
+    rollout restart deploy -n epoch-system epoch-service-api2 &> \"${CMD_RESULT}\"\nif
+    [ $? -ne 0 ]; then\n    logger \"ERROR\" \"CALL : kubectl rollout restart deploy
+    -n epoch-system epoch-service-api2${LF}`cat ${CMD_RESULT}`\"\n    logger \"ERROR\"
+    \"rollout restart epoch-service-api2\"\n    exit 2\nfi\nlogger \"INFO\" \"CALL
+    : kubectl rollout restart deploy -n epoch-system epoch-service-api2${LF}`cat ${CMD_RESULT}`\"\n\nkubectl
+    rollout restart deploy -n epoch-system epoch-control-argocd-api &> \"${CMD_RESULT}\"\nif
+    [ $? -ne 0 ]; then\n    logger \"ERROR\" \"CALL : kubectl rollout restart deploy
+    -n epoch-system epoch-control-argocd-api${LF}`cat ${CMD_RESULT}`\"\n    logger
+    \"ERROR\" \"rollout restart epoch-control-argocd-api\"\n    exit 2\nfi\nlogger
+    \"INFO\" \"CALL : kubectl rollout restart deploy -n epoch-system epoch-control-argocd-api${LF}`cat
+    ${CMD_RESULT}`\"\n\nkubectl rollout restart deploy -n epoch-system epoch-control-ita-api
+    &> \"${CMD_RESULT}\"\nif [ $? -ne 0 ]; then\n    logger \"ERROR\" \"CALL : kubectl
+    rollout restart deploy -n epoch-system epoch-control-ita-api${LF}`cat ${CMD_RESULT}`\"\n
+    \   logger \"ERROR\" \"rollout restart epoch-control-ita-api\"\n    exit 2\nfi\nlogger
+    \"INFO\" \"CALL : kubectl rollout restart deploy -n epoch-system epoch-control-ita-api${LF}`cat
+    ${CMD_RESULT}`\"\n\nwhile true; do\n    sleep 5;\n    RESTART_BERFORE_API_POD=$(kubectl
+    get pod --selector \"name=authentication-infra-api\" -n exastro-platform-authentication-infra
+    -o jsonpath=\"{range .items[*]}{@.metadata.name}{\\\"\\n\\\"}{end}\" 2> /dev/null)\n
+    \   if [ $? -eq 0 ]; then\n        logger \"DEBUG\" \"RESTART_BERFORE_API_POD=${RESTART_BERFORE_API_POD}\"\n
+    \       break;\n    fi\ndone\n\nkubectl rollout restart deploy -n exastro-platform-authentication-infra
+    authentication-infra-api &> \"${CMD_RESULT}\"\nif [ $? -ne 0 ]; then\n    logger
+    \"ERROR\" \"CALL : kubectl rollout restart deploy -n exastro-platform-authentication-infra
+    authentication-infra-api${LF}`cat ${CMD_RESULT}`\"\n    logger \"ERROR\" \"rollout
+    restart authentication-infra-api\"\n    exit 2\nfi\nlogger \"INFO\" \"CALL : kubectl
+    rollout restart deploy -n exastro-platform-authentication-infra authentication-infra-api${LF}`cat
+    ${CMD_RESULT}`\"\n\n# while true; do\n#     sleep 5;\n#     RESTART_BERFORE_KEYCLOAK_POD=$(kubectl
+    get pod --selector \"app=keycloak\" -n exastro-platform-authentication-infra -o
+    jsonpath=\"{range .items[*]}{@.metadata.name}{\\\"\\n\\\"}{end}\" 2> /dev/null)\n#
+    \    if [ $? -eq 0 ]; then\n#         logger \"DEBUG\" \"RESTART_BERFORE_KEYCLOAK_POD=${RESTART_BERFORE_KEYCLOAK_POD}\"\n#
+    \        break;\n#     fi\n# done\n# kubectl rollout restart deploy -n exastro-platform-authentication-infra
+    keycloak &> \"${CMD_RESULT}\"\n# if [ $? -ne 0 ]; then\n#     logger \"ERROR\"
+    \"CALL : kubectl rollout restart deploy -n exastro-platform-authentication-infra
+    keycloak${LF}`cat ${CMD_RESULT}`\"\n#     logger \"ERROR\" \"rollout restart keycloak\"\n#
+    \    exit 2\n# fi\n# logger \"INFO\" \"CALL : kubectl rollout restart deploy -n
+    exastro-platform-authentication-infra keycloak${LF}`cat ${CMD_RESULT}`\"\n\n#\n#
+    wait for restart\n#\nSTEP=$(expr ${STEP} + 1)\nlogger \"INFO\" \"**** STEP : ${STEP}
+    / ${ALLSTEPS} : wait for restart ...\"\n\necho -n \"waiting ...\"\nwhile true;
+    do\n    sleep 5;\n    echo -n \".\";\n    NOT_READY_COUNT=$(\n        kubectl
+    get pod -n exastro-platform-authentication-infra -o json 2> /dev/null | \\\n        jq
+    -r \".items[].status.containerStatuses[].ready\" 2> /dev/null | sed -e \"/true/d\"
+    | wc -l\n    )\n    if [ $? -ne 0 ]; then\n        continue;\n    fi\n    if [
+    ${NOT_READY_COUNT} -ne 0 ]; then\n        logger \"DEBUG\" \"STILL: containerStatuses[].ready=false\"\n
+    \       continue;\n    fi\n\n    NOT_READY_COUNT=$(\n        kubectl get pod -n
+    exastro-platform-authentication-infra -o jsonpath='{range .items[*]}{@.status.phase}{\"\\n\"}'
+    | \\\n        sed -e \"/Running/d\" -e \"/Succeeded/d\" -e \"/^$/d\" | \\\n        wc
+    -l\n    )\n    if [ $? -ne 0 ]; then\n        continue;\n    fi\n    if [ ${NOT_READY_COUNT}
+    -ne 0 ]; then\n        logger \"DEBUG\" \"STILL: status.phase=Not Running/Succeeded\"\n
+    \       continue;\n    fi\n\n    RESTART_AFTER_API_POD=$(kubectl get pod --selector
+    \"name=authentication-infra-api\" -n exastro-platform-authentication-infra -o
+    jsonpath=\"{range .items[*]}{@.metadata.name}{\\\"\\n\\\"}{end}\" 2> /dev/null)\n
+    \   if [ $? -ne 0 ]; then\n        continue;\n    fi\n    if [ `echo \"${RESTART_AFTER_API_POD}\"
+    | wc -l` -gt 1 ]; then\n        logger \"DEBUG\" \"STILL: RESTART_AFTER_API_POD
+    COUNT > 1\"\n        continue;\n    fi\n    if [ \"${RESTART_BERFORE_API_POD}\"
+    = \"${RESTART_AFTER_API_POD}\" ]; then\n        logger \"DEBUG\" \"STILL: NOT
+    CHANGE API POD\"\n        continue;\n    fi\n\n    echo \"\";\n    break;\ndone;\n\nlogger
+    \"DEBUG\" \"RESTART_AFTER_API_POD=${RESTART_AFTER_API_POD}\"\n\n\n#\n# Initialize
+    setting keycloak api call\n#\nSTEP=$(expr ${STEP} + 1)\nlogger \"INFO\" \"****
+    STEP : ${STEP} / ${ALLSTEPS} : Initialize setting keycloak call ...\"\n\n# Initial
+    password\nPASS=\"admin\"\n\n# admin user password change\nBEAR=$(curl -k -s \\\n
+    \   -d \"client_id=admin-cli\" \\\n    -d \"username=admin\" \\\n    -d \"password=${PASS}\"
+    \\\n    -d \"grant_type=password\" \\\n    \"${REST_HOST}auth/realms/${REALM}/protocol/openid-connect/token\"
+    | jq -r \".access_token\")\n\nUSER_LIST=$(curl -X GET -s \\\n    -H \"Content-Type:
+    application/json\" \\\n    -H \"Authorization: bearer ${BEAR}\" \\\n    \"${REST_HOST}auth/admin/realms/${REALM}/users\")
+    \nlogger \"INFO\" \"CALL : keycloak get admin user id\"\n\n# echo ${USER_LIST}
+    | jq\nUSER_ADMIN_ID=$(echo ${USER_LIST} | jq -r '.[] | select(.username == \"admin\")
+    | .id')\n\ncurl -X PUT -s \\\n    -H \"Content-Type: application/json\" \\\n    -H
+    \"Authorization: bearer ${BEAR}\" \\\n    \"${REST_HOST}auth/admin/realms/${REALM}/users/${USER_ADMIN_ID}/reset-password\"
+    \\\n    -d @- << EOF\n    {\n        \"type\": \"password\",\n        \"value\":
+    \"${KEYCLOAK_ADMIN_PASSW}\",\n        \"temporary\": false\n    }\nEOF\nlogger
+    \"INFO\" \"CALL : keycloak put admin new password\"\n\n#\n# Setting api call\n#\nSTEP=$(expr
+    ${STEP} + 1)\nlogger \"INFO\" \"**** STEP : ${STEP} / ${ALLSTEPS} : Setting api
+    call ...\"\n\nAPI_RESPONSE=\"/tmp/${BASENAME}-infra-setting.$$\"\n\ncurl \\\n
+    \   -X POST \\\n    -H  'content-type: application/json'    \\\n    -d  @- \\\n
+    \   -Ss \\\n    -o \"${API_RESPONSE}\" \\\n    http://authentication-infra-api.exastro-platform-authentication-infra.svc:8000/settings
+    \\\n    << EOF\n    {\n        \"realm_name\": \"exastroplatform\",\n        \"realm_option\":
+    {\n            \"displayName\": \"Exastro Platform\",\n            \"enabled\":
+    \"True\",\n            \"registrationAllowed\": \"True\"\n        },\n        \"realm_roles\":
+    [\n            \"epoch-user\",\n            \"epoch-system\"\n        ],\n        \"groups\":
+    [\n            {\n                \"parent_group\": \"\",\n                \"group_name\":
+    \"epoch-user\"\n            }\n        ],\n        \"group_mappings\": [\n            {\n
+    \               \"role_name\": \"epoch-user\",\n                \"group_name\":
+    \"epoch-user\"\n            }\n        ],\n        \"default_group_name\": \"epoch-user\",\n
+    \       \"users\": [\n        ],\n        \"admin_users\": [\n            {\n
+    \               \"user_name\": \"epoch-admin\",\n                \"user_password\":
+    \"${EPOCH_ADMIN_PASSWD}\",\n                \"user_groups\": [],\n                \"user_realm_roles\":
+    [],\n                \"user_option\": {\n                    \"enabled\": \"True\"\n
+    \               }\n            }\n        ],\n        \"clients\": [\n            {\n
+    \               \"id\": \"epoch-system\",\n                \"protocol\": \"openid-connect\",\n
+    \               \"publicClient\": \"false\",\n                \"redirectUris\":
+    [\n                    \"https://${PRM_MY_HOST}:30443/oidc-redirect/\",\n                    \"https://${PRM_MY_HOST}:30443/\"\n
+    \               ],\n                \"baseUrl\": \"https://${PRM_MY_HOST}:30443/oidc-redirect/\",\n
+    \               \"webOrigins\": [],\n                \"protocolMappers\": [\n
+    \                   {\n                        \"name\": \"epoch-system-client-map-role\",\n
+    \                       \"protocol\": \"openid-connect\",\n                        \"protocolMapper\":
+    \"oidc-usermodel-client-role-mapper\",\n                        \"config\": {\n
+    \                           \"id.token.claim\": \"true\",\n                            \"access.token.claim\":
+    \"true\",\n                            \"claim.name\": \"epoch-role\",\n                            \"multivalued\":
+    \"true\",\n                            \"userinfo.token.claim\": \"true\",\n                            \"usermodel.clientRoleMapping.clientId\":
+    \"epoch-system\"\n                        }\n                    },\n                    {\n
+    \                       \"name\": \"epoch-system-map-role\",\n                        \"protocol\":
+    \"openid-connect\",\n                        \"protocolMapper\": \"oidc-usermodel-realm-role-mapper\",\n
+    \                       \"config\": {\n                            \"id.token.claim\":
+    \"true\",\n                            \"access.token.claim\": \"true\",\n                            \"claim.name\":
+    \"epoch-role\",\n                            \"multivalued\": \"true\",\n                            \"userinfo.token.claim\":
+    \"true\"\n                        }\n                    }\n                ]\n
+    \           }\n        ],\n        \"conf_template\": \"epoch-system-template.conf\",\n
+    \       \"token_user\": \"admin\",\n        \"token_password\": \"${KEYCLOAK_ADMIN_PASSW}\",\n
+    \       \"token_realm_name\": \"master\"\n    }\nEOF\nif [ $? -ne 0 ]; then\n
+    \   logger \"ERROR\" \"Setting api call\"\n    exit 2\nfi\n\nAPI_RESULT=$(cat
+    \"${API_RESPONSE}\" | jq -r \".result\")\nif [ $? -ne 0 ]; then\n    logger \"ERROR\"
+    \"Setting api response:\\n`cat ${API_RESPONSE}`\"\n    logger \"ERROR\" \"Api
+    Logs:\\n`kubectl logs deploy/authentication-infra-api -n exastro-platform-authentication-infra`\"\n
+    \   logger \"ERROR\" \"Setting api\"\n    exit 2\nfi\nif [ \"${API_RESULT}\" !=
+    \"200\" ]; then\n    logger \"ERROR\" \"Setting api response:\\n`cat ${API_RESPONSE}`\"\n
+    \   logger \"ERROR\" \"Api Logs:\\n`kubectl logs deploy/authentication-infra-api
+    -n exastro-platform-authentication-infra`\"\n    logger \"ERROR\" \"Setting api\"\n
+    \   exit 2\nfi\n\nlogger \"INFO\" \"**** ${BASENAME} completed successfully ****\"\nexit
+    0\n"
   set-proxy.sh: |
     #!/bin/bash
     #   Copyright 2021 NEC Corporation

@@ -74,25 +74,12 @@ spec:
       labels:
         name: tekton-pipelinerun-db
     spec:
-      volumes:
-      - name: mysqlconf-volume
-        configMap:
-          name: tekton-pipelinerun-db-myconf
-      # COMMENT OUT:Persistent data retention
-      #- name: mysqldata
-      #  hostPath:
-      #    path: /var/data/epoch/tekton_pipelinerun_db/mysql
-      #    type: DirectoryOrCreate
-      - name: mysqlinitdb-volume
-        configMap:
-          name: tekton-pipelinerun-db-initdb
       containers:
       - name: mysql
         image: mysql
         volumeMounts:
-        # COMMENT OUT:Persistent data retention
-        #- name: mysqldata
-        #  mountPath: /var/lib/mysql
+        - name: mysql-persistent-storage
+          mountPath: /var/lib/mysql
         - name: mysqlconf-volume
           mountPath: /etc/mysql
         - name: mysqlinitdb-volume
@@ -102,6 +89,16 @@ spec:
           value: password
         - name: TZ
           value: "Asia/Tokyo"
+      volumes:
+      - name: mysqlconf-volume
+        configMap:
+          name: tekton-pipelinerun-db-myconf
+      - name: mysql-persistent-storage
+        persistentVolumeClaim:
+          claimName: epoch-tekton-pipelinerun-db
+      - name: mysqlinitdb-volume
+        configMap:
+          name: tekton-pipelinerun-db-initdb
 
 ---
 apiVersion: v1

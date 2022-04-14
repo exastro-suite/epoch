@@ -107,7 +107,7 @@ data:
     spec:
       storageClassName: epoch-system-sc
       capacity:
-        storage: 500Mi
+        storage: 4Gi
       accessModes:
         - ReadWriteOnce
       persistentVolumeReclaimPolicy: Retain
@@ -134,7 +134,7 @@ data:
         - ReadWriteOnce
       resources:
         requests:
-          storage: 500Mi
+          storage: 4Gi
       storageClassName: epoch-system-sc
       volumeMode: Filesystem
       volumeName: epoch-rs-cd-result-db
@@ -151,7 +151,7 @@ data:
     spec:
       storageClassName: epoch-system-sc
       capacity:
-        storage: 500Mi
+        storage: 4Gi
       accessModes:
         - ReadWriteOnce
       persistentVolumeReclaimPolicy: Retain
@@ -178,7 +178,7 @@ data:
         - ReadWriteOnce
       resources:
         requests:
-          storage: 500Mi
+          storage: 4Gi
       storageClassName: epoch-system-sc
       volumeMode: Filesystem
       volumeName: epoch-tekton-pipelinerun-db
@@ -196,7 +196,7 @@ data:
     spec:
       storageClassName: epoch-system-sc
       capacity:
-        storage: 500Mi
+        storage: 4Gi
       accessModes:
         - ReadWriteMany
       persistentVolumeReclaimPolicy: Retain
@@ -223,7 +223,7 @@ data:
         - ReadWriteMany
       resources:
         requests:
-          storage: 500Mi
+          storage: 4Gi
       storageClassName: epoch-system-sc
       volumeMode: Filesystem
       volumeName: epoch-rs-logs-db

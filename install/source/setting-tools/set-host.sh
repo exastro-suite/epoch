@@ -26,7 +26,9 @@ logger "INFO" "START : ${BASENAME}"
 # Initialize variables
 #
 STEP=0
-ALLSTEPS=5
+ALLSTEPS=7
+REST_HOST="http://keycloak.exastro-platform-authentication-infra.svc:8080/"
+REALM="master"
 
 #
 # check parameter
@@ -39,6 +41,30 @@ fi
 
 PRM_MY_HOST="$1"
 logger "INFO" "PARAM PRM_MY_HOST : ${PRM_MY_HOST}"
+
+#
+# Initial password check
+#
+CUR_PASS=$(kubectl get secret exastro-platform-authentication-infra-secret -n exastro-platform-authentication-infra -o json | jq -r ".data.KEYCLOAK_PASSWORD" | base64 -d)
+if [ "${CUR_PASS}" != "admin" ]; then
+    logger "ERROR" "Cannot initialize because it is already set"
+    exit 1
+fi
+
+#
+# get token check
+#
+BEAR=$(curl -k -s \
+    -d "client_id=admin-cli" \
+    -d "username=admin" \
+    -d "password=${CUR_PASS}" \
+    -d "grant_type=password" \
+    "${REST_HOST}auth/realms/${REALM}/protocol/openid-connect/token" | jq -r ".access_token")
+if [ "${BEAR}" = "" ]; then
+    logger "ERROR" "Cannot initialize because it is already set"
+    exit 1
+fi
+
 
 #
 # Initialize Setting Parameter
@@ -81,6 +107,54 @@ if [ $? -ne 0 -o -z "${EPOCH_ADMIN_PASSWD_B64}" ]; then
     logger "ERROR" "Generate EPOCH_ADMIN_PASSWD_B64"
     exit 2
 fi
+
+#
+# wait for keycloak pod
+#
+STEP=$(expr ${STEP} + 1)
+logger "INFO" "**** STEP : ${STEP} / ${ALLSTEPS} : wait for keycloak pod ..."
+
+echo -n "waiting ..."
+while true; do
+    sleep 3;
+    echo -n ".";
+    NOT_READY_COUNT=$(
+        kubectl get pod -n exastro-platform-authentication-infra -o json 2> /dev/null | \
+        jq -r ".items[].status.containerStatuses[].ready" 2> /dev/null | sed -e "/true/d" | wc -l
+    )
+    if [ $? -ne 0 ]; then
+        continue;
+    fi
+    if [ ${NOT_READY_COUNT} -ne 0 ]; then
+        logger "DEBUG" "STILL: containerStatuses[].ready=false"
+        continue;
+    fi
+
+    NOT_READY_COUNT=$(
+        kubectl get pod -n exastro-platform-authentication-infra -o jsonpath='{range .items[*]}{@.status.phase}{"\n"}' | \
+        sed -e "/Running/d" -e "/Succeeded/d" -e "/^$/d" | \
+        wc -l
+    )
+    if [ $? -ne 0 ]; then
+        continue;
+    fi
+    if [ ${NOT_READY_COUNT} -ne 0 ]; then
+        logger "DEBUG" "STILL: status.phase=Not Running/Succeeded"
+        continue;
+    fi
+
+    RESTART_AFTER_KEYCLOAK_POD=$(kubectl get pod --selector "app=keycloak" -n exastro-platform-authentication-infra -o jsonpath="{range .items[*]}{@.metadata.name}{\"\n\"}{end}" 2> /dev/null)
+    if [ $? -ne 0 ]; then
+        continue;
+    fi
+    if [ `echo "${RESTART_AFTER_KEYCLOAK_POD}" | wc -l` -gt 1 ]; then
+        logger "DEBUG" "STILL: RESTART_AFTER_KEYCLOAK_POD COUNT > 1"
+        continue;
+    fi
+
+    echo "";
+    break;
+done;
 
 #
 # Set parameter to configmap
@@ -192,21 +266,21 @@ if [ $? -ne 0 ]; then
 fi
 logger "INFO" "CALL : kubectl rollout restart deploy -n exastro-platform-authentication-infra authentication-infra-api${LF}`cat ${CMD_RESULT}`"
 
-while true; do
-    sleep 5;
-    RESTART_BERFORE_KEYCLOAK_POD=$(kubectl get pod --selector "app=keycloak" -n exastro-platform-authentication-infra -o jsonpath="{range .items[*]}{@.metadata.name}{\"\n\"}{end}" 2> /dev/null)
-    if [ $? -eq 0 ]; then
-        logger "DEBUG" "RESTART_BERFORE_KEYCLOAK_POD=${RESTART_BERFORE_KEYCLOAK_POD}"
-        break;
-    fi
-done
-kubectl rollout restart deploy -n exastro-platform-authentication-infra keycloak &> "${CMD_RESULT}"
-if [ $? -ne 0 ]; then
-    logger "ERROR" "CALL : kubectl rollout restart deploy -n exastro-platform-authentication-infra keycloak${LF}`cat ${CMD_RESULT}`"
-    logger "ERROR" "rollout restart keycloak"
-    exit 2
-fi
-logger "INFO" "CALL : kubectl rollout restart deploy -n exastro-platform-authentication-infra keycloak${LF}`cat ${CMD_RESULT}`"
+# while true; do
+#     sleep 5;
+#     RESTART_BERFORE_KEYCLOAK_POD=$(kubectl get pod --selector "app=keycloak" -n exastro-platform-authentication-infra -o jsonpath="{range .items[*]}{@.metadata.name}{\"\n\"}{end}" 2> /dev/null)
+#     if [ $? -eq 0 ]; then
+#         logger "DEBUG" "RESTART_BERFORE_KEYCLOAK_POD=${RESTART_BERFORE_KEYCLOAK_POD}"
+#         break;
+#     fi
+# done
+# kubectl rollout restart deploy -n exastro-platform-authentication-infra keycloak &> "${CMD_RESULT}"
+# if [ $? -ne 0 ]; then
+#     logger "ERROR" "CALL : kubectl rollout restart deploy -n exastro-platform-authentication-infra keycloak${LF}`cat ${CMD_RESULT}`"
+#     logger "ERROR" "rollout restart keycloak"
+#     exit 2
+# fi
+# logger "INFO" "CALL : kubectl rollout restart deploy -n exastro-platform-authentication-infra keycloak${LF}`cat ${CMD_RESULT}`"
 
 #
 # wait for restart
@@ -223,19 +297,20 @@ while true; do
         jq -r ".items[].status.containerStatuses[].ready" 2> /dev/null | sed -e "/true/d" | wc -l
     )
     if [ $? -ne 0 ]; then
-        continue
+        continue;
     fi
     if [ ${NOT_READY_COUNT} -ne 0 ]; then
         logger "DEBUG" "STILL: containerStatuses[].ready=false"
         continue;
     fi
+
     NOT_READY_COUNT=$(
         kubectl get pod -n exastro-platform-authentication-infra -o jsonpath='{range .items[*]}{@.status.phase}{"\n"}' | \
         sed -e "/Running/d" -e "/Succeeded/d" -e "/^$/d" | \
         wc -l
     )
     if [ $? -ne 0 ]; then
-        continue
+        continue;
     fi
     if [ ${NOT_READY_COUNT} -ne 0 ]; then
         logger "DEBUG" "STILL: status.phase=Not Running/Succeeded"
@@ -244,7 +319,7 @@ while true; do
 
     RESTART_AFTER_API_POD=$(kubectl get pod --selector "name=authentication-infra-api" -n exastro-platform-authentication-infra -o jsonpath="{range .items[*]}{@.metadata.name}{\"\n\"}{end}" 2> /dev/null)
     if [ $? -ne 0 ]; then
-        continue
+        continue;
     fi
     if [ `echo "${RESTART_AFTER_API_POD}" | wc -l` -gt 1 ]; then
         logger "DEBUG" "STILL: RESTART_AFTER_API_POD COUNT > 1"
@@ -255,25 +330,51 @@ while true; do
         continue;
     fi
 
-    RESTART_AFTER_KEYCLOAK_POD=$(kubectl get pod --selector "app=keycloak" -n exastro-platform-authentication-infra -o jsonpath="{range .items[*]}{@.metadata.name}{\"\n\"}{end}" 2> /dev/null)
-    if [ $? -ne 0 ]; then
-        continue
-    fi
-    if [ `echo "${RESTART_AFTER_KEYCLOAK_POD}" | wc -l` -gt 1 ]; then
-        logger "DEBUG" "STILL: RESTART_AFTER_KEYCLOAK_POD COUNT > 1"
-        continue;
-    fi
-    if [ "${RESTART_BERFORE_KEYCLOAK_POD}" = "${RESTART_AFTER_KEYCLOAK_POD}" ]; then
-        logger "DEBUG" "STILL: NOT CHANGE KEYCLOAK POD"
-        continue;
-    fi
-
     echo "";
     break;
 done;
 
 logger "DEBUG" "RESTART_AFTER_API_POD=${RESTART_AFTER_API_POD}"
-logger "DEBUG" "RESTART_AFTER_KEYCLOAK_POD=${RESTART_AFTER_KEYCLOAK_POD}"
+
+
+#
+# Initialize setting keycloak api call
+#
+STEP=$(expr ${STEP} + 1)
+logger "INFO" "**** STEP : ${STEP} / ${ALLSTEPS} : Initialize setting keycloak call ..."
+
+# Initial password
+PASS="admin"
+
+# admin user password change
+BEAR=$(curl -k -s \
+    -d "client_id=admin-cli" \
+    -d "username=admin" \
+    -d "password=${PASS}" \
+    -d "grant_type=password" \
+    "${REST_HOST}auth/realms/${REALM}/protocol/openid-connect/token" | jq -r ".access_token")
+
+USER_LIST=$(curl -X GET -s \
+    -H "Content-Type: application/json" \
+    -H "Authorization: bearer ${BEAR}" \
+    "${REST_HOST}auth/admin/realms/${REALM}/users") 
+logger "INFO" "CALL : keycloak get admin user id"
+
+# echo ${USER_LIST} | jq
+USER_ADMIN_ID=$(echo ${USER_LIST} | jq -r '.[] | select(.username == "admin") | .id')
+
+curl -X PUT -s \
+    -H "Content-Type: application/json" \
+    -H "Authorization: bearer ${BEAR}" \
+    "${REST_HOST}auth/admin/realms/${REALM}/users/${USER_ADMIN_ID}/reset-password" \
+    -d @- << EOF
+    {
+        "type": "password",
+        "value": "${KEYCLOAK_ADMIN_PASSW}",
+        "temporary": false
+    }
+EOF
+logger "INFO" "CALL : keycloak put admin new password"
 
 #
 # Setting api call

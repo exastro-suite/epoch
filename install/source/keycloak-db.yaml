@@ -1,0 +1,96 @@
+#   Copyright 2022 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak-db
+  namespace: exastro-platform-authentication-infra
+spec:
+  ports:
+  - port: 3306
+  selector:
+    app: keycloak-db
+  clusterIP: None
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak-db
+  namespace: exastro-platform-authentication-infra
+spec:
+  selector:
+    matchLabels:
+      app: keycloak-db
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: keycloak-db
+    spec:
+      containers:
+        - image: mariadb:10.4.8
+          name: keycloak-db
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: exastro-platform-authentication-infra-secret
+                  key: KEYCLOAK_DB_ROOT_PASSWORD
+            - name: MYSQL_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: exastro-platform-authentication-infra-env
+                  key: KEYCLOAK_DB_DATABASE
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: exastro-platform-authentication-infra-secret
+                  key: KEYCLOAK_DB_USER
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: exastro-platform-authentication-infra-secret
+                  key: KEYCLOAK_DB_PASSWORD
+          ports:
+            - containerPort: 3306
+              name: keycloak-db
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/mysql
+          livenessProbe:
+            exec:
+              command:
+                - /bin/bash
+                - -ec
+                - >-
+                  mysqladmin -h localhost --user=root --password=${MYSQL_ROOT_PASSWORD} ping
+            initialDelaySeconds: 5
+            periodSeconds: 30
+            timeoutSeconds: 5
+          readinessProbe:
+            exec:
+              command:
+                - /bin/bash
+                - -ec
+                - >-
+                  mysql -h localhost --user=root --password=${MYSQL_ROOT_PASSWORD} -e "SELECT 1"
+            initialDelaySeconds: 5
+            periodSeconds: 30
+            timeoutSeconds: 5
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: exastro-platform-authentication-infra-keycloak-db
