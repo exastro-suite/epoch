@@ -1,0 +1,279 @@
+#   Copyright 2022 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+data:
+  epoch-pv-creator.sh: |
+    #!/bin/bash
+
+    echo "[INFO] START: $(basename $0)"
+
+    SCRIPT_PATH=$(dirname $0)
+
+    kubectl get pod -n "${PRM_NAMESPACE}" "${HOSTNAME}" &> /dev/null
+    if [ $? -ne 0 ]; then
+        echo "[ERROR] Not Found Pod : namespace=${PRM_NAMESPACE} jobname=${PRM_JOBNAME} hostname=${HOSTNAME}"
+        exit 1
+    fi
+
+    WORKER_NODE_NAME=$(kubectl get pod -n "${PRM_NAMESPACE}" "${HOSTNAME}" -o jsonpath="{.spec.nodeName}")
+    echo "WORKER_NODE_NAME:${WORKER_NODE_NAME}"
+
+    if [ -z "${WORKER_NODE_NAME}" ]; then
+        echo "[ERROR] Could not get the node name : namespace=${PRM_NAMESPACE} jobname=${PRM_JOBNAME}"
+        exit 1
+    fi
+
+    sed -e "s/#WORKER-NODE-NAME#/${WORKER_NODE_NAME}/g" "${SCRIPT_PATH}/${PRM_PV_TEMPLATE}" | \
+    kubectl apply -f -
+    if [ $? -ne 0 ]; then
+        echo "[ERROR] Failed to create Persistent Volume : namespace=${PRM_NAMESPACE} jobname=${PRM_JOBNAME}"
+        exit 1
+    fi
+
+    kubectl delete job -n "${PRM_NAMESPACE}" "${PRM_JOBNAME}"
+  epoch-system-pv-template.yaml: |+
+    apiVersion: storage.k8s.io/v1
+    kind: StorageClass
+    metadata:
+      name: epoch-system-sc
+    provisioner: kubernetes.io/no-provisioner
+    volumeBindingMode: WaitForFirstConsumer
+    allowVolumeExpansion: true
+
+    ---
+    apiVersion: v1
+    kind: PersistentVolume
+    metadata:
+      name: epoch-tekton-pipeline-db
+      labels:
+        type: local
+      annotations:
+        pv.kubernetes.io/bound-by-controller: "yes"
+    spec:
+      storageClassName: epoch-system-sc
+      capacity:
+        storage: 500Mi
+      accessModes:
+        - ReadWriteOnce
+      persistentVolumeReclaimPolicy: Retain
+      hostPath:
+        path: /var/data/epoch/epoch-tekton-pipeline-db
+        type: DirectoryOrCreate
+      nodeAffinity:
+        required:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+              - #WORKER-NODE-NAME#
+
+    ---
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: epoch-tekton-pipeline-db
+      namespace: epoch-system
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 500Mi
+      storageClassName: epoch-system-sc
+      volumeMode: Filesystem
+      volumeName: epoch-tekton-pipeline-db
+
+    ---
+    apiVersion: v1
+    kind: PersistentVolume
+    metadata:
+      name: epoch-rs-cd-result-db
+      labels:
+        type: local
+      annotations:
+        pv.kubernetes.io/bound-by-controller: "yes"
+    spec:
+      storageClassName: epoch-system-sc
+      capacity:
+        storage: 500Mi
+      accessModes:
+        - ReadWriteOnce
+      persistentVolumeReclaimPolicy: Retain
+      hostPath:
+        path: /var/data/epoch/epoch-rs-cd-result-db
+        type: DirectoryOrCreate
+      nodeAffinity:
+        required:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+              - #WORKER-NODE-NAME#
+
+    ---
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: epoch-rs-cd-result-db
+      namespace: epoch-system
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 500Mi
+      storageClassName: epoch-system-sc
+      volumeMode: Filesystem
+      volumeName: epoch-rs-cd-result-db
+
+    ---
+    apiVersion: v1
+    kind: PersistentVolume
+    metadata:
+      name: epoch-tekton-pipelinerun-db
+      labels:
+        type: local
+      annotations:
+        pv.kubernetes.io/bound-by-controller: "yes"
+    spec:
+      storageClassName: epoch-system-sc
+      capacity:
+        storage: 500Mi
+      accessModes:
+        - ReadWriteOnce
+      persistentVolumeReclaimPolicy: Retain
+      hostPath:
+        path: /var/data/epoch/epoch-tekton-pipelinerun-db
+        type: DirectoryOrCreate
+      nodeAffinity:
+        required:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+              - #WORKER-NODE-NAME#
+
+    ---
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: epoch-tekton-pipelinerun-db
+      namespace: epoch-system
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 500Mi
+      storageClassName: epoch-system-sc
+      volumeMode: Filesystem
+      volumeName: epoch-tekton-pipelinerun-db
+
+
+    ---
+    apiVersion: v1
+    kind: PersistentVolume
+    metadata:
+      name: epoch-rs-logs-db
+      labels:
+        type: local
+      annotations:
+        pv.kubernetes.io/bound-by-controller: "yes"
+    spec:
+      storageClassName: epoch-system-sc
+      capacity:
+        storage: 500Mi
+      accessModes:
+        - ReadWriteMany
+      persistentVolumeReclaimPolicy: Retain
+      hostPath:
+        path: /var/data/epoch/epoch-rs-logs-db
+        type: DirectoryOrCreate
+      nodeAffinity:
+        required:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+              - #WORKER-NODE-NAME#
+
+    ---
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: epoch-rs-logs-db
+      namespace: epoch-system
+    spec:
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: 500Mi
+      storageClassName: epoch-system-sc
+      volumeMode: Filesystem
+      volumeName: epoch-rs-logs-db
+
+    ---
+    apiVersion: v1
+    kind: PersistentVolume
+    metadata:
+      name: epoch-workspace-db
+      labels:
+        type: local
+      annotations:
+        pv.kubernetes.io/bound-by-controller: "yes"
+    spec:
+      storageClassName: epoch-system-sc
+      capacity:
+        storage: 500Mi
+      accessModes:
+        - ReadWriteMany
+      persistentVolumeReclaimPolicy: Retain
+      hostPath:
+        path: /var/data/epoch/epoch-workspace-db
+        type: DirectoryOrCreate
+      nodeAffinity:
+        required:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+              - #WORKER-NODE-NAME#
+
+    ---
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: epoch-workspace-db
+      namespace: epoch-system
+    spec:
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: 500Mi
+      storageClassName: epoch-system-sc
+      volumeMode: Filesystem
+      volumeName: epoch-workspace-db
+
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: epoch-system-pv-create-script
+  namespace: epoch-system

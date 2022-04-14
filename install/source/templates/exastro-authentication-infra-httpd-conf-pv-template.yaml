@@ -4,6 +4,8 @@ metadata:
   name: exastro-authentication-infra-sc
 provisioner: kubernetes.io/no-provisioner
 volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+
 ---
 apiVersion: v1
 kind: PersistentVolume
@@ -19,7 +21,7 @@ spec:
     storage: 500Mi
   accessModes:
     - ReadWriteMany
-  persistentVolumeReclaimPolicy: Recycle
+  persistentVolumeReclaimPolicy: Retain
   hostPath:
     path: /var/data/epoch/authc-httpd/conf
     type: DirectoryOrCreate
@@ -47,3 +49,47 @@ spec:
   storageClassName: exastro-authentication-infra-sc
   volumeMode: Filesystem
   volumeName: exastro-authentication-infra-httpd-conf
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: exastro-platform-authentication-infra-keycloak-db
+  labels:
+    type: local
+  annotations:
+    pv.kubernetes.io/bound-by-controller: "yes"
+spec:
+  storageClassName: exastro-authentication-infra-sc
+  capacity:
+    storage: 500Mi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /var/data/epoch/authc-httpd/keycloak-db
+    type: DirectoryOrCreate
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - #WORKER-NODE-NAME#
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: exastro-platform-authentication-infra-keycloak-db
+  namespace: exastro-platform-authentication-infra
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 500Mi
+  storageClassName: exastro-authentication-infra-sc
+  volumeMode: Filesystem
+  volumeName: exastro-platform-authentication-infra-keycloak-db

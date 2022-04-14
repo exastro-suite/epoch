@@ -24,16 +24,31 @@ TOOLS_SCRIPT="${BASE_DIR}/source/setting-tools"
 
 
 # ---- templatesフォルダ内のtemplateファイルをもとに定義用のyaml生成 ----
+cat <<EOF > ${SOURCE_MANIFEST}/gateway-conf-template.yaml
+#   Copyright 2022 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+EOF
 kubectl create cm gateway-conf-template -n exastro-platform-authentication-infra --dry-run=client -o yaml \
     --from-file=${TEMPLATES_DIR}/epoch-system-template.conf       \
     --from-file=${TEMPLATES_DIR}/epoch-system-ws-template.conf    \
     --from-file=${TEMPLATES_DIR}/epoch-ws-ita-template.conf       \
     --from-file=${TEMPLATES_DIR}/epoch-ws-sonarqube-template.conf \
-    >   ${SOURCE_MANIFEST}/gateway-conf-template.yaml
+    >>   ${SOURCE_MANIFEST}/gateway-conf-template.yaml
 
 # ---- source/tektonフォルダ内のファイルをもとにinstaller scriptのyaml生成 ----
 cat <<EOF > ${SOURCE_MANIFEST}/tekton-installer-script.yaml
-#   Copyright 2019 NEC Corporation
+#   Copyright 2022 NEC Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -54,10 +69,46 @@ kubectl create cm tekton-installer-script -n epoch-system --dry-run=client -o ya
     --from-file=${TEKTON_MANIFEST}/tekton-trigger-interceptors.yaml \
     >>   ${SOURCE_MANIFEST}/tekton-installer-script.yaml
 
+cat <<EOF > ${SOURCE_MANIFEST}/gateway-httpd-pv-create-script.yaml
+#   Copyright 2022 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+EOF
 kubectl create cm gateway-httpd-pv-create-script -n epoch-system --dry-run=client -o yaml \
     --from-file=${TEMPLATES_DIR}/epoch-pv-creator.sh \
     --from-file=${TEMPLATES_DIR}/exastro-authentication-infra-httpd-conf-pv-template.yaml \
-    >   ${SOURCE_MANIFEST}/gateway-httpd-pv-create-script.yaml
+    >>   ${SOURCE_MANIFEST}/gateway-httpd-pv-create-script.yaml
+
+cat <<EOF > ${SOURCE_MANIFEST}/epoch-system-pv-create-script.yaml
+#   Copyright 2022 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+EOF
+kubectl create cm epoch-system-pv-create-script -n epoch-system --dry-run=client -o yaml \
+    --from-file=${TEMPLATES_DIR}/epoch-pv-creator.sh \
+    --from-file=${TEMPLATES_DIR}/epoch-system-pv-template.yaml \
+    >>   ${SOURCE_MANIFEST}/epoch-system-pv-create-script.yaml
+
 
 # ---- source/gitlabフォルダ内のファイルをもとにinstaller scriptのyaml生成 ----
 cat <<EOF > ${SOURCE_MANIFEST}/gitlab-installer-script.yaml
@@ -114,6 +165,8 @@ YAMLFILES+=("epoch-system.yaml")
 YAMLFILES+=("exastro-platform-authentication-infra.yaml")   # namespace
 YAMLFILES+=("host-setting-config.yaml")
 YAMLFILES+=("proxy-setting.yaml")
+YAMLFILES+=("epoch-system-pv-create-script.yaml")
+YAMLFILES+=("epoch-system-pv-create.yaml")
 YAMLFILES+=("epoch-control-api-config.yaml")
 YAMLFILES+=("epoch-control-workspace-api.yaml")
 YAMLFILES+=("epoch-control-github-api.yaml")

@@ -181,3 +181,8 @@ kubectl delete pv gitlab-gitaly --ignore-not-found
 kubectl delete pv gitlab-minio --ignore-not-found
 kubectl delete pv gitlab-postgresql --ignore-not-found
 kubectl delete pv gitlab-redis --ignore-not-found
+kubectl delete pv epoch-rs-cd-result-db --ignore-not-found
+kubectl delete pv epoch-rs-logs-db --ignore-not-found
+kubectl delete pv epoch-tekton-pipeline-db --ignore-not-found
+kubectl delete pv epoch-tekton-pipelinerun-db --ignore-not-found
+kubectl delete pv epoch-workspace-db --ignore-not-found
