@@ -37,7 +37,6 @@ import api_service_cd
 import api_service_member
 import api_service_current
 
-import exastro_logging
 
 # 設定ファイル読み込み・globals初期化
 app = Flask(__name__)
@@ -485,9 +484,8 @@ def call_manifest_template_id(workspace_id, file_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}] file_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id, file_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('CALL {}:from[{}] workspace_id[{}] file_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id, file_id))
+        
 
         if request.method == 'DELETE':
             # parameter template delete (delete)
