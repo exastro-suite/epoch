@@ -14,6 +14,15 @@
 FROM exastro/epoch-kube-command:0.1.5_20211026_1600
 
 WORKDIR /installer/chart
-COPY . /installer/chart
+COPY ./gitlab-5.6.2.tgz /installer/chart
 
+WORKDIR /installer/script
+COPY ./gitlab-config.yaml               /installer/script
+COPY ./gitlab-installer.sh              /installer/script
+COPY ./gitlab-pv-template.yaml          /installer/script
+COPY ./gitlab-root-token-template.yaml  /installer/script
+
+RUN chmod +x /installer/script/gitlab-installer.sh
 WORKDIR /installer
+
+ENTRYPOINT  ["/installer/script/gitlab-installer.sh"]
