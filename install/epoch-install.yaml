@@ -3061,7 +3061,7 @@ spec:
           name: nodeport-template
       - name: gateway-httpd-conf
         persistentVolumeClaim:
-          claimName: exastro-authentication-infra-httpd-conf
+          claimName: exastro-authentication-infra-httpd
       containers:
       - name: authentication-infra-api
         image: exastro/authentication-infra-api:0.3.1_20220201_1000
@@ -3144,6 +3144,7 @@ spec:
         - name: nodeport-template
           mountPath: /app/exastro-authentication-infra/authentication-infra-nodeport-templates
         - name: gateway-httpd-conf
+          subPath: httpd-conf
           mountPath: /var/exastro-authentication-infra/httpd-conf
 
 ---
