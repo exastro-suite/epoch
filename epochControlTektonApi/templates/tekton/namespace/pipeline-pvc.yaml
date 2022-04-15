@@ -25,6 +25,7 @@ spec:
     storage: 500Mi
   accessModes:
     - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
   hostPath:
     path: /var/data/epoch/{{ param.ci_config.pipeline_namespace }}-pv
     type: DirectoryOrCreate
@@ -68,6 +69,7 @@ spec:
     storage: 8Gi
   accessModes:
     - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
   hostPath:
     path: /var/data/epoch/{{ param.ci_config.pipeline_namespace }}-sonarqube-pv
     type: DirectoryOrCreate
@@ -111,6 +113,7 @@ spec:
     storage: 8Gi
   accessModes:
     - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
   hostPath:
     path: /var/data/epoch/{{ param.ci_config.pipeline_namespace }}-sonarqube-db-pv
     type: DirectoryOrCreate

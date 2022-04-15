@@ -34,6 +34,18 @@ data:
         exit 1
     fi
 
+    IFS=, PRM_PV_BEFORE_DELETE_ARR=(${PRM_PV_BEFORE_DELETE})
+    for PV in "${PRM_PV_BEFORE_DELETE_ARR[@]}"; do
+        STATUS=""
+        STATUS=$(kubectl get pv "${PV}" -o jsonpath='{.status.phase}')
+        if [ $? -ne 0 ]; then
+            continue
+        fi
+        if [ "${STATUS}" = "Released" ]; then
+            kubectl delete pv "${PV}"
+        fi
+    done
+
     sed -e "s/#WORKER-NODE-NAME#/${WORKER_NODE_NAME}/g" "${SCRIPT_PATH}/${PRM_PV_TEMPLATE}" | \
     kubectl apply -f -
     if [ $? -ne 0 ]; then
@@ -109,7 +121,7 @@ data:
       capacity:
         storage: 500Mi
       accessModes:
-        - ReadWriteMany
+        - ReadWriteOnce
       persistentVolumeReclaimPolicy: Retain
       hostPath:
         path: /var/data/epoch/authc-httpd/keycloak-db
@@ -131,7 +143,7 @@ data:
       namespace: exastro-platform-authentication-infra
     spec:
       accessModes:
-        - ReadWriteMany
+        - ReadWriteOnce
       resources:
         requests:
           storage: 500Mi

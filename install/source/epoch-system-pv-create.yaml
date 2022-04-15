@@ -34,6 +34,8 @@ spec:
           value: epoch-system
         - name: PRM_PV_TEMPLATE
           value: epoch-system-pv-template.yaml
+        - name: PRM_PV_BEFORE_DELETE
+          value: "epoch-rs-cd-result-db,epoch-rs-logs-db,epoch-tekton-pipeline-db,epoch-tekton-pipelinerun-db,epoch-workspace-db"
         volumeMounts:
         - mountPath: /job-script
           name: script

@@ -64,7 +64,7 @@ spec:
   capacity:
     storage: 500Mi
   accessModes:
-    - ReadWriteMany
+    - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
   hostPath:
     path: /var/data/epoch/authc-httpd/keycloak-db
@@ -86,7 +86,7 @@ metadata:
   namespace: exastro-platform-authentication-infra
 spec:
   accessModes:
-    - ReadWriteMany
+    - ReadWriteOnce
   resources:
     requests:
       storage: 500Mi
