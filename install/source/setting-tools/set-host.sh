@@ -45,26 +45,49 @@ logger "INFO" "PARAM PRM_MY_HOST : ${PRM_MY_HOST}"
 #
 # Initial password check
 #
-CUR_PASS=$(kubectl get secret exastro-platform-authentication-infra-secret -n exastro-platform-authentication-infra -o json | jq -r ".data.KEYCLOAK_PASSWORD" | base64 -d)
-if [ "${CUR_PASS}" != "admin" ]; then
+SAVE_INFRA_SECRET=$(kubectl get secret exastro-platform-authentication-infra-secret -n exastro-platform-authentication-infra -o json)
+SAVE_OIDC_PASSPHRASE_B64=$(echo -n "${SAVE_INFRA_SECRET}" | jq -r ".data.SAVE_GATEWAY_CRYPTO_PASSPHRASE")
+SAVE_KEYCLOAK_PASS_B64=$(echo -n "${SAVE_INFRA_SECRET}" | jq -r ".data.SAVE_KEYCLOAK_PASSWORD")
+SAVE_EPOCH_PASS_B64=$(echo -n "${SAVE_INFRA_SECRET}" | jq -r ".data.SAVE_EPOCH_PASSWORD")
+if [ -n "$SAVE_KEYCLOAK_PASS_B64" -a "${SAVE_KEYCLOAK_PASS_B64}" != "null" ]; then
+
+    SAVE_KEYCLOAK_PASS=$(echo -n "${SAVE_KEYCLOAK_PASS_B64}" | base64 -d)
+    #
+    # get token check
+    #
+    BEAR=$(curl -k -s \
+        -d "client_id=admin-cli" \
+        -d "username=admin" \
+        -d "password=${SAVE_KEYCLOAK_PASS}" \
+        -d "grant_type=password" \
+        "${REST_HOST}auth/realms/${REALM}/protocol/openid-connect/token" | jq -r ".access_token")
+    if [ $? -ne 0 ]; then
+        logger "ERROR" "CALL : KeyCloak Token check error"
+        logger "ERROR" "KeyCloak cannot access the stored information"
+        exit 2
+    fi
+    if [ "${BEAR}" = "" ]; then
+        logger "ERROR" "KeyCloak cannot access the stored information"
+        exit 1
+    fi
+
+    kubectl patch secret -n exastro-platform-authentication-infra exastro-platform-authentication-infra-secret -p "\
+    {\
+        \"data\" : {\
+            \"GATEWAY_CRYPTO_PASSPHRASE\" : \"${SAVE_OIDC_PASSPHRASE_B64}\",\
+            \"KEYCLOAK_PASSWORD\" : \"${SAVE_KEYCLOAK_PASS_B64}\",\
+            \"EPOCH_PASSWORD\" : \"${SAVE_EPOCH_PASS_B64}\"\
+        }\
+    }" &> "${CMD_RESULT}"
+    if [ $? -ne 0 ]; then
+        logger "ERROR" "CALL : kubectl patch secret -n exastro-platform-authentication-infra exastro-platform-authentication-infra-secret${LF}`cat ${CMD_RESULT}`"
+        logger "ERROR" "initialize patch secret exastro-platform-authentication-infra-secret"
+        exit 2
+    fi
+
     logger "ERROR" "Cannot initialize because it is already set"
     exit 1
 fi
-
-#
-# get token check
-#
-BEAR=$(curl -k -s \
-    -d "client_id=admin-cli" \
-    -d "username=admin" \
-    -d "password=${CUR_PASS}" \
-    -d "grant_type=password" \
-    "${REST_HOST}auth/realms/${REALM}/protocol/openid-connect/token" | jq -r ".access_token")
-if [ "${BEAR}" = "" ]; then
-    logger "ERROR" "Cannot initialize because it is already set"
-    exit 1
-fi
-
 
 #
 # Initialize Setting Parameter
@@ -343,25 +366,35 @@ logger "DEBUG" "RESTART_AFTER_API_POD=${RESTART_AFTER_API_POD}"
 STEP=$(expr ${STEP} + 1)
 logger "INFO" "**** STEP : ${STEP} / ${ALLSTEPS} : Initialize setting keycloak call ..."
 
-# Initial password
-PASS="admin"
-
 # admin user password change
 BEAR=$(curl -k -s \
     -d "client_id=admin-cli" \
     -d "username=admin" \
-    -d "password=${PASS}" \
+    -d "password=admin" \
     -d "grant_type=password" \
     "${REST_HOST}auth/realms/${REALM}/protocol/openid-connect/token" | jq -r ".access_token")
+if [ $? -ne 0 ]; then
+    logger "ERROR" "KeyCloak Token get error"
+    exit 2
+fi
 
 USER_LIST=$(curl -X GET -s \
     -H "Content-Type: application/json" \
     -H "Authorization: bearer ${BEAR}" \
     "${REST_HOST}auth/admin/realms/${REALM}/users") 
+if [ $? -ne 0 ]; then
+    logger "ERROR" "KeyCloak User list get error"
+    exit 2
+fi
+
 logger "INFO" "CALL : keycloak get admin user id"
 
 # echo ${USER_LIST} | jq
 USER_ADMIN_ID=$(echo ${USER_LIST} | jq -r '.[] | select(.username == "admin") | .id')
+if [ $? -ne 0 ]; then
+    logger "ERROR" "KeyCloak admin user id not found"
+    exit 2
+fi
 
 curl -X PUT -s \
     -H "Content-Type: application/json" \
@@ -374,6 +407,25 @@ curl -X PUT -s \
         "temporary": false
     }
 EOF
+if [ $? -ne 0 ]; then
+    logger "ERROR" "KeyCloak admin user password changed error"
+    exit 2
+fi
+
+kubectl patch secret -n exastro-platform-authentication-infra exastro-platform-authentication-infra-secret -p "\
+{\
+    \"data\" : {\
+        \"SAVE_GATEWAY_CRYPTO_PASSPHRASE\" : \"${OIDC_PASSPHRASE_B64}\",\
+        \"SAVE_KEYCLOAK_PASSWORD\" : \"${KEYCLOAK_ADMIN_PASSW_B64}\",\
+        \"SAVE_EPOCH_PASSWORD\" : \"${EPOCH_ADMIN_PASSWD_B64}\"\
+    }\
+}" &> "${CMD_RESULT}"
+if [ $? -ne 0 ]; then
+    logger "ERROR" "CALL : kubectl patch secret -n exastro-platform-authentication-infra exastro-platform-authentication-infra-secret${LF}`cat ${CMD_RESULT}`"
+    logger "ERROR" "patch secret exastro-platform-authentication-infra-secret"
+    exit 2
+fi
+
 logger "INFO" "CALL : keycloak put admin new password"
 
 #
