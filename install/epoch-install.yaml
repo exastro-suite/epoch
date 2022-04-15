@@ -8063,22 +8063,37 @@ data:
     check parameter\n#\nif [ $# -ne 1 ]; then\n    logger \"ERROR\" \"Usage : ${BASENAME}
     [hostname or IPaddress]\"\n    logger \"ERROR\" \"Check the parameters and try
     again\"\n    exit 1\nfi\n\nPRM_MY_HOST=\"$1\"\nlogger \"INFO\" \"PARAM PRM_MY_HOST
-    : ${PRM_MY_HOST}\"\n\n#\n# Initial password check\n#\nCUR_PASS=$(kubectl get secret
-    exastro-platform-authentication-infra-secret -n exastro-platform-authentication-infra
-    -o json | jq -r \".data.KEYCLOAK_PASSWORD\" | base64 -d)\nif [ \"${CUR_PASS}\"
-    != \"admin\" ]; then\n    logger \"ERROR\" \"Cannot initialize because it is already
-    set\"\n    exit 1\nfi\n\n#\n# get token check\n#\nBEAR=$(curl -k -s \\\n    -d
-    \"client_id=admin-cli\" \\\n    -d \"username=admin\" \\\n    -d \"password=${CUR_PASS}\"
-    \\\n    -d \"grant_type=password\" \\\n    \"${REST_HOST}auth/realms/${REALM}/protocol/openid-connect/token\"
-    | jq -r \".access_token\")\nif [ \"${BEAR}\" = \"\" ]; then\n    logger \"ERROR\"
-    \"Cannot initialize because it is already set\"\n    exit 1\nfi\n\n\n#\n# Initialize
-    Setting Parameter\n#\nSTEP=$(expr ${STEP} + 1)\nlogger \"INFO\" \"**** STEP :
-    ${STEP} / ${ALLSTEPS} : Initialize Setting Parameter ...\"\n\nOIDC_PASSPHRASE=$(<
-    /dev/urandom tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq)\nif [
-    $? -ne 0 -o -z \"${OIDC_PASSPHRASE}\" ]; then\n    logger \"ERROR\" \"Generate
-    OIDC_PASSPHRASE\"\n    exit 2\nfi\n\nOIDC_PASSPHRASE_B64=$(echo -n \"${OIDC_PASSPHRASE}\"
-    | base64)\nif [ $? -ne 0 -o -z \"${OIDC_PASSPHRASE_B64}\" ]; then\n    logger
-    \"ERROR\" \"Generate OIDC_PASSPHRASE_B64\"\n    exit 2\nfi\n\nKEYCLOAK_ADMIN_PASSW=$(<
+    : ${PRM_MY_HOST}\"\n\n#\n# Initial password check\n#\nSAVE_INFRA_SECRET=$(kubectl
+    get secret exastro-platform-authentication-infra-secret -n exastro-platform-authentication-infra
+    -o json)\nSAVE_OIDC_PASSPHRASE_B64=$(echo -n \"${SAVE_INFRA_SECRET}\" | jq -r
+    \".data.SAVE_GATEWAY_CRYPTO_PASSPHRASE\")\nSAVE_KEYCLOAK_PASS_B64=$(echo -n \"${SAVE_INFRA_SECRET}\"
+    | jq -r \".data.SAVE_KEYCLOAK_PASSWORD\")\nSAVE_EPOCH_PASS_B64=$(echo -n \"${SAVE_INFRA_SECRET}\"
+    | jq -r \".data.SAVE_EPOCH_PASSWORD\")\nif [ -n \"$SAVE_KEYCLOAK_PASS_B64\" -a
+    \"${SAVE_KEYCLOAK_PASS_B64}\" != \"null\" ]; then\n\n    SAVE_KEYCLOAK_PASS=$(echo
+    -n \"${SAVE_KEYCLOAK_PASS_B64}\" | base64 -d)\n    #\n    # get token check\n
+    \   #\n    BEAR=$(curl -k -s \\\n        -d \"client_id=admin-cli\" \\\n        -d
+    \"username=admin\" \\\n        -d \"password=${SAVE_KEYCLOAK_PASS}\" \\\n        -d
+    \"grant_type=password\" \\\n        \"${REST_HOST}auth/realms/${REALM}/protocol/openid-connect/token\"
+    | jq -r \".access_token\")\n    if [ $? -ne 0 ]; then\n        logger \"ERROR\"
+    \"CALL : KeyCloak Token check error\"\n        logger \"ERROR\" \"KeyCloak cannot
+    access the stored information\"\n        exit 2\n    fi\n    if [ \"${BEAR}\"
+    = \"\" ]; then\n        logger \"ERROR\" \"KeyCloak cannot access the stored information\"\n
+    \       exit 1\n    fi\n\n    kubectl patch secret -n exastro-platform-authentication-infra
+    exastro-platform-authentication-infra-secret -p \"\\\n    {\\\n        \\\"data\\\"
+    : {\\\n            \\\"GATEWAY_CRYPTO_PASSPHRASE\\\" : \\\"${SAVE_OIDC_PASSPHRASE_B64}\\\",\\\n
+    \           \\\"KEYCLOAK_PASSWORD\\\" : \\\"${SAVE_KEYCLOAK_PASS_B64}\\\",\\\n
+    \           \\\"EPOCH_PASSWORD\\\" : \\\"${SAVE_EPOCH_PASS_B64}\\\"\\\n        }\\\n
+    \   }\" &> \"${CMD_RESULT}\"\n    if [ $? -ne 0 ]; then\n        logger \"ERROR\"
+    \"CALL : kubectl patch secret -n exastro-platform-authentication-infra exastro-platform-authentication-infra-secret${LF}`cat
+    ${CMD_RESULT}`\"\n        logger \"ERROR\" \"initialize patch secret exastro-platform-authentication-infra-secret\"\n
+    \       exit 2\n    fi\n\n    logger \"ERROR\" \"Cannot initialize because it
+    is already set\"\n    exit 1\nfi\n\n#\n# Initialize Setting Parameter\n#\nSTEP=$(expr
+    ${STEP} + 1)\nlogger \"INFO\" \"**** STEP : ${STEP} / ${ALLSTEPS} : Initialize
+    Setting Parameter ...\"\n\nOIDC_PASSPHRASE=$(< /dev/urandom tr -dc 'a-zA-Z0-9'
+    | fold -w 20 | head -n 1 | sort | uniq)\nif [ $? -ne 0 -o -z \"${OIDC_PASSPHRASE}\"
+    ]; then\n    logger \"ERROR\" \"Generate OIDC_PASSPHRASE\"\n    exit 2\nfi\n\nOIDC_PASSPHRASE_B64=$(echo
+    -n \"${OIDC_PASSPHRASE}\" | base64)\nif [ $? -ne 0 -o -z \"${OIDC_PASSPHRASE_B64}\"
+    ]; then\n    logger \"ERROR\" \"Generate OIDC_PASSPHRASE_B64\"\n    exit 2\nfi\n\nKEYCLOAK_ADMIN_PASSW=$(<
     /dev/urandom tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq)\nif [
     $? -ne 0 -o -z \"${KEYCLOAK_ADMIN_PASSW}\" ]; then\n    logger \"ERROR\" \"Generate
     KEYCLOAK_ADMIN_PASSW\"\n    exit 2\nfi\n\nKEYCLOAK_ADMIN_PASSW_B64=$(echo -n \"${KEYCLOAK_ADMIN_PASSW}\"
@@ -8198,23 +8213,35 @@ data:
     CHANGE API POD\"\n        continue;\n    fi\n\n    echo \"\";\n    break;\ndone;\n\nlogger
     \"DEBUG\" \"RESTART_AFTER_API_POD=${RESTART_AFTER_API_POD}\"\n\n\n#\n# Initialize
     setting keycloak api call\n#\nSTEP=$(expr ${STEP} + 1)\nlogger \"INFO\" \"****
-    STEP : ${STEP} / ${ALLSTEPS} : Initialize setting keycloak call ...\"\n\n# Initial
-    password\nPASS=\"admin\"\n\n# admin user password change\nBEAR=$(curl -k -s \\\n
-    \   -d \"client_id=admin-cli\" \\\n    -d \"username=admin\" \\\n    -d \"password=${PASS}\"
-    \\\n    -d \"grant_type=password\" \\\n    \"${REST_HOST}auth/realms/${REALM}/protocol/openid-connect/token\"
-    | jq -r \".access_token\")\n\nUSER_LIST=$(curl -X GET -s \\\n    -H \"Content-Type:
+    STEP : ${STEP} / ${ALLSTEPS} : Initialize setting keycloak call ...\"\n\n# admin
+    user password change\nBEAR=$(curl -k -s \\\n    -d \"client_id=admin-cli\" \\\n
+    \   -d \"username=admin\" \\\n    -d \"password=admin\" \\\n    -d \"grant_type=password\"
+    \\\n    \"${REST_HOST}auth/realms/${REALM}/protocol/openid-connect/token\" | jq
+    -r \".access_token\")\nif [ $? -ne 0 ]; then\n    logger \"ERROR\" \"KeyCloak
+    Token get error\"\n    exit 2\nfi\n\nUSER_LIST=$(curl -X GET -s \\\n    -H \"Content-Type:
     application/json\" \\\n    -H \"Authorization: bearer ${BEAR}\" \\\n    \"${REST_HOST}auth/admin/realms/${REALM}/users\")
-    \nlogger \"INFO\" \"CALL : keycloak get admin user id\"\n\n# echo ${USER_LIST}
-    | jq\nUSER_ADMIN_ID=$(echo ${USER_LIST} | jq -r '.[] | select(.username == \"admin\")
-    | .id')\n\ncurl -X PUT -s \\\n    -H \"Content-Type: application/json\" \\\n    -H
-    \"Authorization: bearer ${BEAR}\" \\\n    \"${REST_HOST}auth/admin/realms/${REALM}/users/${USER_ADMIN_ID}/reset-password\"
+    \nif [ $? -ne 0 ]; then\n    logger \"ERROR\" \"KeyCloak User list get error\"\n
+    \   exit 2\nfi\n\nlogger \"INFO\" \"CALL : keycloak get admin user id\"\n\n# echo
+    ${USER_LIST} | jq\nUSER_ADMIN_ID=$(echo ${USER_LIST} | jq -r '.[] | select(.username
+    == \"admin\") | .id')\nif [ $? -ne 0 ]; then\n    logger \"ERROR\" \"KeyCloak
+    admin user id not found\"\n    exit 2\nfi\n\ncurl -X PUT -s \\\n    -H \"Content-Type:
+    application/json\" \\\n    -H \"Authorization: bearer ${BEAR}\" \\\n    \"${REST_HOST}auth/admin/realms/${REALM}/users/${USER_ADMIN_ID}/reset-password\"
     \\\n    -d @- << EOF\n    {\n        \"type\": \"password\",\n        \"value\":
-    \"${KEYCLOAK_ADMIN_PASSW}\",\n        \"temporary\": false\n    }\nEOF\nlogger
-    \"INFO\" \"CALL : keycloak put admin new password\"\n\n#\n# Setting api call\n#\nSTEP=$(expr
-    ${STEP} + 1)\nlogger \"INFO\" \"**** STEP : ${STEP} / ${ALLSTEPS} : Setting api
-    call ...\"\n\nAPI_RESPONSE=\"/tmp/${BASENAME}-infra-setting.$$\"\n\ncurl \\\n
-    \   -X POST \\\n    -H  'content-type: application/json'    \\\n    -d  @- \\\n
-    \   -Ss \\\n    -o \"${API_RESPONSE}\" \\\n    http://authentication-infra-api.exastro-platform-authentication-infra.svc:8000/settings
+    \"${KEYCLOAK_ADMIN_PASSW}\",\n        \"temporary\": false\n    }\nEOF\nif [ $?
+    -ne 0 ]; then\n    logger \"ERROR\" \"KeyCloak admin user password changed error\"\n
+    \   exit 2\nfi\n\nkubectl patch secret -n exastro-platform-authentication-infra
+    exastro-platform-authentication-infra-secret -p \"\\\n{\\\n    \\\"data\\\" :
+    {\\\n        \\\"SAVE_GATEWAY_CRYPTO_PASSPHRASE\\\" : \\\"${OIDC_PASSPHRASE_B64}\\\",\\\n
+    \       \\\"SAVE_KEYCLOAK_PASSWORD\\\" : \\\"${KEYCLOAK_ADMIN_PASSW_B64}\\\",\\\n
+    \       \\\"SAVE_EPOCH_PASSWORD\\\" : \\\"${EPOCH_ADMIN_PASSWD_B64}\\\"\\\n    }\\\n}\"
+    &> \"${CMD_RESULT}\"\nif [ $? -ne 0 ]; then\n    logger \"ERROR\" \"CALL : kubectl
+    patch secret -n exastro-platform-authentication-infra exastro-platform-authentication-infra-secret${LF}`cat
+    ${CMD_RESULT}`\"\n    logger \"ERROR\" \"patch secret exastro-platform-authentication-infra-secret\"\n
+    \   exit 2\nfi\n\nlogger \"INFO\" \"CALL : keycloak put admin new password\"\n\n#\n#
+    Setting api call\n#\nSTEP=$(expr ${STEP} + 1)\nlogger \"INFO\" \"**** STEP : ${STEP}
+    / ${ALLSTEPS} : Setting api call ...\"\n\nAPI_RESPONSE=\"/tmp/${BASENAME}-infra-setting.$$\"\n\ncurl
+    \\\n    -X POST \\\n    -H  'content-type: application/json'    \\\n    -d  @-
+    \\\n    -Ss \\\n    -o \"${API_RESPONSE}\" \\\n    http://authentication-infra-api.exastro-platform-authentication-infra.svc:8000/settings
     \\\n    << EOF\n    {\n        \"realm_name\": \"exastroplatform\",\n        \"realm_option\":
     {\n            \"displayName\": \"Exastro Platform\",\n            \"enabled\":
     \"True\",\n            \"registrationAllowed\": \"True\"\n        },\n        \"realm_roles\":
