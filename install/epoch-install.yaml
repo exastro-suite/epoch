@@ -205,7 +205,7 @@ data:
         - ReadWriteOnce
       persistentVolumeReclaimPolicy: Retain
       hostPath:
-        path: /var/data/epoch/epoch-tekton-pipeline-db
+        path: /var/data/epoch/epoch-system/epoch-tekton-pipeline-db
         type: DirectoryOrCreate
       nodeAffinity:
         required:
@@ -249,7 +249,7 @@ data:
         - ReadWriteOnce
       persistentVolumeReclaimPolicy: Retain
       hostPath:
-        path: /var/data/epoch/epoch-rs-cd-result-db
+        path: /var/data/epoch/epoch-system/epoch-rs-cd-result-db
         type: DirectoryOrCreate
       nodeAffinity:
         required:
@@ -293,7 +293,7 @@ data:
         - ReadWriteOnce
       persistentVolumeReclaimPolicy: Retain
       hostPath:
-        path: /var/data/epoch/epoch-tekton-pipelinerun-db
+        path: /var/data/epoch/epoch-system/epoch-tekton-pipelinerun-db
         type: DirectoryOrCreate
       nodeAffinity:
         required:
@@ -338,7 +338,7 @@ data:
         - ReadWriteMany
       persistentVolumeReclaimPolicy: Retain
       hostPath:
-        path: /var/data/epoch/epoch-rs-logs-db
+        path: /var/data/epoch/epoch-system/epoch-rs-logs-db
         type: DirectoryOrCreate
       nodeAffinity:
         required:
@@ -382,7 +382,7 @@ data:
         - ReadWriteMany
       persistentVolumeReclaimPolicy: Retain
       hostPath:
-        path: /var/data/epoch/epoch-workspace-db
+        path: /var/data/epoch/epoch-system/epoch-workspace-db
         type: DirectoryOrCreate
       nodeAffinity:
         required:
@@ -3179,17 +3179,6 @@ spec:
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-
-# apiVersion: v1
-# kind: ConfigMap
-# metadata:
-#   name: gateway-httpd-conf
-#   namespace: exastro-platform-authentication-infra
-# data:
-#   gateway-httpd.conf: |
-#     #
-
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -3206,18 +3195,19 @@ spec:
         name: gateway-httpd
     spec:
       volumes:
-      # - name: gateway-httpd-conf
-      #   configMap:
-      #     name: gateway-httpd-conf
-      - name: gateway-httpd-conf
+      - name: gateway-httpd
         persistentVolumeClaim:
-          claimName: exastro-authentication-infra-httpd-conf
+          claimName: exastro-authentication-infra-httpd
       containers:
       - name: gateway-httpd
         image: exastro/gateway-httpd:0.3.1_20220126_0900
         volumeMounts:
-        - name: gateway-httpd-conf
+        - name: gateway-httpd
           mountPath: /etc/httpd/conf.d/exastroSettings
+          subPath: httpd-conf
+        - name: gateway-httpd
+          mountPath: /var/log/httpd
+          subPath: httpd-log
 
 ---
 apiVersion: v1
@@ -3312,7 +3302,7 @@ data:
     apiVersion: v1
     kind: PersistentVolume
     metadata:
-      name: exastro-authentication-infra-httpd-conf
+      name: exastro-authentication-infra-httpd
       labels:
         type: local
       annotations:
@@ -3320,12 +3310,12 @@ data:
     spec:
       storageClassName: exastro-authentication-infra-sc
       capacity:
-        storage: 500Mi
+        storage: 8Gi
       accessModes:
         - ReadWriteMany
       persistentVolumeReclaimPolicy: Retain
       hostPath:
-        path: /var/data/epoch/authc-httpd/conf
+        path: /var/data/epoch/epoch-system/authc-httpd
         type: DirectoryOrCreate
       nodeAffinity:
         required:
@@ -3340,7 +3330,7 @@ data:
     apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
-      name: exastro-authentication-infra-httpd-conf
+      name: exastro-authentication-infra-httpd
       namespace: exastro-platform-authentication-infra
     spec:
       accessModes:
@@ -3350,7 +3340,7 @@ data:
           storage: 500Mi
       storageClassName: exastro-authentication-infra-sc
       volumeMode: Filesystem
-      volumeName: exastro-authentication-infra-httpd-conf
+      volumeName: exastro-authentication-infra-httpd
 
     ---
     apiVersion: v1
@@ -3369,7 +3359,7 @@ data:
         - ReadWriteOnce
       persistentVolumeReclaimPolicy: Retain
       hostPath:
-        path: /var/data/epoch/authc-httpd/keycloak-db
+        path: /var/data/epoch/epoch-system/keycloak-db
         type: DirectoryOrCreate
       nodeAffinity:
         required:

@@ -23,7 +23,7 @@ spec:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
   hostPath:
-    path: /var/data/epoch/epoch-tekton-pipeline-db
+    path: /var/data/epoch/epoch-system/epoch-tekton-pipeline-db
     type: DirectoryOrCreate
   nodeAffinity:
     required:
@@ -67,7 +67,7 @@ spec:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
   hostPath:
-    path: /var/data/epoch/epoch-rs-cd-result-db
+    path: /var/data/epoch/epoch-system/epoch-rs-cd-result-db
     type: DirectoryOrCreate
   nodeAffinity:
     required:
@@ -111,7 +111,7 @@ spec:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
   hostPath:
-    path: /var/data/epoch/epoch-tekton-pipelinerun-db
+    path: /var/data/epoch/epoch-system/epoch-tekton-pipelinerun-db
     type: DirectoryOrCreate
   nodeAffinity:
     required:
@@ -156,7 +156,7 @@ spec:
     - ReadWriteMany
   persistentVolumeReclaimPolicy: Retain
   hostPath:
-    path: /var/data/epoch/epoch-rs-logs-db
+    path: /var/data/epoch/epoch-system/epoch-rs-logs-db
     type: DirectoryOrCreate
   nodeAffinity:
     required:
@@ -200,7 +200,7 @@ spec:
     - ReadWriteMany
   persistentVolumeReclaimPolicy: Retain
   hostPath:
-    path: /var/data/epoch/epoch-workspace-db
+    path: /var/data/epoch/epoch-system/epoch-workspace-db
     type: DirectoryOrCreate
   nodeAffinity:
     required:

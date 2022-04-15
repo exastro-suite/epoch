@@ -10,7 +10,7 @@ allowVolumeExpansion: true
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: exastro-authentication-infra-httpd-conf
+  name: exastro-authentication-infra-httpd
   labels:
     type: local
   annotations:
@@ -18,12 +18,12 @@ metadata:
 spec:
   storageClassName: exastro-authentication-infra-sc
   capacity:
-    storage: 500Mi
+    storage: 8Gi
   accessModes:
     - ReadWriteMany
   persistentVolumeReclaimPolicy: Retain
   hostPath:
-    path: /var/data/epoch/authc-httpd/conf
+    path: /var/data/epoch/epoch-system/authc-httpd
     type: DirectoryOrCreate
   nodeAffinity:
     required:
@@ -38,7 +38,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: exastro-authentication-infra-httpd-conf
+  name: exastro-authentication-infra-httpd
   namespace: exastro-platform-authentication-infra
 spec:
   accessModes:
@@ -48,7 +48,7 @@ spec:
       storage: 500Mi
   storageClassName: exastro-authentication-infra-sc
   volumeMode: Filesystem
-  volumeName: exastro-authentication-infra-httpd-conf
+  volumeName: exastro-authentication-infra-httpd
 
 ---
 apiVersion: v1
@@ -67,7 +67,7 @@ spec:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
   hostPath:
-    path: /var/data/epoch/authc-httpd/keycloak-db
+    path: /var/data/epoch/epoch-system/keycloak-db
     type: DirectoryOrCreate
   nodeAffinity:
     required:
