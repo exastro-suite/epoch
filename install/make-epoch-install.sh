@@ -111,7 +111,7 @@ kubectl create cm epoch-system-pv-create-script -n epoch-system --dry-run=client
 
 
 # ---- source/gitlabフォルダ内のファイルをもとにinstaller scriptのyaml生成 ----
-cat <<EOF > ${SOURCE_MANIFEST}/gitlab-installer-script.yaml
+cat <<EOF > ${SOURCE_MANIFEST}/gitlab-installer-start-script.yaml
 #   Copyright 2019 NEC Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -126,12 +126,10 @@ cat <<EOF > ${SOURCE_MANIFEST}/gitlab-installer-script.yaml
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 EOF
-kubectl create cm gitlab-installer-script -n gitlab --dry-run=client -o yaml \
-    --from-file=${GITLAB_INSTALLER}/gitlab-config.yaml \
-    --from-file=${GITLAB_INSTALLER}/gitlab-installer.sh \
-    --from-file=${GITLAB_INSTALLER}/gitlab-pv-template.yaml \
-    --from-file=${GITLAB_INSTALLER}/gitlab-root-token-template.yaml \
-    >>   ${SOURCE_MANIFEST}/gitlab-installer-script.yaml
+kubectl create cm gitlab-installer-start-script -n epoch-system --dry-run=client -o yaml \
+    --from-file=${GITLAB_INSTALLER}/gitlab-installer-start.yaml \
+    --from-file=${GITLAB_INSTALLER}/gitlab-installer-start.sh \
+    >>   ${SOURCE_MANIFEST}/gitlab-installer-start-script.yaml
 
 # ---- source/setting-toolsフォルダ内のファイルをもとにsetting-tools scriptのyaml生成 ----
 cat <<EOF > ${SOURCE_MANIFEST}/epoch-setting-tools-script.yaml
@@ -210,8 +208,10 @@ YAMLFILES+=("tekton-installer-script.yaml")
 YAMLFILES+=("tekton-installer.yaml")
 
 # gitlab Installer
-YAMLFILES+=("gitlab-installer.yaml")
-YAMLFILES+=("gitlab-installer-script.yaml")
+#YAMLFILES+=("gitlab-installer.yaml")
+#YAMLFILES+=("gitlab-installer-script.yaml")
+YAMLFILES+=("gitlab-installer-start-script.yaml")
+YAMLFILES+=("gitlab-installer-start.yaml")
 
 # epoch setting-tools
 YAMLFILES+=("epoch-setting-tools-script.yaml")

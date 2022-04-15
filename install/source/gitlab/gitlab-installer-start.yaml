@@ -1,4 +1,4 @@
-#   Copyright 2019 NEC Corporation
+#   Copyright 2022 NEC Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -85,9 +85,6 @@ metadata:
 spec:
   backoffLimit: 0
   template:
-    metadata:
-      labels:
-        app: gitlab-installer
     spec:
       restartPolicy: Never
       volumes:
@@ -95,20 +92,11 @@ spec:
         hostPath:
           path: /var/data/epoch/gitlab
           type: DirectoryOrCreate
-      - name: gitlab-installer-script
-        configMap:
-          name: gitlab-installer-script
       serviceAccount: gitlab-installer
       serviceAccountName: gitlab-installer
       containers:
       - name: gitlab-installer
-        image: exastro/epoch-gitlab-installer:0.3.1_20220124_1700
+        image: exastro/epoch-gitlab-installer:1.0.0_20220415_1000
         volumeMounts:
         - mountPath: /gitlab-pv
           name: gitlab-pv
-        - mountPath: /installer/script
-          name: gitlab-installer-script
-        command: ["sh", "-c"]
-        args:
-          - |
-            bash /installer/script/gitlab-installer.sh
