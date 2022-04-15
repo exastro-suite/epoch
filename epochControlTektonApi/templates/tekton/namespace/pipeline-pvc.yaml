@@ -115,7 +115,7 @@ spec:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
   hostPath:
-    path: /var/data/epoch/workspace-{{ workspace_id }}/{{ param.ci_config.pipeline_namespace }}-sonarqube-db-pv
+    path: /var/data/epoch/workspaces/workspace-{{ workspace_id }}/{{ param.ci_config.pipeline_namespace }}-sonarqube-db-pv
     type: DirectoryOrCreate
   nodeAffinity:
     required:
