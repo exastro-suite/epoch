@@ -27,7 +27,7 @@ spec:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
   hostPath:
-    path: /var/data/epoch/workspace/workspace-{{ param.WORKSPACE_ID }}/{{ param.NAMESPACE }}-ita-pv/database
+    path: /var/data/epoch/workspaces/workspace-{{ param.WORKSPACE_ID }}/{{ param.NAMESPACE }}-ita-pv/database
     type: DirectoryOrCreate
   nodeAffinity:
     required:
@@ -71,7 +71,7 @@ spec:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
   hostPath:
-    path: /var/data/epoch/ita/workspace/workspace-{{ param.WORKSPACE_ID }}/{{ param.NAMESPACE }}-ita-pv/file
+    path: /var/data/epoch/workspaces/workspace-{{ param.WORKSPACE_ID }}/{{ param.NAMESPACE }}-ita-pv/file
     type: DirectoryOrCreate
   nodeAffinity:
     required:
