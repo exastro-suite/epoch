@@ -353,6 +353,7 @@ def create_ita(workspace_id):
                     "HTTP_PROXY": os.environ.get("EPOCH_HTTP_PROXY"),
                     "HTTPS_PROXY": os.environ.get("EPOCH_HTTPS_PROXY"),
                     "NO_PROXY": os.environ.get("EPOCH_HOSTNAME"),
+                    "WORKSPACE_ID": workspace_id,
                     "NAMESPACE": name,
                     "NODE": node,
                 }

@@ -14,7 +14,7 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: {{ param.NAMESPACE }}-database-pv
+  name: {{ param.NAMESPACE }}-ita-database-pv
   labels:
     type: local
   annotations:
@@ -27,7 +27,7 @@ spec:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
   hostPath:
-    path: /var/data/epoch/ita/{{ param.NAMESPACE }}-pv/database
+    path: /var/data/epoch/workspace/workspace-{{ param.WORKSPACE_ID }}/{{ param.NAMESPACE }}-ita-pv/database
     type: DirectoryOrCreate
   nodeAffinity:
     required:
@@ -52,13 +52,13 @@ spec:
       storage: 4Gi
   storageClassName: epoch-ita-database-volume-storage
   volumeMode: Filesystem
-  volumeName: {{ param.NAMESPACE }}-database-pv
+  volumeName: {{ param.NAMESPACE }}-ita-database-pv
 
 ---
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: {{ param.NAMESPACE }}-file-pv
+  name: {{ param.NAMESPACE }}-ita-file-pv
   labels:
     type: local
   annotations:
@@ -71,7 +71,7 @@ spec:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
   hostPath:
-    path: /var/data/epoch/ita/{{ param.NAMESPACE }}-pv/file
+    path: /var/data/epoch/ita/workspace/workspace-{{ param.WORKSPACE_ID }}/{{ param.NAMESPACE }}-ita-pv/file
     type: DirectoryOrCreate
   nodeAffinity:
     required:
@@ -96,4 +96,4 @@ spec:
       storage: 4Gi
   storageClassName: epoch-ita-file-volume-storage
   volumeMode: Filesystem
-  volumeName: {{ param.NAMESPACE }}-file-pv
+  volumeName: {{ param.NAMESPACE }}-ita-file-pv
