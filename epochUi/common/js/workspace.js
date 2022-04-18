@@ -305,7 +305,7 @@ const wsModalJSON = {
             'type': 'radio',
             'name': 'registry-service-select',
             'item': {
-              'epoch': 'EPOCH内レジストリ',
+              //'epoch': 'EPOCH内レジストリ',
               'dockerhub': 'DockerHub'
             }            
           }
@@ -648,7 +648,7 @@ const wsModalJSON = {
               'class': 'input-pickup-select',
               'item': {
                 'internal': 'EPOCHと同じKubernetes',
-                'external': '以外のKubernetes'
+                //'external': '以外のKubernetes'
               },
               'note': 'Deploy先のKubernetesを選択してください'
             },  
@@ -836,28 +836,37 @@ const wsModalJSON = {
         'type': 'negative'
       }
     },
-    'block': {
-      // ITA Link
-      'cdExecutionITALink': {
-        'title': 'デプロイJob',
-        'item': {
-          'cdExecutionITALinkBlock': {
-            'type': 'loading',
-            'id': 'cd-execution-italink'            
+    'block': [
+      {
+        'title': 'Deployジョブ',
+        'item': [
+          {
+            'type': 'html',
+            'mainClass': 'item-horizontal',
+            'title': 'IT Automation',
+            'note': 'IT Automationの画面を開きます。',
+            'html': '<a class="ita-link" href="#" target="_blank">確認・編集</a>'
           }
-        }
+        ]
       },
-      // ITA Link
-      'cdExecutionCondition': {
+      {
         'title': '実行条件',
-        'item': {
-          'cdExecutionConditionBlock': {
-            'type': 'loading',
-            'id': 'cd-execution-condition'            
+        'item': [
+          {
+            'type': 'html',
+            'mainClass': 'item-horizontal',
+            'title': 'CD実行日時',
+            'id': 'deploy-condition'            
+          },
+          {
+            'type': 'html',
+            'mainClass': 'item-horizontal',
+            'title': '環境',
+            'id': 'deploy-environment'            
           }
-        }
+        ]
       },
-      'cdExecutionManifestParameter': {
+      {
         'title': 'Manifestパラメータ',
         'tab': {
           'type': 'reference',
@@ -867,23 +876,23 @@ const wsModalJSON = {
             'key2': 'file_name'
           },
           'emptyText': 'テンプレートファイルの登録がありません。Kubernetes Manifestテンプレートの設定からテンプレートファイルを追加してください。',
-          'item': {
-            'cdExecutionManifestParameterBlock': {
+          'item': [
+            {
               'type': 'loading'
             }
-          }
+          ]
         }
       },
-      'cdExecutionArgo': {
+      {
         'title': 'ArgoCDパイプライン',
-        'item': {
-          'cdExecutionArgoBlock': {
+        'item': [
+          {
             'type': 'loading',
             'id': 'cd-execution-argo'            
           }
-        }
+        ]
       }
-    }
+    ]
   }
 };
 const modal = new modalFunction( wsModalJSON, wsDataJSON );
@@ -1834,11 +1843,11 @@ const templateFileSelect = function( type ){
               + '<td class="template-size c-table-col"><div class="c-table-ci">' + files[i].size + '</div></td>'
               + '<td class="template-date c-table-col"><div class="c-table-ci">' + formatDate + '</div></td>'
               + '<td class="template-menu c-table-col"><div class="c-table-ci">'
-                + '<ul class="c-table-menu-list">'
-                  + '<li class="c-table-menu-item">'
-                    + '<button class="c-table-menu-button epoch-popup-m" title="プレビュー" data-button="preview">'
-                      + '<svg viewBox="0 0 64 64" class="c-table-menu-svg"><use xlink:href="#icon-preview" /></svg></button></li>'
-                + '</ul>'
+                // + '<ul class="c-table-menu-list">'
+                //   + '<li class="c-table-menu-item">'
+                //     + '<button class="c-table-menu-button epoch-popup-m" title="プレビュー" data-button="preview">'
+                //       + '<svg viewBox="0 0 64 64" class="c-table-menu-svg"><use xlink:href="#icon-preview" /></svg></button></li>'
+                // + '</ul>'
               + '</div></td>'
             + '</tr>');
             
@@ -2181,20 +2190,20 @@ const inputParameter = function(){
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 const cdExecution = function(){
   const envList = wsDataJSON['environment'],
-        $modal = $('#modal-container'),
-        $exeSetting = $('#cd-execution-condition'), // 実行条件
+        m = this,
+        $modal = m.$modal,
+        $deployJobLink = $modal.find('.ita-link'), // Deployジョブ ITAリンク
+        $deployCondition = $modal.find('#deploy-condition').find('.item-area'), // 実行条件 / CD実行日時
+        $deployEnvironment = $modal.find('#deploy-environment').find('.item-area'), // 実行条件 / 環境
         $manifest = $('#cd-execution-manifest-parameter'), // Manifestパラメータ
         $argo = $('#cd-execution-argo'), // ArgoCDパイプライン
         $okButton = $modal.find('.modal-menu-button[data-button="ok"]');
 
-  // ITA Link
-  const $italink = $('#cd-execution-italink');
-  if(workspace_client_urls.ita !== null) {
-    $italink.html('IT-Automation : <a href="' + workspace_client_urls.ita + '" target="_blank">確認・編集</a>');
-  }
-  // ITA Link
-
   $okButton.prop('disabled', true );
+
+  // Deployジョブ
+  const itaURL = workspace_client_urls.ita;  
+  $deployJobLink.attr('href', itaURL );
 
   // CD execution environment information processing - CD実行環境情報処理
   new Promise((resolve, reject) =>{
@@ -2225,38 +2234,28 @@ const cdExecution = function(){
 
     const today = fn.formatDate( new Date(), 'yyyy/MM/dd HH:mm');
 
-    const exeSettingHTML = ''
-    + '<table id="cd-execution-condition-table" class="c-table">'
-      + '<tr class="c-table-row">'
-        + '<th class="c-table-col c-table-col-header"><div class="c-table-ci">CD実行日時</div></th>'
-        + '<td class="c-table-col"><div class="c-table-ci">'
-          + '<ul class="execution-date-select item-radio-list">'
-            + '<li class="item-radio-item">'
-              + '<input class="item-radio" type="radio" id="execution-date-immediate" value="immediate" name="execution-date" checked>'
-              + '<label class="item-radio-label" for="execution-date-immediate">即実行</label>'
-            + '</li>'
-            + '<li class="item-radio-item">'
-              + '<input class="item-radio" type="radio" id="execution-date-set" value="dateset" name="execution-date">'
-              + '<label class="item-radio-label" for="execution-date-set">予約日時指定</label>'
-            + '</li>'
-          + '</ul>'
-          + '<div class="execution-date"><input type="text" class="execution-date-input item-text" placeholder="' + today + '" value="' + today + '" disabled></div>'
-        + '</div></td>'
-      + '</tr>'
-        + '<tr class="c-table-row">'
-          + '<th class="c-table-col c-table-col-header"><div class="c-table-ci">環境</div></th>'
-          + '<td class="c-table-col"><div class="c-table-ci">'
-            + '<div class="item-select-area">'
-              + '<select id="cd-execution-environment-select" class="item-select">'
-                + exeSettingOptionHTML
-              + '</select>'
-            + '</div>'
-          + '</div></td>'
-        + '</tr>'
-      + '</table>';
+      const deployCondition = ''
+      + '<ul class="execution-date-select item-radio-list">'
+      + '<li class="item-radio-item">'
+        + '<input class="item-radio" type="radio" id="execution-date-immediate" value="immediate" name="execution-date" checked>'
+        + '<label class="item-radio-label" for="execution-date-immediate">即実行</label>'
+      + '</li>'
+      + '<li class="item-radio-item">'
+        + '<input class="item-radio" type="radio" id="execution-date-set" value="dateset" name="execution-date">'
+        + '<label class="item-radio-label" for="execution-date-set">予約日時指定</label>'
+      + '</li>'
+    + '</ul>'
+    + '<div class="execution-date"><input type="text" class="execution-date-input item-text" placeholder="' + today + '" value="' + today + '" disabled></div>';
+      $deployCondition.html( deployCondition );
       
-      $exeSetting.html( exeSettingHTML );
-    
+      const deployEnviroment = ''
+      + '<div class="item-select-area">'
+        + '<select id="cd-execution-environment-select" class="item-select">'
+          + exeSettingOptionHTML
+        + '</select>'
+      + '</div>';
+      
+      $deployEnvironment.html( deployEnviroment );
 
       const $executionDateInput = $modal.find('.execution-date-input');
       $executionDateInput.datePicker({'s': 'none'});
@@ -2337,16 +2336,41 @@ const cdExecution = function(){
           } else {
             url = '';
           }
+
+          // TODO:SPRINT 85:CAHNGED
           wsDataJSON['cd-execution-param']['operation-search-key'] = repository;
           wsDataJSON['cd-execution-param']['environment-name'] = name;
-          $argo.html('<p>以下の内容でDeployします。よろしいですか？</p>'
-          + tableHTML({
+          const itemList = function( itemData ) {
+            const items = [];
+            for ( const k in itemData ) {
+                items.push(''
+                + '<dl class="item-block item-horizontal">'
+                  + '<dt class="item-header">' + k + '</dt>'
+                  + '<dd class="item-area">' + itemData[k] + '</dd>'
+                + '</dl>');
+            }
+            return items.join('');
+          };
+        
+          $argo.html('<p class="deploy-confirm-message">以下の内容でDeployします。よろしいですか？</p>'
+          + itemList({
             '環境名': name,
             'Manifestリポジトリ': repository,
             'Kubernetes API Server URL': url,
             'Namespace': namespace
           }) );
           $okButton.prop('disabled', false );
+  
+          // wsDataJSON['cd-execution-param']['operation-search-key'] = repository;
+          // wsDataJSON['cd-execution-param']['environment-name'] = name;
+          // $argo.html('<p>以下の内容でDeployします。よろしいですか？</p>'
+          // + tableHTML({
+          //   '環境名': name,
+          //   'Manifestリポジトリ': repository,
+          //   'Kubernetes API Server URL': url,
+          //   'Namespace': namespace
+          // }) );
+          // $okButton.prop('disabled', false );
         } else {
           $argo.add(  $manifest.find('.modal-tab-body-block') ).html( notSelected() );
           wsDataJSON['cd-execution-param']['operation-search-key'] = '';

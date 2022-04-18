@@ -75,11 +75,11 @@ const tableHeader = [
         'icon': 'icon-menu-account',
         'text': 'メンバー一覧',
       },
-      'edit': {
-        'icon': 'icon-edit',
-        'text': 'ワークスペース編集',
-        'separate': 'on'
-      },
+      // 'edit': {
+      //   'icon': 'icon-edit',
+      //   'text': 'ワークスペース編集',
+      //   'separate': 'on'
+      // },
       'leave': {
         'icon': 'icon-move-out',
         'text': 'ワークスペース退去'
@@ -155,7 +155,14 @@ function workspaceList( list ) {
           $table = et.setup('#list', tableHeader, tableBody, {'sortCol': 3, 'sortType': 'desc', 'download': 'on'} );
 
     if ( $table ) {
-      
+      // row click
+      $table.on('click','td.cn0,td.cn1,td.cn2,td.cn3,td.cn4',function() {
+        const idKey=$(this).closest('tr').find('.et-hm-b[data-button=leave]').attr('data-key');
+        refresh_session().then(() => {
+          location.href = 'workspace.html?workspace_id=' + idKey;
+        });
+      });
+
       // menu - メニュー
       $table.on('click', '.et-hm-b', function(){
         const $button = $( this ),
@@ -172,11 +179,11 @@ function workspaceList( list ) {
               });
               break;
             // edit - 編集
-            case 'edit':
-              refresh_session().then(() => {
-                location.href = 'workspace.html?workspace_id=' + idKey;
-              });
-              break;
+            // case 'edit':
+            //   refresh_session().then(() => {
+            //     location.href = 'workspace.html?workspace_id=' + idKey;
+            //   });
+            //   break;
             // leave - 退去
             case 'leave':
               // leave confirmation modal display - 退去確認モーダル表示

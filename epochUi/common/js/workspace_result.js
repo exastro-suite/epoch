@@ -955,6 +955,8 @@ function wsArgocdCheck() {
     const detailInfo = [],
           detailInfoList = [
       ['argocd-environment','環境名'],
+      ['argocd-health-status','APP HEALTH'],
+      ['argocd-sync-status','SYNC STATUS'],
       ['argocd-argocd-manifest','Manifestリポジトリ'],
       ['argocd-server','Kubernetes API Server URL'],
       ['argocd-namespace','Namespace'],
@@ -974,23 +976,12 @@ function wsArgocdCheck() {
         + detailInfo.join('')
       + '</div>'
       + '<div class="argocd-exe-figure">'
-        + '<div class="argocd-status">'
-          + '<div class="argocd-health">'
-            + `<div class="argocd-health-title">APP HEALTH</div>`
-            + '<div class="argocd-health-status"></div>'
-          + '</div>'
-          + '<div class="argocd-sync">'
-            + '<div class="argocd-sync-title">SYNC STATUS</div>'
-            + `<div class="argocd-sync-status"></div>`
-            + '<div class="argocd-sync-head"></div>'
-          + '</div>'
-          + '<div class="argocd-menu" style="text-align:right;">'
-            + '<ul class="argocd-menu-list">'
-              + '<li class="argocd-menu-item" style="height:35px"><button class="argocd-menu-button" data-button="sync"><span class="icon icon-Update"></span> SYNC</button></li>'
-              + '<li class="argocd-menu-item" style="height:35px"><button class="argocd-menu-button" data-button="rollback"><span class="icon icon-Rollback"></span> Rollback</button></li>'
-              + '<li class="argocd-menu-item" style="height:20px"><span class="argocd-end"></span> 時点</li>'
-            + '</ul>'
-          + '</div>'
+        + '<div class="argocd-menu">'
+        + '<span style="position: relative; float:right; padding: 12px 10px 0px 0px;"><span class="argocd-end">9999/99/99 99:99:99</span> 時点</span>'
+        + '<ul class="argocd-menu-list">'
+            + '<li class="argocd-menu-item"><button class="argocd-menu-button epoch-button modal-block-button" data-button="sync"><span class="icon icon-Update"></span> SYNC</button></li>'
+            + '<li class="argocd-menu-item"><button class="argocd-menu-button epoch-button modal-block-button" data-button="rollback"><span class="icon icon-Rollback"></span> Rollback</button></li>'
+          + '</ul>'
         + '</div>'
         + '<div class="argocd-resource">'
         + '</div>'
@@ -1064,19 +1055,18 @@ function wsArgocdCheck() {
         const resource = ul();
       
         const setData = [
-          ['.status-trace-id-number', d.trace_id ],
-          ['.argocd-environment', d.environment_name ],
-          ['.argocd-argocd-manifest', manifest ],
-          ['.argocd-server', d.sync_status.server ],
-          ['.argocd-namespace', d.namespace ],
-          ['.argocd-start', ws.cmn.fn.formatDate( d.startedAt, 'yyyy/MM/dd HH:mm:ss') ],
-          ['.argocd-end', ws.cmn.fn.formatDate( d.finishedAt, 'yyyy/MM/dd HH:mm:ss') ],
-          ['.argocd-health-status', health ],
-          ['.argocd-sync-status', sync ],
-          ['.argocd-sync-head', head ],
-          ['.argocd-resource', resource ]
-        ];        
-        
+            ['.status-trace-id-number', d.trace_id ],
+            ['.argocd-environment', d.environment_name ],
+            ['.argocd-argocd-manifest', manifest ],
+            ['.argocd-server', d.sync_status.server ],
+            ['.argocd-namespace', d.namespace ],
+            ['.argocd-start', ws.cmn.fn.formatDate( d.startedAt, 'yyyy/MM/dd HH:mm:ss') ],
+            ['.argocd-end', ws.cmn.fn.formatDate( d.finishedAt, 'yyyy/MM/dd HH:mm:ss') ],
+            ['.argocd-health-status', health ],
+            ['.argocd-sync-status', sync + ' ' + head ],
+            ['.argocd-resource', resource ]
+          ];        
+          
         const setDataLength = setData.length;
 
         for ( let i = 0; i < setDataLength; i++ ) {

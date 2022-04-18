@@ -842,6 +842,7 @@ modalFunction.prototype = {
             )
           )
         );
+        if ( data.id ) $dl.attr('id', data.id );
         // テキストとテキストエリアは入力文字数を表示する
         if ( ['text','textarea','password','number'].indexOf( type ) !== -1 ) {
           let wordCountHTML = ''
