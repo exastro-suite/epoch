@@ -49,12 +49,12 @@ spec:
           name: epoch-rs-ci-result-conf
       containers:
       - name: epoch-rs-ci-result-api
-        image: exastro/epoch-rs-ci-result-api:0.4.0_20220325_1500
+        image: exastro/epoch-rs-ci-result-api:1.0.0_20220418_1500
         env:
         - name: CONFIG_API_CI_RESULT_PATH
           value: "/etc/epoch/epochRsCiResultApi/api_ci_result.conf"
         - name: FLASK_ENV
-          value: "development"
+          value: "production"
         - name: API_CI_RESULT_PORT
           value: "8000"
         - name: PYTHONIOENCODING

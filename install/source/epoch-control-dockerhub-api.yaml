@@ -41,7 +41,7 @@ spec:
           name: epoch-control-dockerhub-conf
       containers:
       - name: epoch-control-dockerhub-api
-        image: exastro/epoch-control-dockerhub-api:0.4.0_20220325_1500
+        image: exastro/epoch-control-dockerhub-api:1.0.0_20220418_1500
         env:
         - name: HTTP_PROXY
           valueFrom:
@@ -58,7 +58,7 @@ spec:
         - name: CONFIG_API_DOCKERHUB_PATH
           value: "/etc/epoch/epochControlDockerHubApi/api_dockerhub.conf"
         - name: FLASK_ENV
-          value: "development"
+          value: "production"
         - name: API_DOCKERHUB_PORT
           value: "8000"
         - name: PYTHONIOENCODING

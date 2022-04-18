@@ -841,4 +841,4 @@ def get_pv_node():
     return node
 
 if __name__ == "__main__":
-    app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('API_TEKTON_PORT', '8000')), threaded=True)
+    app.run(debug=eval(os.environ.get('API_DEBUG', "False")), host='0.0.0.0', port=int(os.environ.get('API_TEKTON_PORT', '8000')), threaded=True)

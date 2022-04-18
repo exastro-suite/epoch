@@ -32,7 +32,7 @@ spec:
           claimName: exastro-authentication-infra-httpd
       containers:
       - name: gateway-httpd
-        image: exastro/gateway-httpd:0.3.1_20220126_0900
+        image: exastro/gateway-httpd:1.0.0_20220418_1500
         volumeMounts:
         - name: gateway-httpd
           mountPath: /etc/httpd/conf.d/exastroSettings

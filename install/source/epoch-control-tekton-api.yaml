@@ -49,12 +49,12 @@ spec:
           name: epoch-control-tekton-conf
       containers:
       - name: epoch-control-tekton-api
-        image: exastro/epoch-control-tekton-api:0.4.0_20220325_1500
+        image: exastro/epoch-control-tekton-api:1.0.0_20220418_1500
         env:
         - name: CONFIG_API_TEKTON_PATH
           value: "/etc/epoch/epochControlTektonApi/api_tekton.conf"
         - name: FLASK_ENV
-          value: "development"
+          value: "production"
         - name: API_TEKTON_PORT
           value: "8000"
         - name: PYTHONIOENCODING

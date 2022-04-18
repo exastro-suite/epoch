@@ -41,12 +41,12 @@ spec:
           name: epoch-control-argocd-conf
       containers:
       - name: epoch-control-argocd-api
-        image: exastro/epoch-control-argocd-api:0.4.0_20220325_1500
+        image: exastro/epoch-control-argocd-api:1.0.0_20220418_1500
         env:
         - name: CONFIG_API_ARGOCD_PATH
           value: "/etc/epoch/epochControlArgoCDApi/api_argocd.conf"
         - name: FLASK_ENV
-          value: "development"
+          value: "production"
         - name: API_ARGOCD_PORT
           value: "8000"
         - name: PYTHONIOENCODING

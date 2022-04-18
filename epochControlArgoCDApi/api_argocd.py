@@ -714,4 +714,4 @@ def env_name_to_argo_app_name(workspace_id, environments, env_name):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('API_ARGOCD_PORT', '8000')), threaded=True)
+    app.run(debug=eval(os.environ.get('API_DEBUG', "False")), host='0.0.0.0', port=int(os.environ.get('API_ARGOCD_PORT', '8000')), threaded=True)

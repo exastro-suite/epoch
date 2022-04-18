@@ -49,12 +49,12 @@ spec:
           name: epoch-rs-logs-conf
       containers:
       - name: epoch-rs-logs-api
-        image: exastro/epoch-rs-logs-api:0.4.0_20220325_1500
+        image: exastro/epoch-rs-logs-api:1.0.0_20220418_1500
         env:
         - name: CONFIG_API_LOGS_PATH
           value: "/etc/epoch/epochRsLogsApi/api_logs.conf"
         - name: FLASK_ENV
-          value: "development"
+          value: "production"
         - name: API_LOGS_PORT
           value: "8000"
         - name: PYTHONIOENCODING

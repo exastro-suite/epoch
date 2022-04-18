@@ -41,7 +41,7 @@ spec:
           name: epoch-control-github-conf
       containers:
       - name: epoch-control-github-api
-        image: exastro/epoch-control-github-api:0.4.0_20220325_1500
+        image: exastro/epoch-control-github-api:1.0.0_20220418_1500
         env:
         - name: HTTP_PROXY
           valueFrom:
@@ -58,7 +58,7 @@ spec:
         - name: CONFIG_API_GITHUB_PATH
           value: "/etc/epoch/epochControlGitHubApi/api_github.conf"
         - name: FLASK_ENV
-          value: "development"
+          value: "production"
         - name: API_GITHUB_PORT
           value: "8000"
         - name: PYTHONIOENCODING

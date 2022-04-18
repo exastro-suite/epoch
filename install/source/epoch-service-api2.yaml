@@ -42,12 +42,12 @@ spec:
           name: epoch-service-api2-conf
       containers:
       - name: epoch-service-api2
-        image: exastro/epoch-service-api2:0.4.0_20220325_1500
+        image: exastro/epoch-service-api2:1.0.0_20220418_1500
         env:
         - name: CONFIG_API_SERVICE_PATH
           value: "/etc/epoch/epochServiceApi/api_service.conf"
         - name: FLASK_ENV
-          value: "development"
+          value: "production"
         - name: API_SERVICE_PORT
           value: "8000"
         - name: PYTHONIOENCODING
