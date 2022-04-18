@@ -38,12 +38,14 @@
 1. 初期設定実行中は、以下のような実行状況メッセージが表示されます。
 
     ```bash
-    [INFO] Wait for Running setting tools pod
+    If you don't see a command prompt, try pressing enter.
     [INFO] Call set-host command
     [INFO] START : set-host.sh
     [INFO] PARAM PRM_MY_HOST : [your-host]
-    [INFO] **** STEP : 1 / 5 : Initialize Setting Parameter ...
-    [INFO] **** STEP : 2 / 5 : Set Parameter To Configmap
+    [INFO] **** STEP : 1 / 7 : Initialize Setting Parameter ...
+    [INFO] **** STEP : 2 / 7 : wait for keycloak pod ...
+    waiting ...............
+    [INFO] **** STEP : 3 / 7 : Set Parameter To Configmap
     [INFO] CALL : kubectl patch configmap -n epoch-system host-setting-config
     configmap/host-setting-config patched
     [INFO] CALL : kubectl patch configmap -n exastro-platform-authentication-infra exastro-platform-authentication-infra-env
@@ -52,22 +54,26 @@
     configmap/epoch-service-api-config patched
     [INFO] CALL : kubectl patch secret -n exastro-platform-authentication-infra exastro-platform-authentication-infra-secret
     secret/exastro-platform-authentication-infra-secret patched
-    [INFO] **** STEP : 3 / 5 : restart to reflect the settings ...
+    [INFO] **** STEP : 4 / 7 : restart to reflect the settings ...
     [INFO] CALL : kubectl rollout restart deploy -n epoch-system epoch-service-api2
     deployment.apps/epoch-service-api2 restarted
+    [INFO] CALL : kubectl rollout restart deploy -n epoch-system epoch-control-argocd-api
+    deployment.apps/epoch-control-argocd-api restarted
     [INFO] CALL : kubectl rollout restart deploy -n epoch-system epoch-control-ita-api
     deployment.apps/epoch-control-ita-api restarted
     [INFO] CALL : kubectl rollout restart deploy -n exastro-platform-authentication-infra authentication-infra-api
     deployment.apps/authentication-infra-api restarted
-    [INFO] CALL : kubectl rollout restart deploy -n exastro-platform-authentication-infra keycloak
-    deployment.apps/keycloak restarted
-    [INFO] **** STEP : 4 / 5 : wait for restart ...
-    waiting ..........
-    [INFO] **** STEP : 5 / 5 : Setting api call ...
+    [INFO] **** STEP : 5 / 7 : wait for restart ...
+    waiting ....
+    [INFO] **** STEP : 6 / 7 : Initialize setting keycloak call ...
+    [INFO] CALL : keycloak get admin user id
+    [INFO] CALL : keycloak put admin new password
+    [INFO] **** STEP : 7 / 7 : Setting api call ...
     [INFO] **** set-host.sh completed successfully ****
     [INFO] Call set-host-gitlab command
     job.batch/set-host-gitlab created
     ****  completed successfully ****
+    pod "set-host" deleted
     ```
 
 1. 以下のメッセージが表示されましたら初期設定は完了となります:
