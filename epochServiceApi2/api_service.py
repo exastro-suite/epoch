@@ -60,7 +60,7 @@ def call_workspace():
         Response: HTTP Respose
     """
     try:
-        globals.logger.info('Create or GET workspace information. method={}'.format(request.method))
+        globals.logger.info('Create or Get workspace information. method={}'.format(request.method))
 
         if request.method == 'POST':
             # ワークスペース情報作成へリダイレクト
@@ -84,7 +84,7 @@ def call_workspace_by_id(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.info('Get or update or partially update workspace information. method={}, workspace_id={}'.format(request.method, workspace_id))
+        globals.logger.info('Get or Update workspace information. method={}, workspace_id={}'.format(request.method, workspace_id))
                     
         if request.method == 'GET':
             # ワークスペース情報取得 Workspace info. get
@@ -111,7 +111,7 @@ def call_pod(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('Create workspace. method={}, workspace_id={}'.format(request.method, workspace_id))
+        globals.logger.info('Create workspace pod. method={}, workspace_id={}'.format(request.method, workspace_id))
 
         if request.method == 'POST':
             # workspace作成
@@ -223,7 +223,7 @@ def call_ci_result(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.info('Get CI pipeline results. method={}, workspace_id={}'.format(request.method, workspace_id))
+        globals.logger.info('Get CI pipeline result. method={}, workspace_id={}'.format(request.method, workspace_id))
 
         if request.method == 'GET':
             # CIパイプライン結果取得
@@ -246,7 +246,7 @@ def call_ci_result_logs(workspace_id, taskrun_name):
         Response: HTTP Respose
     """
     try:
-        globals.logger.info('Get CI pipeline results. method={}, workspace_id={}, taskrun_name={}'.format(request.method, workspace_id, taskrun_name))
+        globals.logger.info('Get CI pipeline result. method={}, workspace_id={}, taskrun_name={}'.format(request.method, workspace_id, taskrun_name))
 
         if request.method == 'GET':
             # CIパイプライン結果取得
@@ -583,7 +583,7 @@ def call_members():
         Response: HTTP Respose
     """
     try:
-        globals.logger.info('Get all users. method={}'.format(request.method))
+        globals.logger.info('Get member. method={}'.format(request.method))
 
         if request.method == 'GET':
             # all users get
@@ -628,7 +628,7 @@ def call_workspace_member(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.info('Set or get workspace members. method={}, workspace_id={}'.format(request.method, workspace_id))
+        globals.logger.info('Get or Set workspace member. method={}, workspace_id={}'.format(request.method, workspace_id))
         
         if request.method == 'GET':
             # all workspace members get
@@ -654,7 +654,7 @@ def call_workspace_member_cdexec(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.info('Get information about CD execution members. method={}, workspace_id={}'.format(request.method, workspace_id))
+        globals.logger.info('Get CD execution member. method={}, workspace_id={}'.format(request.method, workspace_id))
 
         if request.method == 'GET':
             # cdexec members get
@@ -677,7 +677,7 @@ def call_workspace_leave(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.info('Exit from a member of the workspace. method={}, workspace_id={}'.format(request.method, workspace_id))
+        globals.logger.info('Delete member from workspace. method={}, workspace_id={}'.format(request.method, workspace_id))
 
 
         return api_service_member.leave_workspace(workspace_id)
