@@ -289,7 +289,7 @@ def call_cd_pipeline(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.info('Set CD pipeline information.method=[{}] workspace_id=[{}]'.format(request.method, workspace_id))
+        globals.logger.info('Set CD pipeline information. method={}, workspace_id={}'.format(request.method, workspace_id))
 
         if request.method == 'POST':
             # CDパイプライン情報設定
@@ -313,7 +313,7 @@ def call_cd_pipeline_argocd(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.info('Get CD pipeline (ArgoCD) information.method=[{}] workspace_id=[{}]'.format(request.method, workspace_id))
+        globals.logger.info('Get CD pipeline (ArgoCD) information. method={}, workspace_id={}'.format(request.method, workspace_id))
 
         if request.method == 'GET':
             # Get CD pipeline (ArgoCD) information - CDパイプライン(ArgoCD)情報取得
@@ -337,7 +337,7 @@ def call_cd_pipeline_ita(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.info('Get CD pipeline (it-automation) information.method=[{}] workspace_id=[{}]'.format(request.method, workspace_id))
+        globals.logger.info('Get CD pipeline (it-automation) information. method={}, workspace_id={}'.format(request.method, workspace_id))
         
         if request.method == 'GET':
             # Get CD pipeline (ArgoCD) information - CDパイプライン(ArgoCD)情報取得
@@ -362,7 +362,7 @@ def call_cd_pipeline_git_commits(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.info("Get CD git commmits.method=[{}] workspace_id=[{}]".format(request.method, workspace_id))
+        globals.logger.info("Get CD commit list in manifest repositor. method={}, workspace_id={}".format(request.method, workspace_id))
 
         if request.method == 'GET':
             return api_service_cd.get_git_commits(workspace_id)
@@ -384,7 +384,7 @@ def call_cd_pipeline_argocd_sync(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.info('Synchronize CD pipeline (ArgoCD).method=[{}] workspace_id=[{}]'.format(request.method, workspace_id))
+        globals.logger.info('Synchronize CD pipeline (ArgoCD). method={}, workspace_id={}'.format(request.method, workspace_id))
 
         if request.method == 'POST':
             # Post CD pipeline (ArgoCD) sync - CDパイプライン(ArgoCD)同期
@@ -408,7 +408,7 @@ def call_cd_pipeline_argocd_rollback(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.info('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
+        globals.logger.info('Rollback CD pipeline (ArgoCD). method={}, workspace_id={}'.format(request.method, workspace_id))
 
         if request.method == 'POST':
             # Post CD pipeline (ArgoCD) Rollback - CDパイプライン(ArgoCD)Rollback
@@ -432,7 +432,7 @@ def call_manifest_parameter(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.info('Set manifest parameter.method=[{}] workspace_id=[{}]'.format(request.method, workspace_id))
+        globals.logger.info('Set manifest parameter. method={}, workspace_id={}'.format(request.method, workspace_id))
 
         if request.method == 'POST':
             # manifest parameter setting (post)
@@ -456,7 +456,7 @@ def call_manifest_template(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.info('Get or Post manifest template.method=[{}] workspace_id=[{}]'.format(request.method, workspace_id))
+        globals.logger.info('Get or Set manifest template. method={}, workspace_id={}'.format(request.method, workspace_id))
         
         if request.method == 'POST':
             # manifest template setting (post)
@@ -484,7 +484,7 @@ def call_manifest_template_id(workspace_id, file_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.info('Delete manifest template.method=[{}] workspace_id=[{}] file_id=[{}]'.format( request.method, workspace_id, file_id))
+        globals.logger.info('Delete manifest template. method={}, workspace_id={}, file_id={}'.format( request.method, workspace_id, file_id))
         
 
         if request.method == 'DELETE':
@@ -509,7 +509,7 @@ def call_cd_exec(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.info('Execute CD.method=[{}] workspace_id=[{}]'.format(request.method, workspace_id))
+        globals.logger.info('Execute CD. method={}, workspace_id={}'.format(request.method, workspace_id))
 
         if request.method == 'POST':
             # cd execute (post)
@@ -535,7 +535,7 @@ def call_cd_exec_trace_id(workspace_id, trace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.info('Delete CD exec reservation.method=[{}] workspace_id=[{}] trace_id=[{}]'.format(request.method, workspace_id, trace_id))
+        globals.logger.info('Delete CD exec reservation. method={}, workspace_id={}, trace_id={}'.format(request.method, workspace_id, trace_id))
 
         if request.method == 'DELETE':
             # cd execute (post)
@@ -559,7 +559,7 @@ def call_cd_environment(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.info('Get CD environment.method=[{}] workspace_id=[{}]'.format(request.method, workspace_id))
+        globals.logger.info('Get CD environment. method={}, workspace_id={}'.format(request.method, workspace_id))
 
         if request.method == 'GET':
             # cd execute (post)
@@ -601,7 +601,7 @@ def call_user_current():
         Response: HTTP Respose
     """
     try:
-        globals.logger.info('Get current user infomation.method=[{}]'.format(request.method))
+        globals.logger.info('Get current user infomation. method={}'.format(request.method))
 
         if request.method == 'GET':
             # all users get
