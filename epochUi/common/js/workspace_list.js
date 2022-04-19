@@ -156,6 +156,7 @@ function workspaceList( list ) {
 
     if ( $table ) {
       // row click
+      $table.find('td.cn0,td.cn1,td.cn2,td.cn3,td.cn4').css('cursor','pointer');
       $table.on('click','td.cn0,td.cn1,td.cn2,td.cn3,td.cn4',function() {
         const idKey=$(this).closest('tr').find('.et-hm-b[data-button=leave]').attr('data-key');
         refresh_session().then(() => {
