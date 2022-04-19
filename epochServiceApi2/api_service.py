@@ -362,7 +362,7 @@ def call_cd_pipeline_git_commits(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.info("Get CD commit list in manifest repositor. method={}, workspace_id={}".format(request.method, workspace_id))
+        globals.logger.info("Get CD commit list in manifest repositories. method={}, workspace_id={}".format(request.method, workspace_id))
 
         if request.method == 'GET':
             return api_service_cd.get_git_commits(workspace_id)
