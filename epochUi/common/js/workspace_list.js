@@ -296,3 +296,14 @@ $(function(){
     });
 });
 
+// Button control by role - ロールによるボタン制御
+function show_buttons_by_role() {
+  // Waiting for API data acquisition - APIのデータ取得待ち
+  if(currentUser == null) { setTimeout(show_buttons_by_role, 100); return; }
+  if(!currentUser.data)   { setTimeout(show_buttons_by_role, 100); return; }
+
+  if(currentUser.data.roles.indexOf("ws-create") != -1) {
+    $(".content-menu-button[data-button=newWorkspace]").css("display","");
+  }
+}
+$(document).ready(function(){ show_buttons_by_role(); });
