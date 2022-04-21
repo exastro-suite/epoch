@@ -480,8 +480,10 @@ curl \
         "users": [
             {
                 "user_name": "epoch-admin",
-                "user_password": "${EPOCH_ADMIN_PASSWD}",
-                "user_groups": [],
+                "user_password": "password",
+                "user_groups": [
+                    "epoch-user", "epoch-ws-creator"
+                ],
                 "user_realm_roles": [],
                 "user_option": {
                     "enabled": "True"
