@@ -168,6 +168,10 @@ def get_workspace_members(workspace_id):
                     kind = common.get_role_kind(get_role["name"])
                     # 該当のロールのみチェック Check only the corresponding role
                     if kind is not None:
+                        # ワークスペース作成権限は読み飛ばし Skip workspace creation authority
+                        if get_role["name"] == const.ROLE_WS_CREATE[0]:
+                            continue
+                        
                         ex_role = re.match("ws-({}|\d+)-(.+)", get_role["name"])
                         globals.logger.debug("role_workspace_id:{} kind:{}".format(ex_role[1], ex_role[2]))
                         # 該当のワークスペースのみの絞り込み Narrow down only the applicable workspace
