@@ -15,7 +15,7 @@
 import sys
 
 # ロール定義 Role definition
-ROLE_WS_CREATE = [ "ws-create", "EP000-0094", "ワークスペース作成権限", 0 ]
+ROLE_WS_CREATE = [ "epoch-ws-create", "EP000-0094", "ワークスペース作成権限", 0 ]
 ROLE_WS_OWNER = [ "ws-{}-owner", "EP000-0001", "オーナー", 1 ]
 ROLE_WS_MANAGER = [ "ws-{}-manager", "EP000-0002", "管理者", 2 ]
 ROLE_WS_MEMBER_MG = [ "ws-{}-member-mg", "EP000-0003", "メンバー管理", 3 ]
