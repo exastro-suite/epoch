@@ -100,16 +100,13 @@ def get_workspace_members(workspace_id):
     Returns:
         Response: HTTP Respose
     """
+    globals.logger.info('Get workspace member. workspace_id={}'.format(workspace_id))
 
     app_name = multi_lang.get_text("EP020-0003", "ワークスペース情報:")
     exec_stat = multi_lang.get_text("EP020-0004", "メンバー一覧取得")
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
-
         roles = const.ALL_ROLES
 
         stock_user_id = []  
@@ -205,16 +202,13 @@ def get_workspace_members_cdexec(workspace_id):
     Returns:
         Response: HTTP Respose
     """
+    globals.logger.info('Get CD execution member. workspace_id={}'.format(workspace_id))
 
     app_name = multi_lang.get_text("EP020-0003", "ワークスペース情報:")
     exec_stat = multi_lang.get_text("EP020-0018", "CD実行メンバー一覧取得")
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
-
         # 権限「オーナー変更」保有しているユーザーを抽出する 
         # Extract users who have the authority "change owner"
         rows = api_service_common.get_workspace_members_by_role(workspace_id, const.ROLE_WS_ROLE_CD_EXECUTE[0].format(workspace_id))
@@ -247,6 +241,7 @@ def merge_workspace_members(workspace_id):
     Returns:
         Response: HTTP Respose
     """
+    globals.logger.info('Set workspace member. workspace_id={}'.format(workspace_id))
 
     app_name = multi_lang.get_text("EP020-0003", "ワークスペース情報:")
     exec_stat = multi_lang.get_text("EP020-0005", "メンバー登録")
@@ -254,10 +249,6 @@ def merge_workspace_members(workspace_id):
     return_code = 500
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
-
         # 引数はJSON形式 Arguments are in JSON format
         req_json = request.json.copy()
 
@@ -557,15 +548,13 @@ def leave_workspace(workspace_id):
     Returns:
         Response: HTTP Respose
     """
+    globals.logger.info('Delete member from workspace. workspace_id={}'.format(workspace_id))
+    
     app_name = multi_lang.get_text("EP020-0001", "ワークスペース情報:")
     exec_stat = multi_lang.get_text("EP020-0010", "退去")
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {} workspace_id [{}]'.format(inspect.currentframe().f_code.co_name, workspace_id))
-        globals.logger.debug('#' * 50)
-
         # ヘッダ情報 header info
         post_header = {
             'Content-Type': 'application/json',

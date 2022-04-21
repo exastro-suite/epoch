@@ -45,16 +45,13 @@ def create_workspace():
     Returns:
         Response: HTTP Respose
     """
+    globals.logger.info('Create workspace information.')
 
     app_name = "ワークスペース情報:"
     exec_stat = "作成"
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
-
         # ヘッダ情報
         post_headers = {
             'Content-Type': 'application/json',
@@ -550,16 +547,13 @@ def get_workspace_list():
     Returns:
         Response: HTTP Respose
     """
+    globals.logger.info('Get workspace information.')
 
     app_name = "ワークスペース情報:"
     exec_stat = "一覧取得"
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
-
         # ヘッダ情報 header info
         post_headers = {
             'Content-Type': 'application/json',
@@ -731,16 +725,13 @@ def get_workspace(workspace_id):
     Returns:
         Response: HTTP Respose
     """
+    globals.logger.info('Get workspace information. workspace_id={}'.format(workspace_id))
 
     app_name = "ワークスペース情報:"
     exec_stat = "取得"
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
-
         # ヘッダ情報
         post_headers = {
             'Content-Type': 'application/json',
@@ -805,6 +796,8 @@ def put_workspace(workspace_id):
     Returns:
         Response: HTTP Respose
     """
+    globals.logger.info('Update workspace information. workspace_id={}'.format(workspace_id))
+    
 
     app_name = multi_lang.get_text("EP020-0003", "ワークスペース情報:")
     exec_stat = multi_lang.get_text("EP020-0016", "更新")
@@ -812,11 +805,6 @@ def put_workspace(workspace_id):
     return_code = 500
 
     try:
-
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
-
         # ヘッダ情報 header info.
         post_headers = {
             'Content-Type': 'application/json',
@@ -1062,16 +1050,13 @@ def patch_workspace(workspace_id):
     Returns:
         Response: HTTP Respose
     """
+    globals.logger.info('Update workspace information. workspace_id={}'.format(workspace_id))    
 
     app_name = multi_lang.get_text("EP020-0003", "ワークスペース情報:")
     exec_stat = multi_lang.get_text("EP020-0016", "更新")
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
-
         # ヘッダ情報
         post_headers = {
             'Content-Type': 'application/json',
