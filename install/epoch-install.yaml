@@ -2753,7 +2753,8 @@ data:
     \   AuthType openid-connect\n    <Limit GET>\n      Require claim \"epoch-role:epoch-user\"\n
     \   </Limit>\n  </Location>\n  <Location /api/workspace>\n    ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace
     retry=0 timeout=600\n    ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace\n
-    \   AuthType openid-connect\n    <Limit GET POST>\n      Require claim \"epoch-role:epoch-user\"\n
+    \   AuthType openid-connect\n    <Limit GET>\n      Require claim \"epoch-role:epoch-user\"\n
+    \   </Limit>\n    <Limit POST>\n      Require claim \"epoch-role:ws-create\"\n
     \   </Limit>\n  </Location>\n\n  IncludeOptional conf.d/exastroSettings/epoch-system/*.conf\n\n
     \ <Location /api/user/>\n    ProxyPass        http://authentication-infra-api:8000/user/
     retry=0\n    ProxyPassReverse http://authentication-infra-api:8000/user/\n    AuthType
