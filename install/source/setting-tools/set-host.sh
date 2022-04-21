@@ -453,24 +453,31 @@ curl \
         },
         "realm_roles": [
             "epoch-user",
-            "epoch-system"
+            "epoch-system",
+            "epoch-ws-create"
         ],
         "groups": [
             {
                 "parent_group": "",
                 "group_name": "epoch-user"
+            },
+            {
+                "parent_group": "",
+                "group_name": "epoch-ws-creator"
             }
         ],
         "group_mappings": [
             {
                 "role_name": "epoch-user",
                 "group_name": "epoch-user"
+            },
+            {
+                "role_name": "epoch-ws-create",
+                "group_name": "epoch-ws-creator"
             }
         ],
         "default_group_name": "epoch-user",
         "users": [
-        ],
-        "admin_users": [
             {
                 "user_name": "epoch-admin",
                 "user_password": "${EPOCH_ADMIN_PASSWD}",
@@ -478,8 +485,44 @@ curl \
                 "user_realm_roles": [],
                 "user_option": {
                     "enabled": "True"
-                }
+                },
+                "user_client_roles": [
+                    {
+                        "client_name": "realm-management",
+                        "roles": [
+                            "manage-clients",
+                            "query-realms",
+                            "realm-admin",
+                            "manage-realm",
+                            "create-client",
+                            "manage-events",
+                            "impersonation",
+                            "manage-users",
+                            "manage-authorization",
+                            "query-groups",
+                            "query-users",
+                            "manage-identity-providers",
+                            "query-clients"
+                        ]
+                    },
+                    {
+                        "client_name": "broker",
+                        "roles": [
+                            "read-token"
+                        ]
+                    },
+                    {
+                        "client_name": "account",
+                        "roles": [
+                            "delete-account",
+                            "view-applications",
+                            "manage-consent"
+                        ]
+                    }
+                ]
             }
+        ],
+        "admin_users": [
         ],
         "clients": [
             {
