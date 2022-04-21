@@ -127,10 +127,14 @@ def post_tekton_pipeline(workspace_id):
         # sonarqube設定
         param['ci_config']['sonarqube_password'] = access_data['SONARQUBE_PASSWORD']
         # proxy設定
+        no_proxy = os.environ['EPOCH_NO_PROXY']
+        if 'EPOCH_HOSTNAME' in os.environ and os.environ['EPOCH_HOSTNAME'] != '':
+            no_proxy = no_proxy + ',' + os.environ['EPOCH_HOSTNAME']
+
         param['proxy'] = {
             'http': os.environ['EPOCH_HTTP_PROXY'],
             'https': os.environ['EPOCH_HTTPS_PROXY'],
-            'no_proxy': os.environ['EPOCH_NO_PROXY'],
+            'no_proxy': no_proxy,
         }
         # node設定
         param['node'] = node

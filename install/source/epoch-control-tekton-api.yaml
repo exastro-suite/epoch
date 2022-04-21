@@ -71,6 +71,11 @@ spec:
               key: HTTPS_PROXY
         - name: EPOCH_NO_PROXY
           value: ""
+        - name: EPOCH_HOSTNAME
+          valueFrom:
+            configMapKeyRef:
+              name: host-setting-config
+              key: EPOCH_HOSTNAME
         - name: EPOCH_RS_WORKSPACE_PROTOCOL
           value: "http"
         - name: EPOCH_RS_WORKSPACE_HOST
