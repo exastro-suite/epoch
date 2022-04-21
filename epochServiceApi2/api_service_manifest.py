@@ -46,16 +46,13 @@ def post_manifest_parameter(workspace_id):
     Returns:
         Response: HTTP Respose
     """
-
+    globals.logger.info('Set manifest parameter. workspace_id={}'.format(workspace_id))
+    
     app_name = "ワークスペース情報:"
     exec_stat = "manifestパラメータ登録"
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
-
         # ヘッダ情報 post header info.
         post_headers = {
             'Content-Type': 'application/json',
@@ -142,16 +139,13 @@ def post_manifest_template(workspace_id):
     Returns:
         Response: HTTP Respose
     """
-
+    globals.logger.info('Set manifest template. workspace_id={}'.format(workspace_id))
+    
     app_name = "ワークスペース情報:"
     exec_stat = "manifestテンプレート登録"
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
-
         # ファイルの存在チェック exists file check
         if 'manifest_files' not in request.files:
             error_detail = "アップロードファイルがありません"
@@ -303,16 +297,13 @@ def get_manifest_template_list(workspace_id):
     Returns:
         Response: HTTP Respose
     """
-
+    globals.logger.info('Get manifest template. workspace_id={}'.format(workspace_id))
+    
     app_name = "ワークスペース情報:"
     exec_stat = "manifestテンプレート取得"
     error_detail = ""
 
-    try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
-    
+    try:    
         resourceProtocol = os.environ['EPOCH_RS_WORKSPACE_PROTOCOL']
         resourceHost = os.environ['EPOCH_RS_WORKSPACE_HOST']
         resourcePort = os.environ['EPOCH_RS_WORKSPACE_PORT']
@@ -368,16 +359,13 @@ def delete_manifest_template(workspace_id, file_id):
     Returns:
         Response: HTTP Respose
     """
-
+    globals.logger.info('Delete manifest template. workspace_id={}, file_id={}'.format(workspace_id, file_id))
+    
     app_name = "ワークスペース情報:"
     exec_stat = "manifestテンプレート削除"
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
-    
         # ヘッダ情報
         headers = {
             'Content-Type': 'application/json',
