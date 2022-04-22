@@ -404,7 +404,7 @@ data:
     \               }\n            ]\n        },\n        \"default_group_name\":
     \"epoch-user\",\n        \"users\": [\n            {\n                \"user_info\":
     {\n                    \"username\": \"epoch-admin\",\n                    \"firstName\":
-    \"システム\",\n                    \"lastName\": \"管理者\",\n                    \"groups\":
+    \"ユーザー\",\n                    \"lastName\": \"管理者\",\n                    \"groups\":
     [\n                        \"epoch-user\", \"epoch-ws-creator\"\n                    ],\n
     \                   \"realmRoles\": [],\n                    \"requiredActions\":
     [ \"UPDATE_PROFILE\" ],\n                    \"credentials\": [\n                        {\n

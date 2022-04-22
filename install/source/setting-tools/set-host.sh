@@ -472,7 +472,7 @@ curl \
             {
                 "user_info": {
                     "username": "epoch-admin",
-                    "firstName": "システム",
+                    "firstName": "ユーザー",
                     "lastName": "管理者",
                     "groups": [
                         "epoch-user", "epoch-ws-creator"
