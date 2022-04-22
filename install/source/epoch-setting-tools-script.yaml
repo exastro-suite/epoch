@@ -392,14 +392,16 @@ data:
     \"True\",\n            \"registrationAllowed\": \"True\",\n            \"internationalizationEnabled\":
     true,\n            \"supportedLocales\": [ \"ja\" ],\n            \"defaultLocale\":
     \"ja\"\n        },\n        \"realm_roles\": [\n            \"epoch-user\",\n
-    \           \"epoch-system\",\n            \"epoch-ws-create\"\n        ],\n        \"groups\":
-    [\n            {\n                \"parent_group\": \"\",\n                \"group_name\":
-    \"epoch-user\"\n            },\n            {\n                \"parent_group\":
-    \"\",\n                \"group_name\": \"epoch-ws-creator\"\n            }\n        ],\n
-    \       \"group_mappings\": [\n            {\n                \"role_name\": \"epoch-user\",\n
-    \               \"group_name\": \"epoch-user\"\n            },\n            {\n
-    \               \"role_name\": \"epoch-ws-create\",\n                \"group_name\":
-    \"epoch-ws-creator\"\n            }\n        ],\n        \"default_group_name\":
+    \           \"epoch-system\"\n        ],\n        \"groups\": [\n            {\n
+    \               \"parent_group\": \"\",\n                \"group_name\": \"epoch-user\"\n
+    \           },\n            {\n                \"parent_group\": \"\",\n                \"group_name\":
+    \"epoch-ws-creator\"\n            }\n        ],\n        \"group_mappings\": {\n
+    \           \"realm_role_mappings\": [\n                {\n                    \"role_name\":
+    \"epoch-user\",\n                    \"group_name\": \"epoch-user\"\n                }\n
+    \           ],\n            \"clients_role_mappings\": [\n                {\n
+    \                   \"role_name\": \"ws-create\",\n                    \"client_id\":
+    \"epoch-system\",\n                    \"group_name\": \"epoch-ws-creator\"\n
+    \               }\n            ]\n        },\n        \"default_group_name\":
     \"epoch-user\",\n        \"users\": [\n            {\n                \"user_info\":
     {\n                    \"username\": \"epoch-admin\",\n                    \"firstName\":
     \"システム\",\n                    \"lastName\": \"管理者\",\n                    \"groups\":
@@ -424,24 +426,29 @@ data:
     \                           \"view-applications\",\n                            \"manage-consent\"\n
     \                       ]\n                    }\n                ]\n            }\n
     \       ],\n        \"admin_users\": [\n        ],\n        \"clients\": [\n            {\n
-    \               \"id\": \"epoch-system\",\n                \"protocol\": \"openid-connect\",\n
-    \               \"publicClient\": \"false\",\n                \"redirectUris\":
-    [\n                    \"https://${PRM_MY_HOST}:30443/oidc-redirect/\",\n                    \"https://${PRM_MY_HOST}:30443/\"\n
-    \               ],\n                \"baseUrl\": \"https://${PRM_MY_HOST}:30443/oidc-redirect/\",\n
-    \               \"webOrigins\": [],\n                \"protocolMappers\": [\n
-    \                   {\n                        \"name\": \"epoch-system-client-map-role\",\n
-    \                       \"protocol\": \"openid-connect\",\n                        \"protocolMapper\":
-    \"oidc-usermodel-client-role-mapper\",\n                        \"config\": {\n
-    \                           \"id.token.claim\": \"true\",\n                            \"access.token.claim\":
-    \"true\",\n                            \"claim.name\": \"epoch-role\",\n                            \"multivalued\":
-    \"true\",\n                            \"userinfo.token.claim\": \"true\",\n                            \"usermodel.clientRoleMapping.clientId\":
-    \"epoch-system\"\n                        }\n                    },\n                    {\n
-    \                       \"name\": \"epoch-system-map-role\",\n                        \"protocol\":
-    \"openid-connect\",\n                        \"protocolMapper\": \"oidc-usermodel-realm-role-mapper\",\n
-    \                       \"config\": {\n                            \"id.token.claim\":
-    \"true\",\n                            \"access.token.claim\": \"true\",\n                            \"claim.name\":
-    \"epoch-role\",\n                            \"multivalued\": \"true\",\n                            \"userinfo.token.claim\":
-    \"true\"\n                        }\n                    }\n                ]\n
+    \               \"client_info\": {\n                    \"id\": \"epoch-system\",\n
+    \                   \"protocol\": \"openid-connect\",\n                    \"publicClient\":
+    \"false\",\n                    \"redirectUris\": [\n                        \"https://${PRM_MY_HOST}:30443/oidc-redirect/\",\n
+    \                       \"https://${PRM_MY_HOST}:30443/\"\n                    ],\n
+    \                   \"baseUrl\": \"https://${PRM_MY_HOST}:30443/oidc-redirect/\",\n
+    \                   \"webOrigins\": [],\n                    \"protocolMappers\":
+    [\n                        {\n                            \"name\": \"epoch-system-client-map-role\",\n
+    \                           \"protocol\": \"openid-connect\",\n                            \"protocolMapper\":
+    \"oidc-usermodel-client-role-mapper\",\n                            \"config\":
+    {\n                                \"id.token.claim\": \"true\",\n                                \"access.token.claim\":
+    \"true\",\n                                \"claim.name\": \"epoch-role\",\n                                \"multivalued\":
+    \"true\",\n                                \"userinfo.token.claim\": \"true\",\n
+    \                               \"usermodel.clientRoleMapping.clientId\": \"epoch-system\"\n
+    \                           }\n                        },\n                        {\n
+    \                           \"name\": \"epoch-system-map-role\",\n                            \"protocol\":
+    \"openid-connect\",\n                            \"protocolMapper\": \"oidc-usermodel-realm-role-mapper\",\n
+    \                           \"config\": {\n                                \"id.token.claim\":
+    \"true\",\n                                \"access.token.claim\": \"true\",\n
+    \                               \"claim.name\": \"epoch-role\",\n                                \"multivalued\":
+    \"true\",\n                                \"userinfo.token.claim\": \"true\"\n
+    \                           }\n                        }\n                    ]\n
+    \               },\n                \"client_roles\": [\n                    {\n
+    \                       \"name\": \"ws-create\"\n                    }\n                ]\n
     \           }\n        ],\n        \"conf_template\": \"epoch-system-template.conf\",\n
     \       \"token_user\": \"admin\",\n        \"token_password\": \"${KEYCLOAK_ADMIN_PASSW}\",\n
     \       \"token_realm_name\": \"master\"\n    }\nEOF\nif [ $? -ne 0 ]; then\n
