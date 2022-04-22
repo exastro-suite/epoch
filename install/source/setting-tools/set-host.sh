@@ -440,8 +440,7 @@ curl \
         },
         "realm_roles": [
             "epoch-user",
-            "epoch-system",
-            "epoch-ws-create"
+            "epoch-system"
         ],
         "groups": [
             {
@@ -453,16 +452,21 @@ curl \
                 "group_name": "epoch-ws-creator"
             }
         ],
-        "group_mappings": [
-            {
-                "role_name": "epoch-user",
-                "group_name": "epoch-user"
-            },
-            {
-                "role_name": "epoch-ws-create",
-                "group_name": "epoch-ws-creator"
-            }
-        ],
+        "group_mappings": {
+            "realm_role_mappings": [
+                {
+                    "role_name": "epoch-user",
+                    "group_name": "epoch-user"
+                }
+            ],
+            "clients_role_mappings": [
+                {
+                    "role_name": "ws-create",
+                    "client_id": "epoch-system",
+                    "group_name": "epoch-ws-creator"
+                }
+            ]
+        },
         "default_group_name": "epoch-user",
         "users": [
             {
@@ -524,40 +528,47 @@ curl \
         ],
         "clients": [
             {
-                "id": "epoch-system",
-                "protocol": "openid-connect",
-                "publicClient": "false",
-                "redirectUris": [
-                    "https://${PRM_MY_HOST}:30443/oidc-redirect/",
-                    "https://${PRM_MY_HOST}:30443/"
-                ],
-                "baseUrl": "https://${PRM_MY_HOST}:30443/oidc-redirect/",
-                "webOrigins": [],
-                "protocolMappers": [
-                    {
-                        "name": "epoch-system-client-map-role",
-                        "protocol": "openid-connect",
-                        "protocolMapper": "oidc-usermodel-client-role-mapper",
-                        "config": {
-                            "id.token.claim": "true",
-                            "access.token.claim": "true",
-                            "claim.name": "epoch-role",
-                            "multivalued": "true",
-                            "userinfo.token.claim": "true",
-                            "usermodel.clientRoleMapping.clientId": "epoch-system"
+                "client_info": {
+                    "id": "epoch-system",
+                    "protocol": "openid-connect",
+                    "publicClient": "false",
+                    "redirectUris": [
+                        "https://${PRM_MY_HOST}:30443/oidc-redirect/",
+                        "https://${PRM_MY_HOST}:30443/"
+                    ],
+                    "baseUrl": "https://${PRM_MY_HOST}:30443/oidc-redirect/",
+                    "webOrigins": [],
+                    "protocolMappers": [
+                        {
+                            "name": "epoch-system-client-map-role",
+                            "protocol": "openid-connect",
+                            "protocolMapper": "oidc-usermodel-client-role-mapper",
+                            "config": {
+                                "id.token.claim": "true",
+                                "access.token.claim": "true",
+                                "claim.name": "epoch-role",
+                                "multivalued": "true",
+                                "userinfo.token.claim": "true",
+                                "usermodel.clientRoleMapping.clientId": "epoch-system"
+                            }
+                        },
+                        {
+                            "name": "epoch-system-map-role",
+                            "protocol": "openid-connect",
+                            "protocolMapper": "oidc-usermodel-realm-role-mapper",
+                            "config": {
+                                "id.token.claim": "true",
+                                "access.token.claim": "true",
+                                "claim.name": "epoch-role",
+                                "multivalued": "true",
+                                "userinfo.token.claim": "true"
+                            }
                         }
-                    },
+                    ]
+                },
+                "client_roles": [
                     {
-                        "name": "epoch-system-map-role",
-                        "protocol": "openid-connect",
-                        "protocolMapper": "oidc-usermodel-realm-role-mapper",
-                        "config": {
-                            "id.token.claim": "true",
-                            "access.token.claim": "true",
-                            "claim.name": "epoch-role",
-                            "multivalued": "true",
-                            "userinfo.token.claim": "true"
-                        }
+                        "name": "ws-create"
                     }
                 ]
             }
