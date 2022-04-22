@@ -859,6 +859,31 @@ def post_cd_pipeline_argocd_sync(workspace_id):
         req_json = request.json.copy()
         environment_id = req_json["environment_id"]
 
+        # ユーザIDの取得 get user id
+        user_id = common.get_current_user(request.headers)
+
+        # workspace GET送信 workspace get
+        api_url = "{}://{}:{}/workspace/{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+                                                    os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                    os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                    workspace_id)
+        response = requests.get(api_url)
+
+        # 取得できなかった場合は、終了する If it cannot be obtained, it will end.
+        if response.status_code != 200:
+            error_detail = multi_lang.get_text("EP020-0013", "ワークスペース情報の取得に失敗しました")
+            globals.logger.error(error_detail)
+            raise common.UserException("{} Error workspace info get status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
+
+        # 取得したJSON結果が正常でない場合、例外を返す If the JSON result obtained is not normal, an exception will be returned.
+        ret = json.loads(response.text)
+        workspace_info = ret["rows"][0]
+
+        # CD実行権限があるかチェックする Check if you have CD execution permission
+        if not permission_to_execute(user_id, workspace_id, workspace_info, environment_id = environment_id):
+            error_detail = multi_lang.get_text("EP020-0020", "CD実行権限がありません")
+            globals.logger.debug(error_detail)
+            raise common.AuthException(error_detail)
 
         # ArgoCD Sync call 
         api_url = "{}://{}:{}/workspace/{}/argocd/app/{}/sync".format(os.environ['EPOCH_CONTROL_ARGOCD_PROTOCOL'],
@@ -878,6 +903,8 @@ def post_cd_pipeline_argocd_sync(workspace_id):
         # 戻り値をそのまま返却        
         return jsonify({"result": ret_status}), ret_status
 
+    except common.AuthException as e:
+        return jsonify({"result": 401, "errorDetail": error_detail}), 401
     except common.UserException as e:
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
     except Exception as e:
@@ -912,6 +939,31 @@ def post_cd_pipeline_argocd_rollback(workspace_id):
         req_json = request.json.copy()
         environment_id = req_json["environment_id"]
 
+        # ユーザIDの取得 get user id
+        user_id = common.get_current_user(request.headers)
+
+        # workspace GET送信 workspace get
+        api_url = "{}://{}:{}/workspace/{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
+                                                    os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                    os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                    workspace_id)
+        response = requests.get(api_url)
+
+        # 取得できなかった場合は、終了する If it cannot be obtained, it will end.
+        if response.status_code != 200:
+            error_detail = multi_lang.get_text("EP020-0013", "ワークスペース情報の取得に失敗しました")
+            globals.logger.error(error_detail)
+            raise common.UserException("{} Error workspace info get status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
+
+        # 取得したJSON結果が正常でない場合、例外を返す If the JSON result obtained is not normal, an exception will be returned.
+        ret = json.loads(response.text)
+        workspace_info = ret["rows"][0]
+
+        # CD実行権限があるかチェックする Check if you have CD execution permission
+        if not permission_to_execute(user_id, workspace_id, workspace_info, environment_id = environment_id):
+            error_detail = multi_lang.get_text("EP020-0020", "CD実行権限がありません")
+            globals.logger.debug(error_detail)
+            raise common.AuthException(error_detail)
 
         # ArgoCD Sync call 
         api_url = "{}://{}:{}/workspace/{}/argocd/app/{}/rollback".format(os.environ['EPOCH_CONTROL_ARGOCD_PROTOCOL'],
@@ -931,6 +983,8 @@ def post_cd_pipeline_argocd_rollback(workspace_id):
         # 戻り値をそのまま返却        
         return jsonify({"result": ret_status}), ret_status
 
+    except common.AuthException as e:
+        return jsonify({"result": 401, "errorDetail": error_detail}), 401
     except common.UserException as e:
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
     except Exception as e:
@@ -990,45 +1044,8 @@ def cd_execute(workspace_id):
         # ユーザIDの取得 get user id
         user_id = common.get_current_user(request.headers)
 
-        # CD実行権限があるかチェックする Check if you have CD execution permission
-        check_role = const.ROLE_WS_ROLE_CD_EXECUTE[0].format(workspace_id)
 
-        # 取得したユーザーのロールを取得 Get the role of the acquired user
-        api_url = "{}://{}:{}/{}/user/{}/roles/epoch-system".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
-                                                                os.environ['EPOCH_EPAI_API_HOST'],
-                                                                os.environ['EPOCH_EPAI_API_PORT'],
-                                                                os.environ["EPOCH_EPAI_REALM_NAME"],
-                                                                user_id
-                                                        )
-
-        #
-        # get user role - ユーザーロール情報取得
-        #
-        response = requests.get(api_url)
-        if response.status_code != 200:
-            error_detail = multi_lang.get_text("EP020-0009", "ユーザーロール情報の取得に失敗しました")
-            globals.logger.error(error_detail)
-            raise common.UserException("{} Error user role get status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
-
-        ret_roles = json.loads(response.text)
-        # globals.logger.debug(f"roles:{ret_roles}")
-
-        exist_role = False
-        # 取得したすべてのロールにCD実行があるかチェックする Check if all the retrieved roles have a CD run
-        for get_role in ret_roles["rows"]:
-            # globals.logger.debug('role:{}'.format(get_role["name"]))
-            # ロールがあればチェックOK Check OK if there is a roll
-            if get_role["name"] == check_role:
-                exist_role = True
-                break
-
-        # 権限がない場合はエラーとする If you do not have permission, an error will occur.
-        if not exist_role:
-            error_detail = multi_lang.get_text("EP020-0020", "CD実行権限がありません")
-            globals.logger.error(error_detail)
-            raise common.AuthException(error_detail)
-
-
+        # TODO
         # workspace GET送信 workspace get
         api_url = "{}://{}:{}/workspace/{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
                                                     os.environ['EPOCH_RS_WORKSPACE_HOST'],
@@ -1046,30 +1063,15 @@ def cd_execute(workspace_id):
         ret = json.loads(response.text)
         workspace_info = ret["rows"][0]
 
-        dest_namespace = ""
-        # workspace情報のCD実行権限があるかチェックする Check if you have CD execution permission for workspace information
-        found_user = False
-        # 環境情報がない場合も考慮 Consider even if there is no environmental information
-        if "environments" in workspace_info["cd_config"]:
-            # 選択された環境と一致するまで環境情報をすべて処理する Process all environment information until it matches the selected environment
-            for env in workspace_info["cd_config"]["environments"]:
-                # 実行環境に該当する情報のユーザーIDを取得する Acquire the user ID of the information corresponding to the execution environment
-                if env["name"] == request_json["environmentName"]:
-                    dest_namespace = env["deploy_destination"]["namespace"]
-                    # CD実行権限ありの人すべての場合は、OKとする OK for all people with CD execution permission
-                    if env["cd_exec_users"]["user_select"] == "all":
-                        found_user = True
-                        break
-                    # 選択肢の場合は、該当するユーザーがあるかどうかチェックする If it's an option, check if there is a suitable user
-                    elif user_id in env["cd_exec_users"]["user_id"]:
-                        found_user = True
-                        break
-
-        # 最終的に実行可能かチェックする Check if it is finally feasible
-        if not found_user:
+        # CD実行権限があるかチェックする Check if you have CD execution permission
+        if not permission_to_execute(user_id, workspace_id, workspace_info, environment_name = request_json["environmentName"]):
             error_detail = multi_lang.get_text("EP020-0020", "CD実行権限がありません")
-            globals.logger.error(error_detail)
+            globals.logger.debug(error_detail)
             raise common.AuthException(error_detail)
+
+        dest_environment = next(filter(lambda env: env['name'] == request_json["environmentName"], workspace_info["cd_config"]["environments"]), None)
+        dest_namespace = dest_environment["deploy_destination"]["namespace"]
+
 
         api_url = "{}://{}:{}/{}/user/{}".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
                                                 os.environ['EPOCH_EPAI_API_HOST'],
@@ -1232,45 +1234,6 @@ def cd_execute_cancel(workspace_id, trace_id):
         # ユーザIDの取得 get user id
         user_id = common.get_current_user(request.headers)
 
-        # CD実行権限があるかチェックする Check if you have CD execution permission
-        check_role = const.ROLE_WS_ROLE_CD_EXECUTE[0].format(workspace_id)
-
-        # 取得したユーザーのロールを取得 Get the role of the acquired user
-        api_url = "{}://{}:{}/{}/user/{}/roles/epoch-system".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
-                                                                os.environ['EPOCH_EPAI_API_HOST'],
-                                                                os.environ['EPOCH_EPAI_API_PORT'],
-                                                                os.environ["EPOCH_EPAI_REALM_NAME"],
-                                                                user_id
-                                                        )
-
-        #
-        # get user role - ユーザーロール情報取得
-        #
-        response = requests.get(api_url)
-        if response.status_code != 200:
-            error_detail = multi_lang.get_text("EP020-0009", "ユーザーロール情報の取得に失敗しました")
-            globals.logger.debug(error_detail)
-            raise common.UserException("{} Error user role get status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
-
-        ret_roles = json.loads(response.text)
-        # globals.logger.debug(f"roles:{ret_roles}")
-
-        exist_role = False
-        # 取得したすべてのロールにCD実行があるかチェックする Check if all the retrieved roles have a CD run
-        for get_role in ret_roles["rows"]:
-            # globals.logger.debug('role:{}'.format(get_role["name"]))
-            # ロールがあればチェックOK Check OK if there is a roll
-            if get_role["name"] == check_role:
-                exist_role = True
-                break
-
-        # 権限がない場合はエラーとする If you do not have permission, an error will occur.
-        if not exist_role:
-            error_detail = multi_lang.get_text("EP020-0020", "CD実行権限がありません")
-            globals.logger.debug(error_detail)
-            raise common.AuthException(error_detail)
-
-
         # workspace GET送信 workspace get
         api_url = "{}://{}:{}/workspace/{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
                                                     os.environ['EPOCH_RS_WORKSPACE_HOST'],
@@ -1308,30 +1271,15 @@ def cd_execute_cancel(workspace_id, trace_id):
         cd_result_info = json.loads(ret["rows"][0]["contents"])
         globals.logger.debug(f"cd_result_info{cd_result_info}")
 
-        dest_namespace = ""
-        # workspace情報のCD実行権限があるかチェックする Check if you have CD execution permission for workspace information
-        found_user = False
-        # 環境情報がない場合も考慮 Consider even if there is no environmental information
-        if "environments" in workspace_info["cd_config"]:
-            # 選択された環境と一致するまで環境情報をすべて処理する Process all environment information until it matches the selected environment
-            for env in workspace_info["cd_config"]["environments"]:
-                # 実行環境に該当する情報のユーザーIDを取得する Acquire the user ID of the information corresponding to the execution environment
-                if env["name"] == cd_result_info["environment_name"]:
-                    dest_namespace = env["deploy_destination"]["namespace"]
-                    # CD実行権限ありの人すべての場合は、OKとする OK for all people with CD execution permission
-                    if env["cd_exec_users"]["user_select"] == "all":
-                        found_user = True
-                        break
-                    # 選択肢の場合は、該当するユーザーがあるかどうかチェックする If it's an option, check if there is a suitable user
-                    elif user_id in env["cd_exec_users"]["user_id"]:
-                        found_user = True
-                        break
-
-        # 最終的に実行可能かチェックする Check if it is finally feasible
-        if not found_user:
+        # CD実行権限があるかチェックする Check if you have CD execution permission
+        if not permission_to_execute(user_id, workspace_id, workspace_info, environment_name = cd_result_info["environment_name"]):
             error_detail = multi_lang.get_text("EP020-0020", "CD実行権限がありません")
             globals.logger.debug(error_detail)
             raise common.AuthException(error_detail)
+
+        dest_environment = next(filter(lambda env: env['name'] == cd_result_info["environment_name"], workspace_info["cd_config"]["environments"]), None)
+        dest_namespace = dest_environment["deploy_destination"]["namespace"]
+
 
         api_url = "{}://{}:{}/{}/user/{}".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
                                                 os.environ['EPOCH_EPAI_API_HOST'],
@@ -1408,6 +1356,68 @@ def cd_execute_cancel(workspace_id, trace_id):
     except Exception as e:
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
 
+
+def permission_to_execute(user_id, workspace_id, workspace_info, environment_id = None, environment_name = None):
+    """実行権限チェック
+
+    Args:
+        user_id (str): user id
+        workspace_id (int): workspace id
+        workspace_info (dict): workspace info (not required)
+        environment_id (str): environment id (not required)
+        environment_name (str): environment name (not required)
+    Returns:
+        Bool: True: Authorized / common.UserException, common.AuthException  : Unauthorized
+    """
+
+    check_role = const.ROLE_WS_ROLE_CD_EXECUTE[0].format(workspace_id)
+
+    # ユーザーのロールを取得 Get the role of the acquired user
+    api_url = "{}://{}:{}/{}/user/{}/roles/epoch-system".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
+                                                            os.environ['EPOCH_EPAI_API_HOST'],
+                                                            os.environ['EPOCH_EPAI_API_PORT'],
+                                                            os.environ["EPOCH_EPAI_REALM_NAME"],
+                                                            user_id
+                                                    )
+
+    # get user role - ユーザーロール情報取得
+    response = requests.get(api_url)
+    if response.status_code != 200:
+        error_detail = multi_lang.get_text("EP020-0009", "ユーザーロール情報の取得に失敗しました")
+        globals.logger.error(error_detail)
+        raise common.UserException("{} Error user role get status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
+
+    ret_roles = json.loads(response.text)
+
+    # 取得したすべてのロールにCD実行があるかチェックする Check if all the retrieved roles have a CD run
+    if next(filter(lambda role: role['name'] == check_role, ret_roles['rows']), None) is None:
+        # 権限がない場合はエラーとする If you do not have permission, an error will occur.
+        error_detail = multi_lang.get_text("EP020-0020", "CD実行権限がありません")
+        globals.logger.error(error_detail)
+        raise common.AuthException(error_detail)
+
+    authorized = False
+    if "environments" in workspace_info["cd_config"]:
+        env = None
+        if not environment_name is None:
+            env = next(filter(lambda env: env['name'] == environment_name, workspace_info["cd_config"]["environments"]), None)
+        if not environment_id is None:
+            env = next(filter(lambda env: env['environment_id'] == environment_id, workspace_info["cd_config"]["environments"]), None)
+        
+        if not env is None:
+            # CD実行権限ありの人すべての場合は、OKとする OK for all people with CD execution permission
+            if env['cd_exec_users']['user_select'] == "all":
+                authorized = True
+            # 選択肢の場合は、該当するユーザーがあるかどうかチェックする If it's an option, check if there is a suitable user
+            elif user_id in env["cd_exec_users"]["user_id"]:
+                authorized = True
+
+    if not authorized:
+        error_detail = multi_lang.get_text("EP020-0020", "CD実行権限がありません")
+        globals.logger.error(error_detail)
+        raise common.AuthException(error_detail)
+
+    return authorized
 
 def search_opration_id(opelist, column_indexes, git_url):
     """オペレーションの検索
