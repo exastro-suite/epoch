@@ -2507,7 +2507,6 @@ stringData:
   GATEWAY_CRYPTO_PASSPHRASE: ""
   KEYCLOAK_USER:  "admin"
   KEYCLOAK_PASSWORD: "admin"
-  EPOCH_PASSWORD: ""
   KEYCLOAK_DB_USER: "keycloak"
   KEYCLOAK_DB_PASSWORD: "password"
   KEYCLOAK_DB_ROOT_PASSWORD: "password"
@@ -7768,9 +7767,8 @@ data:
     get secret exastro-platform-authentication-infra-secret -n exastro-platform-authentication-infra
     -o json)\nSAVE_OIDC_PASSPHRASE_B64=$(echo -n \"${SAVE_INFRA_SECRET}\" | jq -r
     \".data.SAVE_GATEWAY_CRYPTO_PASSPHRASE\")\nSAVE_KEYCLOAK_PASS_B64=$(echo -n \"${SAVE_INFRA_SECRET}\"
-    | jq -r \".data.SAVE_KEYCLOAK_PASSWORD\")\nSAVE_EPOCH_PASS_B64=$(echo -n \"${SAVE_INFRA_SECRET}\"
-    | jq -r \".data.SAVE_EPOCH_PASSWORD\")\nif [ -n \"$SAVE_KEYCLOAK_PASS_B64\" -a
-    \"${SAVE_KEYCLOAK_PASS_B64}\" != \"null\" ]; then\n\n    SAVE_KEYCLOAK_PASS=$(echo
+    | jq -r \".data.SAVE_KEYCLOAK_PASSWORD\")\nif [ -n \"$SAVE_KEYCLOAK_PASS_B64\"
+    -a \"${SAVE_KEYCLOAK_PASS_B64}\" != \"null\" ]; then\n\n    SAVE_KEYCLOAK_PASS=$(echo
     -n \"${SAVE_KEYCLOAK_PASS_B64}\" | base64 -d)\n    #\n    # get token check\n
     \   #\n    BEAR=$(curl -k -s \\\n        -d \"client_id=admin-cli\" \\\n        -d
     \"username=admin\" \\\n        -d \"password=${SAVE_KEYCLOAK_PASS}\" \\\n        -d
@@ -7782,11 +7780,11 @@ data:
     \       exit 1\n    fi\n\n    kubectl patch secret -n exastro-platform-authentication-infra
     exastro-platform-authentication-infra-secret -p \"\\\n    {\\\n        \\\"data\\\"
     : {\\\n            \\\"GATEWAY_CRYPTO_PASSPHRASE\\\" : \\\"${SAVE_OIDC_PASSPHRASE_B64}\\\",\\\n
-    \           \\\"KEYCLOAK_PASSWORD\\\" : \\\"${SAVE_KEYCLOAK_PASS_B64}\\\",\\\n
-    \           \\\"EPOCH_PASSWORD\\\" : \\\"${SAVE_EPOCH_PASS_B64}\\\"\\\n        }\\\n
-    \   }\" &> \"${CMD_RESULT}\"\n    if [ $? -ne 0 ]; then\n        logger \"ERROR\"
-    \"CALL : kubectl patch secret -n exastro-platform-authentication-infra exastro-platform-authentication-infra-secret${LF}`cat
-    ${CMD_RESULT}`\"\n        logger \"ERROR\" \"initialize patch secret exastro-platform-authentication-infra-secret\"\n
+    \           \\\"KEYCLOAK_PASSWORD\\\" : \\\"${SAVE_KEYCLOAK_PASS_B64}\\\"\\\n
+    \       }\\\n    }\" &> \"${CMD_RESULT}\"\n    if [ $? -ne 0 ]; then\n        logger
+    \"ERROR\" \"CALL : kubectl patch secret -n exastro-platform-authentication-infra
+    exastro-platform-authentication-infra-secret${LF}`cat ${CMD_RESULT}`\"\n        logger
+    \"ERROR\" \"initialize patch secret exastro-platform-authentication-infra-secret\"\n
     \       exit 2\n    fi\n\n    logger \"ERROR\" \"Cannot initialize because it
     is already set\"\n    exit 1\nfi\n\n#\n# Initialize Setting Parameter\n#\nSTEP=$(expr
     ${STEP} + 1)\nlogger \"INFO\" \"**** STEP : ${STEP} / ${ALLSTEPS} : Initialize
@@ -7799,12 +7797,7 @@ data:
     $? -ne 0 -o -z \"${KEYCLOAK_ADMIN_PASSW}\" ]; then\n    logger \"ERROR\" \"Generate
     KEYCLOAK_ADMIN_PASSW\"\n    exit 2\nfi\n\nKEYCLOAK_ADMIN_PASSW_B64=$(echo -n \"${KEYCLOAK_ADMIN_PASSW}\"
     | base64)\nif [ $? -ne 0 -o -z \"${KEYCLOAK_ADMIN_PASSW_B64}\" ]; then\n    logger
-    \"ERROR\" \"Generate KEYCLOAK_ADMIN_PASSW_B64\"\n    exit 2\nfi\n\nEPOCH_ADMIN_PASSWD=$(<
-    /dev/urandom tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq)\nif [
-    $? -ne 0 -o -z \"${EPOCH_ADMIN_PASSWD}\" ]; then\n    logger \"ERROR\" \"Generate
-    EPOCH_ADMIN_PASSWD\"\n    exit 2\nfi\n\nEPOCH_ADMIN_PASSWD_B64=$(echo -n \"${EPOCH_ADMIN_PASSWD}\"
-    | base64)\nif [ $? -ne 0 -o -z \"${EPOCH_ADMIN_PASSWD_B64}\" ]; then\n    logger
-    \"ERROR\" \"Generate EPOCH_ADMIN_PASSWD_B64\"\n    exit 2\nfi\n\n#\n# wait for
+    \"ERROR\" \"Generate KEYCLOAK_ADMIN_PASSW_B64\"\n    exit 2\nfi\n\n#\n# wait for
     keycloak pod\n#\nSTEP=$(expr ${STEP} + 1)\nlogger \"INFO\" \"**** STEP : ${STEP}
     / ${ALLSTEPS} : wait for keycloak pod ...\"\n\necho -n \"waiting ...\"\nwhile
     true; do\n    sleep 3;\n    echo -n \".\";\n    NOT_READY_COUNT=$(\n        kubectl
@@ -7848,12 +7841,11 @@ data:
     ${CMD_RESULT}`\"\n\n\nkubectl patch secret -n exastro-platform-authentication-infra
     exastro-platform-authentication-infra-secret -p \"\\\n{\\\n    \\\"data\\\" :
     {\\\n        \\\"GATEWAY_CRYPTO_PASSPHRASE\\\" : \\\"${OIDC_PASSPHRASE_B64}\\\",\\\n
-    \       \\\"KEYCLOAK_PASSWORD\\\" : \\\"${KEYCLOAK_ADMIN_PASSW_B64}\\\",\\\n        \\\"EPOCH_PASSWORD\\\"
-    : \\\"${EPOCH_ADMIN_PASSWD_B64}\\\"\\\n    }\\\n}\" &> \"${CMD_RESULT}\"\nif [
-    $? -ne 0 ]; then\n    logger \"ERROR\" \"CALL : kubectl patch secret -n exastro-platform-authentication-infra
-    exastro-platform-authentication-infra-secret${LF}`cat ${CMD_RESULT}`\"\n    logger
-    \"ERROR\" \"patch secret exastro-platform-authentication-infra-secret\"\n    exit
-    2\nfi\nlogger \"INFO\" \"CALL : kubectl patch secret -n exastro-platform-authentication-infra
+    \       \\\"KEYCLOAK_PASSWORD\\\" : \\\"${KEYCLOAK_ADMIN_PASSW_B64}\\\"\\\n    }\\\n}\"
+    &> \"${CMD_RESULT}\"\nif [ $? -ne 0 ]; then\n    logger \"ERROR\" \"CALL : kubectl
+    patch secret -n exastro-platform-authentication-infra exastro-platform-authentication-infra-secret${LF}`cat
+    ${CMD_RESULT}`\"\n    logger \"ERROR\" \"patch secret exastro-platform-authentication-infra-secret\"\n
+    \   exit 2\nfi\nlogger \"INFO\" \"CALL : kubectl patch secret -n exastro-platform-authentication-infra
     exastro-platform-authentication-infra-secret${LF}`cat ${CMD_RESULT}`\"\n\n#\n#
     restart to reflect the settings\n#\nSTEP=$(expr ${STEP} + 1)\nlogger \"INFO\"
     \"**** STEP : ${STEP} / ${ALLSTEPS} : restart to reflect the settings ...\"\n\nkubectl
@@ -7933,10 +7925,9 @@ data:
     \   exit 2\nfi\n\nkubectl patch secret -n exastro-platform-authentication-infra
     exastro-platform-authentication-infra-secret -p \"\\\n{\\\n    \\\"data\\\" :
     {\\\n        \\\"SAVE_GATEWAY_CRYPTO_PASSPHRASE\\\" : \\\"${OIDC_PASSPHRASE_B64}\\\",\\\n
-    \       \\\"SAVE_KEYCLOAK_PASSWORD\\\" : \\\"${KEYCLOAK_ADMIN_PASSW_B64}\\\",\\\n
-    \       \\\"SAVE_EPOCH_PASSWORD\\\" : \\\"${EPOCH_ADMIN_PASSWD_B64}\\\"\\\n    }\\\n}\"
-    &> \"${CMD_RESULT}\"\nif [ $? -ne 0 ]; then\n    logger \"ERROR\" \"CALL : kubectl
-    patch secret -n exastro-platform-authentication-infra exastro-platform-authentication-infra-secret${LF}`cat
+    \       \\\"SAVE_KEYCLOAK_PASSWORD\\\" : \\\"${KEYCLOAK_ADMIN_PASSW_B64}\\\"\\\n
+    \   }\\\n}\" &> \"${CMD_RESULT}\"\nif [ $? -ne 0 ]; then\n    logger \"ERROR\"
+    \"CALL : kubectl patch secret -n exastro-platform-authentication-infra exastro-platform-authentication-infra-secret${LF}`cat
     ${CMD_RESULT}`\"\n    logger \"ERROR\" \"patch secret exastro-platform-authentication-infra-secret\"\n
     \   exit 2\nfi\n\nlogger \"INFO\" \"CALL : keycloak put admin new password\"\n\n#\n#
     Setting api call\n#\nSTEP=$(expr ${STEP} + 1)\nlogger \"INFO\" \"**** STEP : ${STEP}
@@ -7945,17 +7936,41 @@ data:
     \\\n    -Ss \\\n    -o \"${API_RESPONSE}\" \\\n    http://authentication-infra-api.exastro-platform-authentication-infra.svc:8000/settings
     \\\n    << EOF\n    {\n        \"realm_name\": \"exastroplatform\",\n        \"realm_option\":
     {\n            \"displayName\": \"Exastro Platform\",\n            \"enabled\":
-    \"True\",\n            \"registrationAllowed\": \"True\"\n        },\n        \"realm_roles\":
-    [\n            \"epoch-user\",\n            \"epoch-system\"\n        ],\n        \"groups\":
+    \"True\",\n            \"registrationAllowed\": \"True\",\n            \"internationalizationEnabled\":
+    true,\n            \"supportedLocales\": [ \"ja\" ],\n            \"defaultLocale\":
+    \"ja\"\n        },\n        \"realm_roles\": [\n            \"epoch-user\",\n
+    \           \"epoch-system\",\n            \"epoch-ws-create\"\n        ],\n        \"groups\":
     [\n            {\n                \"parent_group\": \"\",\n                \"group_name\":
-    \"epoch-user\"\n            }\n        ],\n        \"group_mappings\": [\n            {\n
-    \               \"role_name\": \"epoch-user\",\n                \"group_name\":
-    \"epoch-user\"\n            }\n        ],\n        \"default_group_name\": \"epoch-user\",\n
-    \       \"users\": [\n        ],\n        \"admin_users\": [\n            {\n
-    \               \"user_name\": \"epoch-admin\",\n                \"user_password\":
-    \"${EPOCH_ADMIN_PASSWD}\",\n                \"user_groups\": [],\n                \"user_realm_roles\":
-    [],\n                \"user_option\": {\n                    \"enabled\": \"True\"\n
-    \               }\n            }\n        ],\n        \"clients\": [\n            {\n
+    \"epoch-user\"\n            },\n            {\n                \"parent_group\":
+    \"\",\n                \"group_name\": \"epoch-ws-creator\"\n            }\n        ],\n
+    \       \"group_mappings\": [\n            {\n                \"role_name\": \"epoch-user\",\n
+    \               \"group_name\": \"epoch-user\"\n            },\n            {\n
+    \               \"role_name\": \"epoch-ws-create\",\n                \"group_name\":
+    \"epoch-ws-creator\"\n            }\n        ],\n        \"default_group_name\":
+    \"epoch-user\",\n        \"users\": [\n            {\n                \"user_info\":
+    {\n                    \"username\": \"epoch-admin\",\n                    \"firstName\":
+    \"システム\",\n                    \"lastName\": \"管理者\",\n                    \"groups\":
+    [\n                        \"epoch-user\", \"epoch-ws-creator\"\n                    ],\n
+    \                   \"realmRoles\": [],\n                    \"requiredActions\":
+    [ \"UPDATE_PROFILE\" ],\n                    \"credentials\": [\n                        {\n
+    \                           \"type\": \"password\",\n                            \"value\":
+    \"password\",\n                            \"temporary\": \"True\"\n                        }\n
+    \                   ],\n                    \"enabled\": \"True\"\n                },\n
+    \               \"client_roles\": [\n                    {\n                        \"client_name\":
+    \"realm-management\",\n                        \"roles\": [\n                            \"manage-clients\",\n
+    \                           \"query-realms\",\n                            \"realm-admin\",\n
+    \                           \"manage-realm\",\n                            \"create-client\",\n
+    \                           \"manage-events\",\n                            \"impersonation\",\n
+    \                           \"manage-users\",\n                            \"manage-authorization\",\n
+    \                           \"query-groups\",\n                            \"query-users\",\n
+    \                           \"manage-identity-providers\",\n                            \"query-clients\"\n
+    \                       ]\n                    },\n                    {\n                        \"client_name\":
+    \"broker\",\n                        \"roles\": [\n                            \"read-token\"\n
+    \                       ]\n                    },\n                    {\n                        \"client_name\":
+    \"account\",\n                        \"roles\": [\n                            \"delete-account\",\n
+    \                           \"view-applications\",\n                            \"manage-consent\"\n
+    \                       ]\n                    }\n                ]\n            }\n
+    \       ],\n        \"admin_users\": [\n        ],\n        \"clients\": [\n            {\n
     \               \"id\": \"epoch-system\",\n                \"protocol\": \"openid-connect\",\n
     \               \"publicClient\": \"false\",\n                \"redirectUris\":
     [\n                    \"https://${PRM_MY_HOST}:30443/oidc-redirect/\",\n                    \"https://${PRM_MY_HOST}:30443/\"\n

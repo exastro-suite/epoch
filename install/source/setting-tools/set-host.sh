@@ -48,7 +48,6 @@ logger "INFO" "PARAM PRM_MY_HOST : ${PRM_MY_HOST}"
 SAVE_INFRA_SECRET=$(kubectl get secret exastro-platform-authentication-infra-secret -n exastro-platform-authentication-infra -o json)
 SAVE_OIDC_PASSPHRASE_B64=$(echo -n "${SAVE_INFRA_SECRET}" | jq -r ".data.SAVE_GATEWAY_CRYPTO_PASSPHRASE")
 SAVE_KEYCLOAK_PASS_B64=$(echo -n "${SAVE_INFRA_SECRET}" | jq -r ".data.SAVE_KEYCLOAK_PASSWORD")
-SAVE_EPOCH_PASS_B64=$(echo -n "${SAVE_INFRA_SECRET}" | jq -r ".data.SAVE_EPOCH_PASSWORD")
 if [ -n "$SAVE_KEYCLOAK_PASS_B64" -a "${SAVE_KEYCLOAK_PASS_B64}" != "null" ]; then
 
     SAVE_KEYCLOAK_PASS=$(echo -n "${SAVE_KEYCLOAK_PASS_B64}" | base64 -d)
@@ -75,8 +74,7 @@ if [ -n "$SAVE_KEYCLOAK_PASS_B64" -a "${SAVE_KEYCLOAK_PASS_B64}" != "null" ]; th
     {\
         \"data\" : {\
             \"GATEWAY_CRYPTO_PASSPHRASE\" : \"${SAVE_OIDC_PASSPHRASE_B64}\",\
-            \"KEYCLOAK_PASSWORD\" : \"${SAVE_KEYCLOAK_PASS_B64}\",\
-            \"EPOCH_PASSWORD\" : \"${SAVE_EPOCH_PASS_B64}\"\
+            \"KEYCLOAK_PASSWORD\" : \"${SAVE_KEYCLOAK_PASS_B64}\"\
         }\
     }" &> "${CMD_RESULT}"
     if [ $? -ne 0 ]; then
@@ -116,18 +114,6 @@ fi
 KEYCLOAK_ADMIN_PASSW_B64=$(echo -n "${KEYCLOAK_ADMIN_PASSW}" | base64)
 if [ $? -ne 0 -o -z "${KEYCLOAK_ADMIN_PASSW_B64}" ]; then
     logger "ERROR" "Generate KEYCLOAK_ADMIN_PASSW_B64"
-    exit 2
-fi
-
-EPOCH_ADMIN_PASSWD=$(< /dev/urandom tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq)
-if [ $? -ne 0 -o -z "${EPOCH_ADMIN_PASSWD}" ]; then
-    logger "ERROR" "Generate EPOCH_ADMIN_PASSWD"
-    exit 2
-fi
-
-EPOCH_ADMIN_PASSWD_B64=$(echo -n "${EPOCH_ADMIN_PASSWD}" | base64)
-if [ $? -ne 0 -o -z "${EPOCH_ADMIN_PASSWD_B64}" ]; then
-    logger "ERROR" "Generate EPOCH_ADMIN_PASSWD_B64"
     exit 2
 fi
 
@@ -231,8 +217,7 @@ kubectl patch secret -n exastro-platform-authentication-infra exastro-platform-a
 {\
     \"data\" : {\
         \"GATEWAY_CRYPTO_PASSPHRASE\" : \"${OIDC_PASSPHRASE_B64}\",\
-        \"KEYCLOAK_PASSWORD\" : \"${KEYCLOAK_ADMIN_PASSW_B64}\",\
-        \"EPOCH_PASSWORD\" : \"${EPOCH_ADMIN_PASSWD_B64}\"\
+        \"KEYCLOAK_PASSWORD\" : \"${KEYCLOAK_ADMIN_PASSW_B64}\"\
     }\
 }" &> "${CMD_RESULT}"
 if [ $? -ne 0 ]; then
@@ -416,8 +401,7 @@ kubectl patch secret -n exastro-platform-authentication-infra exastro-platform-a
 {\
     \"data\" : {\
         \"SAVE_GATEWAY_CRYPTO_PASSPHRASE\" : \"${OIDC_PASSPHRASE_B64}\",\
-        \"SAVE_KEYCLOAK_PASSWORD\" : \"${KEYCLOAK_ADMIN_PASSW_B64}\",\
-        \"SAVE_EPOCH_PASSWORD\" : \"${EPOCH_ADMIN_PASSWD_B64}\"\
+        \"SAVE_KEYCLOAK_PASSWORD\" : \"${KEYCLOAK_ADMIN_PASSW_B64}\"\
     }\
 }" &> "${CMD_RESULT}"
 if [ $? -ne 0 ]; then
@@ -449,37 +433,94 @@ curl \
         "realm_option": {
             "displayName": "Exastro Platform",
             "enabled": "True",
-            "registrationAllowed": "True"
+            "registrationAllowed": "True",
+            "internationalizationEnabled": true,
+            "supportedLocales": [ "ja" ],
+            "defaultLocale": "ja"
         },
         "realm_roles": [
             "epoch-user",
-            "epoch-system"
+            "epoch-system",
+            "epoch-ws-create"
         ],
         "groups": [
             {
                 "parent_group": "",
                 "group_name": "epoch-user"
+            },
+            {
+                "parent_group": "",
+                "group_name": "epoch-ws-creator"
             }
         ],
         "group_mappings": [
             {
                 "role_name": "epoch-user",
                 "group_name": "epoch-user"
+            },
+            {
+                "role_name": "epoch-ws-create",
+                "group_name": "epoch-ws-creator"
             }
         ],
         "default_group_name": "epoch-user",
         "users": [
+            {
+                "user_info": {
+                    "username": "epoch-admin",
+                    "firstName": "システム",
+                    "lastName": "管理者",
+                    "groups": [
+                        "epoch-user", "epoch-ws-creator"
+                    ],
+                    "realmRoles": [],
+                    "requiredActions": [ "UPDATE_PROFILE" ],
+                    "credentials": [
+                        {
+                            "type": "password",
+                            "value": "password",
+                            "temporary": "True"
+                        }
+                    ],
+                    "enabled": "True"
+                },
+                "client_roles": [
+                    {
+                        "client_name": "realm-management",
+                        "roles": [
+                            "manage-clients",
+                            "query-realms",
+                            "realm-admin",
+                            "manage-realm",
+                            "create-client",
+                            "manage-events",
+                            "impersonation",
+                            "manage-users",
+                            "manage-authorization",
+                            "query-groups",
+                            "query-users",
+                            "manage-identity-providers",
+                            "query-clients"
+                        ]
+                    },
+                    {
+                        "client_name": "broker",
+                        "roles": [
+                            "read-token"
+                        ]
+                    },
+                    {
+                        "client_name": "account",
+                        "roles": [
+                            "delete-account",
+                            "view-applications",
+                            "manage-consent"
+                        ]
+                    }
+                ]
+            }
         ],
         "admin_users": [
-            {
-                "user_name": "epoch-admin",
-                "user_password": "${EPOCH_ADMIN_PASSWD}",
-                "user_groups": [],
-                "user_realm_roles": [],
-                "user_option": {
-                    "enabled": "True"
-                }
-            }
         ],
         "clients": [
             {
