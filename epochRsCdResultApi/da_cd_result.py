@@ -19,6 +19,8 @@ import globals
 import common
 from dbconnector import dbcursor
 
+import encrypt_cd_result
+
 def insert_cd_result(cursor, workspace_id, cd_result_id, username, contents):
     """cd_result insert
 
@@ -33,6 +35,10 @@ def insert_cd_result(cursor, workspace_id, cd_result_id, username, contents):
         int: lastrowid
         
     """
+    # encrypt - 暗号化
+    enc = encrypt_cd_result.encrypt_cd_result()
+    enc_contents = enc.encrypt(contents)
+
     # insert実行 insert excute
     cursor.execute('''
                 INSERT INTO cd_result
@@ -55,7 +61,7 @@ def insert_cd_result(cursor, workspace_id, cd_result_id, username, contents):
                     'workspace_id' :                workspace_id,
                     'cd_result_id' :                cd_result_id,
                     'cd_status' :                   contents["cd_status"],
-                    'contents' :                    json.dumps(contents),
+                    'contents' :                    json.dumps(enc_contents),
                     'username' :                    username,
                 })
 
@@ -191,4 +197,11 @@ def select_cd_result(cursor, workspace_id=None, cd_result_id=None, cd_status_in=
     # select実行 select execute
     cursor.execute(sql, cond_json)
     rows = cursor.fetchall()
+
+    enc = encrypt_cd_result.encrypt_cd_result()
+    
+    for row in rows:
+        # decrypt - 復号
+        row['contents'] = json.dumps(enc.decrypt(json.loads(row['contents'])))
+
     return rows
