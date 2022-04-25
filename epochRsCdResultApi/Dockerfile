@@ -16,7 +16,7 @@ FROM    exastro/epoch-api-base:0.1
 WORKDIR /app
 COPY ./ /app/
 
-RUN echo "RUN START"
+RUN pip install pycryptodome
 
 CMD ["python3", "/app/api_cd_result.py"]
 

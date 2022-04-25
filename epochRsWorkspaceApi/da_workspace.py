@@ -19,6 +19,8 @@ import datetime
 import globals
 from dbconnector import dbcursor
 
+import encrypt_workspace
+
 def insert_workspace(cursor, specification):
     """workspace情報登録
 
@@ -30,10 +32,15 @@ def insert_workspace(cursor, specification):
         int: ワークスペースID
         
     """
+
+    # encrypt - 暗号化
+    enc = encrypt_workspace.encrypt_workspace_info()
+    enc_specification = enc.encrypt(specification)
+    
     # insert実行
     cursor.execute('INSERT INTO workspace ( organization_id, specification ) VALUES ( 1, %(specification)s )',
         {
-            'specification' : json.dumps(specification)
+            'specification' : json.dumps(enc_specification)
         }
     )
     # 追加したワークスペースIDをreturn
@@ -51,6 +58,10 @@ def update_workspace(cursor, specification, workspace_id, update_at):
         
     """
 
+    # encrypt - 暗号化
+    enc = encrypt_workspace.encrypt_workspace_info()
+    enc_specification = enc.encrypt(specification)
+
     sql = "UPDATE workspace" \
             " SET specification = %(specification)s"\
             " , update_at = NOW()"\
@@ -61,7 +72,7 @@ def update_workspace(cursor, specification, workspace_id, update_at):
     upd_cnt = cursor.execute(sql,
         {
             'workspace_id' : workspace_id,
-            'specification': json.dumps(specification),
+            'specification': json.dumps(enc_specification),
             'update_at' : update_at
         }
     )
@@ -87,6 +98,10 @@ def patch_workspace(cursor, workspace_id, update_items):
         # keyの種類によって、システム日付を設定する Set the system date according to the key type
         if item == "role_update_at":
             value = datetime.datetime.now()
+        elif key == "specification":
+            # encrypt - 暗号化
+            enc = encrypt_workspace.encrypt_workspace_info()
+            value = json.dumps(enc.encrypt(json.loads(item.values())))
         else:
             value = item.values()
 
@@ -135,6 +150,12 @@ def select_workspace_id(cursor, workspace_id):
         }
     )
     rows = cursor.fetchall()
+    
+    enc = encrypt_workspace.encrypt_workspace_info()
+    for row in rows:
+        # decrypt - 復号
+        row['specification'] = json.dumps(enc.decrypt(json.loads(row['specification'])))
+        
     return rows
 
 def select_workspace(cursor):
@@ -149,6 +170,12 @@ def select_workspace(cursor):
     # select実行
     cursor.execute('SELECT * FROM workspace ORDER BY workspace_id')
     rows = cursor.fetchall()
+
+    enc = encrypt_workspace.encrypt_workspace_info()
+    for row in rows:
+        # decrypt - 復号
+        row['specification'] = json.dumps(enc.decrypt(json.loads(row['specification'])))
+
     return rows
 
 def insert_history(cursor, workspace_id):
@@ -179,5 +206,11 @@ def select_history(cursor, workspace_id):
         }
     )
     rows = cursor.fetchall()
+
+    enc = encrypt_workspace.encrypt_workspace_info()
+    for row in rows:
+        # decrypt - 復号
+        row['specification'] = json.dumps(enc.decrypt(json.loads(row['specification'])))
+
     return rows
 

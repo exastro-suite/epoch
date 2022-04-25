@@ -1,4 +1,3 @@
-#!/bin/bash
 #   Copyright 2019 NEC Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,10 +11,26 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-
-if [ $# -ne 1 ]; then
-    echo "Usage : `basename $0` workspace_id"
-    exit 1
-fi
-
-curl http://epoch-rs-workspace-api:8000/workspace/${1}/access
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: epoch-init-setting
+  namespace: epoch-system
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      volumes:
+      - name: script
+        configMap:
+          name: epoch-init-setting-script
+      containers:
+      - name: pv-creator
+        image: exastro/epoch-kube-command:0.1.5_20211026_1600
+        volumeMounts:
+        - mountPath: /job-script
+          name: script
+        command: ["sh", "-c"]
+        args:
+          - |
+            bash /job-script/epoch-init-setting.sh

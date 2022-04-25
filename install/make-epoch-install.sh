@@ -69,6 +69,25 @@ kubectl create cm tekton-installer-script -n epoch-system --dry-run=client -o ya
     --from-file=${TEKTON_MANIFEST}/tekton-trigger-interceptors.yaml \
     >>   ${SOURCE_MANIFEST}/tekton-installer-script.yaml
 
+cat <<EOF > ${SOURCE_MANIFEST}/epoch-init-setting-script.yaml
+#   Copyright 2022 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+EOF
+kubectl create cm epoch-init-setting-script -n epoch-system --dry-run=client -o yaml \
+    --from-file=${TEMPLATES_DIR}/epoch-init-setting.sh \
+    >>   ${SOURCE_MANIFEST}/epoch-init-setting-script.yaml
+
 cat <<EOF > ${SOURCE_MANIFEST}/gateway-httpd-pv-create-script.yaml
 #   Copyright 2022 NEC Corporation
 #
@@ -157,9 +176,12 @@ kubectl create cm epoch-setting-tools-script -n epoch-system --dry-run=client -o
     --from-file=${TOOLS_SCRIPT}/get-workspace-tools-account.sh \
     >>   ${SOURCE_MANIFEST}/epoch-setting-tools-script.yaml
 
+
 # ---- source内のyamlファイル定義 ----
 YAMLFILES=()
 YAMLFILES+=("epoch-system.yaml")
+YAMLFILES+=("epoch-init-setting-script.yaml")
+YAMLFILES+=("epoch-init-setting.yaml")
 YAMLFILES+=("exastro-platform-authentication-infra.yaml")   # namespace
 YAMLFILES+=("host-setting-config.yaml")
 YAMLFILES+=("proxy-setting.yaml")

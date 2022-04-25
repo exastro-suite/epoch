@@ -18,6 +18,8 @@ import json
 import globals
 from dbconnector import dbcursor
 
+import encrypt_workspace
+
 def insert_workspace_access(cursor, workspace_id, info):
     """ワークスペースアクセス情報登録
 
@@ -30,12 +32,16 @@ def insert_workspace_access(cursor, workspace_id, info):
         int: ワークスペースアクセス情報id
         
     """
+    # encrypt
+    enc = encrypt_workspace.encrypt_workspace_access()
+    enc_info = enc.encrypt(info)
+
     # ワークスペースアクセス情報 insert実行
     cursor.execute('INSERT INTO workspace_access ( workspace_id, info )' \
                     ' VALUES ( %(workspace_id)s, %(info)s )',
         {
             'workspace_id' : workspace_id,
-            'info' : json.dumps(info),
+            'info' : json.dumps(enc_info),
         }
     )
     # 追加したワークスペースIDをreturn
@@ -53,13 +59,17 @@ def update_workspace_access(cursor, workspace_id, info):
         int: アップデート件数
         
     """
+    # encrypt
+    enc = encrypt_workspace.encrypt_workspace_access()
+    enc_info = enc.encrypt(info)
+
     # ワークスペースアクセス情報 update実行
     upd_cnt = cursor.execute('UPDATE workspace_access' \
                     ' SET info = %(info)s' \
                     ' WHERE workspace_id = %(workspace_id)s',
         {
             'workspace_id' : workspace_id,
-            'info': json.dumps(info),
+            'info': json.dumps(enc_info),
         }
     )
     upd_cnt = 1
@@ -104,4 +114,8 @@ def select_workspace_access(cursor, workspace_id):
         }
     )
     rows = cursor.fetchall()
+
+    enc = encrypt_workspace.encrypt_workspace_access()
+    for row in rows:
+        row['info'] = json.dumps(enc.decrypt(json.loads(row['info'])))
     return rows
