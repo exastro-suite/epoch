@@ -12,6 +12,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+from genericpath import exists
 from jinja2 import environment
 from flask import Flask, request, abort, jsonify, render_template
 from datetime import datetime
@@ -246,6 +247,39 @@ def post_cd_pipeline(workspace_id):
                     globals.logger.debug(response.text)
                     error_detail = 'it-automation/manifest/git post処理に失敗しました'
                     raise common.UserException(error_detail)
+
+            # 初回はmanifes parameterがないので更新しない
+            # The first time there is no manifests parameter so do not update
+            exists_manifest = False
+            for env in post_data["ci_config"]["environments"]:
+                if "manifests" in env and \
+                    len(env["manifests"]) > 0:
+                    exists_manifest = True
+                    break
+            
+            if exists_manifest:
+                # send put (manifest parameter update)
+                api_url = "{}://{}:{}/workspace/{}/it-automation/manifest/parameter".format(os.environ['EPOCH_CONTROL_ITA_PROTOCOL'],
+                                                                                    os.environ['EPOCH_CONTROL_ITA_HOST'],
+                                                                                    os.environ['EPOCH_CONTROL_ITA_PORT'],
+                                                                                    workspace_id)
+
+                # Manifestパラメータ設定(ITA) Manifest parameter setting
+                response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
+                globals.logger.debug("it-automation/manifest/parameter:response:" + response.text)
+                if response.status_code != 200 and response.status_code != 201:
+                    if common.is_json_format(response.text):
+                        ret = json.loads(response.text)
+                        globals.logger.debug(ret["result"])
+                        if "errorDetail" in ret:
+                            exec_detail = ret["errorDetail"]
+                        else:
+                            exec_detail = ""
+                        raise common.UserException(exec_detail)
+                    else:
+                        globals.logger.debug(response.text)
+                        error_detail = 'it-automation/manifest/parameter post処理に失敗しました'
+                        raise common.UserException(error_detail)
 
             exec_stat = "CDパイプライン情報設定(ArgoCD設定)"
             # epoch-control-argocd-api の呼び先設定
