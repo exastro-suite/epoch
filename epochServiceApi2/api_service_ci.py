@@ -770,7 +770,7 @@ def get_ci_pipeline_result(workspace_id):
 
 
 def get_ci_pipeline_result_logs(workspace_id, taskrun_name):
-    globals.logger.info('Get CI pipeline result. workspace_id={}, taskrun_name={}'.format(workspace_id, taskrun_name))
+    # globals.logger.info('Get CI pipeline result. workspace_id={}, taskrun_name={}'.format(workspace_id, taskrun_name))
 
     app_name = "TEKTONタスク実行ログ:"
     exec_stat = "情報取得"
@@ -812,7 +812,7 @@ def get_ci_pipeline_result_logs(workspace_id, taskrun_name):
         }
         
         #処理成功のログ出力
-        globals.logger.info('SUCCESS: Get CI pipeline result. workspace_id={}, ret_status={}, taskrun_name_count={}'.format(workspace_id, ret_status, len(taskrun_name)))
+        # globals.logger.info('SUCCESS: Get CI pipeline result. workspace_id={}, ret_status={}, taskrun_name_count={}'.format(workspace_id, ret_status, len(response["log"])))
 
         # 戻り値をそのまま返却        
         return jsonify(response), ret_status
