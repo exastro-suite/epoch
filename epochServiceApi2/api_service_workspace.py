@@ -45,16 +45,13 @@ def create_workspace():
     Returns:
         Response: HTTP Respose
     """
+    globals.logger.info('Create workspace information.')
 
     app_name = "ワークスペース情報:"
     exec_stat = "作成"
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
-
         # ヘッダ情報
         post_headers = {
             'Content-Type': 'application/json',
@@ -140,6 +137,9 @@ def create_workspace():
                 raise common.UserException("{} Error put workspace status db status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
 
         ret_status = 200
+        
+        #処理が成功したことのログを出力
+        globals.logger.info('SUCCESS: Create workspace information. workspace_id={}, ret_status={}'.format( rows[0]["workspace_id"], ret_status))
 
         # 戻り値をそのまま返却        
         return jsonify({"result": ret_status, "rows": rows}), ret_status
@@ -550,16 +550,13 @@ def get_workspace_list():
     Returns:
         Response: HTTP Respose
     """
+    globals.logger.info('Get workspace information list.')
 
     app_name = "ワークスペース情報:"
     exec_stat = "一覧取得"
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
-
         # ヘッダ情報 header info
         post_headers = {
             'Content-Type': 'application/json',
@@ -714,6 +711,9 @@ def get_workspace_list():
             # 404以外の場合は、エラー、404はレコードなしで返却（エラーにはならない） If it is other than 404, it is an error, and 404 is returned without a record (it does not become an error)
             raise Exception('{} Error:{}'.format(inspect.currentframe().f_code.co_name, users_response.status_code))
 
+        #処理が成功したことのログを出力
+        globals.logger.info('SUCCESS: Get workspace information list. workspace_information_list_count={}, ret _status={}'.format(len(rows), 200))
+        
         return jsonify({"result": "200", "rows": rows}), 200
 
     except common.UserException as e:
@@ -731,16 +731,13 @@ def get_workspace(workspace_id):
     Returns:
         Response: HTTP Respose
     """
+    globals.logger.info('Get workspace information. workspace_id={}'.format(workspace_id))
 
     app_name = "ワークスペース情報:"
     exec_stat = "取得"
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
-
         # ヘッダ情報
         post_headers = {
             'Content-Type': 'application/json',
@@ -789,6 +786,9 @@ def get_workspace(workspace_id):
 
             raise common.UserException("{} Error get workspace db status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
 
+        #処理が成功したことのログを出力
+        globals.logger.info('SUCCESS: Get workspace information. workspace_id={}, ret_status={}, workspace_information_count={}'.format(workspace_id, ret_status, len(rows)))
+
         return jsonify({"result": ret_status, "rows": rows}), ret_status
 
     except common.UserException as e:
@@ -805,6 +805,8 @@ def put_workspace(workspace_id):
     Returns:
         Response: HTTP Respose
     """
+    globals.logger.info('Update workspace information. workspace_id={}'.format(workspace_id))
+    
 
     app_name = multi_lang.get_text("EP020-0003", "ワークスペース情報:")
     exec_stat = multi_lang.get_text("EP020-0016", "更新")
@@ -812,11 +814,6 @@ def put_workspace(workspace_id):
     return_code = 500
 
     try:
-
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
-
         # ヘッダ情報 header info.
         post_headers = {
             'Content-Type': 'application/json',
@@ -1044,6 +1041,9 @@ def put_workspace(workspace_id):
 
         ret_status = 200
 
+        #処理が成功したことのログを出力
+        globals.logger.info('SUCCESS: Update workspace information. workspace_id={}, ret_status={}'.format(workspace_id, ret_status))
+
         # 戻り値をそのまま返却        
         return jsonify({"result": ret_status}), ret_status
 
@@ -1062,16 +1062,13 @@ def patch_workspace(workspace_id):
     Returns:
         Response: HTTP Respose
     """
+    globals.logger.info('Update part of workspace information. workspace_id={}'.format(workspace_id))    
 
     app_name = multi_lang.get_text("EP020-0003", "ワークスペース情報:")
     exec_stat = multi_lang.get_text("EP020-0016", "更新")
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
-
         # ヘッダ情報
         post_headers = {
             'Content-Type': 'application/json',
@@ -1101,6 +1098,9 @@ def patch_workspace(workspace_id):
             raise common.UserException("{} Error put workspace db status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
 
         ret_status = response.status_code
+        
+        #処理が成功したことのログを出力
+        globals.logger.info('SUCCESS: Update part of workspace information. workspace_id={}, ret_status={}'.format(workspace_id, ret_status))    
 
         # 戻り値をそのまま返却        
         return jsonify({"result": ret_status}), ret_status
@@ -1126,9 +1126,7 @@ def post_pod(workspace_id):
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Create workspace pod. workspace_id={}'.format(workspace_id))
 
         # ヘッダ情報 header info
         post_headers = {
@@ -1241,6 +1239,9 @@ def post_pod(workspace_id):
             raise common.UserException(error_detail)
 
         ret_status = 200
+        
+        #処理が成功したことのログを出力
+        globals.logger.info('SUCCESS: Create workspace pod. workspace_id={}, ret_status={}'.format(workspace_id, ret_status))
 
         # 戻り値をそのまま返却        
         return jsonify({"result": ret_status}), ret_status

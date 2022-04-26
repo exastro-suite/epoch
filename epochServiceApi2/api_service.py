@@ -181,7 +181,7 @@ def call_git_hooks(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.info('Get webhook execution history. method={}, workspace_id={}'.format( request.method, workspace_id))
+        globals.logger.info('Get webhook execution history. method={}, workspace_id={}'.format(request.method, workspace_id))
 
         if request.method == 'GET':
             return api_service_ci.get_git_hooks(workspace_id)

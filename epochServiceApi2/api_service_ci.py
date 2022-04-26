@@ -47,16 +47,13 @@ def post_ci_pipeline(workspace_id):
     Returns:
         Response: HTTP Respose
     """
-
+    globals.logger.info('Set CI pipeline information. workspace_id={}'.format(workspace_id))
+    
     app_name = "ワークスペース情報:"
     exec_stat = "CIパイプライン情報設定"
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
-
         # ヘッダ情報
         post_headers = {
             'Content-Type': 'application/json',
@@ -270,8 +267,11 @@ def post_ci_pipeline(workspace_id):
                 raise common.UserException(error_detail)
 
         ret_status = 200
-
-        # 戻り値をそのまま返却        
+        
+        #処理が成功したことのログを出力
+        globals.logger.info('SUCCESS: Set CI pipeline information. workspace_id={}, ret_status={}'.format(workspace_id, ret_status))
+        
+        # 戻り値をそのまま返却
         return jsonify({"result": ret_status}), ret_status
 
     except common.UserException as e:
@@ -287,15 +287,13 @@ def get_git_commits(workspace_id):
     Returns:
         Response: HTTP Respose
     """
+    globals.logger.info('Get CI commit list in code repository. workspace_id={}'.format(workspace_id))
+
     app_name = "ワークスペース情報:"
     exec_stat = "CIパイプラインgit履歴取得"
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
-
         # workspace get
         api_url = "{}://{}:{}/workspace/{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
                                                     os.environ['EPOCH_RS_WORKSPACE_HOST'],
@@ -427,6 +425,9 @@ def get_git_commits(workspace_id):
             "rows" : rows,
         }
         ret_status = 200
+        
+        #処理成功のログ出力
+        globals.logger.info('SUCCESS: Get CI commit list in code repository. workspace_id={}, ret_status={}, git_commit_information_count={}'.format(workspace_id, ret_status, len(rows)))
 
         return jsonify(response), ret_status
 
@@ -443,15 +444,13 @@ def get_git_hooks(workspace_id):
     Returns:
         Response: HTTP Respose
     """
+    globals.logger.info('Get webhook execution history. workspace_id={}'.format(workspace_id))
+    
     app_name = "ワークスペース情報:"
     exec_stat = "CIパイプラインwebhook履歴取得"
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
-
         # workspace get
         api_url = "{}://{}:{}/workspace/{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
                                                     os.environ['EPOCH_RS_WORKSPACE_HOST'],
@@ -539,7 +538,10 @@ def get_git_hooks(workspace_id):
             "rows" : rows,
         }
         ret_status = 200
-
+        
+        #処理成功のログ出力
+        globals.logger.info('SUCCESS: Get webhook execution history. workspace_id={},  ret_status={}, git_hook_information_count={}'.format(workspace_id, ret_status, len(rows)))
+        
         return jsonify(response), ret_status
 
     except common.UserException as e:
@@ -556,15 +558,13 @@ def get_registry(workspace_id):
     Returns:
         Response: HTTP Respose
     """
+    globals.logger.info('Get container registry information. workspace_id={}'.format(workspace_id))
+    
     app_name = multi_lang.get_text("EP020-0003", "ワークスペース情報:")
     exec_stat = multi_lang.get_text("EP020-0074", "CIパイプライン コンテナレジストリ情報取得") 
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
-
         # Workspace information acquisition URL - ワークスペース情報取得URL
         api_url = "{}://{}:{}/workspace/{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
                                                     os.environ['EPOCH_RS_WORKSPACE_HOST'],
@@ -643,6 +643,9 @@ def get_registry(workspace_id):
                     )
 
         ret_status = 200
+        
+        #処理成功のログ出力
+        globals.logger.info('SUCCESS: Get container registry information. workspace_id={}, ret_status={}, registry_information_count={}'.format(workspace_id, ret_status, len(rows)))
 
         return jsonify({ "return": ret_status, "rows": rows }), ret_status
 
@@ -661,15 +664,13 @@ def get_ci_pipeline_result(workspace_id):
     Returns:
         Response: HTTP Respose
     """
+    globals.logger.info('Get CI pipeline result. workspace_id={}'.format(workspace_id))
+    
     app_name = "ワークスペース情報:"
     exec_stat = "CIパイプライン結果取得"
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
-
         # Get Query Parameter
         latest = request.args.get('latest', default='False')
         getlog = request.args.get('log', default='True')
@@ -756,7 +757,9 @@ def get_ci_pipeline_result(workspace_id):
             "result": ret_status,
             "rows" : rows,
         }
-
+        
+        #処理成功のログ出力
+        globals.logger.info('SUCCESS: Get CI pipeline result. workspace_id={}, ret_status={}, CI_pipeline_information_count={} '.format(workspace_id, ret_status, len(rows)))
         # 戻り値をそのまま返却        
         return jsonify(response), ret_status
 
@@ -767,16 +770,13 @@ def get_ci_pipeline_result(workspace_id):
 
 
 def get_ci_pipeline_result_logs(workspace_id, taskrun_name):
+    globals.logger.info('Get CI pipeline result. workspace_id={}, taskrun_name={}'.format(workspace_id, taskrun_name))
 
     app_name = "TEKTONタスク実行ログ:"
     exec_stat = "情報取得"
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
-
         # Get Query Parameter
         latest = request.args.get('latest', default='False')
 
@@ -810,6 +810,9 @@ def get_ci_pipeline_result_logs(workspace_id, taskrun_name):
             "result": ret_status,
             "log" : ret["log"],
         }
+        
+        #処理成功のログ出力
+        globals.logger.info('SUCCESS: Get CI pipeline result. workspace_id={}, ret_status={}, taskrun_name_count={}'.format(workspace_id, ret_status, len(taskrun_name)))
 
         # 戻り値をそのまま返却        
         return jsonify(response), ret_status
