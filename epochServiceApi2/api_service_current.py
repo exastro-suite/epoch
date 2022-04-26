@@ -54,7 +54,7 @@ def current_user_get():
     try:
         ret_user = user_get()
 
-        globals.logger.info('SUCCESS: Get current user infomation. ret_result={}, username={}'.format("200", ret_user['username']))
+        globals.logger.info('SUCCESS: Get current user infomation. ret_result={}, user_id={}'.format("200", ret_user['user_id']))
 
         return jsonify({"result": "200", "info": ret_user}), 200
 
@@ -85,6 +85,7 @@ def user_get():
         #
         # get users - ユーザー取得
         #
+        globals.logger.info("Send a request. URL={}".format(api_url))
         response = requests.get(api_url)
         if response.status_code != 200 and response.status_code != 404:
             error_detail = multi_lang.get_text("EP020-0008", "ユーザー情報の取得に失敗しました")
@@ -104,6 +105,7 @@ def user_get():
         #
         # get user role - ユーザーロール情報取得
         #
+        globals.logger.info("Send a request. URL={}".format(api_url))
         response = requests.get(api_url)
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0009", "ユーザーロール情報の取得に失敗しました")
@@ -155,6 +157,7 @@ def user_get():
                                                             os.environ['EPOCH_RS_WORKSPACE_PORT'],
                                                             workspace_id)
 
+                globals.logger.info("Send a request. URL={}".format(api_url))
                 response = requests.get(api_url)
                 if response.status_code != 200:
                     error_detail = multi_lang.get_text("EP020-0013", "ワークスペース情報の取得に失敗しました")
