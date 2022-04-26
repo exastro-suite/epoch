@@ -1120,14 +1120,13 @@ def post_pod(workspace_id):
     Returns:
         Response: HTTP Respose
     """
+    globals.logger.info('Create workspace pod. workspace_id={}'.format(workspace_id))
 
     app_name = "ワークスペース情報:"
     exec_stat = "作成"
     error_detail = ""
 
     try:
-        globals.logger.info('Create workspace pod. workspace_id={}'.format(workspace_id))
-
         # ヘッダ情報 header info
         post_headers = {
             'Content-Type': 'application/json',

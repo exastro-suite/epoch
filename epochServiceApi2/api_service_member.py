@@ -216,7 +216,7 @@ def get_workspace_members_cdexec(workspace_id):
         rows = api_service_common.get_workspace_members_by_role(workspace_id, const.ROLE_WS_ROLE_CD_EXECUTE[0].format(workspace_id))
 
         #処理が成功したことのログを出力
-        globals.logger.info('SUCCESS: Get CD execution member. workspace_id={}, ret_status={}'.format(workspace_id, 200))
+        globals.logger.info('SUCCESS: Get CD execution member. workspace_id={}, ret_status={}, workspace_member_count={}'.format(workspace_id, 200, len(rows)))
         
         return jsonify({"result": "200", "rows": rows}), 200
 
