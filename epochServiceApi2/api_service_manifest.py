@@ -47,7 +47,7 @@ def post_manifest_parameter(workspace_id):
         Response: HTTP Respose
     """
     globals.logger.info('Set manifest parameter. workspace_id={}'.format(workspace_id))
-    
+
     app_name = "ワークスペース情報:"
     exec_stat = "manifestパラメータ登録"
     error_detail = ""
@@ -120,6 +120,8 @@ def post_manifest_parameter(workspace_id):
         # 正常終了 normal return code
         ret_status = 200
 
+        globals.logger.info('SUCCESS: Set manifest parameter. workspace_id={}, ret_status={}, update_at={}'.format(workspace_id, ret_status,row["update_at"]))
+
         return jsonify({"result": ret_status, "update_at": row["update_at"]}), ret_status
 
     except common.UpdateException as e:
@@ -140,7 +142,7 @@ def post_manifest_template(workspace_id):
         Response: HTTP Respose
     """
     globals.logger.info('Set manifest template. workspace_id={}'.format(workspace_id))
-    
+
     app_name = "ワークスペース情報:"
     exec_stat = "manifestテンプレート登録"
     error_detail = ""
@@ -235,13 +237,13 @@ def post_manifest_template(workspace_id):
 
             # 同一ファイルがあるかファイルIDを取得
             file_id = common.get_file_id(ret_manifests["rows"], manifest_file.filename)
-            
+
             # 同一ファイル名が登録されている場合は、更新とする
             if not file_id:
                 # データ登録情報(manifest_dataと結合)
                 post_data_add['manifests'].append(manifest_data)
             else:
-                manifest_data["file_id"] = file_id 
+                manifest_data["file_id"] = file_id
                 # データ更新情報(manifest_dataと結合)
                 post_data_upd['manifests'].append(manifest_data)
 
@@ -280,6 +282,8 @@ def post_manifest_template(workspace_id):
         # 正常終了 normal return code
         ret_status = 200
 
+        globals.logger.info('SUCCESS: Set manifest template. workspace_id={}, ret_status={}, manifest_template_count={}'.format(workspace_id, ret_status, len(response)))
+
         return jsonify({"result": ret_status, "rows": response}), ret_status
 
     except common.UserException as e:
@@ -298,12 +302,12 @@ def get_manifest_template_list(workspace_id):
         Response: HTTP Respose
     """
     globals.logger.info('Get manifest template. workspace_id={}'.format(workspace_id))
-    
+
     app_name = "ワークスペース情報:"
     exec_stat = "manifestテンプレート取得"
     error_detail = ""
 
-    try:    
+    try:
         resourceProtocol = os.environ['EPOCH_RS_WORKSPACE_PROTOCOL']
         resourceHost = os.environ['EPOCH_RS_WORKSPACE_HOST']
         resourcePort = os.environ['EPOCH_RS_WORKSPACE_PORT']
@@ -328,7 +332,7 @@ def get_manifest_template_list(workspace_id):
         elif response.status_code == 404:
             error_detail = 'manifest template data not found'
             raise common.UserException(error_detail)
-        
+
         elif response.status_code != 200:
             # 200(正常), 404(not found) 以外の応答の場合
             error_detail = 'CALL responseAPI Error'
@@ -337,9 +341,11 @@ def get_manifest_template_list(workspace_id):
         ret_manifests = json.loads(response.text)
 
         rows = ret_manifests["rows"]
-        
+
         # 正常終了 normal return code
         ret_status = 200
+
+        globals.logger.info('SUCCESS: Get manifest template. workspace_id={}, ret_status={}, manifest_template_count={}'.format(workspace_id, ret_status, len(rows)))
 
         return jsonify({"result": ret_status, "rows": rows}), ret_status
 
@@ -360,7 +366,7 @@ def delete_manifest_template(workspace_id, file_id):
         Response: HTTP Respose
     """
     globals.logger.info('Delete manifest template. workspace_id={}, file_id={}'.format(workspace_id, file_id))
-    
+
     app_name = "ワークスペース情報:"
     exec_stat = "manifestテンプレート削除"
     error_detail = ""
@@ -402,6 +408,8 @@ def delete_manifest_template(workspace_id, file_id):
         # 正常終了 normal return code
         ret_status = 200
 
+        globals.logger.info('SUCCESS: Delete manifest template. workspace_id={}, file_id={}, ret_status={}, manifest_template_count={}'.format(workspace_id, file_id, ret_status, len(response)))
+
         return jsonify({"result": ret_status, "rows": response}), ret_status
 
     except common.UserException as e:
@@ -420,11 +428,9 @@ def ita_registration(workspace_id):
         Json: 設定したManifest情報
     """
 
-    try:
-        globals.logger.debug('-' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('-' * 50)
+    globals.logger.info('Register with it-automation. workspace_id={}'.format(workspace_id))
 
+    try:
         # post先のURL初期化
         resourceProtocol = os.environ['EPOCH_RS_WORKSPACE_PROTOCOL']
         resourceHost = os.environ['EPOCH_RS_WORKSPACE_HOST']
@@ -491,6 +497,9 @@ def ita_registration(workspace_id):
         # 正常時はmanifest情報取得した内容を返却
         # When normal, the acquired information is returned.
         if response.status_code == 200:
+
+            globals.logger.info('SUCCESS: Register with it-automation. ret_status={}'.format(response.status_code))
+
             return ret_manifests['rows']
         else:
             globals.logger.debug("CALL it-automation/manifest/templates : response:{}".format(response.text))
