@@ -282,6 +282,8 @@ def post_cd_pipeline(workspace_id):
 
         ret_status = 200
 
+        globals.logger.info('SUCCESS: Set CD pipeline information. workspace_id={}, ret_status={}'.format(workspace_id, ret_status))
+
         # 戻り値をそのまま返却
         return jsonify({"result": ret_status}), ret_status
 
@@ -393,6 +395,8 @@ def get_cd_pipeline_ita(workspace_id):
             }
 
             rows.append(row)
+
+            globals.logger.info('SUCCESS: Get CD pipeline (it-automation) information. workspace_id={}, ret_status={}, it-automation_information_count={}'.format(workspace_id, ret_status, len(rows)))
 
         # 戻り値をそのまま返却 Return the return value as it is
         return jsonify({"result": ret_status, "rows": rows}), ret_status
@@ -584,6 +588,8 @@ def get_git_commits(workspace_id):
             "rows" : rows,
         }
         ret_status = 200
+
+        globals.logger.info("SUCCESS: Get CD commit list in manifest repository. workspace_id={}, ret_status={}, CD_commit_count={}".format(workspace_id, ret_status, len(rows)))
 
         return jsonify(response), ret_status
 
@@ -807,6 +813,8 @@ def get_cd_pipeline_argocd(workspace_id):
                 }
             )
 
+        globals.logger.info('SUCCESS: Get CD pipeline (ArgoCD) information. workspace_id={}, ret_status={}, ArgoCD_infomation_count={}'.format(workspace_id, ret_status, len(rows)))
+
         # 戻り値をそのまま返却 Return the return value as it is
         return jsonify({"result": ret_status, "rows": rows}), ret_status
 
@@ -858,6 +866,8 @@ def post_cd_pipeline_argocd_sync(workspace_id):
 
         ret_status = 200
 
+        globals.logger.info('SUCCESS: Synchronize CD pipeline (ArgoCD). workspace_id={}, ret_status={}'.format(workspace_id, ret_status))
+
         # 戻り値をそのまま返却
         return jsonify({"result": ret_status}), ret_status
 
@@ -908,6 +918,8 @@ def post_cd_pipeline_argocd_rollback(workspace_id):
             raise common.UserException(error_detail)
 
         ret_status = 200
+
+        globals.logger.info('SUCCESS: Rollback CD pipeline (ArgoCD). workspace_id={}, ret_status={}'.format(workspace_id, ret_status))
 
         # 戻り値をそのまま返却
         return jsonify({"result": ret_status}), ret_status
@@ -1183,6 +1195,8 @@ def cd_execute(workspace_id):
         # 正常終了 normal return code
         ret_status = 200
 
+        globals.logger.info('SUCCESS: Execute CD. workspace_id={}, ret_status={}'.format(workspace_id, ret_status))
+
         return jsonify({"result": ret_status}), ret_status
 
     except common.AuthException as e:
@@ -1385,6 +1399,8 @@ def cd_execute_cancel(workspace_id, trace_id):
         # 正常終了 normal return code
         ret_status = 200
 
+        globals.logger.info('SUCCESS: Delete CD execution reservation. workspace_id={}, trace_id={}, ret_status={}'.format(workspace_id, trace_id, ret_status))
+
         return jsonify({"result": ret_status}), ret_status
 
     except common.AuthException as e:
@@ -1504,6 +1520,8 @@ def cd_environment_get(workspace_id):
 
         # 正常終了 normal return code
         ret_status = 200
+
+        globals.logger.info('SUCCESS: Get CD environment. workspace_id={}, ret_status={}, environments_count={}'.format(workspace_id, ret_status, len(ret_environments)))
 
         return jsonify({"result": ret_status, "environments": ret_environments}), ret_status
 
