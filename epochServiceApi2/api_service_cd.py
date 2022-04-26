@@ -396,7 +396,7 @@ def get_cd_pipeline_ita(workspace_id):
 
             rows.append(row)
 
-            globals.logger.info('SUCCESS: Get CD pipeline (it-automation) information. workspace_id={}, ret_status={}, it-automation_information_count={}'.format(workspace_id, ret_status, len(rows)))
+        globals.logger.info('SUCCESS: Get CD pipeline (it-automation) information. workspace_id={}, ret_status={}, it-automation_information_count={}'.format(workspace_id, ret_status, len(rows)))
 
         # 戻り値をそのまま返却 Return the return value as it is
         return jsonify({"result": ret_status, "rows": rows}), ret_status
