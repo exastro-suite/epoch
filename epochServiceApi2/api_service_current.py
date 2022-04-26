@@ -46,13 +46,15 @@ def current_user_get():
         Response: HTTP Respose
     """
     globals.logger.info('Get current user infomation.')
-    
+
     app_name = multi_lang.get_text("EP020-0001", "ユーザー情報:")
     exec_stat = multi_lang.get_text("EP020-0017", "取得")
     error_detail = ""
 
     try:
         ret_user = user_get()
+
+        globals.logger.info('SUCCESS: Get current user infomation. ret_result={}, username={}'.format("200", ret_user['username']))
 
         return jsonify({"result": "200", "info": ret_user}), 200
 
@@ -69,11 +71,9 @@ def user_get():
         dict: user info.
     """
 
-    try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
+    globals.logger.info('Get user infomation.')
 
+    try:
         user_id = common.get_current_user(request.headers)
 
         api_url = "{}://{}:{}/{}/user/{}".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
@@ -174,9 +174,9 @@ def user_get():
         set_role_display.sort()
         # ソート用の文字列カット String cut for sorting
         role_display = [s[3:] for s in set_role_display]
-        
+
         ret_role = ret_role + ',"{}":["{}"]'.format(workspace_name, '","'.join(role_display))
-        ret_role = "{" + ret_role[1:] + "}" 
+        ret_role = "{" + ret_role[1:] + "}"
 
         ret_user = {
             "user_id": user_id,
