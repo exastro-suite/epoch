@@ -186,9 +186,11 @@ def get_workspace_members(workspace_id):
                 stock_user_id.append(user["user_id"])
 
         # globals.logger.debug(f"users:{ret_users}")
-
         rows = ret_users
-
+        
+        #処理が成功したことのログを出力
+        globals.logger.info('SUCCESS: Get workspace member. workspace_id={}, ret_status={}, ret_user_count={}'.format(workspace_id, 200, len(rows)))
+        
         return jsonify({"result": "200", "rows": rows}), 200
 
     except common.UserException as e:
@@ -213,6 +215,9 @@ def get_workspace_members_cdexec(workspace_id):
         # Extract users who have the authority "change owner"
         rows = api_service_common.get_workspace_members_by_role(workspace_id, const.ROLE_WS_ROLE_CD_EXECUTE[0].format(workspace_id))
 
+        #処理が成功したことのログを出力
+        globals.logger.info('SUCCESS: Get CD execution member. workspace_id={}, ret_status={}'.format(workspace_id, 200))
+        
         return jsonify({"result": "200", "rows": rows}), 200
 
     except common.UserException as e:
@@ -529,6 +534,9 @@ def merge_workspace_members(workspace_id):
 
             globals.logger.debug("role datetime update Succeed!")
 
+        #処理が成功したことのログを出力
+        globals.logger.info('SUCCESS: Set workspace member. workspace_id={}, ret_status={}'.format(workspace_id, 200))
+        
         return jsonify({"result": "200"}), 200
 
     except common.AuthException as e:
@@ -635,6 +643,9 @@ def leave_workspace(workspace_id):
             error_detail = multi_lang.get_text("EP020-0012", "ロール更新日の変更に失敗しました")
             return jsonify({"result": "400", "reason": multi_lang.get_text("EP020-0015", "ワークスペースからの退去に失敗しました")}), 400
 
+        #処理が成功したことのログを出力
+        globals.logger.info('SUCCESS: Delete member from workspace. workspace_id={}, ret_status={}'.format(workspace_id, 200))
+        
         return jsonify({"result": "200"}), 200
 
     except common.UserException as e:
