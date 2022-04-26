@@ -45,16 +45,13 @@ def current_user_get():
     Returns:
         Response: HTTP Respose
     """
-
+    globals.logger.info('Get current user infomation.')
+    
     app_name = multi_lang.get_text("EP020-0001", "ユーザー情報:")
     exec_stat = multi_lang.get_text("EP020-0017", "取得")
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
-
         ret_user = user_get()
 
         return jsonify({"result": "200", "info": ret_user}), 200

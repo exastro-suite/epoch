@@ -68,17 +68,13 @@ def post_cd_pipeline(workspace_id):
     Returns:
         Response: HTTP Respose
     """
-
+    globals.logger.info('Set CD pipeline information. workspace_id={}'.format(workspace_id))
+    
     app_name = "ワークスペース情報:"
     exec_stat = "CDパイプライン情報設定"
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
-
-
         # ヘッダ情報
         post_headers = {
             'Content-Type': 'application/json',
@@ -297,16 +293,13 @@ def get_cd_pipeline_ita(workspace_id):
     Returns:
         Response: HTTP Respose
     """
-
+    globals.logger.info('Get CD pipeline (it-automation) information. workspace_id={}'.format(workspace_id))
+    
     app_name = multi_lang.get_text("EP020-0076", "CD実行結果(IT-Automation):") 
     exec_stat = multi_lang.get_text("EP020-0077", "CDパイプライン(IT-Automation)情報取得")
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
-
         # Get Query Parameter
         processing = request.args.get('processing', default='False')
         if processing == "True":
@@ -410,15 +403,13 @@ def get_git_commits(workspace_id):
     Returns:
         Response: HTTP Respose
     """
+    globals.logger.info("Get CD commit list in manifest repository. workspace_id={}".format(workspace_id))
+    
     app_name = multi_lang.get_text("EP020-0003", "ワークスペース情報:")
     exec_stat = multi_lang.get_text("EP020-0090", "CDパイプラインgit履歴取得")
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
-
         # workspace get
         api_url = "{}://{}:{}/workspace/{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
                                                     os.environ['EPOCH_RS_WORKSPACE_HOST'],
@@ -597,16 +588,13 @@ def get_cd_pipeline_argocd(workspace_id):
     Returns:
         Response: HTTP Respose
     """
-
+    globals.logger.info('Get CD pipeline (ArgoCD) information. workspace_id={}'.format(workspace_id))
+    
     app_name = multi_lang.get_text("EP020-0034", "CD実行結果(ArgoCD):") 
     exec_stat = multi_lang.get_text("EP020-0030", "CDパイプライン(ArgoCD)情報取得")
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
-
         # Get Query Parameter
         processing = request.args.get('processing', default='False')
         if processing == "True":
@@ -821,16 +809,13 @@ def post_cd_pipeline_argocd_sync(workspace_id):
     Returns:
         Response: HTTP Respose
     """
-
+    globals.logger.info('Synchronize CD pipeline (ArgoCD). workspace_id={}'.format(workspace_id))
+    
     app_name = multi_lang.get_text("EP020-0034", "CD実行結果(ArgoCD):") 
     exec_stat = multi_lang.get_text("EP020-0031", "CDパイプライン(ArgoCD)同期実行")
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {} workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, workspace_id))
-        globals.logger.debug('#' * 50)
-
         # ヘッダ情報
         post_headers = {
             'Content-Type': 'application/json',
@@ -874,16 +859,13 @@ def post_cd_pipeline_argocd_rollback(workspace_id):
     Returns:
         Response: HTTP Respose
     """
-
+    globals.logger.info('Rollback CD pipeline (ArgoCD). workspace_id={}'.format(workspace_id))
+    
     app_name = multi_lang.get_text("EP020-0034", "CD実行結果(ArgoCD):") 
     exec_stat = multi_lang.get_text("EP020-0092", "CDパイプライン(ArgoCD)rollback実行")
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {} workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, workspace_id))
-        globals.logger.debug('#' * 50)
-
         # ヘッダ情報
         post_headers = {
             'Content-Type': 'application/json',
@@ -955,16 +937,13 @@ def cd_execute(workspace_id):
     Returns:
         Response: HTTP Respose
     """
-
+    globals.logger.info('Execute CD. workspace_id={}'.format(workspace_id))
+    
     app_name = multi_lang.get_text("EP020-0003", "ワークスペース情報:")
     exec_stat = multi_lang.get_text("EP020-0019", "CD実行")
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
-
         # 引数をJSON形式で受け取りそのまま引数に設定 parameter set json
         request_json = request.json.copy()
 
@@ -1200,16 +1179,13 @@ def cd_execute_cancel(workspace_id, trace_id):
     Returns:
         Response: HTTP Respose
     """
-
+    globals.logger.info('Delete CD execution reservation. workspace_id={}, trace_id={}'.format(workspace_id, trace_id))
+    
     app_name = multi_lang.get_text("EP020-0003", "ワークスペース情報:")
     exec_stat = multi_lang.get_text("EP020-0085", "CD実行取消")
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
-
         # ユーザIDの取得 get user id
         user_id = common.get_current_user(request.headers)
 
@@ -1448,7 +1424,8 @@ def cd_environment_get(workspace_id):
     Returns:
         Response: HTTP Respose
     """
-
+    globals.logger.info('Get CD environment. workspace_id={}'.format(workspace_id))
+    
     app_name = multi_lang.get_text("EP020-0022", "CD実行環境取得:")
     exec_stat = multi_lang.get_text("EP020-0017", "取得")
     error_detail = ""
