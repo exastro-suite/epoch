@@ -54,7 +54,7 @@ def get_workspace_members_by_role(workspace_id, pickup_roles):
         # Since it is not possible to acquire the user who has it from the child ROLE, the relevant information is extracted from all the parent roles.
         roles = const.ALL_ROLES
 
-        stock_user_id = []  
+        stock_user_id = []
         ret_users = []
         for role in roles:
             # workspace 参照権限のあるユーザーをすべて取得する Get all users with read permission
@@ -69,6 +69,7 @@ def get_workspace_members_by_role(workspace_id, pickup_roles):
             #
             # get users - ユーザー取得
             #
+            globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
             response = requests.get(api_url)
             if response.status_code != 200 and response.status_code != 404:
                 error_detail = multi_lang.get_text("EP020-0008", "ユーザー情報の取得に失敗しました")
@@ -79,7 +80,7 @@ def get_workspace_members_by_role(workspace_id, pickup_roles):
             # globals.logger.debug(f"users:{users}")
 
             for user in users["rows"]:
-                
+
                 # すでに同じユーザーがいた場合は処理しない If the same user already exists, it will not be processed
                 # if len(stock_user_id) > 0:
                 if user["user_id"] in stock_user_id:
@@ -96,6 +97,7 @@ def get_workspace_members_by_role(workspace_id, pickup_roles):
                 #
                 # get user role - ユーザーロール情報取得
                 #
+                globals.logger.info('Send a request. user_id={} URL={}'.format(user["user_id"], api_url))
                 response = requests.get(api_url)
                 if response.status_code != 200:
                     error_detail = multi_lang.get_text("EP020-0009", "ユーザーロール情報の取得に失敗しました")

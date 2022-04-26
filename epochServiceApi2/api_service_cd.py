@@ -87,7 +87,9 @@ def post_cd_pipeline(workspace_id):
                                                     os.environ['EPOCH_RS_WORKSPACE_HOST'],
                                                     os.environ['EPOCH_RS_WORKSPACE_PORT'],
                                                     workspace_id)
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
         response = requests.get(api_url)
+
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0013", "ワークスペース情報の取得に失敗しました")
             globals.logger.debug(error_detail)
@@ -103,7 +105,9 @@ def post_cd_pipeline(workspace_id):
                                                     os.environ['EPOCH_RS_WORKSPACE_HOST'],
                                                     os.environ['EPOCH_RS_WORKSPACE_PORT'],
                                                     workspace_id)
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
         response = requests.get(api_url)
+
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0026", "ワークスペース状態情報の取得に失敗しました")
             globals.logger.debug(error_detail)
@@ -125,7 +129,9 @@ def post_cd_pipeline(workspace_id):
                                                         os.environ['EPOCH_RS_WORKSPACE_HOST'],
                                                         os.environ['EPOCH_RS_WORKSPACE_PORT'],
                                                         workspace_id)
+            globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
             response = requests.get(api_url)
+
             if response.status_code == 200:
                 # 取得したワークスペース情報を退避 Save the acquired workspace information
                 ret = json.loads(response.text)
@@ -177,7 +183,9 @@ def post_cd_pipeline(workspace_id):
                                                                 os.environ['EPOCH_RS_WORKSPACE_PORT'],
                                                                 workspace_id)
 
+            globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
             response = requests.put(api_url, headers=post_headers, data=json.dumps(workspace_status))
+
             if response.status_code != 200:
                 error_detail = multi_lang.get_text("EP020-0027", "ワークスペース状態情報の更新に失敗しました")
                 globals.logger.debug(error_detail)
@@ -206,8 +214,10 @@ def post_cd_pipeline(workspace_id):
 
             for proj_data in git_projects:
                 # gitlab/repos post送信
+                globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
                 response = requests.post('{}/repos'.format(api_url_gitlab), headers=post_headers, data=json.dumps(proj_data))
                 globals.logger.debug("post gitlab/repos response:{}".format(response.text))
+
                 if response.status_code != 200 and response.status_code != 201:
                     error_detail = 'gitlab/repos post処理に失敗しました'
                     raise common.UserException(error_detail)
@@ -222,6 +232,7 @@ def post_cd_pipeline(workspace_id):
                                                                                 workspace_id)
 
             # パイプライン設定(ITA - Git環境情報設定)
+            globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
             response = requests.post( api_url, headers=post_headers, data=json.dumps(post_data))
             globals.logger.debug("it-automation/manifest/git:response:" + response.text)
             if response.status_code != 200 and response.status_code != 201:
@@ -245,8 +256,10 @@ def post_cd_pipeline(workspace_id):
                                                                         os.environ['EPOCH_CONTROL_ARGOCD_PORT'],
                                                                         workspace_id)
             # argocd/settings post送信
+            globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
             response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
             globals.logger.debug("post argocd/settings response:{}".format(response.text))
+
             if response.status_code != 200:
                 error_detail = 'argocd/settings post処理に失敗しました'
                 raise common.UserException(error_detail)
@@ -259,7 +272,7 @@ def post_cd_pipeline(workspace_id):
                                                                 os.environ['EPOCH_RS_WORKSPACE_HOST'],
                                                                 os.environ['EPOCH_RS_WORKSPACE_PORT'],
                                                                 workspace_id)
-
+            globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
             response = requests.put(api_url, headers=post_headers, data=json.dumps(workspace_status))
 
             if response.status_code != 200:
@@ -323,7 +336,9 @@ def get_cd_pipeline_ita(workspace_id):
                                                         os.environ['EPOCH_RS_CD_RESULT_PORT'],
                                                         workspace_id,
                                                         cd_status_in)
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
         response = requests.get(api_url)
+
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0078", "CDパイプライン(IT-Automation)情報の取得に失敗しました")
             globals.logger.debug(error_detail)
@@ -412,7 +427,9 @@ def get_git_commits(workspace_id):
                                                     os.environ['EPOCH_RS_WORKSPACE_HOST'],
                                                     os.environ['EPOCH_RS_WORKSPACE_PORT'],
                                                     workspace_id)
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
         response = requests.get(api_url)
+
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0013", "ワークスペース情報の取得に失敗しました")
             globals.logger.debug(error_detail)
@@ -442,7 +459,9 @@ def get_git_commits(workspace_id):
                                                     os.environ['EPOCH_RS_WORKSPACE_HOST'],
                                                     os.environ['EPOCH_RS_WORKSPACE_PORT'],
                                                     workspace_id)
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
         response = requests.get(api_url)
+
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0091", "manifest情報の取得に失敗しました")
             globals.logger.debug(error_detail)
@@ -469,7 +488,9 @@ def get_git_commits(workspace_id):
                                                     os.environ['EPOCH_CONTROL_INSIDE_GITLAB_HOST'],
                                                     os.environ['EPOCH_CONTROL_INSIDE_GITLAB_PORT'],
                                                     urllib.parse.quote(git_url))
+            globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
             response = requests.get(api_url, headers=post_headers_in_token)
+
             if response.status_code != 200:
                 raise common.UserException("git branches get error:[{}]".format(response.status_code))
 
@@ -485,7 +506,9 @@ def get_git_commits(workspace_id):
                                                         os.environ['EPOCH_CONTROL_INSIDE_GITLAB_PORT'],
                                                         urllib.parse.quote(git_url),
                                                         urllib.parse.quote(branch_row["name"]))
+                globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
                 response = requests.get(api_url, headers=post_headers_in_token)
+
                 if response.status_code != 200:
                     raise common.UserException("git commit get error:[{}]".format(response.status_code))
 
@@ -517,7 +540,9 @@ def get_git_commits(workspace_id):
                                                     os.environ['EPOCH_CONTROL_GITHUB_HOST'],
                                                     os.environ['EPOCH_CONTROL_GITHUB_PORT'],
                                                     urllib.parse.quote(git_url))
+            globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
             response = requests.get(api_url, headers=post_headers_in_token)
+
             if response.status_code != 200:
                 raise common.UserException("git branches get error:[{}]".format(response.status_code))
 
@@ -534,7 +559,9 @@ def get_git_commits(workspace_id):
                                                         os.environ['EPOCH_CONTROL_GITHUB_PORT'],
                                                         urllib.parse.quote(git_url),
                                                         urllib.parse.quote(branch_row["name"]))
+                globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
                 response = requests.get(api_url, headers=post_headers_in_token)
+
                 if response.status_code != 200:
                     raise common.UserException("git commit get error:[{}]".format(response.status_code))
 
@@ -606,7 +633,9 @@ def get_cd_pipeline_argocd(workspace_id):
                                                         os.environ['EPOCH_RS_CD_RESULT_PORT'],
                                                         workspace_id,
                                                         cd_status_in)
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
         response = requests.get(api_url)
+
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0032", "CDパイプライン(ArgoCD)情報の取得に失敗しました")
             globals.logger.debug(error_detail)
@@ -742,7 +771,9 @@ def get_cd_pipeline_argocd(workspace_id):
                                                                         os.environ['EPOCH_CONTROL_ARGOCD_PORT'],
                                                                         workspace_id,
                                                                         argo_app_name)
+                globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
                 resp_argo_status = requests.get(argo_api_url)
+
                 if resp_argo_status.status_code != 200:
                     resp_argo_status = {"result": resp_argo_status.status_code, "result": {}}
                 else:
@@ -825,7 +856,9 @@ def post_cd_pipeline_argocd_sync(workspace_id):
                                                 os.environ['EPOCH_CONTROL_ARGOCD_PORT'],
                                                 workspace_id,
                                                 get_argo_app_name(workspace_id,environment_id))
+        globals.logger.info('Send a request. workspace_id={} environment_id={} URL={}'.format(workspace_id, environment_id, api_url))
         response = requests.post(api_url, headers=post_headers)
+
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0033", "CDパイプライン(ArgoCD)同期実行に失敗しました")
             globals.logger.debug(error_detail)
@@ -876,7 +909,9 @@ def post_cd_pipeline_argocd_rollback(workspace_id):
                                                 os.environ['EPOCH_CONTROL_ARGOCD_PORT'],
                                                 workspace_id,
                                                 get_argo_app_name(workspace_id,environment_id))
+        globals.logger.info('Send a request. workspace_id={} environment_id={} URL={}'.format(workspace_id, environment_id, api_url))
         response = requests.post(api_url, headers=post_headers)
+
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0093", "CDパイプライン(ArgoCD)rollback実行に失敗しました")
             globals.logger.debug(error_detail)
@@ -959,6 +994,7 @@ def cd_execute(workspace_id):
         #
         # get user role - ユーザーロール情報取得
         #
+        globals.logger.info('Send a request. workspace_id={} user_id={} URL={}'.format(workspace_id, user_id, api_url))
         response = requests.get(api_url)
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0009", "ユーザーロール情報の取得に失敗しました")
@@ -989,7 +1025,9 @@ def cd_execute(workspace_id):
                                                     os.environ['EPOCH_RS_WORKSPACE_HOST'],
                                                     os.environ['EPOCH_RS_WORKSPACE_PORT'],
                                                     workspace_id)
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
         response = requests.get(api_url)
+
         # 取得できなかった場合は、終了する If it cannot be obtained, it will end.
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0013", "ワークスペース情報の取得に失敗しました")
@@ -1034,6 +1072,7 @@ def cd_execute(workspace_id):
         #
         # get users - ユーザー取得
         #
+        globals.logger.info('Send a request. workspace_id={} user_id={} URL={}'.format(workspace_id, user_id, api_url))
         response = requests.get(api_url)
         if response.status_code != 200 and response.status_code != 404:
             error_detail = multi_lang.get_text("EP020-0008", "ユーザー情報の取得に失敗しました")
@@ -1055,6 +1094,7 @@ def cd_execute(workspace_id):
         # globals.logger.debug ("cicd url:" + apiInfo)
 
         # オペレーション一覧の取得(ITA) get a ita operations
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, apiInfo))
         request_response = requests.get(apiInfo + "/cd/operations", headers=post_headers)
         # globals.logger.debug("cd/operations:" + request_response.text)
         # 戻り値がJson形式かチェックする return parameter is json?
@@ -1088,6 +1128,7 @@ def cd_execute(workspace_id):
         post_data = json.dumps(post_data)
 
         # CD実行(ITA) cd execute ita
+        globals.logger.info('Send a request. workspace_id={} operation_id={} URL={}'.format(workspace_id, ope_id, api_url))
         response = requests.post(apiInfo + "/cd/execute", headers=post_headers, data=post_data)
         # 正常終了したか確認 Check if it ended normally
         if response.status_code != 200:
@@ -1119,7 +1160,7 @@ def cd_execute(workspace_id):
                                                     users["info"]["username"],
                                                     trace_id
                                                     )
-
+        globals.logger.info('Send a request. workspace_id={} username={} trace_id={} URL={}'.format(workspace_id, users["info"]["username"], trace_id, api_url))
         response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0029", "CD実行結果の登録に失敗しました")
@@ -1144,6 +1185,7 @@ def cd_execute(workspace_id):
                                                     const.LOG_KIND_UPDATE
                                                     )
 
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
         response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0023", "ログ出力に失敗しました")
@@ -1199,6 +1241,7 @@ def cd_execute_cancel(workspace_id, trace_id):
         #
         # get user role - ユーザーロール情報取得
         #
+        globals.logger.info('Send a request. workspace_id={} user_id={} URL={}'.format(workspace_id, user_id, api_url))
         response = requests.get(api_url)
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0009", "ユーザーロール情報の取得に失敗しました")
@@ -1229,7 +1272,9 @@ def cd_execute_cancel(workspace_id, trace_id):
                                                     os.environ['EPOCH_RS_WORKSPACE_HOST'],
                                                     os.environ['EPOCH_RS_WORKSPACE_PORT'],
                                                     workspace_id)
+        globals.logger.info('Send a request. workspace_id={} trace_id={} URL={}'.format(workspace_id, trace_id, api_url))
         response = requests.get(api_url)
+
         # 取得できなかった場合は、終了する If it cannot be obtained, it will end.
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0013", "ワークスペース情報の取得に失敗しました")
@@ -1247,7 +1292,9 @@ def cd_execute_cancel(workspace_id, trace_id):
                                                     os.environ['EPOCH_RS_CD_RESULT_PORT'],
                                                     workspace_id,
                                                     trace_id)
+        globals.logger.info('Send a request. workspace_id={} trace_id={} URL={}'.format(workspace_id, trace_id, api_url))
         response = requests.get(api_url)
+
         # 取得できなかった場合は、終了する If it cannot be obtained, it will end.
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0087", "CD実行結果情報の取得に失敗しました")
@@ -1293,6 +1340,7 @@ def cd_execute_cancel(workspace_id, trace_id):
         #
         # get users - ユーザー取得
         #
+        globals.logger.info('Send a request. workspace_id={} user_id={} URL={}'.format(workspace_id, user_id, api_url))
         response = requests.get(api_url)
         if response.status_code != 200 and response.status_code != 404:
             error_detail = multi_lang.get_text("EP020-0008", "ユーザー情報の取得に失敗しました")
@@ -1315,6 +1363,7 @@ def cd_execute_cancel(workspace_id, trace_id):
         # globals.logger.debug ("cicd url:" + apiInfo)
 
         # 予約取り消し reserve cancel
+        globals.logger.info('Send a request. workspace_id={} trace_id={} URL={}'.format(workspace_id, trace_id, api_url))
         response = requests.delete(apiInfo)
         # globals.logger.debug("cd/operations:" + request_response.text)
         # 戻り値がJson形式かチェックする return parameter is json?
@@ -1340,7 +1389,7 @@ def cd_execute_cancel(workspace_id, trace_id):
                                                     users["info"]["username"],
                                                     const.LOG_KIND_UPDATE
                                                     )
-
+        globals.logger.info('Send a request. workspace_id={} username={} URL={}'.format(workspace_id, users["info"]["username"], api_url))
         response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0023", "ログ出力に失敗しました")
@@ -1436,7 +1485,9 @@ def cd_environment_get(workspace_id):
                                                     os.environ['EPOCH_RS_WORKSPACE_HOST'],
                                                     os.environ['EPOCH_RS_WORKSPACE_PORT'],
                                                     workspace_id)
+        globals.logger.info('Send a request. workspace_id={} user_id={} URL={}'.format(workspace_id, user_id, api_url))
         response = requests.get(api_url)
+
         # 取得できなかった場合は、終了する If it cannot be obtained, it will end.
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0013", "ワークスペース情報の取得に失敗しました")
