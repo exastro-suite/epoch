@@ -134,7 +134,6 @@ def get_workspace_members(workspace_id):
             # globals.logger.debug(f"users:{users}")
 
             for user in users["rows"]:
-
                 # すでに同じユーザーがいた場合は処理しない If the same user already exists, it will not be processed
                 # if len(stock_user_id) > 0:
                 if user["user_id"] in stock_user_id:
@@ -585,7 +584,7 @@ def leave_workspace(workspace_id):
         user_id = common.get_current_user(request.headers)
 
         # 指定のワークスペースIDに対する、オーナーロールのユーザ一覧を取得 Get a list of owner role users for the specified workspace ID
-        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_info_epai))
+        globals.logger.info('Send a request. workspace_id={} URL={}/{}/client/epoch-system/roles/{}/users'.format(workspace_id, api_info_epai, realm_name, const.ROLE_WS_OWNER[0].format(workspace_id)))
         response = requests.get("{}/{}/client/epoch-system/roles/{}/users".format(api_info_epai, realm_name, const.ROLE_WS_OWNER[0].format(workspace_id)), headers=post_header)
 
         users = json.loads(response.text)
@@ -606,7 +605,7 @@ def leave_workspace(workspace_id):
                 # ログイン者が唯一のオーナーの時は退去できない Can't move out when the login person is the only owner
                 return jsonify({"result": "400", "reason": multi_lang.get_text("EP020-0014", "あなた以外のオーナーがいないので退去できません")}), 400
 
-        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_info_epai))
+        globals.logger.info('Send a request. workspace_id={} URL={}/{}/user/{}/roles/epoch-system'.format(workspace_id,api_info_epai, realm_name, user_id))
         response = requests.get("{}/{}/user/{}/roles/epoch-system".format(api_info_epai, realm_name, user_id), headers=post_header)
 
         user_roles = json.loads(response.text)
@@ -628,7 +627,7 @@ def leave_workspace(workspace_id):
         globals.logger.debug("post_data : " + json.dumps(post_data))
 
         # 自分自身のワークスペースに関するロールを全て削除 - Delete all roles related to your own workspace
-        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_info_epai))
+        globals.logger.info('Send a request. workspace_id={} URL={}/{}/user/{}/roles/epoch-system'.format(workspace_id,api_info_epai, realm_name, user_id))
         response = requests.delete("{}/{}/user/{}/roles/epoch-system".format(api_info_epai, realm_name, user_id), headers=post_header, data=json.dumps(post_data))
 
 
