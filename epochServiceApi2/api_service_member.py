@@ -47,15 +47,13 @@ def get_users():
     Returns:
         Response: HTTP Respose
     """
+    globals.logger.info('Get user information list.')
 
     app_name = multi_lang.get_text("EP020-0001", "ユーザー情報:")
     exec_stat = multi_lang.get_text("EP020-0002", "一覧取得")
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
 
         api_url = "{}://{}:{}/{}/user".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
                                             os.environ['EPOCH_EPAI_API_HOST'],
@@ -65,6 +63,7 @@ def get_users():
         #
         # get users - ユーザー取得
         #
+        globals.logger.info('Send a request. URL={}'.format(api_url))
         response = requests.get(api_url)
         if response.status_code != 200 and response.status_code != 404:
             error_detail = multi_lang.get_text("EP020-0008", "ユーザー情報の取得に失敗しました")
@@ -109,7 +108,7 @@ def get_workspace_members(workspace_id):
     try:
         roles = const.ALL_ROLES
 
-        stock_user_id = []  
+        stock_user_id = []
         ret_users = []
         for role in roles:
             # workspace 参照権限のあるユーザーをすべて取得する Get all users with read permission
@@ -124,6 +123,7 @@ def get_workspace_members(workspace_id):
             #
             # get users - ユーザー取得
             #
+            globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
             response = requests.get(api_url)
             if response.status_code != 200 and response.status_code != 404:
                 error_detail = multi_lang.get_text("EP020-0008", "ユーザー情報の取得に失敗しました")
@@ -134,7 +134,7 @@ def get_workspace_members(workspace_id):
             # globals.logger.debug(f"users:{users}")
 
             for user in users["rows"]:
-                
+
                 # すでに同じユーザーがいた場合は処理しない If the same user already exists, it will not be processed
                 # if len(stock_user_id) > 0:
                 if user["user_id"] in stock_user_id:
@@ -151,6 +151,7 @@ def get_workspace_members(workspace_id):
                 #
                 # get user role - ユーザーロール情報取得
                 #
+                globals.logger.info('Send a request. workspace_id={} user_id={} URL={}'.format(workspace_id, user["user_id"], api_url))
                 response = requests.get(api_url)
                 if response.status_code != 200:
                     error_detail = multi_lang.get_text("EP020-0009", "ユーザーロール情報の取得に失敗しました")
@@ -174,7 +175,7 @@ def get_workspace_members(workspace_id):
                                     "kind" : kind
                                 }
                             )
-                
+
                 ret_user = {
                     "user_id": user["user_id"],
                     "username": user["user_name"],
@@ -187,10 +188,10 @@ def get_workspace_members(workspace_id):
 
         # globals.logger.debug(f"users:{ret_users}")
         rows = ret_users
-        
+
         #処理が成功したことのログを出力
         globals.logger.info('SUCCESS: Get workspace member. workspace_id={}, ret_status={}, ret_user_count={}'.format(workspace_id, 200, len(rows)))
-        
+
         return jsonify({"result": "200", "rows": rows}), 200
 
     except common.UserException as e:
@@ -211,13 +212,13 @@ def get_workspace_members_cdexec(workspace_id):
     error_detail = ""
 
     try:
-        # 権限「オーナー変更」保有しているユーザーを抽出する 
+        # 権限「オーナー変更」保有しているユーザーを抽出する
         # Extract users who have the authority "change owner"
         rows = api_service_common.get_workspace_members_by_role(workspace_id, const.ROLE_WS_ROLE_CD_EXECUTE[0].format(workspace_id))
 
         #処理が成功したことのログを出力
         globals.logger.info('SUCCESS: Get CD execution member. workspace_id={}, ret_status={}, workspace_member_count={}'.format(workspace_id, 200, len(rows)))
-        
+
         return jsonify({"result": "200", "rows": rows}), 200
 
     except common.UserException as e:
@@ -267,6 +268,7 @@ def merge_workspace_members(workspace_id):
                                                     os.environ['EPOCH_RS_WORKSPACE_HOST'],
                                                     os.environ['EPOCH_RS_WORKSPACE_PORT'],
                                                     workspace_id)
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
         response = requests.get(api_url, headers=post_headers)
 
         if response.status_code == 200 and common.is_json_format(response.text):
@@ -311,6 +313,7 @@ def merge_workspace_members(workspace_id):
         #
         # get users - ユーザー取得
         #
+        globals.logger.info('Send a request. workspace_id={} user_id={} URL={}'.format(workspace_id, user_id, api_url))
         response = requests.get(api_url)
         if response.status_code != 200 and response.status_code != 404:
             error_detail = multi_lang.get_text("EP020-0008", "ユーザー情報の取得に失敗しました")
@@ -319,7 +322,7 @@ def merge_workspace_members(workspace_id):
         users = json.loads(response.text)
         # globals.logger.debug(f"users:{users}")
 
-        # 取得したユーザーのロールを取得 
+        # 取得したユーザーのロールを取得
         # Get the role of the acquired user
         api_url = "{}://{}:{}/{}/user/{}/roles/epoch-system".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
                                                                 os.environ['EPOCH_EPAI_API_HOST'],
@@ -331,6 +334,7 @@ def merge_workspace_members(workspace_id):
         #
         # get user role - ユーザーロール情報取得
         #
+        globals.logger.info('Send a request. workspace_id={} user_id={} URL={}'.format(workspace_id, user_id, api_url))
         response = requests.get(api_url)
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0009", "ユーザーロール情報の取得に失敗しました")
@@ -341,7 +345,7 @@ def merge_workspace_members(workspace_id):
         # globals.logger.debug(f"roles:{ret_roles}")
 
         bool_owener_role = False
-        # オーナーロール設定可能権限かどうかチェックする 
+        # オーナーロール設定可能権限かどうかチェックする
         # Check if the owner role can be set
         for get_role in ret_roles["rows"]:
             # globals.logger.debug('role:{}'.format(get_role["name"]))
@@ -351,7 +355,7 @@ def merge_workspace_members(workspace_id):
                 bool_owener_role = True
                 break
 
-        # 権限「オーナー変更」保有しているユーザーを抽出する 
+        # 権限「オーナー変更」保有しているユーザーを抽出する
         # Extract users who have the authority "change owner"
         owener_users = api_service_common.get_workspace_members_by_role(workspace_id, const.ROLE_WS_ROLE_OWNER_ROLE_SETTING[0].format(workspace_id))
         # globals.logger.debug(f"owener_users{owener_users}")
@@ -369,7 +373,7 @@ def merge_workspace_members(workspace_id):
                 globals.logger.debug(f"req_row:{row}")
                 bool_owner_update = False
                 for role in row["roles"]:
-                    # オーナー更新ありのフラグをONにする 
+                    # オーナー更新ありのフラグをONにする
                     # Turn on the flag with owner update
                     globals.logger.debug("owener_check({}):({})".format(common.get_role_name(role["kind"]), const.ROLE_WS_OWNER[0]))
                     if common.get_role_name(role["kind"]) == const.ROLE_WS_OWNER[0]:
@@ -388,7 +392,7 @@ def merge_workspace_members(workspace_id):
                     bool_auth_error = True
                     break
 
-                # 権限エラーの場合は、処理を抜ける 
+                # 権限エラーの場合は、処理を抜ける
                 # In case of permission error, exit the process
                 if bool_auth_error:
                     break
@@ -396,7 +400,7 @@ def merge_workspace_members(workspace_id):
             # 権限エラー
             # Permission error
             if bool_auth_error:
-                # ログイン者が唯一のオーナーの時は退去できない 
+                # ログイン者が唯一のオーナーの時は退去できない
                 # Can't move out when the login person is the only owner
                 error_detail = multi_lang.get_text("EP020-0024", "オーナー権限を変更することはできません")
                 raise common.AuthException(error_detail)
@@ -409,7 +413,7 @@ def merge_workspace_members(workspace_id):
             for row in req_json["rows"]:
                 bool_owner_update = False
                 for role in row["roles"]:
-                    # オーナー更新ありのフラグをONにする 
+                    # オーナー更新ありのフラグをONにする
                     # Turn on the flag with owner update
                     if common.get_role_name(role["kind"]) == const.ROLE_WS_OWNER[0]:
                         bool_owner_update = True
@@ -435,7 +439,7 @@ def merge_workspace_members(workspace_id):
 
         for row in req_json["rows"]:
 
-            # 登録前にすべてのroleを削除する 
+            # 登録前にすべてのroleを削除する
             # Delete all roles before registration
             roles = const.ALL_ROLES
             #
@@ -462,12 +466,13 @@ def merge_workspace_members(workspace_id):
             #
             # delete workspace role - ワークスペース ロールの削除
             #
+            globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
             response = requests.delete(api_url, headers=post_headers, data=json.dumps(post_data))
             if response.status_code != 200:
                 error_detail = multi_lang.get_text("EP020-0006", "ロールの削除に失敗しました")
                 raise common.UserException("{} Error user role delete status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
 
-            # 登録するroleの情報を編集 
+            # 登録するroleの情報を編集
             # Edit the information of the role to be registered
             add_roles = []
             for role in row["roles"]:
@@ -476,7 +481,7 @@ def merge_workspace_members(workspace_id):
                     "enabled": True,
                 }
                 add_roles.append(add_role)
-            
+
             post_data = {
                 "roles" : add_roles
             }
@@ -484,6 +489,7 @@ def merge_workspace_members(workspace_id):
             #
             # append workspace role - ワークスペース ロールの付与
             #
+            globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
             response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
             if response.status_code != 200:
                 error_detail = multi_lang.get_text("EP020-0007", "ロールの登録に失敗しました")
@@ -507,7 +513,7 @@ def merge_workspace_members(workspace_id):
                                                         users["info"]["username"],
                                                         const.LOG_KIND_UPDATE
                                                         )
-
+            globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
             response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
             if response.status_code != 200:
                 error_detail = multi_lang.get_text("EP020-0023", "ログ出力に失敗しました")
@@ -526,6 +532,7 @@ def merge_workspace_members(workspace_id):
                                                         os.environ['EPOCH_RS_WORKSPACE_HOST'],
                                                         os.environ['EPOCH_RS_WORKSPACE_PORT'],
                                                         workspace_id)
+            globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
             response = requests.patch(api_url, headers=post_headers, data=json.dumps(post_data))
             if response.status_code != 200:
                 error_detail = multi_lang.get_text("EP000-0024", "対象の情報({})を更新できませんでした", "workspace")
@@ -536,7 +543,7 @@ def merge_workspace_members(workspace_id):
 
         #処理が成功したことのログを出力
         globals.logger.info('SUCCESS: Set workspace member. workspace_id={}, ret_status={}'.format(workspace_id, 200))
-        
+
         return jsonify({"result": "200"}), 200
 
     except common.AuthException as e:
@@ -557,7 +564,7 @@ def leave_workspace(workspace_id):
         Response: HTTP Respose
     """
     globals.logger.info('Delete member from workspace. workspace_id={}'.format(workspace_id))
-    
+
     app_name = multi_lang.get_text("EP020-0001", "ワークスペース情報:")
     exec_stat = multi_lang.get_text("EP020-0010", "退去")
     error_detail = ""
@@ -568,24 +575,25 @@ def leave_workspace(workspace_id):
             'Content-Type': 'application/json',
         }
 
-        api_info_epai = "{}://{}:{}".format(os.environ["EPOCH_EPAI_API_PROTOCOL"], 
-                                            os.environ["EPOCH_EPAI_API_HOST"], 
+        api_info_epai = "{}://{}:{}".format(os.environ["EPOCH_EPAI_API_PROTOCOL"],
+                                            os.environ["EPOCH_EPAI_API_HOST"],
                                             os.environ["EPOCH_EPAI_API_PORT"])
-        
+
         realm_name = "exastroplatform"
-        
+
         # ユーザIDの取得 get user id
         user_id = common.get_current_user(request.headers)
-        
+
         # 指定のワークスペースIDに対する、オーナーロールのユーザ一覧を取得 Get a list of owner role users for the specified workspace ID
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_info_epai))
         response = requests.get("{}/{}/client/epoch-system/roles/{}/users".format(api_info_epai, realm_name, const.ROLE_WS_OWNER[0].format(workspace_id)), headers=post_header)
 
         users = json.loads(response.text)
         globals.logger.debug(type(users["rows"]))
         globals.logger.debug(users["rows"])
-        
+
         owner_check = False
-        
+
         # 自身がオーナーかどうか確認 Check if you are the owner
         for user in users["rows"]:
             if user["user_id"] == user_id:
@@ -598,54 +606,57 @@ def leave_workspace(workspace_id):
                 # ログイン者が唯一のオーナーの時は退去できない Can't move out when the login person is the only owner
                 return jsonify({"result": "400", "reason": multi_lang.get_text("EP020-0014", "あなた以外のオーナーがいないので退去できません")}), 400
 
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_info_epai))
         response = requests.get("{}/{}/user/{}/roles/epoch-system".format(api_info_epai, realm_name, user_id), headers=post_header)
-        
+
         user_roles = json.loads(response.text)
-        
+
         roles = []
-        
-        for role in user_roles["rows"]:            
+
+        for role in user_roles["rows"]:
             if "ws-{}".format(workspace_id) in role["name"]:
                 roles.append(
                     {
                         "name" : role["name"]
                     }
                 )
-            
+
         post_data = {
             "roles" :  roles
         }
-        
+
         globals.logger.debug("post_data : " + json.dumps(post_data))
-        
+
         # 自分自身のワークスペースに関するロールを全て削除 - Delete all roles related to your own workspace
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_info_epai))
         response = requests.delete("{}/{}/user/{}/roles/epoch-system".format(api_info_epai, realm_name, user_id), headers=post_header, data=json.dumps(post_data))
-        
-        
+
+
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0011", "ユーザクライアントロールの削除に失敗しました")
             return jsonify({"result": "400", "reason": multi_lang.get_text("EP020-0015", "ワークスペースからの退去に失敗しました")}), 400
-    
+
         # ロールの更新日を現在時刻に変更 - Change the update date of the role to the current time
-        api_info = "{}://{}:{}/workspace/{}".format(os.environ["EPOCH_RS_WORKSPACE_PROTOCOL"], 
-                                                    os.environ["EPOCH_RS_WORKSPACE_HOST"], 
+        api_info = "{}://{}:{}/workspace/{}".format(os.environ["EPOCH_RS_WORKSPACE_PROTOCOL"],
+                                                    os.environ["EPOCH_RS_WORKSPACE_HOST"],
                                                     os.environ["EPOCH_RS_WORKSPACE_PORT"],
                                                     workspace_id)
-        
+
         # 現在時刻を設定はrs_workspace側で処理 The current time is set on the rs_workspace side
         post_data = {
             'role_update_at' : ''
         }
-        
+
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_info))
         response = requests.patch(api_info, headers=post_header, data=json.dumps(post_data))
-        
+
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0012", "ロール更新日の変更に失敗しました")
             return jsonify({"result": "400", "reason": multi_lang.get_text("EP020-0015", "ワークスペースからの退去に失敗しました")}), 400
 
         #処理が成功したことのログを出力
         globals.logger.info('SUCCESS: Delete member from workspace. workspace_id={}, ret_status={}'.format(workspace_id, 200))
-        
+
         return jsonify({"result": "200"}), 200
 
     except common.UserException as e:
