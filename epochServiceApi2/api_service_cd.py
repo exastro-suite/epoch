@@ -214,7 +214,7 @@ def post_cd_pipeline(workspace_id):
 
             for proj_data in git_projects:
                 # gitlab/repos post送信
-                globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
+                globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url_gitlab))
                 response = requests.post('{}/repos'.format(api_url_gitlab), headers=post_headers, data=json.dumps(proj_data))
                 globals.logger.debug("post gitlab/repos response:{}".format(response.text))
 
@@ -771,7 +771,7 @@ def get_cd_pipeline_argocd(workspace_id):
                                                                         os.environ['EPOCH_CONTROL_ARGOCD_PORT'],
                                                                         workspace_id,
                                                                         argo_app_name)
-                globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
+                globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, argo_api_url))
                 resp_argo_status = requests.get(argo_api_url)
 
                 if resp_argo_status.status_code != 200:
@@ -1128,7 +1128,7 @@ def cd_execute(workspace_id):
         post_data = json.dumps(post_data)
 
         # CD実行(ITA) cd execute ita
-        globals.logger.info('Send a request. workspace_id={} operation_id={} URL={}'.format(workspace_id, ope_id, api_url))
+        globals.logger.info('Send a request. workspace_id={} operation_id={} URL={}'.format(workspace_id, ope_id, apiInfo + "/cd/execute"))
         response = requests.post(apiInfo + "/cd/execute", headers=post_headers, data=post_data)
         # 正常終了したか確認 Check if it ended normally
         if response.status_code != 200:
@@ -1160,7 +1160,7 @@ def cd_execute(workspace_id):
                                                     users["info"]["username"],
                                                     trace_id
                                                     )
-        globals.logger.info('Send a request. workspace_id={} username={} trace_id={} URL={}'.format(workspace_id, users["info"]["username"], trace_id, api_url))
+        globals.logger.info('Send a request. workspace_id={} username={} URL={}'.format(workspace_id, users["info"]["username"], api_url))
         response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0029", "CD実行結果の登録に失敗しました")
@@ -1272,7 +1272,7 @@ def cd_execute_cancel(workspace_id, trace_id):
                                                     os.environ['EPOCH_RS_WORKSPACE_HOST'],
                                                     os.environ['EPOCH_RS_WORKSPACE_PORT'],
                                                     workspace_id)
-        globals.logger.info('Send a request. workspace_id={} trace_id={} URL={}'.format(workspace_id, trace_id, api_url))
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
         response = requests.get(api_url)
 
         # 取得できなかった場合は、終了する If it cannot be obtained, it will end.
@@ -1292,7 +1292,7 @@ def cd_execute_cancel(workspace_id, trace_id):
                                                     os.environ['EPOCH_RS_CD_RESULT_PORT'],
                                                     workspace_id,
                                                     trace_id)
-        globals.logger.info('Send a request. workspace_id={} trace_id={} URL={}'.format(workspace_id, trace_id, api_url))
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
         response = requests.get(api_url)
 
         # 取得できなかった場合は、終了する If it cannot be obtained, it will end.
@@ -1363,7 +1363,7 @@ def cd_execute_cancel(workspace_id, trace_id):
         # globals.logger.debug ("cicd url:" + apiInfo)
 
         # 予約取り消し reserve cancel
-        globals.logger.info('Send a request. workspace_id={} trace_id={} URL={}'.format(workspace_id, trace_id, api_url))
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, apiInfo))
         response = requests.delete(apiInfo)
         # globals.logger.debug("cd/operations:" + request_response.text)
         # 戻り値がJson形式かチェックする return parameter is json?

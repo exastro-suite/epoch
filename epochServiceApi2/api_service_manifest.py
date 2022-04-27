@@ -63,7 +63,6 @@ def post_manifest_parameter(workspace_id):
 
         # send put (workspace data update)
         apiInfo = "{}://{}:{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'], os.environ['EPOCH_RS_WORKSPACE_HOST'], os.environ['EPOCH_RS_WORKSPACE_PORT'])
-        globals.logger.debug("workspace put call: worksapce_id:{}".format(workspace_id))
         globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, apiInfo))
         request_response = requests.put( "{}/workspace/{}/manifestParameter".format(apiInfo, workspace_id), headers=post_headers, data=json.dumps(post_data))
         # エラーの際は処理しない
@@ -88,7 +87,6 @@ def post_manifest_parameter(workspace_id):
         globals.logger.debug("apiInfo:" + apiInfo)
 
         # Manifestパラメータ設定(ITA)
-        globals.logger.debug("ita/manifestParameter post call: worksapce_id:{}".format(workspace_id))
         globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, apiInfo))
         request_response = requests.post( "{}/workspace/{}/it-automation/manifest/parameter".format(apiInfo, workspace_id), headers=post_headers, data=json.dumps(post_data))
         # globals.logger.debug("ita/manifestParameter:response:" + request_response.text.encode().decode('unicode-escape'))
