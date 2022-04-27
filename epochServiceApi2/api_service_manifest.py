@@ -63,7 +63,7 @@ def post_manifest_parameter(workspace_id):
 
         # send put (workspace data update)
         apiInfo = "{}://{}:{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'], os.environ['EPOCH_RS_WORKSPACE_HOST'], os.environ['EPOCH_RS_WORKSPACE_PORT'])
-        globals.logger.debug("workspace put call: worksapce_id:{}".format(workspace_id))
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, apiInfo))
         request_response = requests.put( "{}/workspace/{}/manifestParameter".format(apiInfo, workspace_id), headers=post_headers, data=json.dumps(post_data))
         # エラーの際は処理しない
         if request_response.status_code == 404:
@@ -87,7 +87,7 @@ def post_manifest_parameter(workspace_id):
         globals.logger.debug("apiInfo:" + apiInfo)
 
         # Manifestパラメータ設定(ITA)
-        globals.logger.debug("ita/manifestParameter post call: worksapce_id:{}".format(workspace_id))
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, apiInfo))
         request_response = requests.post( "{}/workspace/{}/it-automation/manifest/parameter".format(apiInfo, workspace_id), headers=post_headers, data=json.dumps(post_data))
         # globals.logger.debug("ita/manifestParameter:response:" + request_response.text.encode().decode('unicode-escape'))
         ret = json.loads(request_response.text)
@@ -103,6 +103,7 @@ def post_manifest_parameter(workspace_id):
                                                     os.environ['EPOCH_RS_WORKSPACE_HOST'],
                                                     os.environ['EPOCH_RS_WORKSPACE_PORT'],
                                                     workspace_id)
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
         response = requests.get(api_url)
 
         # 正常以外はエラーを返す Returns an error if not normal
@@ -178,6 +179,7 @@ def post_manifest_template(workspace_id):
         }
 
         # RsWorkspace API呼び出し(全件取得)
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, apiInfo))
         response = requests.get("{}/workspace/{}/manifests".format(apiInfo, workspace_id), headers=post_headers)
 
         # 戻り値が正常値以外の場合は、処理を終了
@@ -219,6 +221,7 @@ def post_manifest_template(workspace_id):
                                                         os.environ['EPOCH_CONTROL_WORKSPACE_PORT'])
 
             # BlueGreen Deploymentの自動変換
+            globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_control_workspace))
             response = requests.post("{}/workspace/{}/manifest/templates".format(api_control_workspace, workspace_id), headers=post_headers, data=json.dumps(post_data))
 
             # 戻り値が正常値以外の場合は、処理を終了
@@ -265,12 +268,14 @@ def post_manifest_template(workspace_id):
             post_data = json.dumps(upd)
 
             # RsWorkspace API呼び出し(更新)
+            globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, apiInfo))
             response = requests.put("{}/workspace/{}/manifests/{}".format(apiInfo, workspace_id, upd["file_id"]), headers=post_headers, data=post_data)
 
         # JSON形式に変換
         post_data = json.dumps(post_data_add)
 
         # RsWorkspace API呼び出し(登録)
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, apiInfo))
         response = requests.post("{}/workspace/{}/manifests".format(apiInfo, workspace_id), headers=post_headers, data=post_data)
 
         # ITA呼び出し
@@ -319,6 +324,7 @@ def get_manifest_template_list(workspace_id):
         }
 
         # GET送信（作成）
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, apiurl))
         response = requests.get(apiurl, headers=headers)
 
         globals.logger.debug("get_manifests return --------------------")
@@ -383,6 +389,7 @@ def delete_manifest_template(workspace_id, file_id):
         resourcePort = os.environ['EPOCH_RS_WORKSPACE_PORT']
         apiurl = "{}://{}:{}/workspace/{}/manifests/{}".format(resourceProtocol, resourceHost, resourcePort, workspace_id, file_id)
 
+        globals.logger.info('Send a request. workspace_id={} file_id={} URL={}'.format(workspace_id, file_id, apiurl))
         response = requests.delete(apiurl, headers=headers)
 
         if response.status_code == 200 and common.is_json_format(response.text):
@@ -444,6 +451,7 @@ def ita_registration(workspace_id):
 
         globals.logger.debug("CALL manifests get : url:{}".format(apiurl))
         # RsWorkspace API呼び出し RsWorkspace API call
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, apiurl))
         response = requests.get(apiurl, headers=post_headers)
 #        print("CALL responseAPI : response:{}, text:{}".format(response, response.text))
 
@@ -464,6 +472,7 @@ def ita_registration(workspace_id):
         # BlueGreen deploy方式を取得するためにワークスペース情報を取得
         # Get workspace information to get the BlueGreen deploy method
         apiurl = "{}://{}:{}/workspace/{}".format(resourceProtocol, resourceHost, resourcePort, workspace_id)
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, apiurl))
         response = requests.get(apiurl, headers=post_headers)
 
         # 戻り値が正常値以外の場合は、処理を終了
@@ -491,6 +500,7 @@ def ita_registration(workspace_id):
         apiurl = "{}://{}:{}/workspace/{}/it-automation/manifest/templates".format(ita_protocol, ita_host, ita_port, workspace_id)
 
         # RsWorkspace API呼び出し RsWorkspace API call
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, apiurl))
         response = requests.post(apiurl, headers=post_headers, data=send_data)
         globals.logger.debug("CALL it-automation/manifest/templates : status:{}".format(response.status_code))
 

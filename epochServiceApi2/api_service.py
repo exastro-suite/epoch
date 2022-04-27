@@ -247,7 +247,7 @@ def call_ci_result_logs(workspace_id, taskrun_name):
         Response: HTTP Respose
     """
     try:
-        globals.logger.info('Get CI pipeline result. method={}, workspace_id={}, taskrun_name={}'.format(request.method, workspace_id, taskrun_name))
+        # globals.logger.info('Get CI pipeline result. method={}, workspace_id={}, taskrun_name={}'.format(request.method, workspace_id, taskrun_name))
 
         if request.method == 'GET':
             # CIパイプライン結果取得
