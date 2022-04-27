@@ -68,6 +68,7 @@ def create_workspace():
                                                 os.environ['EPOCH_RS_WORKSPACE_HOST'],
                                                 os.environ['EPOCH_RS_WORKSPACE_PORT'])
 
+        globals.logger.info('Send a request. URL={}'.format(api_url))
         response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
 
         if response.status_code == 200:
@@ -98,6 +99,7 @@ def create_workspace():
                                                             os.environ['EPOCH_RS_WORKSPACE_PORT'],
                                                             workspace_id)
 
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
         response = requests.get(api_url)
 
         if response.status_code == 200:
@@ -120,6 +122,7 @@ def create_workspace():
                                                                 os.environ['EPOCH_RS_WORKSPACE_PORT'],
                                                                 workspace_id)
 
+            globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
             response = requests.post(api_url, headers=post_headers, data=json.dumps(workspace_status))
 
             if response.status_code != 200:
@@ -130,18 +133,18 @@ def create_workspace():
                                                                 os.environ['EPOCH_RS_WORKSPACE_HOST'],
                                                                 os.environ['EPOCH_RS_WORKSPACE_PORT'],
                                                                 workspace_id)
-
+            globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
             response = requests.put(api_url, headers=post_headers, data=json.dumps(workspace_status))
 
             if response.status_code != 200:
                 raise common.UserException("{} Error put workspace status db status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
 
         ret_status = 200
-        
+
         #処理が成功したことのログを出力
         globals.logger.info('SUCCESS: Create workspace information. workspace_id={}, ret_status={}'.format( rows[0]["workspace_id"], ret_status))
 
-        # 戻り値をそのまま返却        
+        # 戻り値をそのまま返却
         return jsonify({"result": ret_status, "rows": rows}), ret_status
 
     except common.UserException as e:
@@ -173,7 +176,8 @@ def create_workspace_setting_roles(workspace_id, user_id):
 
         # rolesの取得 get a roles
         post_data = set_roles(workspace_id)
-        
+
+        globals.logger.info('Send a request. workspace_id={} user_id={} URL={}'.format(workspace_id, user_id, api_url))
         response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
 
         #
@@ -194,6 +198,7 @@ def create_workspace_setting_roles(workspace_id, user_id):
             ]
         }
 
+        globals.logger.info('Send a request. workspace_id={} user_id={} URL={}'.format(workspace_id, user_id, api_url))
         response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
 
     except common.UserException as e:
@@ -219,8 +224,8 @@ def create_workspace_setting_auth_infra(workspace_id, user_id):
         }
 
         # authentication-infra-api の呼び先設定
-        api_url_epai = "{}://{}:{}/".format(os.environ["EPOCH_EPAI_API_PROTOCOL"], 
-                                            os.environ["EPOCH_EPAI_API_HOST"], 
+        api_url_epai = "{}://{}:{}/".format(os.environ["EPOCH_EPAI_API_PROTOCOL"],
+                                            os.environ["EPOCH_EPAI_API_HOST"],
                                             os.environ["EPOCH_EPAI_API_PORT"])
 
         # get namespace
@@ -258,6 +263,7 @@ def create_workspace_setting_auth_infra(workspace_id, user_id):
         # post送信（アクセス情報生成）
         exec_stat = "認証基盤 client設定"
         for client in clients:
+            globals.logger.info('Send a request. workspace_id={} user_id={} URL={}{}/{}/{}'.format(workspace_id,user_id, api_url_epai, 'settings', os.environ["EPOCH_EPAI_REALM_NAME"], 'clients'))
             response = requests.post("{}{}/{}/{}".format(api_url_epai, 'settings', os.environ["EPOCH_EPAI_REALM_NAME"], 'clients'), headers=post_headers, data=json.dumps(client))
 
             # 正常時以外はExceptionを発行して終了する
@@ -277,6 +283,7 @@ def create_workspace_setting_auth_infra(workspace_id, user_id):
                 "workspace_id" : workspace_id,
             }
         }
+        globals.logger.info('Send a request. workspace_id={} user_id={} URL={}settings/{}/clients/epoch-system/route'.format(workspace_id, user_id, api_url_epai, os.environ["EPOCH_EPAI_REALM_NAME"]))
         response = requests.post(
             "{}settings/{}/clients/epoch-system/route".format(api_url_epai, os.environ["EPOCH_EPAI_REALM_NAME"]),
             headers=post_headers,
@@ -292,6 +299,7 @@ def create_workspace_setting_auth_infra(workspace_id, user_id):
         # Do "httpd graceful" - Apacheの設定読込を行う
         #
         exec_stat = "認証基盤 設定読み込み"
+        globals.logger.info('Send a request. workspace_id={} user_id={} URL={}{}'.format(workspace_id, user_id, api_url_epai, 'apply_settings'))
         response = requests.put("{}{}".format(api_url_epai, 'apply_settings'), headers=post_headers, data="{}")
         if response.status_code != 200:
             globals.logger.debug(response.text)
@@ -566,6 +574,7 @@ def get_workspace_list():
         api_url = "{}://{}:{}/workspace".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
                                                 os.environ['EPOCH_RS_WORKSPACE_HOST'],
                                                 os.environ['EPOCH_RS_WORKSPACE_PORT'])
+        globals.logger.info('Send a request. URL={}'.format(api_url))
         users_response = requests.get(api_url, headers=post_headers)
 
         # user_idの取得 get user id
@@ -577,10 +586,11 @@ def get_workspace_list():
                                                                         os.environ['EPOCH_EPAI_API_PORT'],
                                                                         os.environ["EPOCH_EPAI_REALM_NAME"],
                                                                         user_id)
+        globals.logger.info('Send a request. URL={}'.format(epai_api_url))
         epai_resp_user_role = requests.get(epai_api_url, headers=post_headers)
-        
+
         rows = []
-        
+
         if users_response.status_code == 200 and common.is_json_format(users_response.text) \
         and epai_resp_user_role.status_code == 200 and common.is_json_format(epai_resp_user_role.text):
             user_roles = json.loads(epai_resp_user_role.text)
@@ -602,10 +612,11 @@ def get_workspace_list():
                                                                                         os.environ["EPOCH_EPAI_REALM_NAME"],
                                                                                         role["name"])
 
+                        globals.logger.info('Send a request. URL={}'.format(epai_api_url))
                         epai_resp_role_disp_name = requests.get(epai_api_url, headers=post_headers)
                         role_info = json.loads(epai_resp_role_disp_name.text)["rows"]
                         # globals.logger.debug("role_info:{}".format(role_info))
-                        
+
                         disp_row = {
                             "id": role["name"],
                             "name": "",
@@ -616,10 +627,10 @@ def get_workspace_list():
                             if "display" in role_info["attributes"]:
                                 disp_row["name"] = multi_lang.get_text(role_info["attributes"]["display"], role_info["attributes"]["display_default"])
 
-                        roles.append(disp_row)           
+                        roles.append(disp_row)
 
                         break
-                
+
                 # Display in list with reference role - 参照ロールありで一覧に表示する
                 if find:
                     all_roles = const.ALL_ROLES
@@ -637,6 +648,7 @@ def get_workspace_list():
                                                                                                 os.environ["EPOCH_EPAI_REALM_NAME"],
                                                                                                 role.format(data_row["workspace_id"]))
                         # get a list of users - ユーザー一覧取得
+                        globals.logger.info('Send a request. URL={}'.format(epai_api_url))
                         users_response = requests.get(epai_api_url)
                         if users_response.status_code != 200 and users_response.status_code != 404:
                             error_detail = multi_lang.get_text("EP020-0008", "ユーザー情報の取得に失敗しました")
@@ -664,39 +676,40 @@ def get_workspace_list():
                                                                                     os.environ['EPOCH_EPAI_API_PORT'],
                                                                                     os.environ["EPOCH_EPAI_REALM_NAME"],
                                                                                     user_id)
+                    globals.logger.info('Send a request. user_id={} URL={}'.format(user_id, epai_api_url))
                     user_role_response = requests.get(epai_api_url)
                     if user_role_response.status_code != 200:
                         error_detail = multi_lang.get_text("EP020-0009", "ユーザーロール情報の取得に失敗しました")
                         raise common.UserException("{} Error user role get status:{}".format(inspect.currentframe().f_code.co_name, users_response.status_code))
 
                     user_roles = json.loads(user_role_response.text)
-                    # globals.logger.debug("user_roles: {}".format(user_roles["rows"])) 
-                    
+                    # globals.logger.debug("user_roles: {}".format(user_roles["rows"]))
+
                     #
                     # Processing for all roles of the acquired login user - 取得したログインユーザの全ロールに対しての処理
                     #
                     for get_role in user_roles["rows"]:
                         kind = common.get_role_kind(get_role["name"])
-                        
-                        # Check only the corresponding role - 該当のロールのみチェック 
+
+                        # Check only the corresponding role - 該当のロールのみチェック
                         if kind is not None:
                             ex_role = re.match("ws-({}|\d+)-(.+)", get_role["name"])
                             # globals.logger.debug("role_workspace_id:{} kind:{}".format(ex_role[1], kind))
-                            
-                            # Narrow down only the applicable workspace - 該当のワークスペースのみの絞り込み 
+
+                            # Narrow down only the applicable workspace - 該当のワークスペースのみの絞り込み
                             if ex_role[1] == str(data_row["workspace_id"]):
                                 role_info = common.get_role_info(get_role["name"])
                                 set_role_kind.append(
                                     {
                                         "kind" : kind,
-                                        "sort" : role_info[3]  
+                                        "sort" : role_info[3]
                                     }
                                 )
 
                     # ロールの表示順を並び替え Sort the display order of roles
-                    set_role_kind_sorted = sorted(set_role_kind, key=lambda x:x['sort']) 
+                    set_role_kind_sorted = sorted(set_role_kind, key=lambda x:x['sort'])
 
-                    # Return value JSON formatting - 返り値 JSON整形 
+                    # Return value JSON formatting - 返り値 JSON整形
                     row = {
                         "workspace_id": data_row["workspace_id"],
                         "workspace_name": data_row["common"]["name"],
@@ -713,7 +726,7 @@ def get_workspace_list():
 
         #処理が成功したことのログを出力
         globals.logger.info('SUCCESS: Get workspace information list. workspace_information_list_count={}, ret _status={}'.format(len(rows), 200))
-        
+
         return jsonify({"result": "200", "rows": rows}), 200
 
     except common.UserException as e:
@@ -748,6 +761,7 @@ def get_workspace(workspace_id):
                                                     os.environ['EPOCH_RS_WORKSPACE_HOST'],
                                                     os.environ['EPOCH_RS_WORKSPACE_PORT'],
                                                     workspace_id)
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
         response = requests.get(api_url, headers=post_headers)
 
         if response.status_code == 200 and common.is_json_format(response.text):
@@ -806,7 +820,6 @@ def put_workspace(workspace_id):
         Response: HTTP Respose
     """
     globals.logger.info('Update workspace information. workspace_id={}'.format(workspace_id))
-    
 
     app_name = multi_lang.get_text("EP020-0003", "ワークスペース情報:")
     exec_stat = multi_lang.get_text("EP020-0016", "更新")
@@ -827,6 +840,7 @@ def put_workspace(workspace_id):
                                                     os.environ['EPOCH_RS_WORKSPACE_HOST'],
                                                     os.environ['EPOCH_RS_WORKSPACE_PORT'],
                                                     workspace_id)
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
         response = requests.get(api_url)
 
         # 正常以外はエラーを返す Returns an error if not normal
@@ -872,7 +886,7 @@ def put_workspace(workspace_id):
         if const.ROLE_WS_ROLE_MANIFEST_SETTING[0].format(workspace_id) in roles:
             # Manifestパラメータの更新権限がある場合はパラメータの内容を差し替える
             # If you have permission to update Manifest parameters, replace the contents of the parameters.
-            row["ci_config"]["environments"] = req_data["ci_config"]["environments"] 
+            row["ci_config"]["environments"] = req_data["ci_config"]["environments"]
 
         elif const.ROLE_WS_ROLE_WS_CD_UPDATE[0].format(workspace_id) in roles:
             # マニフェスト更新権限が無くてワークスペース更新 (CD)有の場合、環境の増減だけ行う
@@ -976,6 +990,7 @@ def put_workspace(workspace_id):
                                                     os.environ['EPOCH_RS_WORKSPACE_HOST'],
                                                     os.environ['EPOCH_RS_WORKSPACE_PORT'],
                                                     workspace_id)
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
         response = requests.put(api_url, headers=post_headers, data=json.dumps(post_data))
 
         if response.status_code == 200:
@@ -1001,6 +1016,7 @@ def put_workspace(workspace_id):
                                                             os.environ['EPOCH_RS_WORKSPACE_PORT'],
                                                             workspace_id)
 
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
         response = requests.get(api_url)
 
         if response.status_code == 200:
@@ -1023,6 +1039,7 @@ def put_workspace(workspace_id):
                                                                 os.environ['EPOCH_RS_WORKSPACE_PORT'],
                                                                 workspace_id)
 
+            globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
             response = requests.post(api_url, headers=post_headers, data=json.dumps(workspace_status))
 
             if response.status_code != 200:
@@ -1034,6 +1051,7 @@ def put_workspace(workspace_id):
                                                                 os.environ['EPOCH_RS_WORKSPACE_PORT'],
                                                                 workspace_id)
 
+            globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
             response = requests.put(api_url, headers=post_headers, data=json.dumps(workspace_status))
 
             if response.status_code != 200:
@@ -1044,7 +1062,7 @@ def put_workspace(workspace_id):
         #処理が成功したことのログを出力
         globals.logger.info('SUCCESS: Update workspace information. workspace_id={}, ret_status={}'.format(workspace_id, ret_status))
 
-        # 戻り値をそのまま返却        
+        # 戻り値をそのまま返却
         return jsonify({"result": ret_status}), ret_status
 
     except common.UserException as e:
@@ -1062,7 +1080,7 @@ def patch_workspace(workspace_id):
     Returns:
         Response: HTTP Respose
     """
-    globals.logger.info('Update part of workspace information. workspace_id={}'.format(workspace_id))    
+    globals.logger.info('Update part of workspace information. workspace_id={}'.format(workspace_id))
 
     app_name = multi_lang.get_text("EP020-0003", "ワークスペース情報:")
     exec_stat = multi_lang.get_text("EP020-0016", "更新")
@@ -1082,6 +1100,8 @@ def patch_workspace(workspace_id):
                                                     os.environ['EPOCH_RS_WORKSPACE_HOST'],
                                                     os.environ['EPOCH_RS_WORKSPACE_PORT'],
                                                     workspace_id)
+
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
         response = requests.patch(api_url, headers=post_headers, data=json.dumps(post_data))
 
         if response.status_code == 200:
@@ -1098,11 +1118,11 @@ def patch_workspace(workspace_id):
             raise common.UserException("{} Error put workspace db status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
 
         ret_status = response.status_code
-        
-        #処理が成功したことのログを出力
-        globals.logger.info('SUCCESS: Update part of workspace information. workspace_id={}, ret_status={}'.format(workspace_id, ret_status))    
 
-        # 戻り値をそのまま返却        
+        #処理が成功したことのログを出力
+        globals.logger.info('SUCCESS: Update part of workspace information. workspace_id={}, ret_status={}'.format(workspace_id, ret_status))
+
+        # 戻り値をそのまま返却
         return jsonify({"result": ret_status}), ret_status
 
     except common.UserException as e:
@@ -1140,6 +1160,8 @@ def post_pod(workspace_id):
                                                     os.environ['EPOCH_RS_WORKSPACE_HOST'],
                                                     os.environ['EPOCH_RS_WORKSPACE_PORT'],
                                                     workspace_id)
+
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
         response = requests.get(api_url)
 
         if response.status_code != 200:
@@ -1162,7 +1184,7 @@ def post_pod(workspace_id):
                                                             os.environ['EPOCH_RS_WORKSPACE_HOST'],
                                                             os.environ['EPOCH_RS_WORKSPACE_PORT'],
                                                             workspace_id)
-
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
         response = requests.put(api_url, headers=post_headers, data=json.dumps(workspace_status))
 
         if response.status_code != 200:
@@ -1175,9 +1197,10 @@ def post_pod(workspace_id):
                                                     os.environ['EPOCH_CONTROL_WORKSPACE_HOST'],
                                                     os.environ['EPOCH_CONTROL_WORKSPACE_PORT'],
                                                     workspace_id)
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
         response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
         globals.logger.debug("post workspace response:{}".format(response.text))
-        
+
         if response.status_code != 200:
             error_detail = 'workspace post処理に失敗しました'
             globals.logger.debug(error_detail)
@@ -1188,6 +1211,7 @@ def post_pod(workspace_id):
                                                             os.environ['EPOCH_CONTROL_ARGOCD_HOST'],
                                                             os.environ['EPOCH_CONTROL_ARGOCD_PORT'],
                                                             workspace_id)
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
         response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
         globals.logger.debug("post argocd response:{}".format(response.text))
 
@@ -1201,6 +1225,7 @@ def post_pod(workspace_id):
                                                                     os.environ['EPOCH_CONTROL_ITA_HOST'],
                                                                     os.environ['EPOCH_CONTROL_ITA_PORT'],
                                                                     workspace_id)
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
         response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
         globals.logger.debug("post it-automation response:{}".format(response.text))
 
@@ -1214,6 +1239,7 @@ def post_pod(workspace_id):
                                                                             os.environ['EPOCH_CONTROL_ITA_PORT'],
                                                                             workspace_id)
 
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
         # it-automation/settings post送信
         response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
         globals.logger.debug("post it-automation/settings response:{}".format(response.text))
@@ -1230,6 +1256,7 @@ def post_pod(workspace_id):
                                                             os.environ['EPOCH_RS_WORKSPACE_PORT'],
                                                             workspace_id)
 
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
         response = requests.put(api_url, headers=post_headers, data=json.dumps(workspace_status))
 
         if response.status_code != 200:
@@ -1238,11 +1265,11 @@ def post_pod(workspace_id):
             raise common.UserException(error_detail)
 
         ret_status = 200
-        
+
         #処理が成功したことのログを出力
         globals.logger.info('SUCCESS: Create workspace pod. workspace_id={}, ret_status={}'.format(workspace_id, ret_status))
 
-        # 戻り値をそのまま返却        
+        # 戻り値をそのまま返却
         return jsonify({"result": ret_status}), ret_status
 
     except common.UserException as e:
