@@ -121,7 +121,7 @@ def get_workspace(workspace_id):
     Returns:
         response: HTTP Respose
     """
-    globals.logger.debug('CALL get_workspace:{}'.format(workspace_id))
+    globals.logger.info('Get workspace details. method={}, workspace_id={}'.format(request.method, workspace_id))
 
     try:
         with dbconnector() as db, dbcursor(db) as cursor:
@@ -131,6 +131,8 @@ def get_workspace(workspace_id):
         if len(fetch_rows) > 0:
             # Response用のjsonに変換
             response_rows = convert_workspace_response(fetch_rows)
+
+            globals.logger.info('SUCCESS: Get workspace details. method={}, workspace_id={}, ret_result={}, workspace_count={}, time={}'.format(request.method, workspace_id, 200, len(response_rows), str(datetime.now(globals.TZ))))
 
             return jsonify({"result": "200", "rows": response_rows, "time": str(datetime.now(globals.TZ))}), 200
 
@@ -191,7 +193,7 @@ def update_workspace(workspace_id):
         else:
             # Error
             raise Exception("method not support!")
-        
+
     except Exception as e:
         return common.serverError(e)
 
@@ -333,7 +335,7 @@ def convert_workspace_specification(json):
     common.deleteDictKey(result, 'create_at')
     common.deleteDictKey(result, 'update_at')
     common.deleteDictKey(result, 'role_update_at')
-    
+
     return result
 
 @app.route('/workspace/<int:workspace_id>/manifests', methods=['POST'])
@@ -346,14 +348,14 @@ def manifest_file_registration(workspace_id):
     Returns:
         response: HTTP Respose
     """
-    globals.logger.debug("CALL manifest_file_registration:{}".format(workspace_id))
+    globals.logger.info("Register manifest file. method={}, workspace_id={}".format(request.method, workspace_id))
 
     try:
         # 登録内容は基本的に、引数のJsonの値を使用する(追加項目があればここで記載)
         specification = request.json
-        response_rows = [] 
+        response_rows = []
         with dbconnector() as db, dbcursor(db) as cursor:
-            
+
             for spec in specification['manifests']:
 
                 # manifest情報 insert実行
@@ -365,6 +367,8 @@ def manifest_file_registration(workspace_id):
                 fetch_rows = da_manifest.select_manifest_id(cursor, workspace_id, manifest_id)
                 # 戻り値に内容を追加
                 response_rows.append(fetch_rows[0])
+
+        globals.logger.info("SUCCESS: Register manifest file. method={}, workspace_id={}, ret_result={}, manifest_file_count={}".format(request.method, workspace_id, 200, len(response_rows)))
 
         return jsonify({"result": "200", "rows": response_rows })
 
@@ -382,16 +386,14 @@ def manifest_file_update(workspace_id, file_id):
     Returns:
         response: HTTP Respose
     """
-    globals.logger.debug("CALL manifest_file_update:{}".format(file_id))
+    globals.logger.info("Update manifest file. method={}, workspace_id={}, file_id={}".format(request.method, workspace_id, file_id))
 
     try:
         # 登録内容は基本的に、引数のJsonの値を使用する(追加項目があればここで記載)
         specification = request.json
-
         with dbconnector() as db, dbcursor(db) as cursor:
             # workspace情報 update実行
             upd_cnt = da_manifest.update_manifest(cursor, workspace_id, specification, file_id)
-
             if upd_cnt == 0:
                 # データがないときは404応答
                 db.rollback()
@@ -402,6 +404,8 @@ def manifest_file_update(workspace_id, file_id):
 
         # Response用のjsonに変換
         response_rows = fetch_rows
+
+        globals.logger.info("SUCCESS: Update manifest file. method={}, workspace_id={}, file_id={}, ret_status={}, manifest_file_count={}".format(request.method, workspace_id, file_id, 200, len(response_rows)))
 
         return jsonify({"result": "200", "rows": response_rows })
 
@@ -424,7 +428,7 @@ def manifest_file_delete_all(workspace_id):
         with dbconnector() as db, dbcursor(db) as cursor:
             # manifests情報 delete実行
             upd_cnt = da_manifest.delete_manifests(cursor, workspace_id)
-    
+
             globals.logger.debug("delete_manifests:ret:{}".format(upd_cnt))
 
             if upd_cnt == 0:
@@ -448,19 +452,21 @@ def manifest_file_delete(workspace_id, manifest_id):
     Returns:
         response: HTTP Respose
     """
-    globals.logger.debug("CALL manifest_file_delete:workspace_id:{}, manifest_id:{}".format(workspace_id, manifest_id))
+    globals.logger.info("Delete manifest file. method={}, workspace_id={}, manifest_id={}".format(request.method, workspace_id, manifest_id))
 
     try:
         with dbconnector() as db, dbcursor(db) as cursor:
             # manifests情報 delete実行
             upd_cnt = da_manifest.delete_manifest(cursor, workspace_id, manifest_id)
-    
+
             globals.logger.debug("delete_manifest:ret:{}".format(upd_cnt))
 
             if upd_cnt == 0:
                 # データがないときは404応答
                 db.rollback()
                 return jsonify({"result": "404" }), 404
+
+        globals.logger.info("SUCCESS: Delete manifest file. workspace_id={}, manifest_id={}, ret_result={}".format(request.method, workspace_id, manifest_id, 200))
 
         return jsonify({"result": "200"})
 
@@ -477,7 +483,7 @@ def manifest_file_get_list(workspace_id):
     Returns:
         response: HTTP Respose
     """
-    globals.logger.debug("CALL manifest_file_get:{}".format(workspace_id))
+    globals.logger.info("Get manifest file list. method={}, workspace_id={}".format(request.method, workspace_id))
 
     try:
         with dbconnector() as db, dbcursor(db) as cursor:
@@ -487,6 +493,8 @@ def manifest_file_get_list(workspace_id):
 
         # Response用のjsonに変換
         response_rows = fetch_rows
+
+        globals.logger.info("SUCCESS: Get manifest file list. method={}, workspace_id={}, ret_result={}, manifest_file_count={}".format(request.method, workspace_id, 200 , len(response_rows)))
 
         return jsonify({"result": "200", "rows": response_rows })
 
@@ -555,7 +563,7 @@ def update_manifestParameter(workspace_id):
     Returns:
         response: HTTP Respose
     """
-    globals.logger.debug("CALL update_manifestParameter:{}".format(workspace_id))
+    globals.logger.info("Update manifestParameter. method={}, workspace_id={}".format(request.method, workspace_id))
 
     try:
         request_json = request.json.copy()
@@ -600,6 +608,8 @@ def update_manifestParameter(workspace_id):
             # Response用のjsonに変換
             response_rows = workspaceInfo
 
+        globals.logger.info("SUCCESS: Update manifestParameter. method={}, workspace_id={}, ret_status={}, workspace_count={}".format(request.method, workspace_id, 200, len(response_rows)))
+
         return jsonify({"result": "200", "rows": response_rows })
 
     except Exception as e:
@@ -622,7 +632,7 @@ def workspace_access_registration(workspace_id):
         # 登録内容は基本的に、引数のJsonの値を使用する(追加項目があればここで記載)
         info = request.json
         with dbconnector() as db, dbcursor(db) as cursor:
-            
+
             # ワークスペースアクセス情報 insert実行
             da_workspace_access.insert_workspace_access(cursor, workspace_id, info)
 
@@ -649,7 +659,7 @@ def workspace_access_update(workspace_id):
         # 登録内容は基本的に、引数のJsonの値を使用する(追加項目があればここで記載)
         info = request.json
         with dbconnector() as db, dbcursor(db) as cursor:
-            
+
             # ワークスペースアクセス情報 update実行
             upd_cnt = da_workspace_access.update_workspace_access(cursor, workspace_id, info)
 
@@ -680,7 +690,7 @@ def workspace_access_get(workspace_id):
     try:
         # 登録内容は基本的に、引数のJsonの値を使用する(追加項目があればここで記載)
         with dbconnector() as db, dbcursor(db) as cursor:
-            
+
             # ワークスペースアクセス情報 select実行
             fetch_rows = da_workspace_access.select_workspace_access(cursor, workspace_id)
 
@@ -716,7 +726,7 @@ def workspace_access_delete(workspace_id, id):
         with dbconnector() as db, dbcursor(db) as cursor:
             # ワークスペースアクセス情報 delete実行
             upd_cnt = da_workspace_access.delete_workspace_access(cursor, workspace_id)
-    
+
             globals.logger.debug("workspace_access:ret:{}".format(upd_cnt))
 
             if upd_cnt == 0:
@@ -747,7 +757,7 @@ def workspace_status_registration(workspace_id):
         # 登録内容は基本的に、引数のJsonの値を使用する(追加項目があればここで記載)
         info = request.json
         with dbconnector() as db, dbcursor(db) as cursor:
-            
+
             # ワークスペース状態情報 insert実行 worksapce status info. insert
             da_workspace_status.insert_workspace_status(cursor, workspace_id, info)
 
@@ -774,7 +784,7 @@ def workspace_status_update(workspace_id):
         # 更新対象のJson値をパラメータとして受け取る Receive the Json value to be updated as a parameter
         info_upadate_colums = request.json
         with dbconnector() as db, dbcursor(db) as cursor:
-            
+
             # ワークスペース状態情報 update実行 worksapce status info. update
             upd_cnt = da_workspace_status.update_workspace_status(cursor, workspace_id, info_upadate_colums)
 
@@ -805,7 +815,7 @@ def workspace_status_get(workspace_id):
     try:
         # 登録内容は基本的に、引数のJsonの値を使用する(追加項目があればここで記載)
         with dbconnector() as db, dbcursor(db) as cursor:
-            
+
             # ワークスペース状態情報 select実行 worksapce status info. select
             fetch_rows = da_workspace_status.select_workspace_status(cursor, workspace_id)
 
@@ -841,7 +851,7 @@ def workspace_status_delete(workspace_id, id):
         with dbconnector() as db, dbcursor(db) as cursor:
             # ワークスペース状態情報 delete実行 worksapce status info. delete
             upd_cnt = da_workspace_status.delete_workspace_status(cursor, workspace_id)
-    
+
             globals.logger.debug("workspace_status:ret:{}".format(upd_cnt))
 
             if upd_cnt == 0:
