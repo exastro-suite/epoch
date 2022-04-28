@@ -37,9 +37,9 @@ spec:
         - name: gateway-httpd
           mountPath: /etc/httpd/conf.d/exastroSettings
           subPath: httpd-conf
-        - name: gateway-httpd
-          mountPath: /var/log/httpd
-          subPath: httpd-log
+        #- name: gateway-httpd
+        #  mountPath: /var/log/httpd
+        #  subPath: httpd-log
 
 ---
 apiVersion: v1

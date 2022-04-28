@@ -3308,9 +3308,9 @@ spec:
         - name: gateway-httpd
           mountPath: /etc/httpd/conf.d/exastroSettings
           subPath: httpd-conf
-        - name: gateway-httpd
-          mountPath: /var/log/httpd
-          subPath: httpd-log
+        #- name: gateway-httpd
+        #  mountPath: /var/log/httpd
+        #  subPath: httpd-log
 
 ---
 apiVersion: v1
@@ -3413,7 +3413,7 @@ data:
     spec:
       storageClassName: exastro-authentication-infra-sc
       capacity:
-        storage: 8Gi
+        storage: 500Mi
       accessModes:
         - ReadWriteMany
       persistentVolumeReclaimPolicy: Retain

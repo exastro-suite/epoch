@@ -75,7 +75,7 @@ data:
     spec:
       storageClassName: exastro-authentication-infra-sc
       capacity:
-        storage: 8Gi
+        storage: 500Mi
       accessModes:
         - ReadWriteMany
       persistentVolumeReclaimPolicy: Retain
