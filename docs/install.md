@@ -25,14 +25,12 @@
     |CPU|2 Core (3.0 GHz)|
     |Memory|8GB|
     |Disc space|10GB|
-    |  |  |
 
     |Worker node| |
     | -: | :-: |
     |CPU|2 Core (3.0 GHz)|
     |Memory|8GB|
     |Disc space|40GB|
-    |  |  |
 
     ※ Worker nodeは、1ワークスペースあたりの要件となります。  
     ※ 要件にはインストールで含まれるEcoSystemの使用要件も含まれております。
@@ -44,7 +42,6 @@
     | 30443 | epochシステム |
     | 31182 | 認証システム |
     | 31183 | GitLab |
-    |  |  |
 
 
 ## EPOCHのインストール

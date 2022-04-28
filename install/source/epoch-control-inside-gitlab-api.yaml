@@ -41,7 +41,7 @@ spec:
           name: epoch-control-inside-gitlab-conf
       containers:
       - name: epoch-control-inside-gitlab-api
-        image: exastro/epoch-control-inside-gitlab-api:1.0.0_20220418_1500
+        image: exastro/epoch-control-inside-gitlab-api:1.0.0_20220428_1530
         env:
         - name: CONFIG_API_INSIDE_GITLAB_PATH
           value: "/etc/epoch/epochControlInsideGitLabApi/api_inside_gitlab.conf"
