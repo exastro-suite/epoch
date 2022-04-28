@@ -1226,7 +1226,7 @@ spec:
           name: epoch-control-ita-conf
       containers:
       - name: epoch-control-ita-api
-        image: exastro/epoch-control-ita-api:1.0.0_20220428_1530
+        image: exastro/epoch-control-ita-api:1.0.0_20220428_1700
         env:
         - name: CONFIG_API_ITA_PATH
           value: "/etc/epoch/epochControlITAApi/api_ita.conf"
@@ -2389,7 +2389,7 @@ spec:
     spec:
       containers:
       - name: epoch-ui
-        image: exastro/epoch-ui:1.0.0_20220428_1530
+        image: exastro/epoch-ui:1.0.0_20220428_1700
 
 ---
 apiVersion: v1
