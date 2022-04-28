@@ -132,7 +132,7 @@ def get_workspace(workspace_id):
             # Response用のjsonに変換
             response_rows = convert_workspace_response(fetch_rows)
 
-            globals.logger.info('SUCCESS: Get workspace details. method={}, workspace_id={}, ret_result={}, workspace_count={}, time={}'.format(request.method, workspace_id, 200, len(response_rows), str(datetime.now(globals.TZ))))
+            globals.logger.info('SUCCESS: Get workspace details. workspace_id={}, ret_result={}, workspace_count={}, time={}'.format(workspace_id, 200, len(response_rows), str(datetime.now(globals.TZ))))
 
             return jsonify({"result": "200", "rows": response_rows, "time": str(datetime.now(globals.TZ))}), 200
 
@@ -368,7 +368,7 @@ def manifest_file_registration(workspace_id):
                 # 戻り値に内容を追加
                 response_rows.append(fetch_rows[0])
 
-        globals.logger.info("SUCCESS: Register manifest file. method={}, workspace_id={}, ret_result={}, manifest_file_count={}".format(request.method, workspace_id, 200, len(response_rows)))
+        globals.logger.info("SUCCESS: Register manifest file. workspace_id={}, ret_result={}, manifest_file_count={}".format(workspace_id, 200, len(response_rows)))
 
         return jsonify({"result": "200", "rows": response_rows })
 
@@ -405,7 +405,7 @@ def manifest_file_update(workspace_id, file_id):
         # Response用のjsonに変換
         response_rows = fetch_rows
 
-        globals.logger.info("SUCCESS: Update manifest file. method={}, workspace_id={}, file_id={}, ret_status={}, manifest_file_count={}".format(request.method, workspace_id, file_id, 200, len(response_rows)))
+        globals.logger.info("SUCCESS: Update manifest file. workspace_id={}, file_id={}, ret_status={}, manifest_file_count={}".format(workspace_id, file_id, 200, len(response_rows)))
 
         return jsonify({"result": "200", "rows": response_rows })
 
@@ -466,7 +466,7 @@ def manifest_file_delete(workspace_id, manifest_id):
                 db.rollback()
                 return jsonify({"result": "404" }), 404
 
-        globals.logger.info("SUCCESS: Delete manifest file. workspace_id={}, manifest_id={}, ret_result={}".format(request.method, workspace_id, manifest_id, 200))
+        globals.logger.info("SUCCESS: Delete manifest file. workspace_id={}, manifest_id={}, ret_result={}".format(workspace_id, manifest_id, 200))
 
         return jsonify({"result": "200"})
 
@@ -494,7 +494,7 @@ def manifest_file_get_list(workspace_id):
         # Response用のjsonに変換
         response_rows = fetch_rows
 
-        globals.logger.info("SUCCESS: Get manifest file list. method={}, workspace_id={}, ret_result={}, manifest_file_count={}".format(request.method, workspace_id, 200 , len(response_rows)))
+        globals.logger.info("SUCCESS: Get manifest file list. workspace_id={}, ret_result={}, manifest_file_count={}".format(workspace_id, 200 , len(response_rows)))
 
         return jsonify({"result": "200", "rows": response_rows })
 
@@ -608,7 +608,7 @@ def update_manifestParameter(workspace_id):
             # Response用のjsonに変換
             response_rows = workspaceInfo
 
-        globals.logger.info("SUCCESS: Update manifestParameter. method={}, workspace_id={}, ret_status={}, workspace_count={}".format(request.method, workspace_id, 200, len(response_rows)))
+        globals.logger.info("SUCCESS: Update manifestParameter. workspace_id={}, ret_status={}, workspace_count={}".format(workspace_id, 200, len(response_rows)))
 
         return jsonify({"result": "200", "rows": response_rows })
 
