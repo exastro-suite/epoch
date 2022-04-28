@@ -4,12 +4,47 @@
 
 * [前提条件](#前提条件)
 * [EPOCHのインストール](#epochのインストール)
+* [EPOCHの起動](#epochの起動)
+* [管理コンソールの起動](#管理コンソールの起動)
+* [ツールのユーザ・パスワードの確認方法](#ツールのユーザ・パスワードの確認方法)
 
 ## 前提条件
 
 1. Kubernetes クラスター バージョン 1.18 ～ 1.21が必要です。
 
 1. 使用するServiceAccountにcluster-adminロールを付与してください。
+
+1. Kubernetes環境から外部のインターネットに接続できる必要があります。
+
+1. Persistent Volumeは、シングルノードのみ対応してます。
+
+1. ソフトウェアの最小要件は以下の通りとなります。
+
+    |Master Node| |
+    | -: | :-: |
+    |CPU|2 Core (3.0 GHz)|
+    |Memory|8GB|
+    |Disc space|10GB|
+    |  |  |
+
+    |Worker node| |
+    | -: | :-: |
+    |CPU|2 Core (3.0 GHz)|
+    |Memory|8GB|
+    |Disc space|40GB|
+    |  |  |
+
+    ※ Worker nodeは、1ワークスペースあたりの要件となります。  
+    ※ 要件にはインストールで含まれるEcoSystemの使用要件も含まれております。
+
+1. Kubernetes環境では、次のポート番号を使用できる必要があります。
+
+    |ポート番号|使用用途|
+    | -: | :- |
+    | 30443 | epochシステム |
+    | 31182 | 認証システム |
+    | 31183 | GitLab |
+    |  |  |
 
 
 ## EPOCHのインストール
@@ -82,7 +117,9 @@
     ****  completed successfully ****
     ```
 
-これでEPOCHを使用する準備が整いました。
+    これでEPOCHを使用する準備が整いました。
+
+---
 
 # EPOCHの起動
 
@@ -92,15 +129,21 @@
     https://your-host:30443/
     ```
 
+- サインインの画面からユーザー名に"epoch-admin"(管理者ユーザー)、パスワードに"password"を入力して、情報更新を行ってからご使用ください。
+
+- 新規登録したユーザーでワークスペースを作成する際は、管理コンソールより管理者ユーザーでサインインを来ない、新規登録ユーザーのグループを付与することで利用可能となります。
+
+---
+
 # 管理コンソールの起動
 
-- 新規登録されたユーザーの設定は、次のURLをブラウザに入力してアクセスします:
+- 管理コンソールへのログインは次のURLをブラウザに入力してアクセスします:
 
     ```
     https://your-host:31182/auth/admin/exastroplatform/console/
     ```
 
-- サインインの画面からユーザ登録のリンク(Register)をクリックして、ユーザ登録を行ってからご使用ください。
+---
 
 # ツールのユーザ・パスワードの確認方法
 
@@ -110,7 +153,7 @@
 
     コマンドで表示した"SONARQUBE_USER","SONARQUBE_PASSWORD"の内容がユーザ・パスワードとなります
 
-    ```bash
+    ```shell
     kubectl exec -it deployment/epoch-setting-tools -n epoch-system -- bash /scripts/get-workspace-tools-account.sh [wowkspace_id]
     ```
 
@@ -120,7 +163,7 @@
 
     コマンドで表示した"ITA_USER","ITA_PASSWORD"の内容がユーザ・パスワードとなります
 
-    ```bash
+    ```shell
     kubectl exec -it deployment/epoch-setting-tools -n epoch-system -- bash /scripts/get-workspace-tools-account.sh [wowkspace_id]
     ```
 
@@ -128,7 +171,7 @@
 
     次のコマンドを実行してadminユーザのパスワードを表示します
 
-    ```bash
+    ```shell
     kubectl exec -it deployment/epoch-setting-tools -n epoch-system -- bash /scripts/get-keycloak-initial-admin-password.sh
     ```
 
@@ -136,6 +179,6 @@
 
     次のコマンドを実行してrootユーザのパスワードを表示します
 
-    ```bash
+    ```shell
     kubectl exec -it deployment/epoch-setting-tools -n epoch-system -- bash /scripts/get-gitlab-initial-root-password.sh
     ```
