@@ -12,8 +12,6 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-# TEST Push TEST Push 2 TEST Push 3
-
 #---- epoch-system.yaml
 ---
 #   Copyright 2019 NEC Corporation
@@ -3305,14 +3303,14 @@ spec:
           claimName: exastro-authentication-infra-httpd
       containers:
       - name: gateway-httpd
-        image: exastro/gateway-httpd:1.0.0_20220418_1500
+        image: exastro/gateway-httpd:1.0.0_20220428_1400
         volumeMounts:
         - name: gateway-httpd
           mountPath: /etc/httpd/conf.d/exastroSettings
           subPath: httpd-conf
-        - name: gateway-httpd
-          mountPath: /var/log/httpd
-          subPath: httpd-log
+        #- name: gateway-httpd
+        #  mountPath: /var/log/httpd
+        #  subPath: httpd-log
 
 ---
 apiVersion: v1
@@ -3415,7 +3413,7 @@ data:
     spec:
       storageClassName: exastro-authentication-infra-sc
       capacity:
-        storage: 8Gi
+        storage: 500Mi
       accessModes:
         - ReadWriteMany
       persistentVolumeReclaimPolicy: Retain
