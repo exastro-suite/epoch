@@ -215,7 +215,8 @@ userInfo.prototype = {
           "firstName": data["info"]["firstName"],
           "lastName": data["info"]["lastName"],
           "email": data["info"]["email"],
-          "composite_roles": data["info"]["composite_roles"]
+          "composite_roles": data["info"]["composite_roles"],
+          "roles": data["info"]["roles"]
         };
 
         // ロールリスト role list

@@ -324,6 +324,11 @@ def get_role_kind(role_name):
 
         ret_kind = None
         for role in roles:
+            # Workspaceに関係がない全体ロール Overall role not related to Workspace
+            if role_name == const.ROLE_WS_CREATE[0]:
+                ret_kind = const.ROLE_WS_CREATE[0]
+                break
+
             # 正規表現を使って、role名を判断する Use regular expressions to determine role names
             ex_role_src = re.match("ws-({}|\d+)-(.+)", role_name)
             ex_role = re.match("ws-({}|\d+)-(.+)", role)
@@ -361,6 +366,11 @@ def get_role_info(role_name):
 
         ret_info = None
         for role in roles:
+            # Workspaceに関係がない全体ロール Overall role not related to Workspace
+            if role_name == const.ROLE_WS_CREATE[0]:
+                ret_info = const.ROLE_WS_CREATE
+                break
+
             # 正規表現を使って、role名を判断する Use regular expressions to determine role names
             ex_role_src = re.match("ws-({}|\d+)-(.+)", role_name)
             ex_role = re.match("ws-({}|\d+)-(.+)", role[0])

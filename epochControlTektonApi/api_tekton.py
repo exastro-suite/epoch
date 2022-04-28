@@ -127,10 +127,14 @@ def post_tekton_pipeline(workspace_id):
         # sonarqube設定
         param['ci_config']['sonarqube_password'] = access_data['SONARQUBE_PASSWORD']
         # proxy設定
+        no_proxy = os.environ['EPOCH_NO_PROXY']
+        if 'EPOCH_HOSTNAME' in os.environ and os.environ['EPOCH_HOSTNAME'] != '':
+            no_proxy = no_proxy + ',' + os.environ['EPOCH_HOSTNAME']
+
         param['proxy'] = {
             'http': os.environ['EPOCH_HTTP_PROXY'],
             'https': os.environ['EPOCH_HTTPS_PROXY'],
-            'no_proxy': os.environ['EPOCH_NO_PROXY'],
+            'no_proxy': no_proxy,
         }
         # node設定
         param['node'] = node
@@ -239,7 +243,7 @@ def sonarqube_initialize(workspace_id, param):
     sonarqube_project_key_name = 'epoch_key'
 
     # 初期設定
-    try_count = 10
+    try_count = 50
     for i in range(try_count):
 
         # パスワード変更
@@ -263,7 +267,10 @@ def sonarqube_initialize(workspace_id, param):
                 globals.logger.debug('SonarQube password has already changed')
 
         except Exception as e:
-            pass
+            if i < try_count - 1:
+                continue
+            else:
+                raise
 
         # ユーザ作成
         globals.logger.debug('user create: ' + str(i))
@@ -286,7 +293,10 @@ def sonarqube_initialize(workspace_id, param):
                 break
 
         except Exception as e:
-            pass
+            if i < try_count - 1:
+                continue
+            else:
+                raise
 
     # TOKEN 削除 -> 払い出し
     try:

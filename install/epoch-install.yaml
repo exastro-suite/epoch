@@ -45,6 +45,93 @@ roleRef:
   kind: ClusterRole
   name: cluster-admin
 
+#---- epoch-init-setting-script.yaml
+---
+#   Copyright 2022 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+data:
+  epoch-init-setting.sh: |
+    #!/bin/bash
+
+    echo "[INFO] START: $(basename $0)"
+
+    kubectl get secret epoch-key -n epoch-system &> /dev/null
+    if [ $? -ne 0 ]; then
+        echo "[INFO] GENERATE epoch-key"
+        ENCRYPT_KEY=$(cat /dev/urandom | base64 | fold -w 16 | head -n 1)
+        cat <<EOF | kubectl apply -f -
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: epoch-key
+      namespace: epoch-system
+    stringData:
+      ENCRYPT_KEY: "${ENCRYPT_KEY}"
+    EOF
+        if [ $? -ne 0 ]; then
+            echo "[ERROR] Failed to GENERATE epoch-key"
+            exit 1
+        fi
+    fi
+
+    exit 0
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: epoch-init-setting-script
+  namespace: epoch-system
+
+#---- epoch-init-setting.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: epoch-init-setting
+  namespace: epoch-system
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      volumes:
+      - name: script
+        configMap:
+          name: epoch-init-setting-script
+      containers:
+      - name: pv-creator
+        image: exastro/epoch-kube-command:0.1.5_20211026_1600
+        volumeMounts:
+        - mountPath: /job-script
+          name: script
+        command: ["sh", "-c"]
+        args:
+          - |
+            bash /job-script/epoch-init-setting.sh
+
 #---- exastro-platform-authentication-infra.yaml
 ---
 #   Copyright 2019 NEC Corporation
@@ -846,6 +933,11 @@ spec:
               key: HTTPS_PROXY
         - name: EPOCH_NO_PROXY
           value: ""
+        - name: EPOCH_HOSTNAME
+          valueFrom:
+            configMapKeyRef:
+              name: host-setting-config
+              key: EPOCH_HOSTNAME
         - name: EPOCH_RS_WORKSPACE_PROTOCOL
           value: "http"
         - name: EPOCH_RS_WORKSPACE_HOST
@@ -1338,7 +1430,7 @@ spec:
           name: epoch-rs-workspace-conf
       containers:
       - name: epoch-rs-workspace-api
-        image: exastro/epoch-rs-workspace-api:1.0.0_20220418_1500
+        image: exastro/epoch-rs-workspace-api:1.0.0_20220425_1730
         env:
         - name: CONFIG_API_WORKSPACE_PATH
           value: "/etc/epoch/epochRsWorkspaceApi/api_workspace.conf"
@@ -1348,6 +1440,11 @@ spec:
           value: "8000"
         - name: PYTHONIOENCODING
           value: utf-8
+        - name: ENCRYPT_KEY
+          valueFrom:
+            secretKeyRef:
+              name: epoch-key
+              key: ENCRYPT_KEY
         volumeMounts:
         - name: epoch-rs-workspace-conf
           mountPath: /etc/epoch/epochRsWorkspaceApi
@@ -1768,7 +1865,7 @@ spec:
           name: epoch-rs-cd-result-conf
       containers:
       - name: epoch-rs-cd-result-api
-        image: exastro/epoch-rs-cd-result-api:1.0.0_20220418_1500
+        image: exastro/epoch-rs-cd-result-api:1.0.0_20220425_1730
         env:
         - name: CONFIG_API_CD_RESULT_PATH
           value: "/etc/epoch/epochRsCdResultApi/api_cd_result.conf"
@@ -1778,6 +1875,11 @@ spec:
           value: "8000"
         - name: PYTHONIOENCODING
           value: utf-8
+        - name: ENCRYPT_KEY
+          valueFrom:
+            secretKeyRef:
+              name: epoch-key
+              key: ENCRYPT_KEY
         volumeMounts:
         - name: epoch-rs-cd-result-conf
           mountPath: /etc/epoch/epochRsCdResultApi
@@ -2507,7 +2609,6 @@ stringData:
   GATEWAY_CRYPTO_PASSPHRASE: ""
   KEYCLOAK_USER:  "admin"
   KEYCLOAK_PASSWORD: "admin"
-  EPOCH_PASSWORD: ""
   KEYCLOAK_DB_USER: "keycloak"
   KEYCLOAK_DB_PASSWORD: "password"
   KEYCLOAK_DB_ROOT_PASSWORD: "password"
@@ -2753,7 +2854,8 @@ data:
     \   AuthType openid-connect\n    <Limit GET>\n      Require claim \"epoch-role:epoch-user\"\n
     \   </Limit>\n  </Location>\n  <Location /api/workspace>\n    ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace
     retry=0 timeout=600\n    ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace\n
-    \   AuthType openid-connect\n    <Limit GET POST>\n      Require claim \"epoch-role:epoch-user\"\n
+    \   AuthType openid-connect\n    <Limit GET>\n      Require claim \"epoch-role:epoch-user\"\n
+    \   </Limit>\n    <Limit POST>\n      Require claim \"epoch-role:ws-create\"\n
     \   </Limit>\n  </Location>\n\n  IncludeOptional conf.d/exastroSettings/epoch-system/*.conf\n\n
     \ <Location /api/user/>\n    ProxyPass        http://authentication-infra-api:8000/user/
     retry=0\n    ProxyPassReverse http://authentication-infra-api:8000/user/\n    AuthType
@@ -7630,7 +7732,7 @@ data:
     kubectl get secret  exastro-platform-authentication-infra-secret -n exastro-platform-authentication-infra -o json | jq -r ".data.KEYCLOAK_PASSWORD" | base64 -d
     echo ""
 
-  get-workspace-tools-account.sh: |+
+  get-workspace-tools-account.sh: |
     #!/bin/bash
     #   Copyright 2019 NEC Corporation
     #
@@ -7651,8 +7753,7 @@ data:
         exit 1
     fi
 
-    kubectl exec -i -n epoch-system deploy/workspace-db -- mysql -N -B -u root -ppassword workspace_db -e"select info from workspace_access where workspace_id=$1;"  2> /dev/null | jq
-
+    curl http://epoch-rs-workspace-api:8000/workspace/${1}/access
   set-host-gitlab.sh: |
     #!/bin/bash
     #   Copyright 2019 NEC Corporation
@@ -7767,9 +7868,8 @@ data:
     get secret exastro-platform-authentication-infra-secret -n exastro-platform-authentication-infra
     -o json)\nSAVE_OIDC_PASSPHRASE_B64=$(echo -n \"${SAVE_INFRA_SECRET}\" | jq -r
     \".data.SAVE_GATEWAY_CRYPTO_PASSPHRASE\")\nSAVE_KEYCLOAK_PASS_B64=$(echo -n \"${SAVE_INFRA_SECRET}\"
-    | jq -r \".data.SAVE_KEYCLOAK_PASSWORD\")\nSAVE_EPOCH_PASS_B64=$(echo -n \"${SAVE_INFRA_SECRET}\"
-    | jq -r \".data.SAVE_EPOCH_PASSWORD\")\nif [ -n \"$SAVE_KEYCLOAK_PASS_B64\" -a
-    \"${SAVE_KEYCLOAK_PASS_B64}\" != \"null\" ]; then\n\n    SAVE_KEYCLOAK_PASS=$(echo
+    | jq -r \".data.SAVE_KEYCLOAK_PASSWORD\")\nif [ -n \"$SAVE_KEYCLOAK_PASS_B64\"
+    -a \"${SAVE_KEYCLOAK_PASS_B64}\" != \"null\" ]; then\n\n    SAVE_KEYCLOAK_PASS=$(echo
     -n \"${SAVE_KEYCLOAK_PASS_B64}\" | base64 -d)\n    #\n    # get token check\n
     \   #\n    BEAR=$(curl -k -s \\\n        -d \"client_id=admin-cli\" \\\n        -d
     \"username=admin\" \\\n        -d \"password=${SAVE_KEYCLOAK_PASS}\" \\\n        -d
@@ -7781,11 +7881,11 @@ data:
     \       exit 1\n    fi\n\n    kubectl patch secret -n exastro-platform-authentication-infra
     exastro-platform-authentication-infra-secret -p \"\\\n    {\\\n        \\\"data\\\"
     : {\\\n            \\\"GATEWAY_CRYPTO_PASSPHRASE\\\" : \\\"${SAVE_OIDC_PASSPHRASE_B64}\\\",\\\n
-    \           \\\"KEYCLOAK_PASSWORD\\\" : \\\"${SAVE_KEYCLOAK_PASS_B64}\\\",\\\n
-    \           \\\"EPOCH_PASSWORD\\\" : \\\"${SAVE_EPOCH_PASS_B64}\\\"\\\n        }\\\n
-    \   }\" &> \"${CMD_RESULT}\"\n    if [ $? -ne 0 ]; then\n        logger \"ERROR\"
-    \"CALL : kubectl patch secret -n exastro-platform-authentication-infra exastro-platform-authentication-infra-secret${LF}`cat
-    ${CMD_RESULT}`\"\n        logger \"ERROR\" \"initialize patch secret exastro-platform-authentication-infra-secret\"\n
+    \           \\\"KEYCLOAK_PASSWORD\\\" : \\\"${SAVE_KEYCLOAK_PASS_B64}\\\"\\\n
+    \       }\\\n    }\" &> \"${CMD_RESULT}\"\n    if [ $? -ne 0 ]; then\n        logger
+    \"ERROR\" \"CALL : kubectl patch secret -n exastro-platform-authentication-infra
+    exastro-platform-authentication-infra-secret${LF}`cat ${CMD_RESULT}`\"\n        logger
+    \"ERROR\" \"initialize patch secret exastro-platform-authentication-infra-secret\"\n
     \       exit 2\n    fi\n\n    logger \"ERROR\" \"Cannot initialize because it
     is already set\"\n    exit 1\nfi\n\n#\n# Initialize Setting Parameter\n#\nSTEP=$(expr
     ${STEP} + 1)\nlogger \"INFO\" \"**** STEP : ${STEP} / ${ALLSTEPS} : Initialize
@@ -7798,12 +7898,7 @@ data:
     $? -ne 0 -o -z \"${KEYCLOAK_ADMIN_PASSW}\" ]; then\n    logger \"ERROR\" \"Generate
     KEYCLOAK_ADMIN_PASSW\"\n    exit 2\nfi\n\nKEYCLOAK_ADMIN_PASSW_B64=$(echo -n \"${KEYCLOAK_ADMIN_PASSW}\"
     | base64)\nif [ $? -ne 0 -o -z \"${KEYCLOAK_ADMIN_PASSW_B64}\" ]; then\n    logger
-    \"ERROR\" \"Generate KEYCLOAK_ADMIN_PASSW_B64\"\n    exit 2\nfi\n\nEPOCH_ADMIN_PASSWD=$(<
-    /dev/urandom tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq)\nif [
-    $? -ne 0 -o -z \"${EPOCH_ADMIN_PASSWD}\" ]; then\n    logger \"ERROR\" \"Generate
-    EPOCH_ADMIN_PASSWD\"\n    exit 2\nfi\n\nEPOCH_ADMIN_PASSWD_B64=$(echo -n \"${EPOCH_ADMIN_PASSWD}\"
-    | base64)\nif [ $? -ne 0 -o -z \"${EPOCH_ADMIN_PASSWD_B64}\" ]; then\n    logger
-    \"ERROR\" \"Generate EPOCH_ADMIN_PASSWD_B64\"\n    exit 2\nfi\n\n#\n# wait for
+    \"ERROR\" \"Generate KEYCLOAK_ADMIN_PASSW_B64\"\n    exit 2\nfi\n\n#\n# wait for
     keycloak pod\n#\nSTEP=$(expr ${STEP} + 1)\nlogger \"INFO\" \"**** STEP : ${STEP}
     / ${ALLSTEPS} : wait for keycloak pod ...\"\n\necho -n \"waiting ...\"\nwhile
     true; do\n    sleep 3;\n    echo -n \".\";\n    NOT_READY_COUNT=$(\n        kubectl
@@ -7847,12 +7942,11 @@ data:
     ${CMD_RESULT}`\"\n\n\nkubectl patch secret -n exastro-platform-authentication-infra
     exastro-platform-authentication-infra-secret -p \"\\\n{\\\n    \\\"data\\\" :
     {\\\n        \\\"GATEWAY_CRYPTO_PASSPHRASE\\\" : \\\"${OIDC_PASSPHRASE_B64}\\\",\\\n
-    \       \\\"KEYCLOAK_PASSWORD\\\" : \\\"${KEYCLOAK_ADMIN_PASSW_B64}\\\",\\\n        \\\"EPOCH_PASSWORD\\\"
-    : \\\"${EPOCH_ADMIN_PASSWD_B64}\\\"\\\n    }\\\n}\" &> \"${CMD_RESULT}\"\nif [
-    $? -ne 0 ]; then\n    logger \"ERROR\" \"CALL : kubectl patch secret -n exastro-platform-authentication-infra
-    exastro-platform-authentication-infra-secret${LF}`cat ${CMD_RESULT}`\"\n    logger
-    \"ERROR\" \"patch secret exastro-platform-authentication-infra-secret\"\n    exit
-    2\nfi\nlogger \"INFO\" \"CALL : kubectl patch secret -n exastro-platform-authentication-infra
+    \       \\\"KEYCLOAK_PASSWORD\\\" : \\\"${KEYCLOAK_ADMIN_PASSW_B64}\\\"\\\n    }\\\n}\"
+    &> \"${CMD_RESULT}\"\nif [ $? -ne 0 ]; then\n    logger \"ERROR\" \"CALL : kubectl
+    patch secret -n exastro-platform-authentication-infra exastro-platform-authentication-infra-secret${LF}`cat
+    ${CMD_RESULT}`\"\n    logger \"ERROR\" \"patch secret exastro-platform-authentication-infra-secret\"\n
+    \   exit 2\nfi\nlogger \"INFO\" \"CALL : kubectl patch secret -n exastro-platform-authentication-infra
     exastro-platform-authentication-infra-secret${LF}`cat ${CMD_RESULT}`\"\n\n#\n#
     restart to reflect the settings\n#\nSTEP=$(expr ${STEP} + 1)\nlogger \"INFO\"
     \"**** STEP : ${STEP} / ${ALLSTEPS} : restart to reflect the settings ...\"\n\nkubectl
@@ -7932,10 +8026,9 @@ data:
     \   exit 2\nfi\n\nkubectl patch secret -n exastro-platform-authentication-infra
     exastro-platform-authentication-infra-secret -p \"\\\n{\\\n    \\\"data\\\" :
     {\\\n        \\\"SAVE_GATEWAY_CRYPTO_PASSPHRASE\\\" : \\\"${OIDC_PASSPHRASE_B64}\\\",\\\n
-    \       \\\"SAVE_KEYCLOAK_PASSWORD\\\" : \\\"${KEYCLOAK_ADMIN_PASSW_B64}\\\",\\\n
-    \       \\\"SAVE_EPOCH_PASSWORD\\\" : \\\"${EPOCH_ADMIN_PASSWD_B64}\\\"\\\n    }\\\n}\"
-    &> \"${CMD_RESULT}\"\nif [ $? -ne 0 ]; then\n    logger \"ERROR\" \"CALL : kubectl
-    patch secret -n exastro-platform-authentication-infra exastro-platform-authentication-infra-secret${LF}`cat
+    \       \\\"SAVE_KEYCLOAK_PASSWORD\\\" : \\\"${KEYCLOAK_ADMIN_PASSW_B64}\\\"\\\n
+    \   }\\\n}\" &> \"${CMD_RESULT}\"\nif [ $? -ne 0 ]; then\n    logger \"ERROR\"
+    \"CALL : kubectl patch secret -n exastro-platform-authentication-infra exastro-platform-authentication-infra-secret${LF}`cat
     ${CMD_RESULT}`\"\n    logger \"ERROR\" \"patch secret exastro-platform-authentication-infra-secret\"\n
     \   exit 2\nfi\n\nlogger \"INFO\" \"CALL : keycloak put admin new password\"\n\n#\n#
     Setting api call\n#\nSTEP=$(expr ${STEP} + 1)\nlogger \"INFO\" \"**** STEP : ${STEP}
@@ -7944,35 +8037,66 @@ data:
     \\\n    -Ss \\\n    -o \"${API_RESPONSE}\" \\\n    http://authentication-infra-api.exastro-platform-authentication-infra.svc:8000/settings
     \\\n    << EOF\n    {\n        \"realm_name\": \"exastroplatform\",\n        \"realm_option\":
     {\n            \"displayName\": \"Exastro Platform\",\n            \"enabled\":
-    \"True\",\n            \"registrationAllowed\": \"True\"\n        },\n        \"realm_roles\":
-    [\n            \"epoch-user\",\n            \"epoch-system\"\n        ],\n        \"groups\":
-    [\n            {\n                \"parent_group\": \"\",\n                \"group_name\":
-    \"epoch-user\"\n            }\n        ],\n        \"group_mappings\": [\n            {\n
-    \               \"role_name\": \"epoch-user\",\n                \"group_name\":
-    \"epoch-user\"\n            }\n        ],\n        \"default_group_name\": \"epoch-user\",\n
-    \       \"users\": [\n        ],\n        \"admin_users\": [\n            {\n
-    \               \"user_name\": \"epoch-admin\",\n                \"user_password\":
-    \"${EPOCH_ADMIN_PASSWD}\",\n                \"user_groups\": [],\n                \"user_realm_roles\":
-    [],\n                \"user_option\": {\n                    \"enabled\": \"True\"\n
-    \               }\n            }\n        ],\n        \"clients\": [\n            {\n
-    \               \"id\": \"epoch-system\",\n                \"protocol\": \"openid-connect\",\n
-    \               \"publicClient\": \"false\",\n                \"redirectUris\":
-    [\n                    \"https://${PRM_MY_HOST}:30443/oidc-redirect/\",\n                    \"https://${PRM_MY_HOST}:30443/\"\n
-    \               ],\n                \"baseUrl\": \"https://${PRM_MY_HOST}:30443/oidc-redirect/\",\n
-    \               \"webOrigins\": [],\n                \"protocolMappers\": [\n
-    \                   {\n                        \"name\": \"epoch-system-client-map-role\",\n
-    \                       \"protocol\": \"openid-connect\",\n                        \"protocolMapper\":
-    \"oidc-usermodel-client-role-mapper\",\n                        \"config\": {\n
-    \                           \"id.token.claim\": \"true\",\n                            \"access.token.claim\":
-    \"true\",\n                            \"claim.name\": \"epoch-role\",\n                            \"multivalued\":
-    \"true\",\n                            \"userinfo.token.claim\": \"true\",\n                            \"usermodel.clientRoleMapping.clientId\":
-    \"epoch-system\"\n                        }\n                    },\n                    {\n
-    \                       \"name\": \"epoch-system-map-role\",\n                        \"protocol\":
-    \"openid-connect\",\n                        \"protocolMapper\": \"oidc-usermodel-realm-role-mapper\",\n
-    \                       \"config\": {\n                            \"id.token.claim\":
-    \"true\",\n                            \"access.token.claim\": \"true\",\n                            \"claim.name\":
-    \"epoch-role\",\n                            \"multivalued\": \"true\",\n                            \"userinfo.token.claim\":
-    \"true\"\n                        }\n                    }\n                ]\n
+    \"True\",\n            \"registrationAllowed\": \"True\",\n            \"internationalizationEnabled\":
+    true,\n            \"supportedLocales\": [ \"ja\" ],\n            \"defaultLocale\":
+    \"ja\"\n        },\n        \"realm_roles\": [\n            \"epoch-user\",\n
+    \           \"epoch-system\"\n        ],\n        \"groups\": [\n            {\n
+    \               \"parent_group\": \"\",\n                \"group_name\": \"epoch-user\"\n
+    \           },\n            {\n                \"parent_group\": \"\",\n                \"group_name\":
+    \"epoch-ws-creator\"\n            }\n        ],\n        \"group_mappings\": {\n
+    \           \"realm_role_mappings\": [\n                {\n                    \"role_name\":
+    \"epoch-user\",\n                    \"group_name\": \"epoch-user\"\n                }\n
+    \           ],\n            \"clients_role_mappings\": [\n                {\n
+    \                   \"role_name\": \"ws-create\",\n                    \"client_id\":
+    \"epoch-system\",\n                    \"group_name\": \"epoch-ws-creator\"\n
+    \               }\n            ]\n        },\n        \"default_group_name\":
+    \"epoch-user\",\n        \"users\": [\n            {\n                \"user_info\":
+    {\n                    \"username\": \"epoch-admin\",\n                    \"firstName\":
+    \"ユーザー\",\n                    \"lastName\": \"管理者\",\n                    \"groups\":
+    [\n                        \"epoch-user\", \"epoch-ws-creator\"\n                    ],\n
+    \                   \"realmRoles\": [],\n                    \"requiredActions\":
+    [ \"UPDATE_PROFILE\" ],\n                    \"credentials\": [\n                        {\n
+    \                           \"type\": \"password\",\n                            \"value\":
+    \"password\",\n                            \"temporary\": \"True\"\n                        }\n
+    \                   ],\n                    \"enabled\": \"True\"\n                },\n
+    \               \"client_roles\": [\n                    {\n                        \"client_name\":
+    \"realm-management\",\n                        \"roles\": [\n                            \"manage-clients\",\n
+    \                           \"query-realms\",\n                            \"realm-admin\",\n
+    \                           \"manage-realm\",\n                            \"create-client\",\n
+    \                           \"manage-events\",\n                            \"impersonation\",\n
+    \                           \"manage-users\",\n                            \"manage-authorization\",\n
+    \                           \"query-groups\",\n                            \"query-users\",\n
+    \                           \"manage-identity-providers\",\n                            \"query-clients\"\n
+    \                       ]\n                    },\n                    {\n                        \"client_name\":
+    \"broker\",\n                        \"roles\": [\n                            \"read-token\"\n
+    \                       ]\n                    },\n                    {\n                        \"client_name\":
+    \"account\",\n                        \"roles\": [\n                            \"delete-account\",\n
+    \                           \"view-applications\",\n                            \"manage-consent\"\n
+    \                       ]\n                    }\n                ]\n            }\n
+    \       ],\n        \"admin_users\": [\n        ],\n        \"clients\": [\n            {\n
+    \               \"client_info\": {\n                    \"id\": \"epoch-system\",\n
+    \                   \"protocol\": \"openid-connect\",\n                    \"publicClient\":
+    \"false\",\n                    \"redirectUris\": [\n                        \"https://${PRM_MY_HOST}:30443/oidc-redirect/\",\n
+    \                       \"https://${PRM_MY_HOST}:30443/\"\n                    ],\n
+    \                   \"baseUrl\": \"https://${PRM_MY_HOST}:30443/oidc-redirect/\",\n
+    \                   \"webOrigins\": [],\n                    \"protocolMappers\":
+    [\n                        {\n                            \"name\": \"epoch-system-client-map-role\",\n
+    \                           \"protocol\": \"openid-connect\",\n                            \"protocolMapper\":
+    \"oidc-usermodel-client-role-mapper\",\n                            \"config\":
+    {\n                                \"id.token.claim\": \"true\",\n                                \"access.token.claim\":
+    \"true\",\n                                \"claim.name\": \"epoch-role\",\n                                \"multivalued\":
+    \"true\",\n                                \"userinfo.token.claim\": \"true\",\n
+    \                               \"usermodel.clientRoleMapping.clientId\": \"epoch-system\"\n
+    \                           }\n                        },\n                        {\n
+    \                           \"name\": \"epoch-system-map-role\",\n                            \"protocol\":
+    \"openid-connect\",\n                            \"protocolMapper\": \"oidc-usermodel-realm-role-mapper\",\n
+    \                           \"config\": {\n                                \"id.token.claim\":
+    \"true\",\n                                \"access.token.claim\": \"true\",\n
+    \                               \"claim.name\": \"epoch-role\",\n                                \"multivalued\":
+    \"true\",\n                                \"userinfo.token.claim\": \"true\"\n
+    \                           }\n                        }\n                    ]\n
+    \               },\n                \"client_roles\": [\n                    {\n
+    \                       \"name\": \"ws-create\"\n                    }\n                ]\n
     \           }\n        ],\n        \"conf_template\": \"epoch-system-template.conf\",\n
     \       \"token_user\": \"admin\",\n        \"token_password\": \"${KEYCLOAK_ADMIN_PASSW}\",\n
     \       \"token_realm_name\": \"master\"\n    }\nEOF\nif [ $? -ne 0 ]; then\n

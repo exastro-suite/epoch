@@ -48,7 +48,7 @@ spec:
           name: epoch-rs-workspace-conf
       containers:
       - name: epoch-rs-workspace-api
-        image: exastro/epoch-rs-workspace-api:1.0.0_20220418_1500
+        image: exastro/epoch-rs-workspace-api:1.0.0_20220425_1730
         env:
         - name: CONFIG_API_WORKSPACE_PATH
           value: "/etc/epoch/epochRsWorkspaceApi/api_workspace.conf"
@@ -58,6 +58,11 @@ spec:
           value: "8000"
         - name: PYTHONIOENCODING
           value: utf-8
+        - name: ENCRYPT_KEY
+          valueFrom:
+            secretKeyRef:
+              name: epoch-key
+              key: ENCRYPT_KEY
         volumeMounts:
         - name: epoch-rs-workspace-conf
           mountPath: /etc/epoch/epochRsWorkspaceApi
