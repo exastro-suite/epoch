@@ -48,7 +48,7 @@ def post_ci_pipeline(workspace_id):
         Response: HTTP Respose
     """
     globals.logger.info('Set CI pipeline information. workspace_id={}'.format(workspace_id))
-    
+
     app_name = "ワークスペース情報:"
     exec_stat = "CIパイプライン情報設定"
     error_detail = ""
@@ -63,9 +63,10 @@ def post_ci_pipeline(workspace_id):
         # post_data = request.json.copy()
         # workspace get
         api_url = "{}://{}:{}/workspace/{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
-                                                    os.environ['EPOCH_RS_WORKSPACE_HOST'],
-                                                    os.environ['EPOCH_RS_WORKSPACE_PORT'],
-                                                    workspace_id)
+                                                   os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                   os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                   workspace_id)
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
         response = requests.get(api_url)
 
         if response.status_code != 200:
@@ -80,9 +81,10 @@ def post_ci_pipeline(workspace_id):
 
         # ワークスペース状態の取得 Get workspace status
         api_url = "{}://{}:{}/workspace/{}/status".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
-                                                    os.environ['EPOCH_RS_WORKSPACE_HOST'],
-                                                    os.environ['EPOCH_RS_WORKSPACE_PORT'],
-                                                    workspace_id)
+                                                          os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                          os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                          workspace_id)
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
         response = requests.get(api_url)
 
         if response.status_code != 200:
@@ -94,7 +96,7 @@ def post_ci_pipeline(workspace_id):
         get_workspace_status = json.loads(response.text)
         # 更新で使用する項目のみを展開する Expand only the items used in the update
         workspace_status = {
-            const.STATUS_CI_SETTING : get_workspace_status[const.STATUS_CI_SETTING] 
+            const.STATUS_CI_SETTING: get_workspace_status[const.STATUS_CI_SETTING]
         }
 
         # 前回の結果が正常終了しているかチェックする
@@ -102,9 +104,10 @@ def post_ci_pipeline(workspace_id):
         if workspace_status[const.STATUS_CI_SETTING] == const.STATUS_OK:
             # 更新前ワークスペース情報取得 Get workspace before update
             api_url = "{}://{}:{}/workspace/{}/before".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
-                                                        os.environ['EPOCH_RS_WORKSPACE_HOST'],
-                                                        os.environ['EPOCH_RS_WORKSPACE_PORT'],
-                                                        workspace_id)
+                                                              os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                              os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                              workspace_id)
+            globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
             response = requests.get(api_url)
 
             if response.status_code == 200:
@@ -149,10 +152,10 @@ def post_ci_pipeline(workspace_id):
             workspace_status[const.STATUS_CI_SETTING] = const.STATUS_NG
             # workspace 状態更新 workspace status update
             api_url = "{}://{}:{}/workspace/{}/status".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
-                                                                os.environ['EPOCH_RS_WORKSPACE_HOST'],
-                                                                os.environ['EPOCH_RS_WORKSPACE_PORT'],
-                                                                workspace_id)
-
+                                                              os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                              os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                              workspace_id)
+            globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
             response = requests.put(api_url, headers=post_headers, data=json.dumps(workspace_status))
 
             if response.status_code != 200:
@@ -161,22 +164,22 @@ def post_ci_pipeline(workspace_id):
                 raise common.UserException(error_detail)
 
             # epoch-control-inside-gitlab-api の呼び先設定
-            api_url_gitlab = "{}://{}:{}/workspace/{}/gitlab".format(os.environ["EPOCH_CONTROL_INSIDE_GITLAB_PROTOCOL"], 
-                                                                    os.environ["EPOCH_CONTROL_INSIDE_GITLAB_HOST"], 
-                                                                    os.environ["EPOCH_CONTROL_INSIDE_GITLAB_PORT"],
-                                                                    workspace_id)
+            api_url_gitlab = "{}://{}:{}/workspace/{}/gitlab".format(os.environ["EPOCH_CONTROL_INSIDE_GITLAB_PROTOCOL"],
+                                                                     os.environ["EPOCH_CONTROL_INSIDE_GITLAB_HOST"],
+                                                                     os.environ["EPOCH_CONTROL_INSIDE_GITLAB_PORT"],
+                                                                     workspace_id)
 
             # epoch-control-github-api の呼び先設定
-            api_url_github = "{}://{}:{}/workspace/{}/github/webhooks".format(os.environ["EPOCH_CONTROL_GITHUB_PROTOCOL"], 
-                                                                            os.environ["EPOCH_CONTROL_GITHUB_HOST"], 
-                                                                            os.environ["EPOCH_CONTROL_GITHUB_PORT"],
-                                                                            workspace_id)
+            api_url_github = "{}://{}:{}/workspace/{}/github/webhooks".format(os.environ["EPOCH_CONTROL_GITHUB_PROTOCOL"],
+                                                                              os.environ["EPOCH_CONTROL_GITHUB_HOST"],
+                                                                              os.environ["EPOCH_CONTROL_GITHUB_PORT"],
+                                                                              workspace_id)
 
             # epoch-control-tekton-api の呼び先設定
-            api_url_tekton = "{}://{}:{}/workspace/{}/tekton/pipeline".format(os.environ["EPOCH_CONTROL_TEKTON_PROTOCOL"], 
-                                                                            os.environ["EPOCH_CONTROL_TEKTON_HOST"], 
-                                                                            os.environ["EPOCH_CONTROL_TEKTON_PORT"],
-                                                                            workspace_id)
+            api_url_tekton = "{}://{}:{}/workspace/{}/tekton/pipeline".format(os.environ["EPOCH_CONTROL_TEKTON_PROTOCOL"],
+                                                                              os.environ["EPOCH_CONTROL_TEKTON_HOST"],
+                                                                              os.environ["EPOCH_CONTROL_TEKTON_PORT"],
+                                                                              workspace_id)
 
             # パイプライン設定(GitLab Create Project)
             # request_body = json.loads(request.data)
@@ -206,9 +209,9 @@ def post_ci_pipeline(workspace_id):
             #         }
             #         git_projects.append(ap_data)
 
-
             for proj_data in git_projects:
                 # gitlab/repos post送信
+                globals.logger.info('Send a request. workspace_id={} URL={}/repos'.format(workspace_id, api_url_gitlab))
                 response = requests.post('{}/repos'.format(api_url_gitlab), headers=post_headers, data=json.dumps(proj_data))
                 globals.logger.debug("post gitlab/repos response:{}".format(response.text))
 
@@ -218,7 +221,8 @@ def post_ci_pipeline(workspace_id):
 
             if request_body['ci_config']['pipelines_common']['git_repositry']['housing'] == 'outer':
                 # github/webhooks post送信
-                response = requests.post( api_url_github, headers=post_headers, data=json.dumps(post_data))
+                globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url_github))
+                response = requests.post(api_url_github, headers=post_headers, data=json.dumps(post_data))
                 globals.logger.debug("post github/webhooks response:{}".format(response.text))
 
                 if response.status_code != 200:
@@ -236,6 +240,7 @@ def post_ci_pipeline(workspace_id):
                         'webhooks_url': pipeline_ap['webhooks_url'],
                     }
 
+                    globals.logger.info('Send a request. workspace_id={} URL={}/webhooks'.format(workspace_id, api_url_gitlab))
                     response = requests.post('{}/webhooks'.format(api_url_gitlab), headers=post_headers, data=json.dumps(ap_data))
                     globals.logger.debug("post gitlab/webhooks response:{}".format(response.text))
 
@@ -244,6 +249,7 @@ def post_ci_pipeline(workspace_id):
                         raise common.UserException(error_detail)
 
             # listener post送信
+            globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url_tekton))
             response = requests.post(api_url_tekton, headers=post_headers, data=json.dumps(post_data))
             globals.logger.debug("post tekton/pipeline response:{}".format(response.text))
 
@@ -255,10 +261,10 @@ def post_ci_pipeline(workspace_id):
             workspace_status[const.STATUS_CI_SETTING] = const.STATUS_OK
             # workspace 状態更新 workspace status update
             api_url = "{}://{}:{}/workspace/{}/status".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
-                                                                os.environ['EPOCH_RS_WORKSPACE_HOST'],
-                                                                os.environ['EPOCH_RS_WORKSPACE_PORT'],
-                                                                workspace_id)
-
+                                                              os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                              os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                              workspace_id)
+            globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
             response = requests.put(api_url, headers=post_headers, data=json.dumps(workspace_status))
 
             if response.status_code != 200:
@@ -267,10 +273,10 @@ def post_ci_pipeline(workspace_id):
                 raise common.UserException(error_detail)
 
         ret_status = 200
-        
+
         #処理が成功したことのログを出力
         globals.logger.info('SUCCESS: Set CI pipeline information. workspace_id={}, ret_status={}'.format(workspace_id, ret_status))
-        
+
         # 戻り値をそのまま返却
         return jsonify({"result": ret_status}), ret_status
 
@@ -278,6 +284,7 @@ def post_ci_pipeline(workspace_id):
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
     except Exception as e:
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+
 
 def get_git_commits(workspace_id):
     """Get git commit history - gitコミット履歴取得
@@ -296,9 +303,10 @@ def get_git_commits(workspace_id):
     try:
         # workspace get
         api_url = "{}://{}:{}/workspace/{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
-                                                    os.environ['EPOCH_RS_WORKSPACE_HOST'],
-                                                    os.environ['EPOCH_RS_WORKSPACE_PORT'],
-                                                    workspace_id)
+                                                   os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                   os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                   workspace_id)
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
         response = requests.get(api_url)
 
         if response.status_code != 200:
@@ -328,9 +336,10 @@ def get_git_commits(workspace_id):
             if workspace_info["ci_config"]["pipelines_common"]["git_repositry"]["housing"] == const.HOUSING_INNER:
                 # EPOCH内レジストリ ブランチの一覧取得 Get a list of registry branches in EPOCH
                 api_url = "{}://{}:{}/branches?git_url={}".format(os.environ['EPOCH_CONTROL_INSIDE_GITLAB_PROTOCOL'],
-                                                        os.environ['EPOCH_CONTROL_INSIDE_GITLAB_HOST'],
-                                                        os.environ['EPOCH_CONTROL_INSIDE_GITLAB_PORT'],
-                                                        urllib.parse.quote(git_url))
+                                                                  os.environ['EPOCH_CONTROL_INSIDE_GITLAB_HOST'],
+                                                                  os.environ['EPOCH_CONTROL_INSIDE_GITLAB_PORT'],
+                                                                  urllib.parse.quote(git_url))
+                globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
                 response = requests.get(api_url, headers=post_headers_in_token)
 
                 if response.status_code != 200:
@@ -343,10 +352,11 @@ def get_git_commits(workspace_id):
                 for branch_row in ret_git_branches["rows"]:
                     # EPOCH内レジストリ Registry in EPOCH
                     api_url = "{}://{}:{}/commits?git_url={}&branch={}".format(os.environ['EPOCH_CONTROL_INSIDE_GITLAB_PROTOCOL'],
-                                                            os.environ['EPOCH_CONTROL_INSIDE_GITLAB_HOST'],
-                                                            os.environ['EPOCH_CONTROL_INSIDE_GITLAB_PORT'],
-                                                            urllib.parse.quote(git_url),
-                                                            urllib.parse.quote(branch_row["name"]))
+                                                                               os.environ['EPOCH_CONTROL_INSIDE_GITLAB_HOST'],
+                                                                               os.environ['EPOCH_CONTROL_INSIDE_GITLAB_PORT'],
+                                                                               urllib.parse.quote(git_url),
+                                                                               urllib.parse.quote(branch_row["name"]))
+                    globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
                     response = requests.get(api_url, headers=post_headers_in_token)
 
                     if response.status_code != 200:
@@ -358,7 +368,7 @@ def get_git_commits(workspace_id):
                     # Process for the number of acquired information
                     for git_row in ret_git_commit["rows"]:
                         web_url = git_row["web_url"]
-                        base_url = re.search('^https?://[^/][^/]*/',git_url).group()
+                        base_url = re.search('^https?://[^/][^/]*/', git_url).group()
                         web_url = web_url.replace("https://gitlab.gitlab.svc/", base_url)
                         # web_url = web_url.replace("https://gitlab.gitlab.svc/", git_url.match("(https?://[^/]+/)"))
 
@@ -376,9 +386,10 @@ def get_git_commits(workspace_id):
             else:
                 # GitHub branches get
                 api_url = "{}://{}:{}/branches?git_url={}".format(os.environ['EPOCH_CONTROL_GITHUB_PROTOCOL'],
-                                                        os.environ['EPOCH_CONTROL_GITHUB_HOST'],
-                                                        os.environ['EPOCH_CONTROL_GITHUB_PORT'],
-                                                        urllib.parse.quote(git_url))
+                                                                  os.environ['EPOCH_CONTROL_GITHUB_HOST'],
+                                                                  os.environ['EPOCH_CONTROL_GITHUB_PORT'],
+                                                                  urllib.parse.quote(git_url))
+                globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
                 response = requests.get(api_url, headers=post_headers_in_token)
 
                 if response.status_code != 200:
@@ -392,10 +403,11 @@ def get_git_commits(workspace_id):
 
                     # GitHub commit get
                     api_url = "{}://{}:{}/commits?git_url={}&branch={}".format(os.environ['EPOCH_CONTROL_GITHUB_PROTOCOL'],
-                                                            os.environ['EPOCH_CONTROL_GITHUB_HOST'],
-                                                            os.environ['EPOCH_CONTROL_GITHUB_PORT'],
-                                                            urllib.parse.quote(git_url),
-                                                            urllib.parse.quote(branch_row["name"]))
+                                                                               os.environ['EPOCH_CONTROL_GITHUB_HOST'],
+                                                                               os.environ['EPOCH_CONTROL_GITHUB_PORT'],
+                                                                               urllib.parse.quote(git_url),
+                                                                               urllib.parse.quote(branch_row["name"]))
+                    globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
                     response = requests.get(api_url, headers=post_headers_in_token)
 
                     if response.status_code != 200:
@@ -421,11 +433,11 @@ def get_git_commits(workspace_id):
                         rows.append(row)
 
         response = {
-            "result":"200",
-            "rows" : rows,
+            "result": "200",
+            "rows": rows,
         }
         ret_status = 200
-        
+
         #処理成功のログ出力
         globals.logger.info('SUCCESS: Get CI commit list in code repository. workspace_id={}, ret_status={}, git_commit_information_count={}'.format(workspace_id, ret_status, len(rows)))
 
@@ -445,7 +457,7 @@ def get_git_hooks(workspace_id):
         Response: HTTP Respose
     """
     globals.logger.info('Get webhook execution history. workspace_id={}'.format(workspace_id))
-    
+
     app_name = "ワークスペース情報:"
     exec_stat = "CIパイプラインwebhook履歴取得"
     error_detail = ""
@@ -453,9 +465,10 @@ def get_git_hooks(workspace_id):
     try:
         # workspace get
         api_url = "{}://{}:{}/workspace/{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
-                                                    os.environ['EPOCH_RS_WORKSPACE_HOST'],
-                                                    os.environ['EPOCH_RS_WORKSPACE_PORT'],
-                                                    workspace_id)
+                                                   os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                   os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                   workspace_id)
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
         response = requests.get(api_url)
 
         if response.status_code != 200:
@@ -486,9 +499,10 @@ def get_git_hooks(workspace_id):
             if workspace_info["cd_config"]["environments_common"]["git_repositry"]["housing"] == const.HOUSING_OUTER:
                 # GitHub hooks get
                 api_url = "{}://{}:{}/hooks?git_url={}".format(os.environ['EPOCH_CONTROL_GITHUB_PROTOCOL'],
-                                                        os.environ['EPOCH_CONTROL_GITHUB_HOST'],
-                                                        os.environ['EPOCH_CONTROL_GITHUB_PORT'],
-                                                        urllib.parse.quote(git_url))
+                                                               os.environ['EPOCH_CONTROL_GITHUB_HOST'],
+                                                               os.environ['EPOCH_CONTROL_GITHUB_PORT'],
+                                                               urllib.parse.quote(git_url))
+                globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
                 response = requests.get(api_url, headers=post_headers_in_token)
 
                 if response.status_code != 200:
@@ -500,16 +514,17 @@ def get_git_hooks(workspace_id):
                 # 取得した情報数分処理する
                 # Process for the number of acquired information
                 for hooks_row in ret_git_hooks["rows"]:
-                # GitHub hooks get
+                    # GitHub hooks get
                     api_url = "{}://{}:{}/hooks/{}/deliveries?git_url={}".format(os.environ['EPOCH_CONTROL_GITHUB_PROTOCOL'],
-                                                            os.environ['EPOCH_CONTROL_GITHUB_HOST'],
-                                                            os.environ['EPOCH_CONTROL_GITHUB_PORT'],
-                                                            hooks_row["id"],
-                                                            urllib.parse.quote(git_url))
+                                                                                 os.environ['EPOCH_CONTROL_GITHUB_HOST'],
+                                                                                 os.environ['EPOCH_CONTROL_GITHUB_PORT'],
+                                                                                 hooks_row["id"],
+                                                                                 urllib.parse.quote(git_url))
+                    globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
                     response = requests.get(api_url, headers=post_headers_in_token)
 
                     if response.status_code != 200:
-                        raise common.UserException("git deliveries get error:[{}]".format(response.status_code))
+                        raise common.UserException('git deliveries get error:[{}]'.format(response.status_code))
 
                     ret_git_deliveries = json.loads(response.text)
                     # globals.logger.debug("deliveries:[{}]".format(ret_git_deliveries["rows"]))
@@ -532,16 +547,15 @@ def get_git_hooks(workspace_id):
 
                             rows.append(row)
 
-
         response = {
-            "result":"200",
-            "rows" : rows,
+            "result": "200",
+            "rows": rows,
         }
         ret_status = 200
-        
+
         #処理成功のログ出力
-        globals.logger.info('SUCCESS: Get webhook execution history. workspace_id={},  ret_status={}, git_hook_information_count={}'.format(workspace_id, ret_status, len(rows)))
-        
+        globals.logger.info('SUCCESS: Get webhook execution history. workspace_id={}, ret_status={}, git_hook_information_count={}'.format(workspace_id, ret_status, len(rows)))
+
         return jsonify(response), ret_status
 
     except common.UserException as e:
@@ -559,19 +573,20 @@ def get_registry(workspace_id):
         Response: HTTP Respose
     """
     globals.logger.info('Get container registry information. workspace_id={}'.format(workspace_id))
-    
+
     app_name = multi_lang.get_text("EP020-0003", "ワークスペース情報:")
-    exec_stat = multi_lang.get_text("EP020-0074", "CIパイプライン コンテナレジストリ情報取得") 
+    exec_stat = multi_lang.get_text("EP020-0074", "CIパイプライン コンテナレジストリ情報取得")
     error_detail = ""
 
     try:
         # Workspace information acquisition URL - ワークスペース情報取得URL
         api_url = "{}://{}:{}/workspace/{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
-                                                    os.environ['EPOCH_RS_WORKSPACE_HOST'],
-                                                    os.environ['EPOCH_RS_WORKSPACE_PORT'],
-                                                    workspace_id)
+                                                   os.environ['EPOCH_RS_WORKSPACE_HOST'],
+                                                   os.environ['EPOCH_RS_WORKSPACE_PORT'],
+                                                   workspace_id)
 
         # Get Workspace information ― ワークスペース情報取得
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
         response = requests.get(api_url)
         workspace_json = json.loads(response.text)
 
@@ -592,10 +607,11 @@ def get_registry(workspace_id):
 
         # CI result information acquisition URL - CI結果情報取得URL
         api_url = "{}://{}:{}/workspace/{}/tekton/task".format(os.environ['EPOCH_RS_CI_RESULT_PROTOCOL'],
-                                                                os.environ['EPOCH_RS_CI_RESULT_HOST'],
-                                                                os.environ['EPOCH_RS_CI_RESULT_PORT'],
-                                                                workspace_id)
+                                                               os.environ['EPOCH_RS_CI_RESULT_HOST'],
+                                                               os.environ['EPOCH_RS_CI_RESULT_PORT'],
+                                                               workspace_id)
         # Get CI result information ― CI結果情報取得
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
         response = requests.get(api_url)
         ci_result_json = json.loads(response.text)
 
@@ -605,21 +621,22 @@ def get_registry(workspace_id):
             raise common.UserException(error_detail)
 
         rows = []
-        
+
         # Extract the repository information from the acquired CI result information and format it
         # 取得したCI結果情報の内、リポジトリ情報を抜き出して整形
         for ci_result in ci_result_json["rows"]:
-            
+
             # Container registry information acquisition URL - コンテナレジストリ情報取得URL
             api_url = "{}://{}:{}/registry/{}".format(os.environ['EPOCH_CONTROL_DOCKERHUB_PROTOCOL'],
-                                                        os.environ['EPOCH_CONTROL_DOCKERHUB_HOST'],
-                                                        os.environ['EPOCH_CONTROL_DOCKERHUB_PORT'],
-                                                        ci_result["container_registry_image"])
+                                                      os.environ['EPOCH_CONTROL_DOCKERHUB_HOST'],
+                                                      os.environ['EPOCH_CONTROL_DOCKERHUB_PORT'],
+                                                      ci_result["container_registry_image"])
 
             # Get container registry information - コンテナレジストリ情報取得
+            globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
             response = requests.post(api_url, headers=request_headers)
             registry_json = json.loads(response.text)
-            
+
             if response.status_code != 200:
                 error_detail = multi_lang.get_text("EP020-0075", "コンテナレジストリ情報の取得に失敗しました")
                 globals.logger.debug(error_detail)
@@ -630,7 +647,7 @@ def get_registry(workspace_id):
                 # レジストリ名とイメージタグが一致する、リポジトリ情報と、レジストリ情報をマージする
                 if ci_result["container_registry_image"] in registry["name"] \
                 and ci_result["container_registry_image_tag"] in registry["tag"]:
-                
+
                     rows.append(
                         {
                             "registry": registry,
@@ -643,11 +660,11 @@ def get_registry(workspace_id):
                     )
 
         ret_status = 200
-        
+
         #処理成功のログ出力
         globals.logger.info('SUCCESS: Get container registry information. workspace_id={}, ret_status={}, registry_information_count={}'.format(workspace_id, ret_status, len(rows)))
 
-        return jsonify({ "return": ret_status, "rows": rows }), ret_status
+        return jsonify({"return": ret_status, "rows": rows}), ret_status
 
     except common.UserException as e:
         return common.server_error_to_message(e, app_name + exec_stat, error_detail)
@@ -665,7 +682,7 @@ def get_ci_pipeline_result(workspace_id):
         Response: HTTP Respose
     """
     globals.logger.info('Get CI pipeline result. workspace_id={}'.format(workspace_id))
-    
+
     app_name = "ワークスペース情報:"
     exec_stat = "CIパイプライン結果取得"
     error_detail = ""
@@ -681,12 +698,13 @@ def get_ci_pipeline_result(workspace_id):
         }
 
         # epoch-control-tekton-api の呼び先設定
-        api_url_tekton = "{}://{}:{}/workspace/{}/tekton/pipelinerun".format(os.environ["EPOCH_CONTROL_TEKTON_PROTOCOL"], 
-                                                                          os.environ["EPOCH_CONTROL_TEKTON_HOST"], 
-                                                                          os.environ["EPOCH_CONTROL_TEKTON_PORT"],
-                                                                          workspace_id)
+        api_url_tekton = "{}://{}:{}/workspace/{}/tekton/pipelinerun".format(os.environ["EPOCH_CONTROL_TEKTON_PROTOCOL"],
+                                                                             os.environ["EPOCH_CONTROL_TEKTON_HOST"],
+                                                                             os.environ["EPOCH_CONTROL_TEKTON_PORT"],
+                                                                             workspace_id)
         # TEKTONパイプライン情報取得
         exec_stat = "pipelinerun情報取得"
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url_tekton))
         request_response = requests.get(api_url_tekton, params={"latest": latest})
 
         ret = json.loads(request_response.text)
@@ -720,13 +738,14 @@ def get_ci_pipeline_result(workspace_id):
 
                         # epoch-control-tekton-api の呼び先設定
                         api_url_tekton = "{}://{}:{}/workspace/{}/tekton/taskrun/{}/logs".format(
-                                                                                        os.environ["EPOCH_CONTROL_TEKTON_PROTOCOL"], 
-                                                                                        os.environ["EPOCH_CONTROL_TEKTON_HOST"], 
+                                                                                        os.environ["EPOCH_CONTROL_TEKTON_PROTOCOL"],
+                                                                                        os.environ["EPOCH_CONTROL_TEKTON_HOST"],
                                                                                         os.environ["EPOCH_CONTROL_TEKTON_PORT"],
                                                                                         workspace_id,
                                                                                         taskrun_name)
                         # TEKTONタスク実行ログ情報取得
                         exec_stat = "taskrunログ情報取得"
+                        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url_tekton))
                         request_response = requests.get(api_url_tekton, params={"latest": latest})
 
                         ret = json.loads(request_response.text)
@@ -755,12 +774,12 @@ def get_ci_pipeline_result(workspace_id):
         ret_status = 200
         response = {
             "result": ret_status,
-            "rows" : rows,
+            "rows": rows,
         }
-        
+
         #処理成功のログ出力
         globals.logger.info('SUCCESS: Get CI pipeline result. workspace_id={}, ret_status={}, CI_pipeline_information_count={} '.format(workspace_id, ret_status, len(rows)))
-        # 戻り値をそのまま返却        
+        # 戻り値をそのまま返却
         return jsonify(response), ret_status
 
     except common.UserException as e:
@@ -787,13 +806,14 @@ def get_ci_pipeline_result_logs(workspace_id, taskrun_name):
 
         # epoch-control-tekton-api の呼び先設定
         api_url_tekton = "{}://{}:{}/workspace/{}/tekton/taskrun/{}/logs".format(
-                                                                        os.environ["EPOCH_CONTROL_TEKTON_PROTOCOL"], 
-                                                                        os.environ["EPOCH_CONTROL_TEKTON_HOST"], 
+                                                                        os.environ["EPOCH_CONTROL_TEKTON_PROTOCOL"],
+                                                                        os.environ["EPOCH_CONTROL_TEKTON_HOST"],
                                                                         os.environ["EPOCH_CONTROL_TEKTON_PORT"],
                                                                         workspace_id,
                                                                         taskrun_name)
         # TEKTONタスク実行ログ情報取得
         exec_stat = "taskrunログ情報取得"
+        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url_tekton))
         request_response = requests.get(api_url_tekton, params={"latest": latest})
 
         ret = json.loads(request_response.text)
@@ -808,13 +828,13 @@ def get_ci_pipeline_result_logs(workspace_id, taskrun_name):
         ret_status = 200
         response = {
             "result": ret_status,
-            "log" : ret["log"],
+            "log": ret["log"],
         }
-        
+
         #処理成功のログ出力
         # globals.logger.info('SUCCESS: Get CI pipeline result. workspace_id={}, ret_status={}, taskrun_name_count={}'.format(workspace_id, ret_status, len(response["log"])))
 
-        # 戻り値をそのまま返却        
+        # 戻り値をそのまま返却
         return jsonify(response), ret_status
 
     except common.UserException as e:
