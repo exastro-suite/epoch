@@ -43,6 +43,11 @@
     | 31182 | 認証システム |
     | 31183 | GitLab |
 
+1. Worker nodeのLinuxのkernelパラメータ設定について、次の条件を満たしている必要があります。
+
+    | kernelパラメータ | 条件 |
+    | :- | :- |
+    | vm.max_map_count | 524288 以上 |
 
 ## EPOCHのインストール
 
