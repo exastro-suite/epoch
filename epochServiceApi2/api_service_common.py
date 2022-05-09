@@ -44,12 +44,9 @@ def get_workspace_members_by_role(workspace_id, pickup_roles):
     Returns:
         Response: HTTP Respose
     """
+    globals.logger.info('Get acquisition of workspace members with designated roles.')
 
     try:
-        globals.logger.debug('=' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('=' * 50)
-
         # 子のROLEからでは、もちえているユーザーの取得ができないのですべての親ロールから該当する情報を抜き出していく
         # Since it is not possible to acquire the user who has it from the child ROLE, the relevant information is extracted from all the parent roles.
         roles = const.ALL_ROLES
