@@ -18,7 +18,8 @@ var workspace_api_conf = {
         // "registry"  : "https://hub.docker.com/repositories",
         // "ita"       : location_prot + "//" + location_host + ":" + (location_prot == "https:"? "31183": "31183") + "/default/menu/01_browse.php?no=2100180006",
         // "sonarqube" : location_prot + "//" + location_host + ":" + (location_prot == "https:"? "31185": "31185") + "/",
-        "ita"       : "{baseurl}/default/menu/01_browse.php?no=2100180006",
+        //"ita"       : "{baseurl}/default/menu/01_browse.php?no=2100180006",
+        "ita"       : "{baseurl}/default/menu/01_browse.php?no=2100180003&conductor_class_id=2",
         "sonarqube" : "{baseurl}",
     },
     "test": {
@@ -77,6 +78,9 @@ var workspace_api_conf = {
 
                 "sync": {
                     "post":     URL_BASE + "/api/workspace/{workspace_id}/cd/pipeline/argocd/sync",
+                },
+                "rollback": {
+                    "post":     URL_BASE + "/api/workspace/{workspace_id}/cd/pipeline/argocd/rollback",
                 },
             },
         },

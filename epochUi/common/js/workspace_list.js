@@ -75,13 +75,13 @@ const tableHeader = [
         'icon': 'icon-menu-account',
         'text': 'メンバー一覧',
       },
-      'edit': {
-        'icon': 'icon-edit',
-        'text': 'ワークスペース編集',
-        'separate': 'on'
-      },
+      // 'edit': {
+      //   'icon': 'icon-edit',
+      //   'text': 'ワークスペース編集',
+      //   'separate': 'on'
+      // },
       'leave': {
-        'icon': 'icon-trash',
+        'icon': 'icon-move-out',
         'text': 'ワークスペース退去'
       },
       // 'delete': {
@@ -155,7 +155,15 @@ function workspaceList( list ) {
           $table = et.setup('#list', tableHeader, tableBody, {'sortCol': 3, 'sortType': 'desc', 'download': 'on'} );
 
     if ( $table ) {
-      
+      // row click
+      $table.find('td.cn0,td.cn1,td.cn2,td.cn3,td.cn4').css('cursor','pointer');
+      $table.on('click','td.cn0,td.cn1,td.cn2,td.cn3,td.cn4',function() {
+        const idKey=$(this).closest('tr').find('.et-hm-b[data-button=leave]').attr('data-key');
+        refresh_session().then(() => {
+          location.href = 'workspace.html?workspace_id=' + idKey;
+        });
+      });
+
       // menu - メニュー
       $table.on('click', '.et-hm-b', function(){
         const $button = $( this ),
@@ -172,11 +180,11 @@ function workspaceList( list ) {
               });
               break;
             // edit - 編集
-            case 'edit':
-              refresh_session().then(() => {
-                location.href = 'workspace.html?workspace_id=' + idKey;
-              });
-              break;
+            // case 'edit':
+            //   refresh_session().then(() => {
+            //     location.href = 'workspace.html?workspace_id=' + idKey;
+            //   });
+            //   break;
             // leave - 退去
             case 'leave':
               // leave confirmation modal display - 退去確認モーダル表示
@@ -288,3 +296,14 @@ $(function(){
     });
 });
 
+// Button control by role - ロールによるボタン制御
+function show_buttons_by_role() {
+  // Waiting for API data acquisition - APIのデータ取得待ち
+  if(currentUser == null) { setTimeout(show_buttons_by_role, 100); return; }
+  if(!currentUser.data)   { setTimeout(show_buttons_by_role, 100); return; }
+
+  if(currentUser.data.roles.indexOf("ws-create") != -1) {
+    $(".content-menu-button[data-button=newWorkspace]").css("display","");
+  }
+}
+$(document).ready(function(){ show_buttons_by_role(); });

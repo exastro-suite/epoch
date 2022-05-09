@@ -83,7 +83,7 @@ data:
     kubectl get secret  exastro-platform-authentication-infra-secret -n exastro-platform-authentication-infra -o json | jq -r ".data.KEYCLOAK_PASSWORD" | base64 -d
     echo ""
 
-  get-workspace-tools-account.sh: |+
+  get-workspace-tools-account.sh: |
     #!/bin/bash
     #   Copyright 2019 NEC Corporation
     #
@@ -104,8 +104,7 @@ data:
         exit 1
     fi
 
-    kubectl exec -i -n epoch-system deploy/workspace-db -- mysql -N -B -u root -ppassword workspace_db -e"select info from workspace_access where workspace_id=$1;"  2> /dev/null | jq
-
+    curl http://epoch-rs-workspace-api:8000/workspace/${1}/access
   set-host-gitlab.sh: |
     #!/bin/bash
     #   Copyright 2019 NEC Corporation
@@ -202,396 +201,266 @@ data:
 
     logger "INFO" "configuration was successful"
     exit 0
-  set-host.sh: |
-    #!/bin/bash
-    #   Copyright 2021 NEC Corporation
-    #
-    #   Licensed under the Apache License, Version 2.0 (the "License");
-    #   you may not use this file except in compliance with the License.
-    #   You may obtain a copy of the License at
-    #
-    #       http://www.apache.org/licenses/LICENSE-2.0
-    #
-    #   Unless required by applicable law or agreed to in writing, software
-    #   distributed under the License is distributed on an "AS IS" BASIS,
-    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    #   See the License for the specific language governing permissions and
-    #   limitations under the License.
-
-
-    BASENAME=$(basename "$0")
-    CMD_RESULT="/tmp/result.$$"
-    LF='
-    '
-    source "`dirname $0`/common-import-logger.sh" "${BASENAME}"
-
-    logger "INFO" "START : ${BASENAME}"
-
-    #
-    # Initialize variables
-    #
-    STEP=0
-    ALLSTEPS=5
-
-    #
-    # check parameter
-    #
-    if [ $# -ne 1 ]; then
-        logger "ERROR" "Usage : ${BASENAME} [hostname or IPaddress]"
-        logger "ERROR" "Check the parameters and try again"
-        exit 1
-    fi
-
-    PRM_MY_HOST="$1"
-    logger "INFO" "PARAM PRM_MY_HOST : ${PRM_MY_HOST}"
-
-    #
-    # Initialize Setting Parameter
-    #
-    STEP=$(expr ${STEP} + 1)
-    logger "INFO" "**** STEP : ${STEP} / ${ALLSTEPS} : Initialize Setting Parameter ..."
-
-    OIDC_PASSPHRASE=$(< /dev/urandom tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq)
-    if [ $? -ne 0 -o -z "${OIDC_PASSPHRASE}" ]; then
-        logger "ERROR" "Generate OIDC_PASSPHRASE"
-        exit 2
-    fi
-
-    OIDC_PASSPHRASE_B64=$(echo -n "${OIDC_PASSPHRASE}" | base64)
-    if [ $? -ne 0 -o -z "${OIDC_PASSPHRASE_B64}" ]; then
-        logger "ERROR" "Generate OIDC_PASSPHRASE_B64"
-        exit 2
-    fi
-
-    KEYCLOAK_ADMIN_PASSW=$(< /dev/urandom tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq)
-    if [ $? -ne 0 -o -z "${KEYCLOAK_ADMIN_PASSW}" ]; then
-        logger "ERROR" "Generate KEYCLOAK_ADMIN_PASSW"
-        exit 2
-    fi
-
-    KEYCLOAK_ADMIN_PASSW_B64=$(echo -n "${KEYCLOAK_ADMIN_PASSW}" | base64)
-    if [ $? -ne 0 -o -z "${KEYCLOAK_ADMIN_PASSW_B64}" ]; then
-        logger "ERROR" "Generate KEYCLOAK_ADMIN_PASSW_B64"
-        exit 2
-    fi
-
-    EPOCH_ADMIN_PASSWD=$(< /dev/urandom tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq)
-    if [ $? -ne 0 -o -z "${EPOCH_ADMIN_PASSWD}" ]; then
-        logger "ERROR" "Generate EPOCH_ADMIN_PASSWD"
-        exit 2
-    fi
-
-    EPOCH_ADMIN_PASSWD_B64=$(echo -n "${EPOCH_ADMIN_PASSWD}" | base64)
-    if [ $? -ne 0 -o -z "${EPOCH_ADMIN_PASSWD_B64}" ]; then
-        logger "ERROR" "Generate EPOCH_ADMIN_PASSWD_B64"
-        exit 2
-    fi
-
-    #
-    # Set parameter to configmap
-    #
-    STEP=$(expr ${STEP} + 1)
-    logger "INFO" "**** STEP : ${STEP} / ${ALLSTEPS} : Set Parameter To Configmap"
-
-    kubectl patch configmap -n epoch-system host-setting-config -p "\
-    {\
-        \"data\" : {\
-            \"EPOCH_HOSTNAME\" : \"${PRM_MY_HOST}\"\
-        }\
-    }" &> "${CMD_RESULT}"
-    if [ $? -ne 0 ]; then
-        logger "ERROR" "CALL : kubectl patch configmap -n epoch-system host-setting-config${LF}`cat ${CMD_RESULT}`"
-        logger "ERROR" "patch configmap host-setting-config"
-        exit 2
-    fi
-    logger "INFO" "CALL : kubectl patch configmap -n epoch-system host-setting-config${LF}`cat ${CMD_RESULT}`"
-
-
-    kubectl patch configmap -n exastro-platform-authentication-infra exastro-platform-authentication-infra-env -p "\
-    {\
-        \"data\" : {\
-            \"EXASTRO_KEYCLOAK_HOST\" : \"${PRM_MY_HOST}\"\
-        }\
-    }" &> "${CMD_RESULT}"
-    if [ $? -ne 0 ]; then
-        logger "ERROR" "CALL : kubectl patch configmap -n exastro-platform-authentication-infra exastro-platform-authentication-infra-env${LF}`cat ${CMD_RESULT}`"
-        logger "ERROR" "patch configmap exastro-platform-authentication-infra-env"
-        exit 2
-    fi
-    logger "INFO" "CALL : kubectl patch configmap -n exastro-platform-authentication-infra exastro-platform-authentication-infra-env${LF}`cat ${CMD_RESULT}`"
-
-
-    kubectl patch configmap -n epoch-system epoch-service-api-config -p "\
-    {\
-        \"data\" : {\
-            \"EPOCH_EPAI_HOST\" : \"${PRM_MY_HOST}\"\
-        }\
-    }" &> "${CMD_RESULT}"
-    if [ $? -ne 0 ]; then
-        logger "ERROR" "CALL : kubectl patch configmap -n epoch-system epoch-service-api-config${LF}`cat ${CMD_RESULT}`"
-        logger "ERROR" "patch configmap epoch-service-api-config"
-        exit 2
-    fi
-    logger "INFO" "CALL : kubectl patch configmap -n epoch-system epoch-service-api-config${LF}`cat ${CMD_RESULT}`"
-
-
-    kubectl patch secret -n exastro-platform-authentication-infra exastro-platform-authentication-infra-secret -p "\
-    {\
-        \"data\" : {\
-            \"GATEWAY_CRYPTO_PASSPHRASE\" : \"${OIDC_PASSPHRASE_B64}\",\
-            \"KEYCLOAK_PASSWORD\" : \"${KEYCLOAK_ADMIN_PASSW_B64}\",\
-            \"EPOCH_PASSWORD\" : \"${EPOCH_ADMIN_PASSWD_B64}\"\
-        }\
-    }" &> "${CMD_RESULT}"
-    if [ $? -ne 0 ]; then
-        logger "ERROR" "CALL : kubectl patch secret -n exastro-platform-authentication-infra exastro-platform-authentication-infra-secret${LF}`cat ${CMD_RESULT}`"
-        logger "ERROR" "patch secret exastro-platform-authentication-infra-secret"
-        exit 2
-    fi
-    logger "INFO" "CALL : kubectl patch secret -n exastro-platform-authentication-infra exastro-platform-authentication-infra-secret${LF}`cat ${CMD_RESULT}`"
-
-    #
-    # restart to reflect the settings
-    #
-    STEP=$(expr ${STEP} + 1)
-    logger "INFO" "**** STEP : ${STEP} / ${ALLSTEPS} : restart to reflect the settings ..."
-
-    kubectl rollout restart deploy -n epoch-system epoch-service-api2 &> "${CMD_RESULT}"
-    if [ $? -ne 0 ]; then
-        logger "ERROR" "CALL : kubectl rollout restart deploy -n epoch-system epoch-service-api2${LF}`cat ${CMD_RESULT}`"
-        logger "ERROR" "rollout restart epoch-service-api2"
-        exit 2
-    fi
-    logger "INFO" "CALL : kubectl rollout restart deploy -n epoch-system epoch-service-api2${LF}`cat ${CMD_RESULT}`"
-
-    kubectl rollout restart deploy -n epoch-system epoch-control-ita-api &> "${CMD_RESULT}"
-    if [ $? -ne 0 ]; then
-        logger "ERROR" "CALL : kubectl rollout restart deploy -n epoch-system epoch-control-ita-api${LF}`cat ${CMD_RESULT}`"
-        logger "ERROR" "rollout restart epoch-control-ita-api"
-        exit 2
-    fi
-    logger "INFO" "CALL : kubectl rollout restart deploy -n epoch-system epoch-control-ita-api${LF}`cat ${CMD_RESULT}`"
-
-    while true; do
-        sleep 5;
-        RESTART_BERFORE_API_POD=$(kubectl get pod --selector "name=authentication-infra-api" -n exastro-platform-authentication-infra -o jsonpath="{range .items[*]}{@.metadata.name}{\"\n\"}{end}" 2> /dev/null)
-        if [ $? -eq 0 ]; then
-            logger "DEBUG" "RESTART_BERFORE_API_POD=${RESTART_BERFORE_API_POD}"
-            break;
-        fi
-    done
-
-    kubectl rollout restart deploy -n exastro-platform-authentication-infra authentication-infra-api &> "${CMD_RESULT}"
-    if [ $? -ne 0 ]; then
-        logger "ERROR" "CALL : kubectl rollout restart deploy -n exastro-platform-authentication-infra authentication-infra-api${LF}`cat ${CMD_RESULT}`"
-        logger "ERROR" "rollout restart authentication-infra-api"
-        exit 2
-    fi
-    logger "INFO" "CALL : kubectl rollout restart deploy -n exastro-platform-authentication-infra authentication-infra-api${LF}`cat ${CMD_RESULT}`"
-
-    while true; do
-        sleep 5;
-        RESTART_BERFORE_KEYCLOAK_POD=$(kubectl get pod --selector "app=keycloak" -n exastro-platform-authentication-infra -o jsonpath="{range .items[*]}{@.metadata.name}{\"\n\"}{end}" 2> /dev/null)
-        if [ $? -eq 0 ]; then
-            logger "DEBUG" "RESTART_BERFORE_KEYCLOAK_POD=${RESTART_BERFORE_KEYCLOAK_POD}"
-            break;
-        fi
-    done
-    kubectl rollout restart deploy -n exastro-platform-authentication-infra keycloak &> "${CMD_RESULT}"
-    if [ $? -ne 0 ]; then
-        logger "ERROR" "CALL : kubectl rollout restart deploy -n exastro-platform-authentication-infra keycloak${LF}`cat ${CMD_RESULT}`"
-        logger "ERROR" "rollout restart keycloak"
-        exit 2
-    fi
-    logger "INFO" "CALL : kubectl rollout restart deploy -n exastro-platform-authentication-infra keycloak${LF}`cat ${CMD_RESULT}`"
-
-    #
-    # wait for restart
-    #
-    STEP=$(expr ${STEP} + 1)
-    logger "INFO" "**** STEP : ${STEP} / ${ALLSTEPS} : wait for restart ..."
-
-    echo -n "waiting ..."
-    while true; do
-        sleep 5;
-        echo -n ".";
-        NOT_READY_COUNT=$(
-            kubectl get pod -n exastro-platform-authentication-infra -o json 2> /dev/null | \
-            jq -r ".items[].status.containerStatuses[].ready" 2> /dev/null | sed -e "/true/d" | wc -l
-        )
-        if [ $? -ne 0 ]; then
-            continue
-        fi
-        if [ ${NOT_READY_COUNT} -ne 0 ]; then
-            logger "DEBUG" "STILL: containerStatuses[].ready=false"
-            continue;
-        fi
-        NOT_READY_COUNT=$(
-            kubectl get pod -n exastro-platform-authentication-infra -o jsonpath='{range .items[*]}{@.status.phase}{"\n"}' | \
-            sed -e "/Running/d" -e "/Succeeded/d" -e "/^$/d" | \
-            wc -l
-        )
-        if [ $? -ne 0 ]; then
-            continue
-        fi
-        if [ ${NOT_READY_COUNT} -ne 0 ]; then
-            logger "DEBUG" "STILL: status.phase=Not Running/Succeeded"
-            continue;
-        fi
-
-        RESTART_AFTER_API_POD=$(kubectl get pod --selector "name=authentication-infra-api" -n exastro-platform-authentication-infra -o jsonpath="{range .items[*]}{@.metadata.name}{\"\n\"}{end}" 2> /dev/null)
-        if [ $? -ne 0 ]; then
-            continue
-        fi
-        if [ `echo "${RESTART_AFTER_API_POD}" | wc -l` -gt 1 ]; then
-            logger "DEBUG" "STILL: RESTART_AFTER_API_POD COUNT > 1"
-            continue;
-        fi
-        if [ "${RESTART_BERFORE_API_POD}" = "${RESTART_AFTER_API_POD}" ]; then
-            logger "DEBUG" "STILL: NOT CHANGE API POD"
-            continue;
-        fi
-
-        RESTART_AFTER_KEYCLOAK_POD=$(kubectl get pod --selector "app=keycloak" -n exastro-platform-authentication-infra -o jsonpath="{range .items[*]}{@.metadata.name}{\"\n\"}{end}" 2> /dev/null)
-        if [ $? -ne 0 ]; then
-            continue
-        fi
-        if [ `echo "${RESTART_AFTER_KEYCLOAK_POD}" | wc -l` -gt 1 ]; then
-            logger "DEBUG" "STILL: RESTART_AFTER_KEYCLOAK_POD COUNT > 1"
-            continue;
-        fi
-        if [ "${RESTART_BERFORE_KEYCLOAK_POD}" = "${RESTART_AFTER_KEYCLOAK_POD}" ]; then
-            logger "DEBUG" "STILL: NOT CHANGE KEYCLOAK POD"
-            continue;
-        fi
-
-        echo "";
-        break;
-    done;
-
-    logger "DEBUG" "RESTART_AFTER_API_POD=${RESTART_AFTER_API_POD}"
-    logger "DEBUG" "RESTART_AFTER_KEYCLOAK_POD=${RESTART_AFTER_KEYCLOAK_POD}"
-
-    #
-    # Setting api call
-    #
-    STEP=$(expr ${STEP} + 1)
-    logger "INFO" "**** STEP : ${STEP} / ${ALLSTEPS} : Setting api call ..."
-
-    API_RESPONSE="/tmp/${BASENAME}-infra-setting.$$"
-
-    curl \
-        -X POST \
-        -H  'content-type: application/json'    \
-        -d  @- \
-        -Ss \
-        -o "${API_RESPONSE}" \
-        http://authentication-infra-api.exastro-platform-authentication-infra.svc:8000/settings \
-        << EOF
-        {
-            "realm_name": "exastroplatform",
-            "realm_option": {
-                "displayName": "Exastro Platform",
-                "enabled": "True",
-                "registrationAllowed": "True"
-            },
-            "realm_roles": [
-                "epoch-user",
-                "epoch-system"
-            ],
-            "groups": [
-                {
-                    "parent_group": "",
-                    "group_name": "epoch-user"
-                }
-            ],
-            "group_mappings": [
-                {
-                    "role_name": "epoch-user",
-                    "group_name": "epoch-user"
-                }
-            ],
-            "default_group_name": "epoch-user",
-            "users": [
-            ],
-            "admin_users": [
-                {
-                    "user_name": "epoch-admin",
-                    "user_password": "${EPOCH_ADMIN_PASSWD}",
-                    "user_groups": [],
-                    "user_realm_roles": [],
-                    "user_option": {
-                        "enabled": "True"
-                    }
-                }
-            ],
-            "clients": [
-                {
-                    "id": "epoch-system",
-                    "protocol": "openid-connect",
-                    "publicClient": "false",
-                    "redirectUris": [
-                        "https://${PRM_MY_HOST}:30443/oidc-redirect/",
-                        "https://${PRM_MY_HOST}:30443/"
-                    ],
-                    "baseUrl": "https://${PRM_MY_HOST}:30443/oidc-redirect/",
-                    "webOrigins": [],
-                    "protocolMappers": [
-                        {
-                            "name": "epoch-system-client-map-role",
-                            "protocol": "openid-connect",
-                            "protocolMapper": "oidc-usermodel-client-role-mapper",
-                            "config": {
-                                "id.token.claim": "true",
-                                "access.token.claim": "true",
-                                "claim.name": "epoch-role",
-                                "multivalued": "true",
-                                "userinfo.token.claim": "true",
-                                "usermodel.clientRoleMapping.clientId": "epoch-system"
-                            }
-                        },
-                        {
-                            "name": "epoch-system-map-role",
-                            "protocol": "openid-connect",
-                            "protocolMapper": "oidc-usermodel-realm-role-mapper",
-                            "config": {
-                                "id.token.claim": "true",
-                                "access.token.claim": "true",
-                                "claim.name": "epoch-role",
-                                "multivalued": "true",
-                                "userinfo.token.claim": "true"
-                            }
-                        }
-                    ]
-                }
-            ],
-            "conf_template": "epoch-system-template.conf",
-            "token_user": "admin",
-            "token_password": "${KEYCLOAK_ADMIN_PASSW}",
-            "token_realm_name": "master"
-        }
-    EOF
-    if [ $? -ne 0 ]; then
-        logger "ERROR" "Setting api call"
-        exit 2
-    fi
-
-    API_RESULT=$(cat "${API_RESPONSE}" | jq -r ".result")
-    if [ $? -ne 0 ]; then
-        logger "ERROR" "Setting api response:\n`cat ${API_RESPONSE}`"
-        logger "ERROR" "Api Logs:\n`kubectl logs deploy/authentication-infra-api -n exastro-platform-authentication-infra`"
-        logger "ERROR" "Setting api"
-        exit 2
-    fi
-    if [ "${API_RESULT}" != "200" ]; then
-        logger "ERROR" "Setting api response:\n`cat ${API_RESPONSE}`"
-        logger "ERROR" "Api Logs:\n`kubectl logs deploy/authentication-infra-api -n exastro-platform-authentication-infra`"
-        logger "ERROR" "Setting api"
-        exit 2
-    fi
-
-    logger "INFO" "**** ${BASENAME} completed successfully ****"
-    exit 0
+  set-host.sh: "#!/bin/bash\n#   Copyright 2021 NEC Corporation\n#\n#   Licensed under
+    the Apache License, Version 2.0 (the \"License\");\n#   you may not use this file
+    except in compliance with the License.\n#   You may obtain a copy of the License
+    at\n#\n#       http://www.apache.org/licenses/LICENSE-2.0\n#\n#   Unless required
+    by applicable law or agreed to in writing, software\n#   distributed under the
+    License is distributed on an \"AS IS\" BASIS,\n#   WITHOUT WARRANTIES OR CONDITIONS
+    OF ANY KIND, either express or implied.\n#   See the License for the specific
+    language governing permissions and\n#   limitations under the License.\n\n\nBASENAME=$(basename
+    \"$0\")\nCMD_RESULT=\"/tmp/result.$$\"\nLF='\n'\nsource \"`dirname $0`/common-import-logger.sh\"
+    \"${BASENAME}\"\n\nlogger \"INFO\" \"START : ${BASENAME}\"\n\n#\n# Initialize
+    variables\n#\nSTEP=0\nALLSTEPS=7\nREST_HOST=\"http://keycloak.exastro-platform-authentication-infra.svc:8080/\"\nREALM=\"master\"\n\n#\n#
+    check parameter\n#\nif [ $# -ne 1 ]; then\n    logger \"ERROR\" \"Usage : ${BASENAME}
+    [hostname or IPaddress]\"\n    logger \"ERROR\" \"Check the parameters and try
+    again\"\n    exit 1\nfi\n\nPRM_MY_HOST=\"$1\"\nlogger \"INFO\" \"PARAM PRM_MY_HOST
+    : ${PRM_MY_HOST}\"\n\n#\n# Initial password check\n#\nSAVE_INFRA_SECRET=$(kubectl
+    get secret exastro-platform-authentication-infra-secret -n exastro-platform-authentication-infra
+    -o json)\nSAVE_OIDC_PASSPHRASE_B64=$(echo -n \"${SAVE_INFRA_SECRET}\" | jq -r
+    \".data.SAVE_GATEWAY_CRYPTO_PASSPHRASE\")\nSAVE_KEYCLOAK_PASS_B64=$(echo -n \"${SAVE_INFRA_SECRET}\"
+    | jq -r \".data.SAVE_KEYCLOAK_PASSWORD\")\nif [ -n \"$SAVE_KEYCLOAK_PASS_B64\"
+    -a \"${SAVE_KEYCLOAK_PASS_B64}\" != \"null\" ]; then\n\n    SAVE_KEYCLOAK_PASS=$(echo
+    -n \"${SAVE_KEYCLOAK_PASS_B64}\" | base64 -d)\n    #\n    # get token check\n
+    \   #\n    BEAR=$(curl -k -s \\\n        -d \"client_id=admin-cli\" \\\n        -d
+    \"username=admin\" \\\n        -d \"password=${SAVE_KEYCLOAK_PASS}\" \\\n        -d
+    \"grant_type=password\" \\\n        \"${REST_HOST}auth/realms/${REALM}/protocol/openid-connect/token\"
+    | jq -r \".access_token\")\n    if [ $? -ne 0 ]; then\n        logger \"ERROR\"
+    \"CALL : KeyCloak Token check error\"\n        logger \"ERROR\" \"KeyCloak cannot
+    access the stored information\"\n        exit 2\n    fi\n    if [ \"${BEAR}\"
+    = \"\" ]; then\n        logger \"ERROR\" \"KeyCloak cannot access the stored information\"\n
+    \       exit 1\n    fi\n\n    kubectl patch secret -n exastro-platform-authentication-infra
+    exastro-platform-authentication-infra-secret -p \"\\\n    {\\\n        \\\"data\\\"
+    : {\\\n            \\\"GATEWAY_CRYPTO_PASSPHRASE\\\" : \\\"${SAVE_OIDC_PASSPHRASE_B64}\\\",\\\n
+    \           \\\"KEYCLOAK_PASSWORD\\\" : \\\"${SAVE_KEYCLOAK_PASS_B64}\\\"\\\n
+    \       }\\\n    }\" &> \"${CMD_RESULT}\"\n    if [ $? -ne 0 ]; then\n        logger
+    \"ERROR\" \"CALL : kubectl patch secret -n exastro-platform-authentication-infra
+    exastro-platform-authentication-infra-secret${LF}`cat ${CMD_RESULT}`\"\n        logger
+    \"ERROR\" \"initialize patch secret exastro-platform-authentication-infra-secret\"\n
+    \       exit 2\n    fi\n\n    logger \"ERROR\" \"Cannot initialize because it
+    is already set\"\n    exit 1\nfi\n\n#\n# Initialize Setting Parameter\n#\nSTEP=$(expr
+    ${STEP} + 1)\nlogger \"INFO\" \"**** STEP : ${STEP} / ${ALLSTEPS} : Initialize
+    Setting Parameter ...\"\n\nOIDC_PASSPHRASE=$(< /dev/urandom tr -dc 'a-zA-Z0-9'
+    | fold -w 20 | head -n 1 | sort | uniq)\nif [ $? -ne 0 -o -z \"${OIDC_PASSPHRASE}\"
+    ]; then\n    logger \"ERROR\" \"Generate OIDC_PASSPHRASE\"\n    exit 2\nfi\n\nOIDC_PASSPHRASE_B64=$(echo
+    -n \"${OIDC_PASSPHRASE}\" | base64)\nif [ $? -ne 0 -o -z \"${OIDC_PASSPHRASE_B64}\"
+    ]; then\n    logger \"ERROR\" \"Generate OIDC_PASSPHRASE_B64\"\n    exit 2\nfi\n\nKEYCLOAK_ADMIN_PASSW=$(<
+    /dev/urandom tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | sort | uniq)\nif [
+    $? -ne 0 -o -z \"${KEYCLOAK_ADMIN_PASSW}\" ]; then\n    logger \"ERROR\" \"Generate
+    KEYCLOAK_ADMIN_PASSW\"\n    exit 2\nfi\n\nKEYCLOAK_ADMIN_PASSW_B64=$(echo -n \"${KEYCLOAK_ADMIN_PASSW}\"
+    | base64)\nif [ $? -ne 0 -o -z \"${KEYCLOAK_ADMIN_PASSW_B64}\" ]; then\n    logger
+    \"ERROR\" \"Generate KEYCLOAK_ADMIN_PASSW_B64\"\n    exit 2\nfi\n\n#\n# wait for
+    keycloak pod\n#\nSTEP=$(expr ${STEP} + 1)\nlogger \"INFO\" \"**** STEP : ${STEP}
+    / ${ALLSTEPS} : wait for keycloak pod ...\"\n\necho -n \"waiting ...\"\nwhile
+    true; do\n    sleep 3;\n    echo -n \".\";\n    NOT_READY_COUNT=$(\n        kubectl
+    get pod -n exastro-platform-authentication-infra -o json 2> /dev/null | \\\n        jq
+    -r \".items[].status.containerStatuses[].ready\" 2> /dev/null | sed -e \"/true/d\"
+    | wc -l\n    )\n    if [ $? -ne 0 ]; then\n        continue;\n    fi\n    if [
+    ${NOT_READY_COUNT} -ne 0 ]; then\n        logger \"DEBUG\" \"STILL: containerStatuses[].ready=false\"\n
+    \       continue;\n    fi\n\n    NOT_READY_COUNT=$(\n        kubectl get pod -n
+    exastro-platform-authentication-infra -o jsonpath='{range .items[*]}{@.status.phase}{\"\\n\"}'
+    | \\\n        sed -e \"/Running/d\" -e \"/Succeeded/d\" -e \"/^$/d\" | \\\n        wc
+    -l\n    )\n    if [ $? -ne 0 ]; then\n        continue;\n    fi\n    if [ ${NOT_READY_COUNT}
+    -ne 0 ]; then\n        logger \"DEBUG\" \"STILL: status.phase=Not Running/Succeeded\"\n
+    \       continue;\n    fi\n\n    RESTART_AFTER_KEYCLOAK_POD=$(kubectl get pod
+    --selector \"app=keycloak\" -n exastro-platform-authentication-infra -o jsonpath=\"{range
+    .items[*]}{@.metadata.name}{\\\"\\n\\\"}{end}\" 2> /dev/null)\n    if [ $? -ne
+    0 ]; then\n        continue;\n    fi\n    if [ `echo \"${RESTART_AFTER_KEYCLOAK_POD}\"
+    | wc -l` -gt 1 ]; then\n        logger \"DEBUG\" \"STILL: RESTART_AFTER_KEYCLOAK_POD
+    COUNT > 1\"\n        continue;\n    fi\n\n    echo \"\";\n    break;\ndone;\n\n#\n#
+    Set parameter to configmap\n#\nSTEP=$(expr ${STEP} + 1)\nlogger \"INFO\" \"****
+    STEP : ${STEP} / ${ALLSTEPS} : Set Parameter To Configmap\"\n\nkubectl patch configmap
+    -n epoch-system host-setting-config -p \"\\\n{\\\n    \\\"data\\\" : {\\\n        \\\"EPOCH_HOSTNAME\\\"
+    : \\\"${PRM_MY_HOST}\\\"\\\n    }\\\n}\" &> \"${CMD_RESULT}\"\nif [ $? -ne 0 ];
+    then\n    logger \"ERROR\" \"CALL : kubectl patch configmap -n epoch-system host-setting-config${LF}`cat
+    ${CMD_RESULT}`\"\n    logger \"ERROR\" \"patch configmap host-setting-config\"\n
+    \   exit 2\nfi\nlogger \"INFO\" \"CALL : kubectl patch configmap -n epoch-system
+    host-setting-config${LF}`cat ${CMD_RESULT}`\"\n\n\nkubectl patch configmap -n
+    exastro-platform-authentication-infra exastro-platform-authentication-infra-env
+    -p \"\\\n{\\\n    \\\"data\\\" : {\\\n        \\\"EXASTRO_KEYCLOAK_HOST\\\" :
+    \\\"${PRM_MY_HOST}\\\"\\\n    }\\\n}\" &> \"${CMD_RESULT}\"\nif [ $? -ne 0 ];
+    then\n    logger \"ERROR\" \"CALL : kubectl patch configmap -n exastro-platform-authentication-infra
+    exastro-platform-authentication-infra-env${LF}`cat ${CMD_RESULT}`\"\n    logger
+    \"ERROR\" \"patch configmap exastro-platform-authentication-infra-env\"\n    exit
+    2\nfi\nlogger \"INFO\" \"CALL : kubectl patch configmap -n exastro-platform-authentication-infra
+    exastro-platform-authentication-infra-env${LF}`cat ${CMD_RESULT}`\"\n\n\nkubectl
+    patch configmap -n epoch-system epoch-service-api-config -p \"\\\n{\\\n    \\\"data\\\"
+    : {\\\n        \\\"EPOCH_EPAI_HOST\\\" : \\\"${PRM_MY_HOST}\\\"\\\n    }\\\n}\"
+    &> \"${CMD_RESULT}\"\nif [ $? -ne 0 ]; then\n    logger \"ERROR\" \"CALL : kubectl
+    patch configmap -n epoch-system epoch-service-api-config${LF}`cat ${CMD_RESULT}`\"\n
+    \   logger \"ERROR\" \"patch configmap epoch-service-api-config\"\n    exit 2\nfi\nlogger
+    \"INFO\" \"CALL : kubectl patch configmap -n epoch-system epoch-service-api-config${LF}`cat
+    ${CMD_RESULT}`\"\n\n\nkubectl patch secret -n exastro-platform-authentication-infra
+    exastro-platform-authentication-infra-secret -p \"\\\n{\\\n    \\\"data\\\" :
+    {\\\n        \\\"GATEWAY_CRYPTO_PASSPHRASE\\\" : \\\"${OIDC_PASSPHRASE_B64}\\\",\\\n
+    \       \\\"KEYCLOAK_PASSWORD\\\" : \\\"${KEYCLOAK_ADMIN_PASSW_B64}\\\"\\\n    }\\\n}\"
+    &> \"${CMD_RESULT}\"\nif [ $? -ne 0 ]; then\n    logger \"ERROR\" \"CALL : kubectl
+    patch secret -n exastro-platform-authentication-infra exastro-platform-authentication-infra-secret${LF}`cat
+    ${CMD_RESULT}`\"\n    logger \"ERROR\" \"patch secret exastro-platform-authentication-infra-secret\"\n
+    \   exit 2\nfi\nlogger \"INFO\" \"CALL : kubectl patch secret -n exastro-platform-authentication-infra
+    exastro-platform-authentication-infra-secret${LF}`cat ${CMD_RESULT}`\"\n\n#\n#
+    restart to reflect the settings\n#\nSTEP=$(expr ${STEP} + 1)\nlogger \"INFO\"
+    \"**** STEP : ${STEP} / ${ALLSTEPS} : restart to reflect the settings ...\"\n\nkubectl
+    rollout restart deploy -n epoch-system epoch-service-api2 &> \"${CMD_RESULT}\"\nif
+    [ $? -ne 0 ]; then\n    logger \"ERROR\" \"CALL : kubectl rollout restart deploy
+    -n epoch-system epoch-service-api2${LF}`cat ${CMD_RESULT}`\"\n    logger \"ERROR\"
+    \"rollout restart epoch-service-api2\"\n    exit 2\nfi\nlogger \"INFO\" \"CALL
+    : kubectl rollout restart deploy -n epoch-system epoch-service-api2${LF}`cat ${CMD_RESULT}`\"\n\nkubectl
+    rollout restart deploy -n epoch-system epoch-control-argocd-api &> \"${CMD_RESULT}\"\nif
+    [ $? -ne 0 ]; then\n    logger \"ERROR\" \"CALL : kubectl rollout restart deploy
+    -n epoch-system epoch-control-argocd-api${LF}`cat ${CMD_RESULT}`\"\n    logger
+    \"ERROR\" \"rollout restart epoch-control-argocd-api\"\n    exit 2\nfi\nlogger
+    \"INFO\" \"CALL : kubectl rollout restart deploy -n epoch-system epoch-control-argocd-api${LF}`cat
+    ${CMD_RESULT}`\"\n\nkubectl rollout restart deploy -n epoch-system epoch-control-ita-api
+    &> \"${CMD_RESULT}\"\nif [ $? -ne 0 ]; then\n    logger \"ERROR\" \"CALL : kubectl
+    rollout restart deploy -n epoch-system epoch-control-ita-api${LF}`cat ${CMD_RESULT}`\"\n
+    \   logger \"ERROR\" \"rollout restart epoch-control-ita-api\"\n    exit 2\nfi\nlogger
+    \"INFO\" \"CALL : kubectl rollout restart deploy -n epoch-system epoch-control-ita-api${LF}`cat
+    ${CMD_RESULT}`\"\n\nwhile true; do\n    sleep 5;\n    RESTART_BERFORE_API_POD=$(kubectl
+    get pod --selector \"name=authentication-infra-api\" -n exastro-platform-authentication-infra
+    -o jsonpath=\"{range .items[*]}{@.metadata.name}{\\\"\\n\\\"}{end}\" 2> /dev/null)\n
+    \   if [ $? -eq 0 ]; then\n        logger \"DEBUG\" \"RESTART_BERFORE_API_POD=${RESTART_BERFORE_API_POD}\"\n
+    \       break;\n    fi\ndone\n\nkubectl rollout restart deploy -n exastro-platform-authentication-infra
+    authentication-infra-api &> \"${CMD_RESULT}\"\nif [ $? -ne 0 ]; then\n    logger
+    \"ERROR\" \"CALL : kubectl rollout restart deploy -n exastro-platform-authentication-infra
+    authentication-infra-api${LF}`cat ${CMD_RESULT}`\"\n    logger \"ERROR\" \"rollout
+    restart authentication-infra-api\"\n    exit 2\nfi\nlogger \"INFO\" \"CALL : kubectl
+    rollout restart deploy -n exastro-platform-authentication-infra authentication-infra-api${LF}`cat
+    ${CMD_RESULT}`\"\n\n# while true; do\n#     sleep 5;\n#     RESTART_BERFORE_KEYCLOAK_POD=$(kubectl
+    get pod --selector \"app=keycloak\" -n exastro-platform-authentication-infra -o
+    jsonpath=\"{range .items[*]}{@.metadata.name}{\\\"\\n\\\"}{end}\" 2> /dev/null)\n#
+    \    if [ $? -eq 0 ]; then\n#         logger \"DEBUG\" \"RESTART_BERFORE_KEYCLOAK_POD=${RESTART_BERFORE_KEYCLOAK_POD}\"\n#
+    \        break;\n#     fi\n# done\n# kubectl rollout restart deploy -n exastro-platform-authentication-infra
+    keycloak &> \"${CMD_RESULT}\"\n# if [ $? -ne 0 ]; then\n#     logger \"ERROR\"
+    \"CALL : kubectl rollout restart deploy -n exastro-platform-authentication-infra
+    keycloak${LF}`cat ${CMD_RESULT}`\"\n#     logger \"ERROR\" \"rollout restart keycloak\"\n#
+    \    exit 2\n# fi\n# logger \"INFO\" \"CALL : kubectl rollout restart deploy -n
+    exastro-platform-authentication-infra keycloak${LF}`cat ${CMD_RESULT}`\"\n\n#\n#
+    wait for restart\n#\nSTEP=$(expr ${STEP} + 1)\nlogger \"INFO\" \"**** STEP : ${STEP}
+    / ${ALLSTEPS} : wait for restart ...\"\n\necho -n \"waiting ...\"\nwhile true;
+    do\n    sleep 5;\n    echo -n \".\";\n    NOT_READY_COUNT=$(\n        kubectl
+    get pod -n exastro-platform-authentication-infra -o json 2> /dev/null | \\\n        jq
+    -r \".items[].status.containerStatuses[].ready\" 2> /dev/null | sed -e \"/true/d\"
+    | wc -l\n    )\n    if [ $? -ne 0 ]; then\n        continue;\n    fi\n    if [
+    ${NOT_READY_COUNT} -ne 0 ]; then\n        logger \"DEBUG\" \"STILL: containerStatuses[].ready=false\"\n
+    \       continue;\n    fi\n\n    NOT_READY_COUNT=$(\n        kubectl get pod -n
+    exastro-platform-authentication-infra -o jsonpath='{range .items[*]}{@.status.phase}{\"\\n\"}'
+    | \\\n        sed -e \"/Running/d\" -e \"/Succeeded/d\" -e \"/^$/d\" | \\\n        wc
+    -l\n    )\n    if [ $? -ne 0 ]; then\n        continue;\n    fi\n    if [ ${NOT_READY_COUNT}
+    -ne 0 ]; then\n        logger \"DEBUG\" \"STILL: status.phase=Not Running/Succeeded\"\n
+    \       continue;\n    fi\n\n    RESTART_AFTER_API_POD=$(kubectl get pod --selector
+    \"name=authentication-infra-api\" -n exastro-platform-authentication-infra -o
+    jsonpath=\"{range .items[*]}{@.metadata.name}{\\\"\\n\\\"}{end}\" 2> /dev/null)\n
+    \   if [ $? -ne 0 ]; then\n        continue;\n    fi\n    if [ `echo \"${RESTART_AFTER_API_POD}\"
+    | wc -l` -gt 1 ]; then\n        logger \"DEBUG\" \"STILL: RESTART_AFTER_API_POD
+    COUNT > 1\"\n        continue;\n    fi\n    if [ \"${RESTART_BERFORE_API_POD}\"
+    = \"${RESTART_AFTER_API_POD}\" ]; then\n        logger \"DEBUG\" \"STILL: NOT
+    CHANGE API POD\"\n        continue;\n    fi\n\n    echo \"\";\n    break;\ndone;\n\nlogger
+    \"DEBUG\" \"RESTART_AFTER_API_POD=${RESTART_AFTER_API_POD}\"\n\n\n#\n# Initialize
+    setting keycloak api call\n#\nSTEP=$(expr ${STEP} + 1)\nlogger \"INFO\" \"****
+    STEP : ${STEP} / ${ALLSTEPS} : Initialize setting keycloak call ...\"\n\n# admin
+    user password change\nBEAR=$(curl -k -s \\\n    -d \"client_id=admin-cli\" \\\n
+    \   -d \"username=admin\" \\\n    -d \"password=admin\" \\\n    -d \"grant_type=password\"
+    \\\n    \"${REST_HOST}auth/realms/${REALM}/protocol/openid-connect/token\" | jq
+    -r \".access_token\")\nif [ $? -ne 0 ]; then\n    logger \"ERROR\" \"KeyCloak
+    Token get error\"\n    exit 2\nfi\n\nUSER_LIST=$(curl -X GET -s \\\n    -H \"Content-Type:
+    application/json\" \\\n    -H \"Authorization: bearer ${BEAR}\" \\\n    \"${REST_HOST}auth/admin/realms/${REALM}/users\")
+    \nif [ $? -ne 0 ]; then\n    logger \"ERROR\" \"KeyCloak User list get error\"\n
+    \   exit 2\nfi\n\nlogger \"INFO\" \"CALL : keycloak get admin user id\"\n\n# echo
+    ${USER_LIST} | jq\nUSER_ADMIN_ID=$(echo ${USER_LIST} | jq -r '.[] | select(.username
+    == \"admin\") | .id')\nif [ $? -ne 0 ]; then\n    logger \"ERROR\" \"KeyCloak
+    admin user id not found\"\n    exit 2\nfi\n\ncurl -X PUT -s \\\n    -H \"Content-Type:
+    application/json\" \\\n    -H \"Authorization: bearer ${BEAR}\" \\\n    \"${REST_HOST}auth/admin/realms/${REALM}/users/${USER_ADMIN_ID}/reset-password\"
+    \\\n    -d @- << EOF\n    {\n        \"type\": \"password\",\n        \"value\":
+    \"${KEYCLOAK_ADMIN_PASSW}\",\n        \"temporary\": false\n    }\nEOF\nif [ $?
+    -ne 0 ]; then\n    logger \"ERROR\" \"KeyCloak admin user password changed error\"\n
+    \   exit 2\nfi\n\nkubectl patch secret -n exastro-platform-authentication-infra
+    exastro-platform-authentication-infra-secret -p \"\\\n{\\\n    \\\"data\\\" :
+    {\\\n        \\\"SAVE_GATEWAY_CRYPTO_PASSPHRASE\\\" : \\\"${OIDC_PASSPHRASE_B64}\\\",\\\n
+    \       \\\"SAVE_KEYCLOAK_PASSWORD\\\" : \\\"${KEYCLOAK_ADMIN_PASSW_B64}\\\"\\\n
+    \   }\\\n}\" &> \"${CMD_RESULT}\"\nif [ $? -ne 0 ]; then\n    logger \"ERROR\"
+    \"CALL : kubectl patch secret -n exastro-platform-authentication-infra exastro-platform-authentication-infra-secret${LF}`cat
+    ${CMD_RESULT}`\"\n    logger \"ERROR\" \"patch secret exastro-platform-authentication-infra-secret\"\n
+    \   exit 2\nfi\n\nlogger \"INFO\" \"CALL : keycloak put admin new password\"\n\n#\n#
+    Setting api call\n#\nSTEP=$(expr ${STEP} + 1)\nlogger \"INFO\" \"**** STEP : ${STEP}
+    / ${ALLSTEPS} : Setting api call ...\"\n\nAPI_RESPONSE=\"/tmp/${BASENAME}-infra-setting.$$\"\n\ncurl
+    \\\n    -X POST \\\n    -H  'content-type: application/json'    \\\n    -d  @-
+    \\\n    -Ss \\\n    -o \"${API_RESPONSE}\" \\\n    http://authentication-infra-api.exastro-platform-authentication-infra.svc:8000/settings
+    \\\n    << EOF\n    {\n        \"realm_name\": \"exastroplatform\",\n        \"realm_option\":
+    {\n            \"displayName\": \"Exastro Platform\",\n            \"enabled\":
+    \"True\",\n            \"registrationAllowed\": \"True\",\n            \"internationalizationEnabled\":
+    true,\n            \"supportedLocales\": [ \"ja\" ],\n            \"defaultLocale\":
+    \"ja\"\n        },\n        \"realm_roles\": [\n            \"epoch-user\",\n
+    \           \"epoch-system\"\n        ],\n        \"groups\": [\n            {\n
+    \               \"parent_group\": \"\",\n                \"group_name\": \"epoch-user\"\n
+    \           },\n            {\n                \"parent_group\": \"\",\n                \"group_name\":
+    \"epoch-ws-creator\"\n            }\n        ],\n        \"group_mappings\": {\n
+    \           \"realm_role_mappings\": [\n                {\n                    \"role_name\":
+    \"epoch-user\",\n                    \"group_name\": \"epoch-user\"\n                }\n
+    \           ],\n            \"clients_role_mappings\": [\n                {\n
+    \                   \"role_name\": \"ws-create\",\n                    \"client_id\":
+    \"epoch-system\",\n                    \"group_name\": \"epoch-ws-creator\"\n
+    \               }\n            ]\n        },\n        \"default_group_name\":
+    \"epoch-user\",\n        \"users\": [\n            {\n                \"user_info\":
+    {\n                    \"username\": \"epoch-admin\",\n                    \"firstName\":
+    \"ユーザー\",\n                    \"lastName\": \"管理者\",\n                    \"groups\":
+    [\n                        \"epoch-user\", \"epoch-ws-creator\"\n                    ],\n
+    \                   \"realmRoles\": [],\n                    \"requiredActions\":
+    [ \"UPDATE_PROFILE\" ],\n                    \"credentials\": [\n                        {\n
+    \                           \"type\": \"password\",\n                            \"value\":
+    \"password\",\n                            \"temporary\": \"True\"\n                        }\n
+    \                   ],\n                    \"enabled\": \"True\"\n                },\n
+    \               \"client_roles\": [\n                    {\n                        \"client_name\":
+    \"realm-management\",\n                        \"roles\": [\n                            \"manage-clients\",\n
+    \                           \"query-realms\",\n                            \"realm-admin\",\n
+    \                           \"manage-realm\",\n                            \"create-client\",\n
+    \                           \"manage-events\",\n                            \"impersonation\",\n
+    \                           \"manage-users\",\n                            \"manage-authorization\",\n
+    \                           \"query-groups\",\n                            \"query-users\",\n
+    \                           \"manage-identity-providers\",\n                            \"query-clients\"\n
+    \                       ]\n                    },\n                    {\n                        \"client_name\":
+    \"broker\",\n                        \"roles\": [\n                            \"read-token\"\n
+    \                       ]\n                    },\n                    {\n                        \"client_name\":
+    \"account\",\n                        \"roles\": [\n                            \"delete-account\",\n
+    \                           \"view-applications\",\n                            \"manage-consent\"\n
+    \                       ]\n                    }\n                ]\n            }\n
+    \       ],\n        \"admin_users\": [\n        ],\n        \"clients\": [\n            {\n
+    \               \"client_info\": {\n                    \"id\": \"epoch-system\",\n
+    \                   \"protocol\": \"openid-connect\",\n                    \"publicClient\":
+    \"false\",\n                    \"redirectUris\": [\n                        \"https://${PRM_MY_HOST}:30443/oidc-redirect/\",\n
+    \                       \"https://${PRM_MY_HOST}:30443/\"\n                    ],\n
+    \                   \"baseUrl\": \"https://${PRM_MY_HOST}:30443/oidc-redirect/\",\n
+    \                   \"webOrigins\": [],\n                    \"protocolMappers\":
+    [\n                        {\n                            \"name\": \"epoch-system-client-map-role\",\n
+    \                           \"protocol\": \"openid-connect\",\n                            \"protocolMapper\":
+    \"oidc-usermodel-client-role-mapper\",\n                            \"config\":
+    {\n                                \"id.token.claim\": \"true\",\n                                \"access.token.claim\":
+    \"true\",\n                                \"claim.name\": \"epoch-role\",\n                                \"multivalued\":
+    \"true\",\n                                \"userinfo.token.claim\": \"true\",\n
+    \                               \"usermodel.clientRoleMapping.clientId\": \"epoch-system\"\n
+    \                           }\n                        },\n                        {\n
+    \                           \"name\": \"epoch-system-map-role\",\n                            \"protocol\":
+    \"openid-connect\",\n                            \"protocolMapper\": \"oidc-usermodel-realm-role-mapper\",\n
+    \                           \"config\": {\n                                \"id.token.claim\":
+    \"true\",\n                                \"access.token.claim\": \"true\",\n
+    \                               \"claim.name\": \"epoch-role\",\n                                \"multivalued\":
+    \"true\",\n                                \"userinfo.token.claim\": \"true\"\n
+    \                           }\n                        }\n                    ]\n
+    \               },\n                \"client_roles\": [\n                    {\n
+    \                       \"name\": \"ws-create\"\n                    }\n                ]\n
+    \           }\n        ],\n        \"conf_template\": \"epoch-system-template.conf\",\n
+    \       \"token_user\": \"admin\",\n        \"token_password\": \"${KEYCLOAK_ADMIN_PASSW}\",\n
+    \       \"token_realm_name\": \"master\"\n    }\nEOF\nif [ $? -ne 0 ]; then\n
+    \   logger \"ERROR\" \"Setting api call\"\n    exit 2\nfi\n\nAPI_RESULT=$(cat
+    \"${API_RESPONSE}\" | jq -r \".result\")\nif [ $? -ne 0 ]; then\n    logger \"ERROR\"
+    \"Setting api response:\\n`cat ${API_RESPONSE}`\"\n    logger \"ERROR\" \"Api
+    Logs:\\n`kubectl logs deploy/authentication-infra-api -n exastro-platform-authentication-infra`\"\n
+    \   logger \"ERROR\" \"Setting api\"\n    exit 2\nfi\nif [ \"${API_RESULT}\" !=
+    \"200\" ]; then\n    logger \"ERROR\" \"Setting api response:\\n`cat ${API_RESPONSE}`\"\n
+    \   logger \"ERROR\" \"Api Logs:\\n`kubectl logs deploy/authentication-infra-api
+    -n exastro-platform-authentication-infra`\"\n    logger \"ERROR\" \"Setting api\"\n
+    \   exit 2\nfi\n\nlogger \"INFO\" \"**** ${BASENAME} completed successfully ****\"\nexit
+    0\n"
   set-proxy.sh: |
     #!/bin/bash
     #   Copyright 2021 NEC Corporation

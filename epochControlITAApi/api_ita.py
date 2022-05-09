@@ -340,57 +340,42 @@ def create_ita(workspace_id):
         # namespace定義
         name = common.get_namespace_name(workspace_id)
 
+        # node情報取得 node get 
+        node = get_pv_node()
+
+        yaml_files = [ 'ita_pv.yaml', 'ita_install.yaml' ]
+
         globals.logger.debug("ita-pod create start")
         # templateの展開
         with tempfile.TemporaryDirectory() as tempdir:
-            file_name = 'ita_install.yaml'
-            yaml_param={
-                "HTTP_PROXY": os.environ.get("EPOCH_HTTP_PROXY"),
-                "HTTPS_PROXY": os.environ.get("EPOCH_HTTPS_PROXY"),
-                "NO_PROXY": os.environ.get("EPOCH_HOSTNAME"),
-            }
-            yaml_text = render_template(file_name, param=yaml_param)
+            for file_name in yaml_files:
+                yaml_param={
+                    "HTTP_PROXY": os.environ.get("EPOCH_HTTP_PROXY"),
+                    "HTTPS_PROXY": os.environ.get("EPOCH_HTTPS_PROXY"),
+                    "NO_PROXY": os.environ.get("EPOCH_HOSTNAME"),
+                    "WORKSPACE_ID": workspace_id,
+                    "NAMESPACE": name,
+                    "NODE": node,
+                }
 
-            # yaml一時ファイル生成
-            path_yamlfile = '{}/{}'.format(tempdir, file_name)
-            with open(path_yamlfile, mode='w') as fp:
-                fp.write(yaml_text)
+                yaml_text = render_template(file_name, param=yaml_param)
 
-            # kubectl実行
-            try:
-                result_kubectl = subprocess.check_output(['kubectl', 'apply', '-f', path_yamlfile,'-n',name], stderr=subprocess.STDOUT)
-                globals.logger.debug('COMMAAND SUCCEED: kubectl apply -f {}\n{}'.format(path_yamlfile, result_kubectl.decode('utf-8')))
+                # yaml一時ファイル生成
+                path_yamlfile = '{}/{}'.format(tempdir, file_name)
+                with open(path_yamlfile, mode='w') as fp:
+                    fp.write(yaml_text)
 
-            except subprocess.CalledProcessError as e:
-                globals.logger.error('COMMAND ERROR RETURN:{}\n{}'.format(e.returncode, e.output.decode('utf-8')))
-                exec_detail = "IT-AutomationのPodが生成できません。環境を確認してください。"
-                raise common.UserException(exec_detail)
-            except Exception:
-                raise
+                # kubectl実行
+                try:
+                    result_kubectl = subprocess.check_output(['kubectl', 'apply', '-f', path_yamlfile,'-n',name], stderr=subprocess.STDOUT)
+                    globals.logger.debug('COMMAAND SUCCEED: kubectl apply -f {}\n{}'.format(path_yamlfile, result_kubectl.decode('utf-8')))
 
-        # 対象となるdeploymentを定義
-        # deployments = [ "deployment/ita-worker" ]
-
-        # envs = [
-        #     "HTTP_PROXY=" + os.environ['EPOCH_HTTP_PROXY'],
-        #     "HTTPS_PROXY=" + os.environ['EPOCH_HTTPS_PROXY'],
-        #     "http_proxy=" + os.environ['EPOCH_HTTP_PROXY'],
-        #     "https_proxy=" + os.environ['EPOCH_HTTPS_PROXY']
-        # ]
-
-        # exec_detail = "環境変数[PROXY]を確認してください"
-        # for deployment_name in deployments:
-        #     for env_name in envs:
-        #         # 環境変数の設定
-        #         try:
-        #             result_kubectl = subprocess.check_output(["kubectl","set","env",deployment_name,"-n",name,env_name],stderr=subprocess.STDOUT)
-        #             globals.logger.debug('COMMAAND SUCCEED: kubectl set env {}\n{}'.format(deployment_name, result_kubectl.decode('utf-8')))
-        #         except subprocess.CalledProcessError as e:
-        #             globals.logger.error('COMMAND ERROR RETURN:{}\n{}'.format(e.returncode, e.output.decode('utf-8')))
-        #             exec_detail = "{}の環境変数[PROXY]の設定ができません。環境を確認してください。".format(deployment_name)
-        #             raise common.UserException(exec_detail)
-        #         except Exception:
-        #             raise
+                except subprocess.CalledProcessError as e:
+                    globals.logger.error('COMMAND ERROR RETURN:{}\n{}'.format(e.returncode, e.output.decode('utf-8')))
+                    exec_detail = "IT-AutomationのPodが生成できません。環境を確認してください。"
+                    raise common.UserException(exec_detail)
+                except Exception:
+                    raise
 
         exec_detail = ""
 
@@ -891,5 +876,28 @@ def is_ita_mysql_running(namespace, ita_db_user, ita_db_password):
     return ret
 
 
+def get_pv_node():
+    """PV格納node取得
+
+    Returns:
+        string: Node名
+    """
+    node = ""
+
+    try:
+        # kubectlでnode情報を取得 kubectl get node information
+        result = subprocess.check_output(
+            ['kubectl', 'get', 'pod', '-n', 'epoch-system', '-o', 'json', "--selector", "name=epoch-control-tekton-api"], stderr=subprocess.STDOUT)
+
+        dict_result = json.loads(result.decode('utf-8'))
+        node = dict_result["items"][0]["spec"]["nodeName"]
+
+    except subprocess.CalledProcessError as e:
+        # コマンド実行エラー command execute error
+        globals.logger.error('COMMAND ERROR RETURN:{}\n{}'.format(e.returncode, e.output.decode('utf-8')))
+        raise # 再スロー
+
+    return node
+
 if __name__ == "__main__":
-    app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('API_ITA_PORT', '8000')), threaded=True)
+    app.run(debug=eval(os.environ.get('API_DEBUG', "False")), host='0.0.0.0', port=int(os.environ.get('API_ITA_PORT', '8000')), threaded=True)

@@ -49,16 +49,21 @@ spec:
           name: epoch-rs-cd-result-conf
       containers:
       - name: epoch-rs-cd-result-api
-        image: exastro/epoch-rs-cd-result-api:0.4.0_20220325_1500
+        image: exastro/epoch-rs-cd-result-api:1.0.0_20220428_1530
         env:
         - name: CONFIG_API_CD_RESULT_PATH
           value: "/etc/epoch/epochRsCdResultApi/api_cd_result.conf"
         - name: FLASK_ENV
-          value: "development"
+          value: "production"
         - name: API_CD_RESULT_PORT
           value: "8000"
         - name: PYTHONIOENCODING
           value: utf-8
+        - name: ENCRYPT_KEY
+          valueFrom:
+            secretKeyRef:
+              name: epoch-key
+              key: ENCRYPT_KEY
         volumeMounts:
         - name: epoch-rs-cd-result-conf
           mountPath: /etc/epoch/epochRsCdResultApi

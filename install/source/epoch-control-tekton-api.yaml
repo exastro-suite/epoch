@@ -49,12 +49,12 @@ spec:
           name: epoch-control-tekton-conf
       containers:
       - name: epoch-control-tekton-api
-        image: exastro/epoch-control-tekton-api:0.4.0_20220325_1500
+        image: exastro/epoch-control-tekton-api:1.0.0_20220428_1530
         env:
         - name: CONFIG_API_TEKTON_PATH
           value: "/etc/epoch/epochControlTektonApi/api_tekton.conf"
         - name: FLASK_ENV
-          value: "development"
+          value: "production"
         - name: API_TEKTON_PORT
           value: "8000"
         - name: PYTHONIOENCODING
@@ -71,6 +71,11 @@ spec:
               key: HTTPS_PROXY
         - name: EPOCH_NO_PROXY
           value: ""
+        - name: EPOCH_HOSTNAME
+          valueFrom:
+            configMapKeyRef:
+              name: host-setting-config
+              key: EPOCH_HOSTNAME
         - name: EPOCH_RS_WORKSPACE_PROTOCOL
           value: "http"
         - name: EPOCH_RS_WORKSPACE_HOST

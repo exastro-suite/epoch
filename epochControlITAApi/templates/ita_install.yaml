@@ -39,10 +39,6 @@ spec:
       labels:
         app: it-automation
     spec:
-      volumes:
-      - name: epoch-ita-conf
-        configMap:
-          name: epoch-ita-conf
       containers:
       - name: it-automation
         image: exastro/it-automation:1.9.0-ja
@@ -51,13 +47,32 @@ spec:
         - containerPort: 443
         securityContext:
           privileged: true
+        env:
+        - name: EXASTRO_AUTO_FILE_VOLUME_INIT
+          value: "true"
+        - name: EXASTRO_AUTO_DATABASE_VOLUME_INIT
+          value: "true"
         volumeMounts:
         - name: epoch-ita-conf
           mountPath: /app/epoch/tmp
+        - name: epoch-ita-database-volume
+          mountPath: /exastro-database-volume
+        - name: epoch-ita-file-volume
+          mountPath: /exastro-file-volume
       hostAliases:
       - hostnames:
         - exastro-it-automation
         ip: 127.0.0.1
+      volumes:
+      - name: epoch-ita-conf
+        configMap:
+          name: epoch-ita-conf
+      - name: epoch-ita-database-volume
+        persistentVolumeClaim:
+          claimName: epoch-ita-database-volume
+      - name: epoch-ita-file-volume
+        persistentVolumeClaim:
+          claimName: epoch-ita-file-volume
 ---
 apiVersion: v1
 kind: Service

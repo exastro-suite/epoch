@@ -1,0 +1,229 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: epoch-system-sc
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: epoch-tekton-pipeline-db
+  labels:
+    type: local
+  annotations:
+    pv.kubernetes.io/bound-by-controller: "yes"
+spec:
+  storageClassName: epoch-system-sc
+  capacity:
+    storage: 500Mi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /var/data/epoch/epoch-system/epoch-tekton-pipeline-db
+    type: DirectoryOrCreate
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - #WORKER-NODE-NAME#
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: epoch-tekton-pipeline-db
+  namespace: epoch-system
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Mi
+  storageClassName: epoch-system-sc
+  volumeMode: Filesystem
+  volumeName: epoch-tekton-pipeline-db
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: epoch-rs-cd-result-db
+  labels:
+    type: local
+  annotations:
+    pv.kubernetes.io/bound-by-controller: "yes"
+spec:
+  storageClassName: epoch-system-sc
+  capacity:
+    storage: 4Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /var/data/epoch/epoch-system/epoch-rs-cd-result-db
+    type: DirectoryOrCreate
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - #WORKER-NODE-NAME#
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: epoch-rs-cd-result-db
+  namespace: epoch-system
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 4Gi
+  storageClassName: epoch-system-sc
+  volumeMode: Filesystem
+  volumeName: epoch-rs-cd-result-db
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: epoch-tekton-pipelinerun-db
+  labels:
+    type: local
+  annotations:
+    pv.kubernetes.io/bound-by-controller: "yes"
+spec:
+  storageClassName: epoch-system-sc
+  capacity:
+    storage: 4Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /var/data/epoch/epoch-system/epoch-tekton-pipelinerun-db
+    type: DirectoryOrCreate
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - #WORKER-NODE-NAME#
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: epoch-tekton-pipelinerun-db
+  namespace: epoch-system
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 4Gi
+  storageClassName: epoch-system-sc
+  volumeMode: Filesystem
+  volumeName: epoch-tekton-pipelinerun-db
+
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: epoch-rs-logs-db
+  labels:
+    type: local
+  annotations:
+    pv.kubernetes.io/bound-by-controller: "yes"
+spec:
+  storageClassName: epoch-system-sc
+  capacity:
+    storage: 4Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /var/data/epoch/epoch-system/epoch-rs-logs-db
+    type: DirectoryOrCreate
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - #WORKER-NODE-NAME#
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: epoch-rs-logs-db
+  namespace: epoch-system
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 4Gi
+  storageClassName: epoch-system-sc
+  volumeMode: Filesystem
+  volumeName: epoch-rs-logs-db
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: epoch-workspace-db
+  labels:
+    type: local
+  annotations:
+    pv.kubernetes.io/bound-by-controller: "yes"
+spec:
+  storageClassName: epoch-system-sc
+  capacity:
+    storage: 500Mi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /var/data/epoch/epoch-system/epoch-workspace-db
+    type: DirectoryOrCreate
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - #WORKER-NODE-NAME#
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: epoch-workspace-db
+  namespace: epoch-system
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 500Mi
+  storageClassName: epoch-system-sc
+  volumeMode: Filesystem
+  volumeName: epoch-workspace-db
+

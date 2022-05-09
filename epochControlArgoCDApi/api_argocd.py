@@ -127,6 +127,33 @@ def call_argocd_app_sync(workspace_id, app_name):
         return common.server_error(e)
 
 
+@app.route('/workspace/<int:workspace_id>/argocd/app/<string:app_name>/rollback', methods=['POST'])
+def call_argocd_app_rollback(workspace_id, app_name):
+    """Call workspace/workspace_id/argocd/app/rollback
+
+    Args:
+        workspace_id (int): workspace id
+        app_name (str): app name (same environment name)
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'POST':
+            # post argocd rollback - ArgoCD rollback処理
+            return post_argocd_rollback(workspace_id, app_name)
+        else:
+            # エラー
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+
 def create_argocd(workspace_id):
     """ Create pod argocd - ArgoCD Pod 作成
 
@@ -201,12 +228,16 @@ def create_argocd(workspace_id):
                         "deployment/argocd-repo-server" ]
 
         # Proxyの設定値
+        no_proxy = os.environ['EPOCH_ARGOCD_NO_PROXY']
+        if 'EPOCH_HOSTNAME' in os.environ and os.environ['EPOCH_HOSTNAME'] != '':
+            no_proxy = no_proxy + ',' + os.environ['EPOCH_HOSTNAME']
+
         envs = [ "HTTP_PROXY=" + os.environ['EPOCH_HTTP_PROXY'],
                  "HTTPS_PROXY=" + os.environ['EPOCH_HTTPS_PROXY'],
                  "http_proxy=" + os.environ['EPOCH_HTTP_PROXY'],
                  "https_proxy=" + os.environ['EPOCH_HTTPS_PROXY'],
-                 "NO_PROXY=" + os.environ['EPOCH_ARGOCD_NO_PROXY'],
-                 "no_proxy=" + os.environ['EPOCH_ARGOCD_NO_PROXY'] ]
+                 "NO_PROXY=" + no_proxy,
+                 "no_proxy=" + no_proxy]
 
         # PROXYの設定を反映
         for deployment_name in deployments:
@@ -238,7 +269,7 @@ def get_argocd_app(workspace_id, app_name):
 
     try:
         globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
+        globals.logger.debug('CALL {} workspace_id:[{}], app_name:[{}]'.format(inspect.currentframe().f_code.co_name, workspace_id, app_name))
         globals.logger.debug('#' * 50)
 
         # ワークスペースアクセス情報取得 Get workspace access information
@@ -262,11 +293,60 @@ def get_argocd_app(workspace_id, app_name):
         stdout_cd = subprocess.check_output(["argocd","app","get", app_name, "-o","json"],stderr=subprocess.STDOUT)
         # globals.logger.debug(stdout_cd.decode('utf-8'))
 
-        # globals.logger.debug(stdout_cd)
-        ret_status = 200
-        
         result = json.loads(stdout_cd)
-        
+
+        # ヘッダ情報
+        post_headers = {
+            'Content-Type': 'application/json',
+        }
+
+        # argocd tree info get
+        api_info = "https://{}".format(argo_host)
+
+        post_data = {
+            "username" : argo_id,
+            "password" : argo_password,
+        }
+        from requests.packages.urllib3.exceptions import InsecureRequestWarning
+        requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+
+        # Toekn取得 get token
+        globals.logger.debug ("argocd token get call:")
+        response = requests.post( "{}/api/v1/session".format(api_info), headers=post_headers, data=json.dumps(post_data), verify=False)
+
+        # 正常時以外はExceptionを発行して終了する
+        # Exception is issued and ends except when it is normal.
+        if response.status_code != 200:
+            globals.logger.error(response.text)
+            error_detail = "argocd token get error : status_code:{}".format(response.status_code)
+            raise common.UserException(error_detail)
+
+        ret_token = json.loads(response.text)
+
+        post_headers = {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer {}'.format(ret_token["token"]),
+        }
+
+        # Node情報取得 get node information
+        globals.logger.debug ("argocd tree info get call:")
+        response = requests.get( "{}/api/v1/applications/{}/resource-tree".format(api_info, app_name), headers=post_headers, verify=False)
+
+        # 正常時以外はExceptionを発行して終了する
+        # Exception is issued and ends except when it is normal.
+        if response.status_code != 200:
+            globals.logger.error(response.text)
+            error_detail = "argocd tree info get error : status_code:{}".format(response.status_code)
+            raise common.UserException(error_detail)
+
+        ret_tree = json.loads(response.text)
+        # globals.logger.debug(ret_tree)
+
+        result.update(ret_tree)
+        # globals.logger.debug(result)
+
+        ret_status = 200
+
         # 戻り値をそのまま返却        
         return jsonify({"result": ret_status, "result": result}), ret_status
 
@@ -314,7 +394,9 @@ def post_argocd_sync(workspace_id, app_name):
             stdout_cd = subprocess.check_output(["argocd","app","sync",app_name],stderr=subprocess.STDOUT)
             # globals.logger.debug(stdout_cd.decode('utf-8'))
         except subprocess.CalledProcessError as e:
-            globals.logger.debug("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+            globals.logger.debug("command '{}' return with error (code {})".format(e.cmd, e.returncode))
+            # globals.logger.debug(e.output)
+            raise
 
         ret_status = 200
         
@@ -326,6 +408,57 @@ def post_argocd_sync(workspace_id, app_name):
     except Exception as e:
         return common.server_error(e)
 
+
+def post_argocd_rollback(workspace_id, app_name):
+    """post argocd rollback - ArgoCD rollback処理
+
+    Args:
+        workspace_id (int): workspace id
+        app_name (str): app name (same environment name)
+
+    Returns:
+        Response: HTTP Respose
+    """
+
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {} workspace_id[{}] app_name[{}]'.format(inspect.currentframe().f_code.co_name, workspace_id, app_name))
+        globals.logger.debug('#' * 50)
+
+        # ワークスペースアクセス情報取得 Get workspace access information
+        access_data = get_access_info(workspace_id)
+
+        argo_host = 'argocd-server.epoch-ws-{}.svc'.format(workspace_id)
+        argo_id = access_data['ARGOCD_USER']
+        argo_password = access_data['ARGOCD_PASSWORD']
+        
+        #
+        # argocd login
+        #
+        globals.logger.debug("argocd login :")
+        stdout_cd = common.subprocess_check_output_with_retry(["argocd","login",argo_host,"--insecure","--username",argo_id,"--password",argo_password],stderr=subprocess.STDOUT)
+        # globals.logger.debug(stdout_cd.decode('utf-8'))
+
+        #
+        # app rollback
+        #
+        globals.logger.debug("argocd app rollback :")
+        try:
+            stdout_cd = subprocess.check_output(["argocd","app","rollback",app_name],stderr=subprocess.STDOUT)
+            # globals.logger.debug(stdout_cd.decode('utf-8'))
+        except subprocess.CalledProcessError as e:
+            globals.logger.debug("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+            raise
+
+        ret_status = 200
+        
+        # 正常終了 normal end       
+        return jsonify({"result": ret_status}), ret_status
+
+    except common.UserException as e:
+        return common.server_error(e)
+    except Exception as e:
+        return common.server_error(e)
 
 @app.route('/workspace/<int:workspace_id>/argocd/settings', methods=['POST'])
 def call_argocd_settings(workspace_id):
@@ -428,24 +561,16 @@ def argocd_settings(workspace_id):
         # アプリケーション情報の一覧を取得する
         globals.logger.debug("argocd app list :")
         stdout_cd = subprocess.check_output(["argocd","app","list","-o","json"],stderr=subprocess.STDOUT)
-        globals.logger.debug(stdout_cd.decode('utf-8'))
+        # globals.logger.debug(stdout_cd.decode('utf-8'))
 
-        # アプリケーション情報を削除する
+
+        # 環境が無くなったものについて、アプリケーション情報を削除する
         app_list = json.loads(stdout_cd)
         for app in app_list:
-            globals.logger.debug('argocd app delete [app] {} :'.format(app['metadata']['name']))
-            stdout_cd = subprocess.check_output(["argocd","app","delete",app['metadata']['name'],"-y"],stderr=subprocess.STDOUT)
-
-        # アプリケーションが消えるまでWaitする
-        globals.logger.debug("wait : argocd app list clean")
-
-        for i in range(WAIT_APPLICATION_DELETE):
-            # アプリケーションの一覧を取得し、結果が0件になるまでWaitする
-            stdout_cd = subprocess.check_output(["argocd","app","list","-o","json"],stderr=subprocess.STDOUT)
-            app_list = json.loads(stdout_cd)
-            if len(app_list) == 0:
-                break
-            time.sleep(1) # 1秒ごとに確認
+            not_found_env = (next(filter(lambda env: (get_argo_app_name(workspace_id, env['environment_id']) == app['metadata']['name']), request_cd_env), None) is None)
+            if not_found_env:
+                globals.logger.debug('argocd app delete [app] {} :'.format(app['metadata']['name']))
+                stdout_cd = subprocess.check_output(["argocd","app","delete",app['metadata']['name'],"--cascade=false"],stderr=subprocess.STDOUT)
 
         # 環境群数分処理を実行
         for env in request_cd_env:
@@ -465,27 +590,46 @@ def argocd_settings(workspace_id):
                     error_detail = 'create namespace処理に失敗しました'
                     raise common.UserException(error_detail)
 
-            exec_stat = multi_lang.get_text("EP035-0007", "ArgoCD設定 - アプリケーション作成")
-            error_detail = multi_lang.get_text("EP035-0008", "ArgoCDの入力内容を確認してください")
+            argo_app = next(filter(lambda app: (argo_app_name == app['metadata']['name']), app_list), None)
 
-            # argocd app create catalogue \
-            # --repo [repogitory URL] \
-            # --path ./ \
-            # --dest-server https://kubernetes.default.svc \
-            # --dest-namespace [namespace] \
-            # --auto-prune \
-            # --sync-policy automated
-            # アプリケーション作成
-            globals.logger.debug("argocd app create :")
-            stdout_cd = subprocess.check_output(["argocd","app","create",argo_app_name,
-                "--repo",gitUrl,
-                "--path","./",
-                "--dest-server",cluster,
-                "--dest-namespace",namespace,
-                "--auto-prune",
-                "--sync-policy","automated",
-                ],stderr=subprocess.STDOUT)
-            globals.logger.debug(stdout_cd.decode('utf-8'))
+            if argo_app is None:
+                # create application
+                exec_stat = multi_lang.get_text("EP035-0007", "ArgoCD設定 - アプリケーション作成")
+                error_detail = multi_lang.get_text("EP035-0008", "ArgoCDの入力内容を確認してください")
+
+                globals.logger.debug('argocd app create [app] {} / {}'.format(argo_app_name, env['name']))
+
+                # アプリケーション作成
+                stdout_cd = subprocess.check_output(["argocd","app","create",argo_app_name,
+                    "--repo",gitUrl,
+                    "--path","./",
+                    "--dest-server",cluster,
+                    "--dest-namespace",namespace,
+                    ],stderr=subprocess.STDOUT)
+                globals.logger.debug(stdout_cd.decode('utf-8'))
+
+            else:
+                # update application
+                exec_stat = multi_lang.get_text("EP035-0009", "ArgoCD設定 - アプリケーション更新")
+                error_detail = multi_lang.get_text("EP035-0008", "ArgoCDの入力内容を確認してください")
+
+                if cluster == argo_app["spec"]["destination"]["server"] \
+                and namespace == argo_app["spec"]["destination"]["namespace"] \
+                and gitUrl == argo_app["spec"]["source"]["repoURL"]:
+                    # unchanged
+                    globals.logger.debug('argocd app unchanged skip [app] {} / {}:'.format(argo_app_name, env['name']))
+
+                else:
+                    # update application
+                    globals.logger.debug('argocd app set [app] {} / {}:'.format(argo_app_name, env['name']))
+                    stdout_cd = subprocess.check_output(["argocd","app","set",argo_app_name,
+                        "--repo",gitUrl,
+                        "--path","./",
+                        "--dest-server",cluster,
+                        "--dest-namespace",namespace,
+                        ],stderr=subprocess.STDOUT)
+
+                    globals.logger.debug(stdout_cd.decode('utf-8'))
 
         ret_status = 200
 
@@ -570,4 +714,4 @@ def env_name_to_argo_app_name(workspace_id, environments, env_name):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('API_ARGOCD_PORT', '8000')), threaded=True)
+    app.run(debug=eval(os.environ.get('API_DEBUG', "False")), host='0.0.0.0', port=int(os.environ.get('API_ARGOCD_PORT', '8000')), threaded=True)

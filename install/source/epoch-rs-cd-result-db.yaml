@@ -66,25 +66,12 @@ spec:
       labels:
         name: rs-cd-result-db
     spec:
-      volumes:
-      - name: mysqlconf-volume
-        configMap:
-          name: rs-cd-result-db-myconf
-      # COMMENT OUT:Persistent data retention
-      #- name: mysqldata
-      #  hostPath:
-      #    path: /var/data/epoch/rs_cd_result_db/mysql
-      #    type: DirectoryOrCreate
-      - name: mysqlinitdb-volume
-        configMap:
-          name: rs-cd-result-db-initdb
       containers:
       - name: mysql
         image: mysql
         volumeMounts:
-        # COMMENT OUT:Persistent data retention
-        #- name: mysqldata
-        #  mountPath: /var/lib/mysql
+        - name: mysql-persistent-storage
+          mountPath: /var/lib/mysql
         - name: mysqlconf-volume
           mountPath: /etc/mysql
         - name: mysqlinitdb-volume
@@ -92,6 +79,16 @@ spec:
         env:
         - name: MYSQL_ROOT_PASSWORD
           value: password
+      volumes:
+      - name: mysqlconf-volume
+        configMap:
+          name: rs-cd-result-db-myconf
+      - name: mysql-persistent-storage
+        persistentVolumeClaim:
+          claimName: epoch-rs-cd-result-db
+      - name: mysqlinitdb-volume
+        configMap:
+          name: rs-cd-result-db-initdb
 
 ---
 apiVersion: v1

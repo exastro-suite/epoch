@@ -32,7 +32,7 @@ gitlab:
     minReplicas: 1
     maxReplicas: 1
 registry:
-  enabled: true
+  enabled: false
   hpa:
     minReplicas: 1
     maxReplicas: 1

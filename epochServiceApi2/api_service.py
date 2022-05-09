@@ -406,6 +406,32 @@ def call_cd_pipeline_argocd_sync(workspace_id):
         return common.server_error(e)
 
 
+@app.route('/workspace/<int:workspace_id>/cd/pipeline/argocd/rollback', methods=['POST'])
+def call_cd_pipeline_argocd_rollback(workspace_id):
+    """workspace/workspace_id/cd/pipeline/argocd/rollback Call
+
+    Args:
+        workspace_id (int): workspace ID
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'POST':
+            # Post CD pipeline (ArgoCD) Rollback - CDパイプライン(ArgoCD)Rollback
+            return api_service_cd.post_cd_pipeline_argocd_rollback(workspace_id)
+        else:
+            # Error
+            raise Exception("method not support!")
+
+    except Exception as e:
+        return common.server_error(e)
+
+
 @app.route('/workspace/<int:workspace_id>/manifest/parameter', methods=['POST'])
 def call_manifest_parameter(workspace_id):
     """workspace/workspace_id/manifest/parameter Call
@@ -687,4 +713,4 @@ def call_workspace_leave(workspace_id):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('API_SERVICE_PORT', '8000')), threaded=True)
+    app.run(debug=eval(os.environ.get('API_DEBUG', "False")), host='0.0.0.0', port=int(os.environ.get('API_SERVICE_PORT', '8000')), threaded=True)

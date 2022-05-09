@@ -25,8 +25,9 @@ spec:
     storage: 500Mi
   accessModes:
     - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
   hostPath:
-    path: /var/data/epoch/{{ param.ci_config.pipeline_namespace }}-pv
+    path: /var/data/epoch/workspaces/workspace-{{ workspace_id }}/{{ param.ci_config.pipeline_namespace }}-pv
     type: DirectoryOrCreate
   nodeAffinity:
     required:
@@ -52,3 +53,91 @@ spec:
   storageClassName: epoch-tekton-pipeline-storage
   volumeMode: Filesystem
   volumeName: {{ param.ci_config.pipeline_namespace }}-pv
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ param.ci_config.pipeline_namespace }}-sonarqube-pv
+  labels:
+    type: local
+  annotations:
+    pv.kubernetes.io/bound-by-controller: "yes"
+spec:
+  storageClassName: epoch-tekton-pipeline-storage
+  capacity:
+    storage: 8Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /var/data/epoch/workspaces/workspace-{{ workspace_id }}/{{ param.ci_config.pipeline_namespace }}-sonarqube-pv
+    type: DirectoryOrCreate
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - {{ param.node }}
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pipeline-sonarqube-pvc
+  namespace: {{ param.ci_config.pipeline_namespace }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 8Gi
+  storageClassName: epoch-tekton-pipeline-storage
+  volumeMode: Filesystem
+  volumeName: {{ param.ci_config.pipeline_namespace }}-sonarqube-pv
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ param.ci_config.pipeline_namespace }}-sonarqube-db-pv
+  labels:
+    type: local
+  annotations:
+    pv.kubernetes.io/bound-by-controller: "yes"
+spec:
+  storageClassName: epoch-tekton-pipeline-storage
+  capacity:
+    storage: 8Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /var/data/epoch/workspaces/workspace-{{ workspace_id }}/{{ param.ci_config.pipeline_namespace }}-sonarqube-db-pv
+    type: DirectoryOrCreate
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - {{ param.node }}
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pipeline-sonarqube-db-pvc
+  namespace: {{ param.ci_config.pipeline_namespace }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 8Gi
+  storageClassName: epoch-tekton-pipeline-storage
+  volumeMode: Filesystem
+  volumeName: {{ param.ci_config.pipeline_namespace }}-sonarqube-db-pv

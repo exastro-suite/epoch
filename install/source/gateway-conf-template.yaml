@@ -1,3 +1,16 @@
+#   Copyright 2022 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
 apiVersion: v1
 data:
   epoch-system-template.conf: "Listen {{ epoch_port }}\n<VirtualHost *:{{ epoch_port
@@ -19,7 +32,8 @@ data:
     \   AuthType openid-connect\n    <Limit GET>\n      Require claim \"epoch-role:epoch-user\"\n
     \   </Limit>\n  </Location>\n  <Location /api/workspace>\n    ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace
     retry=0 timeout=600\n    ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace\n
-    \   AuthType openid-connect\n    <Limit GET POST>\n      Require claim \"epoch-role:epoch-user\"\n
+    \   AuthType openid-connect\n    <Limit GET>\n      Require claim \"epoch-role:epoch-user\"\n
+    \   </Limit>\n    <Limit POST>\n      Require claim \"epoch-role:ws-create\"\n
     \   </Limit>\n  </Location>\n\n  IncludeOptional conf.d/exastroSettings/epoch-system/*.conf\n\n
     \ <Location /api/user/>\n    ProxyPass        http://authentication-infra-api:8000/user/
     retry=0\n    ProxyPassReverse http://authentication-infra-api:8000/user/\n    AuthType
@@ -139,7 +153,7 @@ data:
         ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/cd/pipeline
         AuthType openid-connect
         <Limit GET>
-            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-reference"
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-cd-execute-result"
         </Limit>
         <Limit POST PUT>
             Require claim "epoch-role:ws-{{ param.workspace_id }}-role-ws-cd-update"
@@ -163,6 +177,21 @@ data:
             Require claim "epoch-role:ws-{{ param.workspace_id }}-role-cd-execute"
         </Limit>
         <LimitExcept GET POST DELETE>
+            Require all denied
+        </LimitExcept>
+      </Location>
+
+      <Location /api/workspace/{{ param.workspace_id }}/cd/pipeline/argocd>
+        ProxyPass        http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/cd/pipeline/argocd retry=0 timeout=600
+        ProxyPassReverse http://epoch-service-api2.epoch-system.svc:8000/workspace/{{ param.workspace_id }}/cd/pipeline/argocd
+        AuthType openid-connect
+        <Limit GET>
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-cd-execute-result"
+        </Limit>
+        <Limit POST>
+            Require claim "epoch-role:ws-{{ param.workspace_id }}-role-cd-execute"
+        </Limit>
+        <LimitExcept GET POST>
             Require all denied
         </LimitExcept>
       </Location>

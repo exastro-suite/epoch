@@ -133,6 +133,10 @@ def user_get():
                 if get_role["name"] not in all_roles:
                     all_roles.append(get_role["name"])
 
+                # ワークスペース作成権限は読み飛ばし Skip workspace creation authority
+                if get_role["name"] == const.ROLE_WS_CREATE[0]:
+                    continue
+
                 ex_role = re.match("ws-({}|\d+)-(.+)", get_role["name"])
                 globals.logger.debug("role_workspace_id:{} kind:{}".format(ex_role[1], ex_role[2]))
 
@@ -160,8 +164,11 @@ def user_get():
 
                 response = requests.get(api_url)
                 if response.status_code != 200:
-                    error_detail = multi_lang.get_text("EP020-0013", "ワークスペース情報の取得に失敗しました")
-                    raise common.UserException("{} Error workspace get status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
+                    # error_detail = multi_lang.get_text("EP020-0013", "ワークスペース情報の取得に失敗しました")
+                    # raise common.UserException("{} Error workspace get status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
+                    # ワークスペース情報がない場合は、読み飛ばす If there is no workspace information, skip it
+                    workspace_name = None
+                    continue
 
                 ret_ws = json.loads(response.text)
                 workspace_name = ret_ws["rows"][0]["common"]["name"]

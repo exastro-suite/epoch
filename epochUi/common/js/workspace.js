@@ -21,6 +21,7 @@ var workspace_client_urls = {
   "ita" : null,
   "sonarqube": null
 }
+var RefWsDataJSON = null;
 
 // function workspace()
 // ├ initWorkspaceType: 初期タブ
@@ -71,6 +72,10 @@ const wsDataJSON = {
   },
   'workspace': {
   },
+  'argocd': {
+    'argocd-bluegreen': 'auto',
+    'argocd-bluegreen-scaledown-wait': 30,
+  },
   'environment' : {
   },
   'application-code': {
@@ -97,6 +102,7 @@ const wsDataJSON = {
     'preserve-datetime': ""
   }
 };
+RefWsDataJSON=wsDataJSON;
 
 const wsModalJSON = {
   'yamlPreview': {
@@ -300,7 +306,7 @@ const wsModalJSON = {
             'type': 'radio',
             'name': 'registry-service-select',
             'item': {
-              'epoch': 'EPOCH内レジストリ',
+              //'epoch': 'EPOCH内レジストリ',
               'dockerhub': 'DockerHub'
             }            
           }
@@ -586,6 +592,31 @@ const wsModalJSON = {
       },
     },
     'block': {
+      'deploy': {
+        'title': 'Deploy方式',
+        'item': [
+          {
+            'type': 'radio',
+              'title': 'manifestテンプレート変換',
+              'name': 'argocd-bluegreen',
+              'class': 'input-pickup-select',
+              'item': {
+                'auto': 'BlueGreen自動変換',
+                'none': '変換しない'
+              }
+          },
+          {
+            'type': 'number',
+            'title': 'BlueGreenデプロイ完了後の古いPodのスケールダウンの待ち時間（秒）',
+            'name': 'argocd-bluegreen-scaledown-wait',
+            'class': 'input-pickup input-pickup-auto',
+            'min': 1,
+            'max': 604800,
+            'placeholder': '0',
+            'note': '古いPodのスケールダウンの待ち時間（秒）を入力してください',
+          },
+        ]
+      },
       'environmentList': {
         'title': '環境一覧',
         'button': {
@@ -618,7 +649,7 @@ const wsModalJSON = {
               'class': 'input-pickup-select',
               'item': {
                 'internal': 'EPOCHと同じKubernetes',
-                'external': '以外のKubernetes'
+                //'external': '以外のKubernetes'
               },
               'note': 'Deploy先のKubernetesを選択してください'
             },  
@@ -806,17 +837,37 @@ const wsModalJSON = {
         'type': 'negative'
       }
     },
-    'block': {
-      'cdExecutionCondition': {
-        'title': '実行条件',
-        'item': {
-          'cdExecutionConditionBlock': {
-            'type': 'loading',
-            'id': 'cd-execution-condition'            
+    'block': [
+      {
+        'title': 'Deployジョブ',
+        'item': [
+          {
+            'type': 'html',
+            'mainClass': 'item-horizontal',
+            'title': 'IT Automation',
+            'note': 'IT Automationの画面を開きます。',
+            'html': '<a class="ita-link" href="#" target="_blank">確認・編集</a>'
           }
-        }
+        ]
       },
-      'cdExecutionManifestParameter': {
+      {
+        'title': '実行条件',
+        'item': [
+          {
+            'type': 'html',
+            'mainClass': 'item-horizontal',
+            'title': 'CD実行日時',
+            'id': 'deploy-condition'            
+          },
+          {
+            'type': 'html',
+            'mainClass': 'item-horizontal',
+            'title': '環境',
+            'id': 'deploy-environment'            
+          }
+        ]
+      },
+      {
         'title': 'Manifestパラメータ',
         'tab': {
           'type': 'reference',
@@ -826,23 +877,23 @@ const wsModalJSON = {
             'key2': 'file_name'
           },
           'emptyText': 'テンプレートファイルの登録がありません。Kubernetes Manifestテンプレートの設定からテンプレートファイルを追加してください。',
-          'item': {
-            'cdExecutionManifestParameterBlock': {
+          'item': [
+            {
               'type': 'loading'
             }
-          }
+          ]
         }
       },
-      'cdExecutionArgo': {
+      {
         'title': 'ArgoCDパイプライン',
-        'item': {
-          'cdExecutionArgoBlock': {
+        'item': [
+          {
             'type': 'loading',
             'id': 'cd-execution-argo'            
           }
-        }
+        ]
       }
-    }
+    ]
   }
 };
 const modal = new modalFunction( wsModalJSON, wsDataJSON );
@@ -1334,7 +1385,8 @@ $workspaceFooter.on('click', '.workspace-footer-menu-button', function(){
 
 // モーダル内の入力データを wsDataJSON に入れる
 const setInputData = function( tabTarget, commonTarget ){
-  const inputTarget = 'input[type="text"], input[type="password"], input[type="radio"]:checked, textarea, input[type="hidden"], .item-freeitem';
+  //const inputTarget = 'input[type="text"], input[type="password"], input[type="radio"]:checked, textarea, input[type="hidden"], .item-freeitem';
+  const inputTarget = 'input[type="text"], input[type="password"], input[type="radio"]:checked, textarea, input[type="hidden"], input[type="number"], .item-freeitem';
   
   // タブリストの作成
   modal.$modal.find('.modal-tab-item').each( function(){
@@ -1393,7 +1445,7 @@ const setInputData = function( tabTarget, commonTarget ){
 
 // 削除されたタブに合わせてデータも削除する
 const deleteTabData = function( target ){
-  const deleteData = modal.$modal.attr('data-tab-delete');
+  const deleteData = modal.$modal.find('.modal').attr('data-tab-delete');
   if ( deleteData !== undefined ) {
     const deleteArray = deleteData.split(','),
           deleteLength = deleteArray.length;
@@ -1654,6 +1706,14 @@ const templateFileSelect = function( type ){
       + '<p class="item-file-droparea-text">ここにファイルをドロップ または クリック</p>'
     + '</div>'
   + '</div>';
+
+  if ( wsDataJSON.argocd && wsDataJSON.argocd["argocd-bluegreen"] === 'auto') {
+    uploadHtml += '<ul class="upload-attention-list">'
+    + '<li class="upload-attention-item">※BlueGreen自動変換するmanifestテンプレートは、kind: Deployment内に、metadata指定、ならびにportsのcontainerPort指定が必要となります。</li>'
+    + '<li class="upload-attention-item">※BlueGreen自動変換ができない場合は、アップロードされたmanifestテンプレートのままとなります。</li>'
+    + '</ul>';
+  }
+
   $file.html( uploadHtml );
 
   // ファイル選択リストを表示する
@@ -1709,7 +1769,35 @@ const templateFileSelect = function( type ){
                         'file_text':  data['rows'][fileidx]['file_text'],
                         'update_at':  data['rows'][fileidx]['update_at'],
                       };
+                      // BlueGreen支援ありの場合 With BlueGreen support
+                      if (wsDataJSON['argocd']['argocd-bluegreen'] === "auto"){
+                        for(var env in wsDataJSON['environment']) {
+                          file_id = data['rows'][fileidx]['id'];
+                          console.log('file_id:' + file_id);
+                          item_name = env + "-" + file_id + '-' + 'bluegreen_sdd_sec';
+                          if (!('parameter' in wsDataJSON['environment'][env])) 
+                          {
+                            wsDataJSON['environment'][env]['parameter'] = {}
+                          }
+                          if (!(file_id in wsDataJSON['environment'][env]['parameter'])) 
+                          {
+                            wsDataJSON['environment'][env]['parameter'][file_id] = {}
+                          }
+                          if (!(item_name in wsDataJSON['environment'][env]['parameter'][file_id])) 
+                          {
+                            if(wsDataJSON['argocd']['argocd-bluegreen-scaledown-wait'] === undefined || wsDataJSON['argocd']['argocd-bluegreen-scaledown-wait'] === "") {
+                              wsDataJSON['environment'][env]['parameter'][file_id][item_name] = "0";
+                            } else {
+                              wsDataJSON['environment'][env]['parameter'][file_id][item_name] = wsDataJSON['argocd']['argocd-bluegreen-scaledown-wait'];
+                            }
+                          }
+                          console.log(wsDataJSON['environment'][env]['parameter'][file_id]);
+                          // wsDataJSON['environment'][env]['parameter'][file_id]['bluegreen_sdd_sec'] = '30';
+                        }
+                      }
                     }
+
+
                     // アップロードが完了したら
                     workspaceImageUpdate();
 
@@ -1756,11 +1844,11 @@ const templateFileSelect = function( type ){
               + '<td class="template-size c-table-col"><div class="c-table-ci">' + files[i].size + '</div></td>'
               + '<td class="template-date c-table-col"><div class="c-table-ci">' + formatDate + '</div></td>'
               + '<td class="template-menu c-table-col"><div class="c-table-ci">'
-                + '<ul class="c-table-menu-list">'
-                  + '<li class="c-table-menu-item">'
-                    + '<button class="c-table-menu-button epoch-popup-m" title="プレビュー" data-button="preview">'
-                      + '<svg viewBox="0 0 64 64" class="c-table-menu-svg"><use xlink:href="#icon-preview" /></svg></button></li>'
-                + '</ul>'
+                // + '<ul class="c-table-menu-list">'
+                //   + '<li class="c-table-menu-item">'
+                //     + '<button class="c-table-menu-button epoch-popup-m" title="プレビュー" data-button="preview">'
+                //       + '<svg viewBox="0 0 64 64" class="c-table-menu-svg"><use xlink:href="#icon-preview" /></svg></button></li>'
+                // + '</ul>'
               + '</div></td>'
             + '</tr>');
             
@@ -1943,7 +2031,8 @@ const inputParameter = function(){
     // 予約項目説明
     const itemFixedInfo = {
       'image': 'イメージ',
-      'image_tag': 'イメージタグ名'
+      'image_tag': 'イメージタグ名',
+      'bluegreen_sdd_sec': getText('EP010-0609','BlueGreen切替待機時間')
     };
     
     // 環境が登録済みか？
@@ -2102,13 +2191,20 @@ const inputParameter = function(){
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 const cdExecution = function(){
   const envList = wsDataJSON['environment'],
-        $modal = $('#modal-container'),
-        $exeSetting = $('#cd-execution-condition'), // 実行条件
+        m = this,
+        $modal = m.$modal,
+        $deployJobLink = $modal.find('.ita-link'), // Deployジョブ ITAリンク
+        $deployCondition = $modal.find('#deploy-condition').find('.item-area'), // 実行条件 / CD実行日時
+        $deployEnvironment = $modal.find('#deploy-environment').find('.item-area'), // 実行条件 / 環境
         $manifest = $('#cd-execution-manifest-parameter'), // Manifestパラメータ
         $argo = $('#cd-execution-argo'), // ArgoCDパイプライン
         $okButton = $modal.find('.modal-menu-button[data-button="ok"]');
-        
+
   $okButton.prop('disabled', true );
+
+  // Deployジョブ
+  const itaURL = workspace_client_urls.ita;  
+  $deployJobLink.attr('href', itaURL );
 
   // CD execution environment information processing - CD実行環境情報処理
   new Promise((resolve, reject) =>{
@@ -2139,38 +2235,28 @@ const cdExecution = function(){
 
     const today = fn.formatDate( new Date(), 'yyyy/MM/dd HH:mm');
 
-    const exeSettingHTML = ''
-    + '<table id="cd-execution-condition-table" class="c-table">'
-      + '<tr class="c-table-row">'
-        + '<th class="c-table-col c-table-col-header"><div class="c-table-ci">CD実行日時</div></th>'
-        + '<td class="c-table-col"><div class="c-table-ci">'
-          + '<ul class="execution-date-select item-radio-list">'
-            + '<li class="item-radio-item">'
-              + '<input class="item-radio" type="radio" id="execution-date-immediate" value="immediate" name="execution-date" checked>'
-              + '<label class="item-radio-label" for="execution-date-immediate">即実行</label>'
-            + '</li>'
-            + '<li class="item-radio-item">'
-              + '<input class="item-radio" type="radio" id="execution-date-set" value="dateset" name="execution-date">'
-              + '<label class="item-radio-label" for="execution-date-set">予約日時指定</label>'
-            + '</li>'
-          + '</ul>'
-          + '<div class="execution-date"><input type="text" class="execution-date-input item-text" placeholder="' + today + '" value="' + today + '" disabled></div>'
-        + '</div></td>'
-      + '</tr>'
-        + '<tr class="c-table-row">'
-          + '<th class="c-table-col c-table-col-header"><div class="c-table-ci">環境</div></th>'
-          + '<td class="c-table-col"><div class="c-table-ci">'
-            + '<div class="item-select-area">'
-              + '<select id="cd-execution-environment-select" class="item-select">'
-                + exeSettingOptionHTML
-              + '</select>'
-            + '</div>'
-          + '</div></td>'
-        + '</tr>'
-      + '</table>';
+      const deployCondition = ''
+      + '<ul class="execution-date-select item-radio-list">'
+      + '<li class="item-radio-item">'
+        + '<input class="item-radio" type="radio" id="execution-date-immediate" value="immediate" name="execution-date" checked>'
+        + '<label class="item-radio-label" for="execution-date-immediate">即実行</label>'
+      + '</li>'
+      + '<li class="item-radio-item">'
+        + '<input class="item-radio" type="radio" id="execution-date-set" value="dateset" name="execution-date">'
+        + '<label class="item-radio-label" for="execution-date-set">予約日時指定</label>'
+      + '</li>'
+    + '</ul>'
+    + '<div class="execution-date"><input type="text" class="execution-date-input item-text" placeholder="' + today + '" value="' + today + '" disabled></div>';
+      $deployCondition.html( deployCondition );
       
-      $exeSetting.html( exeSettingHTML );
-    
+      const deployEnviroment = ''
+      + '<div class="item-select-area">'
+        + '<select id="cd-execution-environment-select" class="item-select">'
+          + exeSettingOptionHTML
+        + '</select>'
+      + '</div>';
+      
+      $deployEnvironment.html( deployEnviroment );
 
       const $executionDateInput = $modal.find('.execution-date-input');
       $executionDateInput.datePicker({'s': 'none'});
@@ -2215,7 +2301,7 @@ const cdExecution = function(){
               nKey = envID + '-environment-namespace',
               sKey = envID + '-environment-deploy-select',
               uKey = envID + '-environment-url',
-              uDefault = 'https://Kubernetes.default.svc';
+              uDefault = 'https://kubernetes.default.svc';
         
         console.log('cd-execution-environment-select change');
         if ( envID !== 'none') {
@@ -2251,16 +2337,41 @@ const cdExecution = function(){
           } else {
             url = '';
           }
+
+          // TODO:SPRINT 85:CAHNGED
           wsDataJSON['cd-execution-param']['operation-search-key'] = repository;
           wsDataJSON['cd-execution-param']['environment-name'] = name;
-          $argo.html('<p>以下の内容でDeployします。よろしいですか？</p>'
-          + tableHTML({
+          const itemList = function( itemData ) {
+            const items = [];
+            for ( const k in itemData ) {
+                items.push(''
+                + '<dl class="item-block item-horizontal">'
+                  + '<dt class="item-header">' + k + '</dt>'
+                  + '<dd class="item-area">' + itemData[k] + '</dd>'
+                + '</dl>');
+            }
+            return items.join('');
+          };
+        
+          $argo.html('<p class="deploy-confirm-message">以下の内容でDeployします。よろしいですか？</p>'
+          + itemList({
             '環境名': name,
             'Manifestリポジトリ': repository,
             'Kubernetes API Server URL': url,
             'Namespace': namespace
           }) );
           $okButton.prop('disabled', false );
+  
+          // wsDataJSON['cd-execution-param']['operation-search-key'] = repository;
+          // wsDataJSON['cd-execution-param']['environment-name'] = name;
+          // $argo.html('<p>以下の内容でDeployします。よろしいですか？</p>'
+          // + tableHTML({
+          //   '環境名': name,
+          //   'Manifestリポジトリ': repository,
+          //   'Kubernetes API Server URL': url,
+          //   'Namespace': namespace
+          // }) );
+          // $okButton.prop('disabled', false );
         } else {
           $argo.add(  $manifest.find('.modal-tab-body-block') ).html( notSelected() );
           wsDataJSON['cd-execution-param']['operation-search-key'] = '';
@@ -2457,7 +2568,7 @@ $('#content').find('.modal-open').on('click', function(e){
     // Argo CD
     case 'pipelineArgo': {
       funcs.ok = function(){
-        setInputData('environment', '');
+        setInputData('environment', 'argocd');
         deleteTabData('environment');
         wsDataCompare();
         workspaceImageUpdate();
@@ -3087,7 +3198,12 @@ const compareInfo = function( modalID, compareData ){
           wsDataJSON['application-code'][item][item + '-unit-test-dir']     = (data_pipelines[i].unit_test.directory  !== undefined? data_pipelines[i].unit_test.directory : null);
           wsDataJSON['application-code'][item][item + '-unit-test-parameter'] = (data_pipelines[i].unit_test.params  !== undefined? JSON.stringify({"p":data_pipelines[i].unit_test.params}) : null);
         }
-    
+
+        wsDataJSON['argocd']['argocd-bluegreen'] = ( data_workspace.cd_config.deploy_method === "BlueGreen"? "auto": "none" );
+        if ( data_workspace.cd_config.deploy_method === "BlueGreen" ) {
+          wsDataJSON['argocd']['argocd-bluegreen-scaledown-wait'] = data_workspace.cd_config.deploy_scale_down_delay_seconds;
+        }
+
         wsDataJSON['environment'] = {};
         data_environments = data_workspace['cd_config']['environments'];
         for(var i in data_environments) {
@@ -3247,6 +3363,7 @@ const compareInfo = function( modalID, compareData ){
         }
         update_mode = "作成"; 
       } else {
+        created_workspace_id = workspace_id;
         api_param = {
           "type": "PUT",
           "url": workspace_api_conf.api.resource.put.replace('{workspace_id}', workspace_id),
@@ -3273,7 +3390,7 @@ const compareInfo = function( modalID, compareData ){
         console.log("FAIL : ワークスペース情報登録");
         console.log("RESPONSE:" + jqXHR.responseText);
         // 失敗
-        try { reject({"error_statement" : jqXHR.responseJSON.result.errorStatement, "error_detail": jqXHR.responseJSON.result.errorDetail}); } catch { reject(); }
+        try { reject({"error_statement" : jqXHR.responseJSON.errorStatement, "error_detail": jqXHR.responseJSON.errorDetail}); } catch { reject(); }
       });
     }).then(() => {
       //
@@ -3310,7 +3427,7 @@ const compareInfo = function( modalID, compareData ){
         console.log("FAIL : ワークスペース作成");
         console.log("RESPONSE:" + jqXHR.responseText);
         // 失敗
-        try { reject({"error_statement" : jqXHR.responseJSON.result.errorStatement, "error_detail": jqXHR.responseJSON.result.errorDetail}); } catch { reject(); }
+        try { reject({"error_statement" : jqXHR.responseJSON.errorStatement, "error_detail": jqXHR.responseJSON.errorDetail}); } catch { reject(); }
       });
     })}).then(() => {
       $('#progress_message').html('STEP 3/3 :   パイプラインを' + update_mode + 'しています');
@@ -3576,6 +3693,13 @@ const compareInfo = function( modalID, compareData ){
       },
       'environments' : [],
     }
+    if(wsDataJSON['argocd']['argocd-bluegreen'] === "none") {
+      reqbody['cd_config'].deploy_method = "RollingUpdate";
+    } else {
+      reqbody['cd_config'].deploy_method = "BlueGreen";
+      reqbody['cd_config'].deploy_scale_down_delay_seconds = wsDataJSON['argocd']['argocd-bluegreen-scaledown-wait'];
+    }
+
     if(wsDataJSON['git-service-argo']['git-service-argo-account-select'] == "applicationCode") {
       reqbody['cd_config'].environments_common.git_repositry.user = wsDataJSON['git-service']['git-service-user'];
       reqbody['cd_config'].environments_common.git_repositry.password = wsDataJSON['git-service']['git-service-token'];
@@ -3654,27 +3778,49 @@ const compareInfo = function( modalID, compareData ){
         console.log("--- data ----");
         console.log(JSON.stringify(data));
         if(data.result == '200') {
+          workspace_update_at = data.update_at;
+          console.log("update_at:" + workspace_update_at);
           // 成功
           resolve();
         } else {
           // 失敗
           reject();
         }
-      }).fail(function() {
+      }).fail((jqXHR, textStatus, errorThrown) => {
         console.log("FAIL : マニフェストパラメータ設定");
+        console.log("RESPONSE:" + jqXHR.responseText);
         // 失敗
-        reject();
+        try { reject({"error_statement" : jqXHR.responseJSON.errorStatement, "error_detail": jqXHR.responseJSON.errorDetail}); } catch { reject(); }
       });
 
     }).then(() => {
 
       console.log('Complete !!');
 
-    }).catch(() => {
+    }).catch((errorinfo) => {
       // 実行中ダイアログ表示
       $('#modal-progress-container').css('display','flex');
       $('#progress_message').html('ERROR :  マニフェストパラメータの設定に失敗しました');
-  
+
+      try {
+        if(errorinfo.error_statement) {
+          $('#error_statement').html('<br><hr>ERROR情報<br>　' + errorinfo.error_statement);
+        } else {
+          $('#error_statement').html('');
+        }
+      } catch {
+        $('#error_statement').html('');
+      }
+      try {
+        if(errorinfo.error_detail) {
+          $('#error_detail').html('　' + errorinfo.error_detail);
+        } else {
+          $('#error_detail').html('　上記の処理でエラーが発生しました');
+        }
+      } catch {
+        $('#error_detail').html('');
+      }
+
       $('#progress-message-ok').prop("disabled", false);
       console.log('Fail !!');
     });
@@ -3773,9 +3919,9 @@ const compareInfo = function( modalID, compareData ){
         "data": {'processing': "True"}
       }).done(function(response) {
         var cdresult = response.rows;
-        console.log("DONE : cdresult");
-        console.log("--- data ----");
-        console.log(JSON.stringify(cdresult));
+        // console.log("DONE : cdresult");
+        // console.log("--- data ----");
+        // console.log(JSON.stringify(cdresult));
         var visibility = "hidden";
         for(let i = 0; i < cdresult.length; i++) {
           if(['ITA-Execute'].includes(cdresult[i].cd_status)) {
@@ -3820,9 +3966,9 @@ const compareInfo = function( modalID, compareData ){
         "data": {'processing': "True"}
       }).done(function(response) {
         var cdresult = response.rows;
-        console.log("DONE : cdresult");
-        console.log("--- data ----");
-        console.log(JSON.stringify(cdresult));
+        // console.log("DONE : cdresult");
+        // console.log("--- data ----");
+        // console.log(JSON.stringify(cdresult));
         var visibility = "hidden";
         for(let i = 0; i < cdresult.length; i++) {
           if(['ArgoCD-Sync', 'ArgoCD-Processing'].includes(cdresult[i].cd_status)) {

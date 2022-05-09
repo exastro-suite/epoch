@@ -41,12 +41,12 @@ spec:
           name: epoch-control-inside-gitlab-conf
       containers:
       - name: epoch-control-inside-gitlab-api
-        image: exastro/epoch-control-inside-gitlab-api:0.4.0_20220325_1500
+        image: exastro/epoch-control-inside-gitlab-api:1.0.0_20220428_1530
         env:
         - name: CONFIG_API_INSIDE_GITLAB_PATH
           value: "/etc/epoch/epochControlInsideGitLabApi/api_inside_gitlab.conf"
         - name: FLASK_ENV
-          value: "development"
+          value: "production"
         - name: API_INSIDE_GITLAB_PORT
           value: "8000"
         - name: PYTHONIOENCODING

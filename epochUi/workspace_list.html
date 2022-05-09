@@ -199,6 +199,10 @@
       <polygon points="15.52,0.64 15.52,10.08 22.56,10.08 22.56,7.68 56.32,7.68 56.32,56.32 22.56,56.32 22.56,53.92 15.52,53.92 
         15.52,63.36 63.36,63.36 63.36,0.64 	"/>
     </symbol>
+    <symbol id="icon-move-out">
+      <polygon points="36,50 24,50 24,39.2 24,14.8 24,10 9.6,4 36,4 36,14.8 40,14.8 40,0 0,0 0,54 24,64 24,54 40,54 40,39.2 36,39.2"/>
+      <polygon points="64,27 48,11 48,18.8 28,18.8 28,35.2 48,35.2 48,43 	"/>
+    </symbol>
   </defs>
 </svg>
 
@@ -238,7 +242,7 @@
           </div>
         </div>
       </li>
-      <li class="header-menu-item"><a href="#" class="header-menu-link epoch-popup-m" title="ヘルプ"><svg viewBox="0 0 64 64" class="icon-header-svg"><use href="#icon-header-question" /></svg></a></li>
+      <li class="header-menu-item"><a href="#" class="header-menu-link epoch-popup-m" menu-type="help" title="ヘルプ" target="_blank"><svg viewBox="0 0 64 64" class="icon-header-svg"><use href="#icon-header-question" /></svg></a></li>
       <li class="header-menu-item"><a href="#" class="header-menu-link epoch-popup-m" title="通知"><svg viewBox="0 0 64 64" class="icon-header-svg"><use href="#icon-header-notice" /></svg></a></li>
       <!-- li class="header-menu-item"><a href="#" class="header-menu-link epoch-popup-m" title="11111111111111111111111"><svg viewBox="0 0 64 64" class="icon-header-svg"><use href="#icon-header-setting" /></svg></a></li -->
     </ul>
@@ -283,7 +287,7 @@
       <div class="content-header-menu">
         <ul class="content-menu-list">
           <li class="content-menu-item">
-            <button class="content-menu-button epoch-popup" data-button="newWorkspace" title="新しいワークスペースを作成します。">
+            <button class="content-menu-button epoch-popup" data-button="newWorkspace" title="新しいワークスペースを作成します。" style="display:none">
               <svg viewBox="0 0 64 64" class="content-menu-button-svg">
                 <use href="#icon-menu-workspace"></use>
               </svg>
@@ -306,7 +310,7 @@
 
 <footer id="footer">
   <small class="copyright"></small>
-  <div class="version">Exastro EPOCH Version <script>document.write(epoch_version);</script></div>
+  <div class="version">Exastro EPOCH Version <span class="version_number"></span></div>
 </footer>
 
 </div><!-- // #container -->

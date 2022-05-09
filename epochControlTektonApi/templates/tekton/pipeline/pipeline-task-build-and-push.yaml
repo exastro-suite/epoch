@@ -94,6 +94,10 @@ spec:
     - --build-arg
     - HTTPS_PROXY={{ param.proxy.https }}
     - --build-arg
+    - NO_PROXY={{ param.proxy.no_proxy }}
+    - --build-arg
     - http_proxy={{ param.proxy.http }}
     - --build-arg
     - https_proxy={{ param.proxy.https }}
+    - --build-arg
+    - no_proxy={{ param.proxy.no_proxy }}

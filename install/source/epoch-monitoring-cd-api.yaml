@@ -42,12 +42,12 @@ spec:
           name: epoch-monitoring-cd-api-conf
       containers:
       - name: epoch-monitoring-cd-api
-        image: exastro/epoch-monitoring-cd-api:0.4.0_20220325_1500
+        image: exastro/epoch-monitoring-cd-api:1.0.0_20220428_1530
         env:
         - name: CONFIG_API_MONITORING_CD_PATH
           value: "/etc/epoch/epochMonitoringCdApi/api_monitoring_cd.conf"
         - name: FLASK_ENV
-          value: "development"
+          value: "production"
         - name: PYTHONIOENCODING
           value: utf-8
         envFrom:

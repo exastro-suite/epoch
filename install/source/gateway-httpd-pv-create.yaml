@@ -34,6 +34,8 @@ spec:
           value: epoch-system
         - name: PRM_PV_TEMPLATE
           value: exastro-authentication-infra-httpd-conf-pv-template.yaml
+        - name: PRM_PV_BEFORE_DELETE
+          value: "exastro-authentication-infra-httpd-conf,exastro-platform-authentication-infra-keycloak-db"
         volumeMounts:
         - mountPath: /job-script
           name: script

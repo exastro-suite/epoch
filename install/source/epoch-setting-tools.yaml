@@ -32,7 +32,7 @@ spec:
           name: epoch-setting-tools-script
       - name: setting-logs
         hostPath:
-          path: /var/data/epoch/epoch-setting-tools
+          path: /var/data/epoch/epoch-system/epoch-setting-tools
           type: DirectoryOrCreate
       containers:
       - name: epoch-setting-tools

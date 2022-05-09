@@ -22,6 +22,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 var URL_BASE=window.location.protocol + "//" + window.location.hostname + ":" + window.location.port
 var currentUser = null;
+const HELP_URL="https://exastro-suite.github.io/epoch-docs/index_ja.html"
 
 function initialScreen() {
 
@@ -104,9 +105,10 @@ function initialScreen() {
                 tL = $target.offset().left,
                 tT = $target.offset().top,
                 pW = $popup.outerWidth(),
-                pH = $popup.outerHeight();
+                pH = $popup.outerHeight(),
+                wsL = $window.scrollLeft();
 
-          let l = ( tL + tW / 2 ) - ( pW / 2 ),
+          let l = ( tL + tW / 2 ) - ( pW / 2 ) - wsL,
               t = tT - pH - m;
           
           // Windowサイズを超える場合は調整
@@ -126,9 +128,28 @@ function initialScreen() {
             'top': t
           });
 
-              // 矢印の位置
-              const aL = ( tL + ( tW / 2 )) - l;
-              $arrow.css('left', aL );
+          // 矢印の位置
+          let aL = 0;
+          if ( tL - wsL + tW > wW ) {
+              const twW = tW - ( tL - wsL + tW - wW );
+              if ( twW > pW || wW < twW ) {
+                  aL = pW / 2;
+              } else {
+                  aL = pW - ( twW / 2 );
+                  if ( pW - aL < 20 ) aL = pW - 20;
+              }    
+          } else if ( tL < wsL ) {
+              const twW = tL + tW - wsL;
+              if ( twW > pW ) {
+                  aL = pW / 2;
+              } else {
+                  aL = twW / 2;
+                  if (aL < 20 ) aL = 20;
+              }
+          } else {
+              aL = ( tL + ( tW / 2 )) - l - wsL;
+          }
+          $arrow.css('left', aL );
 
           $target.on({
             'mouseleave.popup ': function(){
@@ -188,13 +209,14 @@ userInfo.prototype = {
         console.log("[TRACE] get user info response:" + JSON.stringify(data));
 
         u.data = {
-          "id": data["info"]["id"],
+          "id": data["info"]["user_id"],
           "username": data["info"]["username"],
           "enabled": data["info"]["enabled"],
           "firstName": data["info"]["firstName"],
           "lastName": data["info"]["lastName"],
           "email": data["info"]["email"],
-          "composite_roles": data["info"]["composite_roles"]
+          "composite_roles": data["info"]["composite_roles"],
+          "roles": data["info"]["roles"]
         };
 
         // ロールリスト role list
@@ -689,6 +711,16 @@ function getText(textId, originText, ...args){
 
   return text;
 };
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//   set help link / version
+// 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+$(document).ready(() => {
+  $(".header-menu-link[menu-type=help]").attr("href", HELP_URL);
+  $(".version_number").text(epoch_version);
+});
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //

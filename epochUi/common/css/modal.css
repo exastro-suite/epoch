@@ -447,6 +447,7 @@ color: #666;
 }
 .item-horizontal {
 display: flex;
+flex-wrap: wrap;
 }
 .item-horizontal .item-header {
 display: flex;
@@ -458,6 +459,19 @@ margin: 0;
 width: 60%;
 padding-left: 16px;
 border-left: 1px solid #DDD;
+}
+#cd-execution .item-horizontal .item-header { width: 32%; }
+#cd-execution .item-horizontal .item-area { width: 68%; }
+.deploy-confirm-message {
+margin-bottom: 8px; padding: 16px 24px;
+background-color: #F7FCF3;
+border: 2px solid #60C60D;
+border-radius: 4px;
+color: #4D9E0A;
+}
+
+.item-horizontal .item-note {
+width: 100%;
 }
 .item-horizontal .item-reference,
 .item-horizontal .item-string {

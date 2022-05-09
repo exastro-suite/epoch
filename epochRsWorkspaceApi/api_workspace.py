@@ -561,6 +561,7 @@ def update_manifestParameter(workspace_id):
         request_json = request.json.copy()
         update_at = request_json["update_at"]
         update_at = parser.parse(update_at)
+        # globals.logger.debug("update_at:{}".format(update_at))
 
         # Requestからspecification項目を生成する
         specification = request_json
@@ -571,13 +572,17 @@ def update_manifestParameter(workspace_id):
 
             # workspace情報のmanifestParameter部を差し替え
             db_specification = json.loads(workspaceInfo[0]["specification"])
+            # update_at = workspaceInfo[0]["update_at"]
+            globals.logger.debug("update_at:{} - db_update_at:{}".format(update_at, workspaceInfo[0]["update_at"]))
 
             # 登録する配列用のindex
             i = 0
             for db_env in db_specification["ci_config"]["environments"]:
                 for in_env in specification["ci_config"]["environments"]:
+                    # globals.logger.debug("db:[{}] : in:[{}]".format(db_env["environment_id"], in_env["environment_id"]))
                     if db_env["environment_id"] == in_env["environment_id"]:
                         db_specification["ci_config"]["environments"][i]["manifests"] = in_env["manifests"]
+                        # globals.logger.debug("db_manifest:[{}]".format(db_specification["ci_config"]["environments"][i]["manifests"]))
                         break
                 i += 1
 
@@ -851,5 +856,5 @@ def workspace_status_delete(workspace_id, id):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('API_WORKSPACE_PORT', '8000')), threaded=True)
+    app.run(debug=eval(os.environ.get('API_DEBUG', "False")), host='0.0.0.0', port=int(os.environ.get('API_WORKSPACE_PORT', '8000')), threaded=True)
 

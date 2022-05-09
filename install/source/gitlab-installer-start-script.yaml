@@ -1,0 +1,144 @@
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+data:
+  gitlab-installer-start.sh: |+
+    #!/bin/bash
+    #   Copyright 2022 NEC Corporation
+    #
+    #   Licensed under the Apache License, Version 2.0 (the "License");
+    #   you may not use this file except in compliance with the License.
+    #   You may obtain a copy of the License at
+    #
+    #       http://www.apache.org/licenses/LICENSE-2.0
+    #
+    #   Unless required by applicable law or agreed to in writing, software
+    #   distributed under the License is distributed on an "AS IS" BASIS,
+    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    #   See the License for the specific language governing permissions and
+    #   limitations under the License.
+
+    SCRIPT_PATH="/gitlab-installer-start-script"
+
+    echo "---- install gitlab-installer-start.yaml"
+    kubectl apply -f ${SCRIPT_PATH}/gitlab-installer-start.yaml
+
+  gitlab-installer-start.yaml: |
+    #   Copyright 2022 NEC Corporation
+    #
+    #   Licensed under the Apache License, Version 2.0 (the "License");
+    #   you may not use this file except in compliance with the License.
+    #   You may obtain a copy of the License at
+    #
+    #       http://www.apache.org/licenses/LICENSE-2.0
+    #
+    #   Unless required by applicable law or agreed to in writing, software
+    #   distributed under the License is distributed on an "AS IS" BASIS,
+    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    #   See the License for the specific language governing permissions and
+    #   limitations under the License.
+    apiVersion: v1
+    kind: Namespace
+    metadata:
+      name: gitlab
+
+    ---
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: gitlab-installer
+      namespace: gitlab
+
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      name: gitlab-installer-crole
+    rules:
+     - apiGroups: [""]
+       resources: ["persistentvolumes"]
+       verbs: ["get", "list", "watch", "create", "update", "patch"]
+
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+     name: gitlab-installer-crolebinding
+    subjects:
+    - kind: ServiceAccount
+      name: gitlab-installer
+      namespace: gitlab
+    roleRef:
+      kind: ClusterRole
+      name: gitlab-installer-crole
+      apiGroup: rbac.authorization.k8s.io
+
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+     name: gitlab-installer-admin-rolebinding
+    subjects:
+    - kind: ServiceAccount
+      name: gitlab-installer
+      namespace: gitlab
+    roleRef:
+      kind: ClusterRole
+      name: cluster-admin
+      apiGroup: rbac.authorization.k8s.io
+
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+     name: gitlab-installer-rolebinding
+     namespace: gitlab
+    subjects:
+    - kind: ServiceAccount
+      name: gitlab-installer
+      namespace: gitlab
+    roleRef:
+      kind: ClusterRole
+      name: admin
+      apiGroup: rbac.authorization.k8s.io
+
+    ---
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: gitlab-installer
+      namespace: gitlab
+    spec:
+      backoffLimit: 0
+      template:
+        spec:
+          restartPolicy: Never
+          volumes:
+          - name: gitlab-pv
+            hostPath:
+              path: /var/data/epoch/gitlab
+              type: DirectoryOrCreate
+          serviceAccount: gitlab-installer
+          serviceAccountName: gitlab-installer
+          containers:
+          - name: gitlab-installer
+            image: exastro/epoch-gitlab-installer:1.0.0_20220415_1000
+            volumeMounts:
+            - mountPath: /gitlab-pv
+              name: gitlab-pv
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: gitlab-installer-start-script
+  namespace: epoch-system

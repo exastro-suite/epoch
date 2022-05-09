@@ -18,5 +18,4 @@ if [ $# -ne 1 ]; then
     exit 1
 fi
 
-kubectl exec -i -n epoch-system deploy/workspace-db -- mysql -N -B -u root -ppassword workspace_db -e"select info from workspace_access where workspace_id=$1;"  2> /dev/null | jq
-
+curl http://epoch-rs-workspace-api:8000/workspace/${1}/access

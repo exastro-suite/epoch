@@ -11,17 +11,6 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-
-# apiVersion: v1
-# kind: ConfigMap
-# metadata:
-#   name: gateway-httpd-conf
-#   namespace: exastro-platform-authentication-infra
-# data:
-#   gateway-httpd.conf: |
-#     #
-
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -38,18 +27,19 @@ spec:
         name: gateway-httpd
     spec:
       volumes:
-      # - name: gateway-httpd-conf
-      #   configMap:
-      #     name: gateway-httpd-conf
-      - name: gateway-httpd-conf
+      - name: gateway-httpd
         persistentVolumeClaim:
-          claimName: exastro-authentication-infra-httpd-conf
+          claimName: exastro-authentication-infra-httpd
       containers:
       - name: gateway-httpd
-        image: exastro/gateway-httpd:0.3.1_20220126_0900
+        image: exastro/gateway-httpd:1.0.0_20220428_1530
         volumeMounts:
-        - name: gateway-httpd-conf
+        - name: gateway-httpd
           mountPath: /etc/httpd/conf.d/exastroSettings
+          subPath: httpd-conf
+        #- name: gateway-httpd
+        #  mountPath: /var/log/httpd
+        #  subPath: httpd-log
 
 ---
 apiVersion: v1
