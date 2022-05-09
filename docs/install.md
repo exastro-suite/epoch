@@ -65,13 +65,13 @@
 
 1. 次のコマンドを実行して、EPOCH をインストールします:
 
-    ```bash
+    ```
     kubectl apply -f https://github.com/exastro-suite/epoch/releases/latest/download/epoch-install.yaml
     ```
 
 1. 次のコマンドを実行して、EPOCHの初期設定を行います:
 
-    ```bash
+    ```
     kubectl run -i --rm set-host -n epoch-system --restart=Never --image=exastro/epoch-setting:0.3_5 --pod-running-timeout=30m -- set-host [your-host]
     ```
     **注:** [your-host]には、ご自身のホストに接続するためのサーバー名またはIPアドレスを指定してください。
@@ -84,7 +84,7 @@
 
 1. 初期設定実行中は、以下のような実行状況メッセージが表示されます。
 
-    ```bash
+    ```
     If you don't see a command prompt, try pressing enter.
     [INFO] Call set-host command
     [INFO] START : set-host.sh
@@ -125,7 +125,7 @@
 
 1. 以下のメッセージが表示されましたら初期設定は完了となります:
 
-    ```bash
+    ```
     ****  completed successfully ****
     ```
 
@@ -165,7 +165,7 @@
 
     コマンドで表示した"SONARQUBE_USER","SONARQUBE_PASSWORD"の内容がユーザ・パスワードとなります
 
-    ```shell
+    ```
     kubectl exec -it deployment/epoch-setting-tools -n epoch-system -- bash /scripts/get-workspace-tools-account.sh [wowkspace_id]
     ```
 
@@ -175,7 +175,7 @@
 
     コマンドで表示した"ITA_USER","ITA_PASSWORD"の内容がユーザ・パスワードとなります
 
-    ```shell
+    ```
     kubectl exec -it deployment/epoch-setting-tools -n epoch-system -- bash /scripts/get-workspace-tools-account.sh [wowkspace_id]
     ```
 
@@ -183,7 +183,7 @@
 
     次のコマンドを実行してadminユーザのパスワードを表示します
 
-    ```shell
+    ```
     kubectl exec -it deployment/epoch-setting-tools -n epoch-system -- bash /scripts/get-keycloak-initial-admin-password.sh
     ```
 
@@ -191,6 +191,6 @@
 
     次のコマンドを実行してrootユーザのパスワードを表示します
 
-    ```shell
+    ```
     kubectl exec -it deployment/epoch-setting-tools -n epoch-system -- bash /scripts/get-gitlab-initial-root-password.sh
     ```
