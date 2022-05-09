@@ -123,9 +123,7 @@ def call_workspace_member_logs(workspace_id, username, log_kind):
     """
 
     try:
-        globals.logger.debug('=' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}] member[{}] log_kind[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id, username, log_kind))
-        globals.logger.debug('=' * 50)
+        globals.logger.info("Request workspace member's log output. method={}, workspace_id={}, member={}, log_kind={}".format(request.method, workspace_id, username, log_kind))
 
         # log出力 log output
         return logs_insert(workspace_id=workspace_id, username=username, log_kind=log_kind)
@@ -146,7 +144,7 @@ def logs_insert(workspace_id=None, username=None, log_kind=None):
     """
 
     try:
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}] member[{}] log_kind[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id, username, log_kind))
+        globals.logger.info('Insert log_id. workspace_id={}, member={}, log_kind={}'.format(workspace_id, username, log_kind))
 
         with dbconnector() as db, dbcursor(db) as cursor:
             
@@ -156,7 +154,7 @@ def logs_insert(workspace_id=None, username=None, log_kind=None):
             # logs insert実行
             log_id = da_logs.insert_logs(cursor, workspace_id, username, log_kind, contents)
 
-            globals.logger.debug('insert log_id:{}'.format(log_id))
+            globals.logger.info('SUCCESS: Insert log_id:{}. ret_status={}'.format(log_id, 200))
 
         return jsonify({"result": "200"}), 200
 
