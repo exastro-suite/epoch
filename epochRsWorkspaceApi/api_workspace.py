@@ -52,7 +52,7 @@ def create_workspace():
     Returns:
         response: HTTP Respose
     """
-    globals.logger.debug('CALL create_workspace')
+    globals.logger.info('Create workspace. method={}'.format(request.method))
     app_name = "ワークスペース情報登録:"
     exec_stat = "初期化"
     exec_detail = ""
@@ -81,7 +81,7 @@ def create_workspace():
         # Response用のjsonに変換
         response_rows = fetch_rows
 
-        globals.logger.info('CREATED workspace:{}'.format(str(workspace_id)))
+        globals.logger.info('SUCCESS: Create workspace. ret_stauts={}, workspace_id={}, workspace_information_count={}'.format(200, str(workspace_id), len(response_rows)))
 
         return jsonify({"result": "200", "rows": response_rows })
 
@@ -96,7 +96,7 @@ def list_workspace():
     Returns:
         response: HTTP Respose
     """
-    globals.logger.debug('CALL list_workspace')
+    globals.logger.info('Get workspace information list. method={}'.format(request.method))
 
     try:
         with dbconnector() as db, dbcursor(db) as cursor:
@@ -105,6 +105,9 @@ def list_workspace():
 
         # Response用のjsonに変換
         response_rows = convert_workspace_response(fetch_rows)
+
+        #処理が成功したことのログを出力
+        globals.logger.info('SUCCESS: Get workspace information list. ret_status={}, workspace_information_list_count={}, time={}'.format("200", len(response_rows), str(datetime.now(globals.TZ))))
 
         return jsonify({"result": "200", "rows": response_rows, "time": str(datetime.now(globals.TZ))}), 200
 
@@ -132,7 +135,7 @@ def get_workspace(workspace_id):
             # Response用のjsonに変換
             response_rows = convert_workspace_response(fetch_rows)
 
-            globals.logger.info('SUCCESS: Get workspace details. workspace_id={}, ret_result={}, workspace_count={}, time={}'.format(workspace_id, 200, len(response_rows), str(datetime.now(globals.TZ))))
+            globals.logger.info('SUCCESS: Get workspace details. ret_result={}, workspace_id={}, workspace_info_count={}, time={}'.format(workspace_id, 200, len(response_rows), str(datetime.now(globals.TZ))))
 
             return jsonify({"result": "200", "rows": response_rows, "time": str(datetime.now(globals.TZ))}), 200
 
@@ -206,7 +209,7 @@ def put_workspace(workspace_id):
     Returns:
         response: HTTP Respose
     """
-    globals.logger.debug("CALL put_workspace:{}".format(workspace_id))
+    globals.logger.info('Update workspace. method={}, workspace_id={}'.format(request.method, workspace_id))
     app_name = "ワークスペース情報更新:"
     exec_stat = "初期化"
     exec_detail = ""
@@ -215,7 +218,7 @@ def put_workspace(workspace_id):
         request_json = request.json.copy()
         update_at = request_json["update_at"]
         update_at = parser.parse(update_at)
-        globals.logger.debug(f"update_at:{update_at}")
+        globals.logger.info(f"update_at:{update_at}")
         # Requestからspecification項目を生成する
         specification = convert_workspace_specification(request_json)
 
@@ -241,6 +244,8 @@ def put_workspace(workspace_id):
         # Response用のjsonに変換
         response_rows = fetch_rows
 
+        globals.logger.info('SUCCESS: Update workspace. workspace_id={}, workspace_id={}, workspace_infomation_count={}'.format(200, workspace_id, len(response_rows)))
+        
         return jsonify({"result": "200", "rows": response_rows })
 
     except Exception as e:
@@ -255,7 +260,7 @@ def patch_workspace(workspace_id):
     Returns:
         response: HTTP Respose
     """
-    globals.logger.debug("CALL patch_workspace:{}".format(workspace_id))
+    globals.logger.info("Update part of workspace information. workspace_id={}".format(workspace_id))
     app_name = "ワークスペース更新パッチ:"
     exec_stat = "更新"
     exec_detail = ""
@@ -279,7 +284,7 @@ def patch_workspace(workspace_id):
             exec_stat = "更新実行"
             upd_cnt = da_workspace.patch_workspace(cursor, workspace_id, request_json)
 
-            globals.logger.debug('workspace update complete update_count:{}'.format(upd_cnt))
+            globals.logger.info('workspace update complete update_count:{}'.format(upd_cnt))
 
             if upd_cnt == 0:
                 # データがないときは404応答
@@ -298,6 +303,8 @@ def patch_workspace(workspace_id):
 
         # Response用のjsonに変換
         response_rows = fetch_rows
+        
+        globals.logger.info("SUCCESS: Update part of workspace information. ret_status={}, workspace_id={}, workspace_information_count={}".format("200", workspace_id, len(response_rows)))
 
         return jsonify({"result": "200", "rows": response_rows }), 200
 
@@ -743,7 +750,7 @@ def workspace_access_delete(workspace_id, id):
 
 @app.route('/workspace/<int:workspace_id>/status', methods=['POST'])
 def workspace_status_registration(workspace_id):
-    """ワークスペース状態状態登録 workspace status registration
+    """ワークスペース状態登録 workspace status registration
 
     Args:
         workspace_id (int): ワークスペースID worksapce id
@@ -751,7 +758,7 @@ def workspace_status_registration(workspace_id):
     Returns:
         response: HTTP Respose
     """
-    globals.logger.debug("CALL workspace_access_registration:{}".format(workspace_id))
+    globals.logger.info('Register workspace status. method={}, workspace_id={}'.format(request.method, workspace_id))
 
     try:
         # 登録内容は基本的に、引数のJsonの値を使用する(追加項目があればここで記載)
@@ -761,7 +768,7 @@ def workspace_status_registration(workspace_id):
             # ワークスペース状態情報 insert実行 worksapce status info. insert
             da_workspace_status.insert_workspace_status(cursor, workspace_id, info)
 
-            globals.logger.debug('insert workspace_id:{}'.format(workspace_id))
+        globals.logger.info('SUCCESS: Register workspace status. ret_status={}, workspace_id={}'.format(200, workspace_id))
 
         return jsonify({"result": "200"}), 200
 
@@ -778,7 +785,7 @@ def workspace_status_update(workspace_id):
     Returns:
         response: HTTP Respose
     """
-    globals.logger.debug("CALL workspace_status_update:{}".format(workspace_id))
+    globals.logger.info('Update workspace staus. method={}, workspace_id={}'.format(request.method, workspace_id))
 
     try:
         # 更新対象のJson値をパラメータとして受け取る Receive the Json value to be updated as a parameter
@@ -788,12 +795,14 @@ def workspace_status_update(workspace_id):
             # ワークスペース状態情報 update実行 worksapce status info. update
             upd_cnt = da_workspace_status.update_workspace_status(cursor, workspace_id, info_upadate_colums)
 
-            globals.logger.debug('update workspace_id:{}'.format(workspace_id))
+            globals.logger.info('update workspace_id:{}'.format(workspace_id))
 
             if upd_cnt == 0:
                 # データがないときは404応答
                 db.rollback()
                 return jsonify({"result": "404" }), 404
+
+        globals.logger.info('SUCCESS: Update workspace staus. ret_stauts={}, workspace_id={}'.format(200, workspace_id))
 
         return jsonify({"result": "200"}), 200
 
@@ -810,7 +819,7 @@ def workspace_status_get(workspace_id):
     Returns:
         response: HTTP Respose
     """
-    globals.logger.debug("CALL workspace_status_get:{}".format(workspace_id))
+    globals.logger.info('Get workspace status. method={}, workspace_id={}'.format(request.method, workspace_id))
 
     try:
         # 登録内容は基本的に、引数のJsonの値を使用する(追加項目があればここで記載)
@@ -826,6 +835,8 @@ def workspace_status_get(workspace_id):
 
         # Response用のjsonに変換[変換が必要な場合は関数化する]
         response_row = json.loads(fetch_rows[0]["info"])
+
+        globals.logger.info('SUCCESS: Get workspace status. ret_status={}, workspace_id={}, workspace_status_information_count={}'.format(200, workspace_id, len(response_row)))
 
         return jsonify(response_row), 200
 
