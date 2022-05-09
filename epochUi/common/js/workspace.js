@@ -73,7 +73,8 @@ const wsDataJSON = {
   'workspace': {
   },
   'argocd': {
-    'argocd-bluegreen': 'auto'
+    'argocd-bluegreen': 'auto',
+    'argocd-bluegreen-scaledown-wait': 30,
   },
   'environment' : {
   },
@@ -612,7 +613,7 @@ const wsModalJSON = {
             'min': 1,
             'max': 604800,
             'placeholder': '0',
-            'note': '古いPodのスケールダウンの待ち時間（秒）を入力してください'
+            'note': '古いPodのスケールダウンの待ち時間（秒）を入力してください',
           },
         ]
       },

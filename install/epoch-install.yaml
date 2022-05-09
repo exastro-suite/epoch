@@ -629,7 +629,7 @@ spec:
           name: epoch-control-workspace-conf
       containers:
       - name: epoch-control-workspace-api
-        image: exastro/epoch-control-workspace-api:1.0.0_20220418_1500
+        image: exastro/epoch-control-workspace-api:1.0.0_20220428_1530
         env:
         - name: CONFIG_API_WORKSPACE_PATH
           value: "/etc/epoch/epochControlWorkspaceApi/api_workspace.conf"
@@ -719,7 +719,7 @@ spec:
           name: epoch-control-github-conf
       containers:
       - name: epoch-control-github-api
-        image: exastro/epoch-control-github-api:1.0.0_20220418_1500
+        image: exastro/epoch-control-github-api:1.0.0_20220428_1530
         env:
         - name: HTTP_PROXY
           valueFrom:
@@ -811,7 +811,7 @@ spec:
           name: epoch-control-inside-gitlab-conf
       containers:
       - name: epoch-control-inside-gitlab-api
-        image: exastro/epoch-control-inside-gitlab-api:1.0.0_20220418_1500
+        image: exastro/epoch-control-inside-gitlab-api:1.0.0_20220428_1530
         env:
         - name: CONFIG_API_INSIDE_GITLAB_PATH
           value: "/etc/epoch/epochControlInsideGitLabApi/api_inside_gitlab.conf"
@@ -911,7 +911,7 @@ spec:
           name: epoch-control-tekton-conf
       containers:
       - name: epoch-control-tekton-api
-        image: exastro/epoch-control-tekton-api:1.0.0_20220418_1500
+        image: exastro/epoch-control-tekton-api:1.0.0_20220428_1530
         env:
         - name: CONFIG_API_TEKTON_PATH
           value: "/etc/epoch/epochControlTektonApi/api_tekton.conf"
@@ -1142,7 +1142,7 @@ spec:
           name: epoch-control-argocd-conf
       containers:
       - name: epoch-control-argocd-api
-        image: exastro/epoch-control-argocd-api:1.0.0_20220418_1500
+        image: exastro/epoch-control-argocd-api:1.0.0_20220428_1530
         env:
         - name: CONFIG_API_ARGOCD_PATH
           value: "/etc/epoch/epochControlArgoCDApi/api_argocd.conf"
@@ -1226,7 +1226,7 @@ spec:
           name: epoch-control-ita-conf
       containers:
       - name: epoch-control-ita-api
-        image: exastro/epoch-control-ita-api:1.0.0_20220418_1500
+        image: exastro/epoch-control-ita-api:1.0.0_20220428_1700
         env:
         - name: CONFIG_API_ITA_PATH
           value: "/etc/epoch/epochControlITAApi/api_ita.conf"
@@ -1336,7 +1336,7 @@ spec:
           name: epoch-control-dockerhub-conf
       containers:
       - name: epoch-control-dockerhub-api
-        image: exastro/epoch-control-dockerhub-api:1.0.0_20220418_1500
+        image: exastro/epoch-control-dockerhub-api:1.0.0_20220428_1530
         env:
         - name: HTTP_PROXY
           valueFrom:
@@ -1430,7 +1430,7 @@ spec:
           name: epoch-rs-workspace-conf
       containers:
       - name: epoch-rs-workspace-api
-        image: exastro/epoch-rs-workspace-api:1.0.0_20220425_1730
+        image: exastro/epoch-rs-workspace-api:1.0.0_20220428_1530
         env:
         - name: CONFIG_API_WORKSPACE_PATH
           value: "/etc/epoch/epochRsWorkspaceApi/api_workspace.conf"
@@ -1659,7 +1659,7 @@ spec:
           name: epoch-rs-ci-result-conf
       containers:
       - name: epoch-rs-ci-result-api
-        image: exastro/epoch-rs-ci-result-api:1.0.0_20220418_1500
+        image: exastro/epoch-rs-ci-result-api:1.0.0_20220428_1530
         env:
         - name: CONFIG_API_CI_RESULT_PATH
           value: "/etc/epoch/epochRsCiResultApi/api_ci_result.conf"
@@ -1865,7 +1865,7 @@ spec:
           name: epoch-rs-cd-result-conf
       containers:
       - name: epoch-rs-cd-result-api
-        image: exastro/epoch-rs-cd-result-api:1.0.0_20220425_1730
+        image: exastro/epoch-rs-cd-result-api:1.0.0_20220428_1530
         env:
         - name: CONFIG_API_CD_RESULT_PATH
           value: "/etc/epoch/epochRsCdResultApi/api_cd_result.conf"
@@ -2066,7 +2066,7 @@ spec:
           name: epoch-rs-logs-conf
       containers:
       - name: epoch-rs-logs-api
-        image: exastro/epoch-rs-logs-api:1.0.0_20220418_1500
+        image: exastro/epoch-rs-logs-api:1.0.0_20220428_1530
         env:
         - name: CONFIG_API_LOGS_PATH
           value: "/etc/epoch/epochRsLogsApi/api_logs.conf"
@@ -2317,7 +2317,7 @@ spec:
           name: epoch-service-api2-conf
       containers:
       - name: epoch-service-api2
-        image: exastro/epoch-service-api2:1.0.0_20220418_1500
+        image: exastro/epoch-service-api2:1.0.0_20220428_1530
         env:
         - name: CONFIG_API_SERVICE_PATH
           value: "/etc/epoch/epochServiceApi/api_service.conf"
@@ -2389,7 +2389,7 @@ spec:
     spec:
       containers:
       - name: epoch-ui
-        image: exastro/epoch-ui:1.0.0_20220418_1500
+        image: exastro/epoch-ui:1.0.0_20220428_1700
 
 ---
 apiVersion: v1
@@ -2503,7 +2503,7 @@ spec:
           name: epoch-monitoring-cd-api-conf
       containers:
       - name: epoch-monitoring-cd-api
-        image: exastro/epoch-monitoring-cd-api:1.0.0_20220418_1500
+        image: exastro/epoch-monitoring-cd-api:1.0.0_20220428_1530
         env:
         - name: CONFIG_API_MONITORING_CD_PATH
           value: "/etc/epoch/epochMonitoringCdApi/api_monitoring_cd.conf"
@@ -3166,7 +3166,7 @@ spec:
           claimName: exastro-authentication-infra-httpd
       containers:
       - name: authentication-infra-api
-        image: exastro/authentication-infra-api:1.0.0_20220418_1830
+        image: exastro/authentication-infra-api:1.0.0_20220428_1530
         env:
         - name: CONFIG_API_AUTHC_INFRA_PATH
           value: "/etc/exastro-authentication-infra/authentication-infra-api/api_authc_infra.conf"
@@ -3303,14 +3303,14 @@ spec:
           claimName: exastro-authentication-infra-httpd
       containers:
       - name: gateway-httpd
-        image: exastro/gateway-httpd:1.0.0_20220418_1500
+        image: exastro/gateway-httpd:1.0.0_20220428_1530
         volumeMounts:
         - name: gateway-httpd
           mountPath: /etc/httpd/conf.d/exastroSettings
           subPath: httpd-conf
-        - name: gateway-httpd
-          mountPath: /var/log/httpd
-          subPath: httpd-log
+        #- name: gateway-httpd
+        #  mountPath: /var/log/httpd
+        #  subPath: httpd-log
 
 ---
 apiVersion: v1
@@ -3413,7 +3413,7 @@ data:
     spec:
       storageClassName: exastro-authentication-infra-sc
       capacity:
-        storage: 8Gi
+        storage: 500Mi
       accessModes:
         - ReadWriteMany
       persistentVolumeReclaimPolicy: Retain

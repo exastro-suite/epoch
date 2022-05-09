@@ -49,7 +49,7 @@ spec:
           name: epoch-rs-cd-result-conf
       containers:
       - name: epoch-rs-cd-result-api
-        image: exastro/epoch-rs-cd-result-api:1.0.0_20220425_1730
+        image: exastro/epoch-rs-cd-result-api:1.0.0_20220428_1530
         env:
         - name: CONFIG_API_CD_RESULT_PATH
           value: "/etc/epoch/epochRsCdResultApi/api_cd_result.conf"
