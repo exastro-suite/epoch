@@ -43,11 +43,21 @@
     | 31182 | 認証システム |
     | 31183 | GitLab |
 
-1. Worker nodeのLinuxのkernelパラメータ設定について、次の条件を満たしている必要があります。
+1. EPOCHでは、静的解析ツールにSonarQubeを使用しており、SonarQubeでは組み込みのElasticsearchを使用するため、Worker nodeのLinuxのkernelパラメータ設定について、次の条件を満たしている必要があります。
 
     | kernelパラメータ | 条件 |
     | :- | :- |
     | vm.max_map_count | 524288 以上 |
+    | fs.file-max | 131072 以上 |
+
+
+    | ユーザーリソース | 条件 |
+    | :- | :- |
+    | 同時にオープンできるファイル数 | 131072 以上 |
+    | 実行可能なユーザープロセスの最大数 | 8192 以上 |
+
+    ※SonarQubeのホスト要件については以下のサイトで確認できます。  
+    [https://hub.docker.com/_/sonarqube](https://hub.docker.com/_/sonarqube)
 
 ## EPOCHのインストール
 
