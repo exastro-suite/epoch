@@ -135,7 +135,7 @@ def get_workspace(workspace_id):
             # Response用のjsonに変換
             response_rows = convert_workspace_response(fetch_rows)
 
-            globals.logger.info('SUCCESS: Get workspace details. ret_result={}, workspace_id={}, workspace_info_count={}, time={}'.format(workspace_id, 200, len(response_rows), str(datetime.now(globals.TZ))))
+            globals.logger.info('SUCCESS: Get workspace details. ret_status={}, workspace_id={}, workspace_info_count={}, time={}'.format(200, workspace_id, len(response_rows), str(datetime.now(globals.TZ))))
 
             return jsonify({"result": "200", "rows": response_rows, "time": str(datetime.now(globals.TZ))}), 200
 
@@ -186,6 +186,9 @@ def update_workspace(workspace_id):
     Returns:
         response: HTTP Respose
     """
+
+    globals.logger.info('Update or Update part of workspace imformation. method={}'.format(request.method))
+
     try:
         if request.method == 'PUT':
             # ワークスペース更新 put workspace
@@ -209,7 +212,7 @@ def put_workspace(workspace_id):
     Returns:
         response: HTTP Respose
     """
-    globals.logger.info('Update workspace. method={}, workspace_id={}'.format(request.method, workspace_id))
+    globals.logger.info('Update workspace information. workspace_id={}'.format(workspace_id))
     app_name = "ワークスペース情報更新:"
     exec_stat = "初期化"
     exec_detail = ""
@@ -218,7 +221,7 @@ def put_workspace(workspace_id):
         request_json = request.json.copy()
         update_at = request_json["update_at"]
         update_at = parser.parse(update_at)
-        globals.logger.info(f"update_at:{update_at}")
+        globals.logger.info(f"workspace_id={workspace_id}, update_at={update_at}")
         # Requestからspecification項目を生成する
         specification = convert_workspace_specification(request_json)
 
@@ -244,7 +247,7 @@ def put_workspace(workspace_id):
         # Response用のjsonに変換
         response_rows = fetch_rows
 
-        globals.logger.info('SUCCESS: Update workspace. workspace_id={}, workspace_id={}, workspace_infomation_count={}'.format(200, workspace_id, len(response_rows)))
+        globals.logger.info('SUCCESS: Update workspace. ret_status={}, workspace_id={}, workspace_infomation_count={}'.format(200, workspace_id, len(response_rows)))
         
         return jsonify({"result": "200", "rows": response_rows })
 
@@ -284,7 +287,7 @@ def patch_workspace(workspace_id):
             exec_stat = "更新実行"
             upd_cnt = da_workspace.patch_workspace(cursor, workspace_id, request_json)
 
-            globals.logger.info('workspace update complete update_count:{}'.format(upd_cnt))
+            globals.logger.info('workspace update complete. workspace_id={} update_count={}'.format(workspace_id, upd_cnt))
 
             if upd_cnt == 0:
                 # データがないときは404応答
