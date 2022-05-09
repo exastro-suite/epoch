@@ -43,7 +43,7 @@
     | 31182 | 認証システム |
     | 31183 | GitLab |
 
-1. EPOCHでは、静的解析ツールにSonarQubeを使用しており、SonarQubeでは組み込みのElasticsearchを使用するため、Worker nodeのLinuxのkernelパラメータ設定について、次の条件を満たしている必要があります。
+1. EPOCHでは、SonarQubeを使用するため、Worker nodeのLinuxの設定について、次の条件を満たしている必要があります。
 
     | kernelパラメータ | 条件 |
     | :- | :- |
