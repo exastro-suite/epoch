@@ -3,9 +3,9 @@ openapi: 3.0.0
 # 基本情報
 info:
   # バージョン表記
-  version: 0.3.1
+  version: 1.0.0
   # タイトル
-  title: epoch-serivice-api
+  title: epoch-service-api
   # 説明
   description: |
     - Exastro EPOCH service-api のRestAPIドキュメント
