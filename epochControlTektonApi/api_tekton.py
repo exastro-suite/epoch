@@ -106,7 +106,7 @@ def post_tekton_pipeline(workspace_id):
     Returns:
         Response: HTTP Respose
     """
-    globals.logger.debug('CALL post_tekton_pipeline:{}'.format(workspace_id))
+    globals.logger.info('Create tekton pipeline. method={}, workspace_id={}'.format(request.method, workspace_id))
 
 
     try:
@@ -211,7 +211,9 @@ def post_tekton_pipeline(workspace_id):
                 pass    # 失敗は無視
 
             raise   # エラーをスロー
-
+        
+        globals.logger.info('SUCCESS: Create tekton pipeline. ret_status={}, workspace_id={}'.format(200, workspace_id))
+        
         return jsonify({"result": "200"}), 200
 
     except Exception as e:
@@ -485,7 +487,7 @@ def get_tekton_pipelinerun(workspace_id):
     Returns:
         Response: HTTP Respose
     """
-    globals.logger.debug('CALL get_tekton_pipelinerun:{}'.format(workspace_id))
+    globals.logger.debug('Get tekton pipelinerun result. method={}, workspace_id={}'.format(request.method, workspace_id))
 
     try:
         #    latest (bool): 最新のみ
@@ -539,7 +541,7 @@ def get_tekton_pipelinerun(workspace_id):
                     resPlRunitem = get_responsePipelineRunItem(plRunitem)
                     resRows.append(resPlRunitem)
 
-        globals.logger.debug(json.dumps(resRows))
+        globals.logger.info('SUCCESS: Get tekton pipelinerun result. ret_status={}, workspace_id={}, tekton_pipelinerun_result_count={}'.format(200, workspace_id, len(json.dumps(resRows))))
 
         # 正常応答
         return jsonify({"result": "200", "rows": resRows}), 200
