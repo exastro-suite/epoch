@@ -59,9 +59,7 @@ def get_repositories(registry):
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Get DockerHub container image. method={}'.format(request.method))
 
         # Get Dockerhub TOKEN
         token = get_token(request.headers["username"], request.headers["password"])
@@ -97,6 +95,8 @@ def get_repositories(registry):
             else:
                 api_url = api_response_json["next"]
 
+        globals.logger.info('SUCCESS: Get DockerHub container image. ret_status={}, DockerHub_container_image_count={}'.format(200, len(rows)))
+
         return jsonify({"result": 200, "rows": rows}), 200
 
     except common.UserException as e:
@@ -115,9 +115,8 @@ def get_token(username, password):
     Returns:
         str: token
     """
-    globals.logger.debug('#' * 50)
-    globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-    globals.logger.debug('#' * 50)
+
+    globals.logger.info('Get token. username={}'.format(username))
 
     api_headers = {
         'Content-Type': 'application/json',
@@ -133,6 +132,8 @@ def get_token(username, password):
         return None
     
     api_response_json = json.loads(api_response.text)
+
+    globals.logger.info('SUCCESS: Get token. ret_status={}, token_count={}'.format(200, len(api_response_json)))
 
     return api_response_json["token"]
 
