@@ -49,11 +49,9 @@ def settings_manifest_templates(workspace_id):
         Response: HTTP Respose
     """
 
-    try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
+    globals.logger.info('Set it-automation manifest template. workspace_id={}'.format(workspace_id))
 
+    try:
         # パラメータ情報(JSON形式) prameter 
         payload = request.json.copy()
 
@@ -63,6 +61,8 @@ def settings_manifest_templates(workspace_id):
 
         # 正常終了 normal termination
         ret_status = 200
+
+        globals.logger.info('SUCCESS: Set it-automation manifest template. workspace_id={}, ret_status={}, ret_text={}'.format(workspace_id, ret_status, len(ret_text)))
 
         # 戻り値をそのまま返却
         # Return the return value as it is

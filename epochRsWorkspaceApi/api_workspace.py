@@ -156,7 +156,7 @@ def get_workspace_before(workspace_id):
     Returns:
         response: HTTP Respose
     """
-    globals.logger.debug('CALL get_workspace_before:{}'.format(workspace_id))
+    globals.logger.info('Get Workspace history before update. method={}, workspace_id={}'.format(request.method, workspace_id))
 
     try:
         with dbconnector() as db, dbcursor(db) as cursor:
@@ -166,6 +166,8 @@ def get_workspace_before(workspace_id):
         if len(fetch_rows) > 0:
             # Convert to json for Response - Response用のjsonに変換
             response_rows = convert_workspace_response(fetch_rows)
+
+            globals.logger.info('SUCCESS: Get Workspace history before update. workspace_id={}, ret_result={}, workspace_count={}, time={}'.format(workspace_id, 200, len(response_rows), str(datetime.now(globals.TZ))))
 
             return jsonify({"result": "200", "rows": response_rows, "time": str(datetime.now(globals.TZ))}), 200
 
