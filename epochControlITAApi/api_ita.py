@@ -118,9 +118,7 @@ def call_ita_manifest_git(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Set git environment. method={}, workspace_id={}'.format(request.method, workspace_id))
 
         if request.method == 'POST':
             # it-automation git-environment settging
@@ -142,11 +140,9 @@ def call_ita_manifest_parameter(workspace_id):
 
     Returns:
         Response: HTTP Respose
-    """
+    """    
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Set it-automation manifest parameter. method={}, workspace_id={}'.format(request.method, workspace_id))
 
         if request.method == 'POST':
             # it-automation manifest-parameter settging
@@ -170,9 +166,7 @@ def call_ita_manifest_templates(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Set it-automation manifest template. method={}, workspace_id={}'.format(request.method, workspace_id))
 
         if request.method == 'POST':
             # it-automation manifest-templates settging
@@ -196,9 +190,7 @@ def call_ita_cd_operations(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Get it-automation CD operation. method={}, workspace_id={}'.format(request.method, workspace_id))
 
         if request.method == 'GET':
             # it-automation get cd-operations 
@@ -222,9 +214,7 @@ def call_ita_cd_execute(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Execute it-automation CD. method={}, workspace_id={}'.format(request.method, workspace_id))
 
         if request.method == 'POST':
             # it-automation cd execute
@@ -249,9 +239,7 @@ def call_ita_cd_execute_by_conductor_id(workspace_id, conductor_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}] conductor_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id, conductor_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Cancel it-automation cd execute. method={}, workspace_id={}, conductor_id={}'.format(request.method, workspace_id, conductor_id))
 
         if request.method == 'DELETE':
             # it-automation cd execute cancel
