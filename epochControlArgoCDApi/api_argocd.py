@@ -86,9 +86,7 @@ def call_argocd_app(workspace_id, app_name):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}] app_name[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id, app_name))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Get ArgoCD APP information. method={}'.format(request.method))
 
         if request.method == 'GET':
             # argocd app情報取得 argocd app information get
@@ -112,9 +110,7 @@ def call_argocd_app_sync(workspace_id, app_name):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Synchronize ArgoCD. method={}'.format(request.method))
 
         if request.method == 'POST':
             # post argocd sync - ArgoCD 同期処理
@@ -139,9 +135,7 @@ def call_argocd_app_rollback(workspace_id, app_name):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Rollback ArgoCD. method={}'.format(request.method))
 
         if request.method == 'POST':
             # post argocd rollback - ArgoCD rollback処理
@@ -247,7 +241,7 @@ def create_argocd(workspace_id):
                 stdout_cd = subprocess.check_output(["kubectl","set","env",deployment_name,"-n",workspace_namespace(workspace_id),env_name],stderr=subprocess.STDOUT)
                 # globals.logger.debug(stdout_cd.decode('utf-8'))
 
-        # 戻り値をそのまま返却        
+        # 戻り値をそのまま返却
         return jsonify({"result": ret_status}), ret_status
 
     except common.UserException as e:
@@ -268,9 +262,7 @@ def get_argocd_app(workspace_id, app_name):
     """
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Get ArgoCD info.')
 
         # ワークスペースアクセス情報取得 Get workspace access information
         access_data = get_access_info(workspace_id)
@@ -278,7 +270,7 @@ def get_argocd_app(workspace_id, app_name):
         argo_host = 'argocd-server.epoch-ws-{}.svc'.format(workspace_id)
         argo_id = access_data['ARGOCD_USER']
         argo_password = access_data['ARGOCD_PASSWORD']
-        
+
         #
         # argocd login
         #
@@ -295,10 +287,11 @@ def get_argocd_app(workspace_id, app_name):
 
         # globals.logger.debug(stdout_cd)
         ret_status = 200
-        
+
         result = json.loads(stdout_cd)
-        
-        # 戻り値をそのまま返却        
+
+        # 戻り値をそのまま返却
+        globals.logger.info('SUCCESS: Get ArgoCD info. ret_result={}, workspace_id={}'.format(200, workspace_id))
         return jsonify({"result": ret_status, "result": result}), ret_status
 
     except common.UserException as e:
@@ -319,9 +312,7 @@ def post_argocd_sync(workspace_id, app_name):
     """
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {} workspace_id[{}] app_name[{}]'.format(inspect.currentframe().f_code.co_name, workspace_id, app_name))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Synchronize ArgoCD.')
 
         # ワークスペースアクセス情報取得 Get workspace access information
         access_data = get_access_info(workspace_id)
@@ -329,7 +320,7 @@ def post_argocd_sync(workspace_id, app_name):
         argo_host = 'argocd-server.epoch-ws-{}.svc'.format(workspace_id)
         argo_id = access_data['ARGOCD_USER']
         argo_password = access_data['ARGOCD_PASSWORD']
-        
+
         #
         # argocd login
         #
@@ -350,8 +341,9 @@ def post_argocd_sync(workspace_id, app_name):
             raise
 
         ret_status = 200
-        
-        # 正常終了 normal end       
+
+        # 正常終了 normal end
+        globals.logger.info('SUCCESS: Synchronize ArgoCD. ret_result={}, workspace_id={}'.format(200, workspace_id))
         return jsonify({"result": ret_status}), ret_status
 
     except common.UserException as e:
@@ -372,9 +364,7 @@ def post_argocd_rollback(workspace_id, app_name):
     """
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {} workspace_id[{}] app_name[{}]'.format(inspect.currentframe().f_code.co_name, workspace_id, app_name))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Rollback ArgoCD.'.format(request.method))
 
         # ワークスペースアクセス情報取得 Get workspace access information
         access_data = get_access_info(workspace_id)
@@ -382,7 +372,7 @@ def post_argocd_rollback(workspace_id, app_name):
         argo_host = 'argocd-server.epoch-ws-{}.svc'.format(workspace_id)
         argo_id = access_data['ARGOCD_USER']
         argo_password = access_data['ARGOCD_PASSWORD']
-        
+
         #
         # argocd login
         #
@@ -402,8 +392,9 @@ def post_argocd_rollback(workspace_id, app_name):
             raise
 
         ret_status = 200
-        
-        # 正常終了 normal end       
+
+        # 正常終了 normal end
+        globals.logger.info('SUCCESS: Rollback ArgoCD. ret_result={}, workspace_id={}'.format(200, workspace_id))
         return jsonify({"result": ret_status}), ret_status
 
     except common.UserException as e:
@@ -422,9 +413,7 @@ def call_argocd_settings(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Set ArgoCD. method={}'.format(request.method))
 
         if request.method == 'POST':
             # settig argocd - ArgoCD設定
@@ -452,6 +441,8 @@ def argocd_settings(workspace_id):
     error_detail = ""
 
     try:
+        globals.logger.info('Set ArgoCD.')
+
         # ワークスペースアクセス情報取得
         access_data = get_access_info(workspace_id)
 
@@ -584,7 +575,8 @@ def argocd_settings(workspace_id):
 
         ret_status = 200
 
-        # 戻り値をそのまま返却        
+        # 戻り値をそのまま返却
+        globals.logger.info('SUCCESS: Set ArgoCD. ret_result={}, workspace_id={}'.format(200, workspace_id))
         return jsonify({"result": ret_status}), ret_status
 
     except common.UserException as e:
