@@ -98,7 +98,7 @@ def post_gitlab_webhooks(workspace_id):
     Returns:
         Response: HTTP Respose
     """
-    globals.logger.debug('CALL post_gitlab_webhooks:{}'.format(workspace_id))
+    globals.logger.info('Set GitLab webhooks. method={}, workspace_id={}'.format(request.method, workspace_id))
 
     try:
         #
@@ -115,6 +115,7 @@ def post_gitlab_webhooks(workspace_id):
         globals.logger.debug('CALL exists_webhook:ret:{}'.format(ret_exists))
         # すでにwebhookが存在したので200で終了
         if ret_exists:
+            globals.logger.info('Already exist GitLab webhooks. ret_status={}, workspace_id={}'.format(200, workspace_id))
             return jsonify({"result": "200", "output": "gitlab_webhook{ already exists webhook}"}), 200
 
         # ヘッダ情報
@@ -142,7 +143,7 @@ def post_gitlab_webhooks(workspace_id):
         globals.logger.debug('code: {}, message: {}'.format(str(request_response.status_code), request_response.text))
         # 正常に作成された場合は201が応答されるので正常終了
         if request_response.status_code == 201:
-            globals.logger.debug('gitlab webhook create SUCCEED')
+            globals.logger.info('SUCCESS: Set GitLab webhooks. ret_status={}, workspace_id={}'.format(str(request_response.status_code), workspace_id))
         else:
             raise Exception("webhook create error:{}".format(request_response.text))
 
