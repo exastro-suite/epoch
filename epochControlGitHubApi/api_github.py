@@ -388,7 +388,7 @@ def get_git_branches():
             rows = None
             globals.logger.debug("git branches get error:[{}] text:[{}]".format(response.status_code, response.text))
 
-        globals.logger.info('SUCCESS: Get git branches information. ret_status={}, git_branch_count={}'.format(ret_status, len(rows)))
+        globals.logger.info('SUCCESS: Get git branches information. ret_status={}, git_branch_count={}'.format(ret_status, len(rows) if rows is not None else None))
 
         # 取得したGit branches情報を返却 Return the acquired Git branches information
         return jsonify({"result": ret_status, "rows": rows}), ret_status
@@ -454,7 +454,7 @@ def get_git_commits(revision = None):
             rows = None
             globals.logger.debug("git commits get error:[{}] text:[{}]".format(response.status_code, response.text))
 
-        globals.logger.info('SUCCESS: Get git commits information. ret_status={}, git_commit_count={}'.format(ret_status, len(rows)))
+        globals.logger.info('SUCCESS: Get git commits information. ret_status={}, git_commit_count={}'.format(ret_status, len(rows) if rows is not None else None))
 
         # 取得したGit commit情報を返却 Return the acquired Git commit information
         return jsonify({"result": ret_status, "rows": rows}), ret_status
