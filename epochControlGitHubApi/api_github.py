@@ -61,9 +61,7 @@ def call_github_webhooks(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Get or Create webhooks. method={}, workspace_id={}'.format(request.method, workspace_id))
 
         if request.method == 'POST':
             # webhooks 生成
