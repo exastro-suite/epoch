@@ -66,16 +66,14 @@ def call_ita(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Create it-automation. method={}, workspace_id={}'.format(request.method, workspace_id))
 
         if request.method == 'POST':
             # it-automation pod create
             return create_ita(workspace_id)
         else:
             # Error
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'POST'))
 
     except Exception as e:
         return common.server_error(e)
@@ -92,16 +90,14 @@ def call_ita_settings(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Set it-automation environment. method={}, workspace_id={}'.format(request.method, workspace_id))
 
         if request.method == 'POST':
             # it-automation setting
             return settings_ita(workspace_id)
         else:
             # Error
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'POST'))
 
     except Exception as e:
         return common.server_error(e)
@@ -125,7 +121,7 @@ def call_ita_manifest_git(workspace_id):
             return api_ita_manifests.settings_git_environment(workspace_id)
         else:
             # Error
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'POST'))
 
     except Exception as e:
         return common.server_error(e)
@@ -140,7 +136,7 @@ def call_ita_manifest_parameter(workspace_id):
 
     Returns:
         Response: HTTP Respose
-    """    
+    """
     try:
         globals.logger.info('Set it-automation manifest parameter. method={}, workspace_id={}'.format(request.method, workspace_id))
 
@@ -149,7 +145,7 @@ def call_ita_manifest_parameter(workspace_id):
             return api_ita_manifests.settings_manifest_parameter(workspace_id)
         else:
             # Error
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'POST'))
 
     except Exception as e:
         return common.server_error(e)
@@ -173,7 +169,7 @@ def call_ita_manifest_templates(workspace_id):
             return api_ita_manifests.settings_manifest_templates(workspace_id)
         else:
             # Error
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'POST'))
 
     except Exception as e:
         return common.server_error(e)
@@ -193,11 +189,11 @@ def call_ita_cd_operations(workspace_id):
         globals.logger.info('Get it-automation CD operation. method={}, workspace_id={}'.format(request.method, workspace_id))
 
         if request.method == 'GET':
-            # it-automation get cd-operations 
+            # it-automation get cd-operations
             return api_ita_cd.get_cd_operations(workspace_id)
         else:
             # Error
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'GET'))
 
     except Exception as e:
         return common.server_error(e)
@@ -221,7 +217,7 @@ def call_ita_cd_execute(workspace_id):
             return api_ita_cd.cd_execute(workspace_id)
         else:
             # Error
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'POST'))
 
     except Exception as e:
         return common.server_error(e)
@@ -246,7 +242,7 @@ def call_ita_cd_execute_by_conductor_id(workspace_id, conductor_id):
             return api_ita_cd.cd_execute_cancel(workspace_id, conductor_id)
         else:
             # Error
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'DELETE'))
 
     except Exception as e:
         return common.server_error(e)
@@ -264,16 +260,14 @@ def call_ita_cd_result(workspace_id, conductor_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}] conductor_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id, conductor_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Get it-automation result. method={}, workspace_id={}, conductor_id={}'.format(request.method, workspace_id, conductor_id))
 
         if request.method == 'GET':
             # it-automation cd result get
             return api_ita_cd.cd_result_get(workspace_id, conductor_id)
         else:
             # Error
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'GET'))
 
     except Exception as e:
         return common.server_error(e)
@@ -291,16 +285,14 @@ def call_ita_cd_result_logs(workspace_id, conductor_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}] conductor_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id, conductor_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Get it-automation result logs. method={}, workspace_id={}, conductor_id={}'.format(request.method, workspace_id, conductor_id))
 
         if request.method == 'GET':
             # it-automation cd result logs get
             return api_ita_cd.cd_result_logs_get(workspace_id, conductor_id)
         else:
             # Error
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'GET'))
 
     except Exception as e:
         return common.server_error(e)
@@ -321,9 +313,7 @@ def create_ita(workspace_id):
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Create it-automation. workspace_id={}'.format(workspace_id))
 
         # namespace定義
         name = common.get_namespace_name(workspace_id)
@@ -385,7 +375,8 @@ def create_ita(workspace_id):
         # 正常終了
         ret_status = 200
 
-        # 戻り値をそのまま返却        
+        # 戻り値をそのまま返却
+        globals.logger.info('SUCCESS: Create it-automation. ret_result={}, workspace_id={}'.format(200, workspace_id))
         return jsonify({"result": ret_status}), ret_status
 
     except common.UserException as e:
@@ -409,9 +400,7 @@ def settings_ita(workspace_id):
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Set it-automation environment. workspace_id={}'.format(workspace_id))
 
         ita_db_name = "ita_db"
         ita_db_user = "ita_db_user"
@@ -483,7 +472,7 @@ def settings_ita(workspace_id):
             globals.logger.debug("ITA initialize Imported.(success)")
             # 正常終了
             ret_status = 200
-            # 戻り値をそのまま返却        
+            # 戻り値をそのまま返却
             return jsonify({"result": ret_status}), ret_status
 
         # 一度もインポートしていないときに処理する
@@ -573,7 +562,8 @@ def settings_ita(workspace_id):
         # 正常終了
         ret_status = 200
 
-        # 戻り値をそのまま返却        
+        # 戻り値をそのまま返却
+        globals.logger.info('SUCCESS: Set it-automation environment. ret_result={}, workspace_id={}'.format(200, workspace_id))
         return jsonify({"result": ret_status}), ret_status
 
     except common.UserException as e:
@@ -708,7 +698,7 @@ def kym_file_upload(host, auth):
         Exception: [description]
 
     Returns:
-        [str]: upload id, filename, menu items 
+        [str]: upload id, filename, menu items
     """
 
     globals.logger.debug('---- upload kym file ----')
