@@ -129,7 +129,7 @@ def call_cd_result_member(workspace_id, username, cd_result_id):
     """
 
     try:
-        globals.logger.info('Get or Create result by members. method={}, workspace_id={}, cd_result_id={}, username={}'.format(request.method, workspace_id, cd_result_id, username))
+        globals.logger.info('Get or Create CD result by members. method={}, workspace_id={}, cd_result_id={}, username={}'.format(request.method, workspace_id, cd_result_id, username))
 
         if request.method == 'POST':
             # cd execute (post)
@@ -169,7 +169,7 @@ def cd_result_insert(workspace_id, cd_result_id, username):
 
             globals.logger.debug('insert lastrowid:{}'.format(lastrowid))
 
-        globals.logger.info('sinomiya:172:SUCCESS: Insert CD result. ret_result={}, workspace_id={}, cd_result_id={}, username={}'.format(200, workspace_id, cd_result_id, username))
+        globals.logger.info('SUCCESS: Insert CD result. ret_result={}, workspace_id={}, cd_result_id={}, username={}'.format(200, workspace_id, cd_result_id, username))
         return jsonify({"result": "200", "lastrowid": lastrowid}), 200
 
     except Exception as e:
