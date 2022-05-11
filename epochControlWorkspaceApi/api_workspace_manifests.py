@@ -62,7 +62,7 @@ def settings_manifest_templates(workspace_id):
         # 正常終了 normal termination
         ret_status = 200
 
-        globals.logger.info('SUCCESS: Set it-automation manifest template. workspace_id={}, ret_status={}, ret_text={}'.format(workspace_id, ret_status, len(ret_text)))
+        globals.logger.info('SUCCESS: Set it-automation manifest template. ret_status={}, workspace_id={}, ret_text_length ={}'.format(ret_status, workspace_id, len(ret_text)))
 
         # 戻り値をそのまま返却
         # Return the return value as it is

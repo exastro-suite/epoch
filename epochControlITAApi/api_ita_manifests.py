@@ -306,7 +306,7 @@ def settings_git_environment(workspace_id):
         # 正常終了
         ret_status = 200
 
-        globals.logger.info('SUCCESS: Set git environment. workspace_id={}, ret_status={}, git_environment_count={}'.format(workspace_id, ret_status, len(response["items"])))
+        globals.logger.info('SUCCESS: Set git environment. ret_status={}, workspace_id={}, git_environment_count={}'.format(ret_status, workspace_id, len(response["items"])))
 
         # 戻り値をそのまま返却        
         return jsonify({"result": ret_status, "rows": response["items"]}), ret_status
@@ -801,7 +801,7 @@ def settings_manifest_parameter(workspace_id):
         # 正常終了
         ret_status = 200
 
-        globals.logger.info('SUCCES: Set it-automation manifest parameter. workspace_id={}, ret_status={}'.format(workspace_id, ret_status))
+        globals.logger.info('SUCCESS: Set it-automation manifest parameter. ret_status={}, workspace_id={}'.format(ret_status, workspace_id))
 
         # 戻り値をそのまま返却        
         return jsonify({"result": ret_status}), ret_status
@@ -1027,7 +1027,7 @@ def settings_manifest_templates(workspace_id):
         # 正常終了
         ret_status = 200
 
-        globals.logger.info('SUCCESS: Set it-automation manifest template. workspace_id={}, ret_status={}'.format(workspace_id, ret_status))
+        globals.logger.info('SUCCESS: Set it-automation manifest template. ret_status={}, workspace_id={}'.format(ret_status, workspace_id))
 
         # 戻り値をそのまま返却        
         return jsonify({"result": ret_status}), ret_status

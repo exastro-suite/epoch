@@ -101,7 +101,7 @@ def get_cd_operations(workspace_id):
         # 正常終了
         ret_status = 200
 
-        globals.logger.info('SUCCESS: Get CD operations list. workspace_id={}, opeletion_count={}, rows={}'.format(workspace_id, ret_status, len(rows)))
+        globals.logger.info('SUCCESS: Get CD operations list. ret_status={}, workspace_id={}, operation_count={}'.format(ret_status, workspace_id, len(rows)))
 
         # 戻り値をそのまま返却        
         return jsonify({"result": ret_status, "rows": rows}), ret_status
@@ -199,7 +199,7 @@ def cd_execute(workspace_id):
         # 正常終了
         ret_status = 200
 
-        globals.logger.info('SUCCESS: Execute it-automation CD. workspace_id={}, ret_status={}, cd_result_id={}'.format(workspace_id, ret_status, cd_result_id))
+        globals.logger.info('SUCCESS: Execute it-automation CD. ret_status={}, workspace_id={}, cd_result_id={}'.format(ret_status, workspace_id, cd_result_id))
 
         # 戻り値をそのまま返却        
         return jsonify({"result": ret_status, "cd_result_id": cd_result_id}), ret_status
@@ -266,7 +266,7 @@ def cd_execute_cancel(workspace_id, conductor_id):
         # 正常終了 Successful completion
         ret_status = 200
 
-        globals.logger.info('SUCCESS: Cancel it-automation cd execute. workspace_id={}, conductor_id={}, ret_status={}'.format( workspace_id, conductor_id, ret_status))
+        globals.logger.info('SUCCESS: Cancel it-automation cd execute. ret_status={}, workspace_id={}, conductor_id={}'.format(ret_status, workspace_id, conductor_id))
 
         # 戻り値をそのまま返却 Return the return value as it is
         return jsonify({"result": ret_status}), ret_status

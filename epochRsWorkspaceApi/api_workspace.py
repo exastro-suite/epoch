@@ -167,7 +167,7 @@ def get_workspace_before(workspace_id):
             # Convert to json for Response - Response用のjsonに変換
             response_rows = convert_workspace_response(fetch_rows)
 
-            globals.logger.info('SUCCESS: Get Workspace history before update. workspace_id={}, ret_result={}, workspace_count={}, time={}'.format(workspace_id, 200, len(response_rows), str(datetime.now(globals.TZ))))
+            globals.logger.info('SUCCESS: Get Workspace history before update. ret_result={}, workspace_id={}, workspace_count={}, time={}'.format(200, workspace_id, len(response_rows), str(datetime.now(globals.TZ))))
 
             return jsonify({"result": "200", "rows": response_rows, "time": str(datetime.now(globals.TZ))}), 200
 
