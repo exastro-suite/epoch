@@ -116,7 +116,7 @@ def get_token(username, password):
         str: token
     """
 
-    globals.logger.info('Get token. username={}'.format(username))
+    globals.logger.info('Get token process. username={}'.format(username))
 
     api_headers = {
         'Content-Type': 'application/json',
@@ -133,7 +133,7 @@ def get_token(username, password):
     
     api_response_json = json.loads(api_response.text)
 
-    globals.logger.info('SUCCESS: Get token. ret_status={}, token_count={}'.format(200, len(api_response_json)))
+    globals.logger.info('SUCCESS: Get token process. username={}'.format(username))
 
     return api_response_json["token"]
 

@@ -541,7 +541,7 @@ def get_tekton_pipelinerun(workspace_id):
                     resPlRunitem = get_responsePipelineRunItem(plRunitem)
                     resRows.append(resPlRunitem)
 
-        globals.logger.info('SUCCESS: Get tekton pipelinerun result. ret_status={}, workspace_id={}, tekton_pipelinerun_result_count={}'.format(200, workspace_id, len(json.dumps(resRows))))
+        globals.logger.info('SUCCESS: Get tekton pipelinerun result. ret_status={}, workspace_id={}, tekton_pipelinerun_result_count={}'.format(200, workspace_id, len(resRows)))
 
         # 正常応答
         return jsonify({"result": "200", "rows": resRows}), 200
