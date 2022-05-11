@@ -84,9 +84,7 @@ def call_github_branches_root():
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}]'.format(inspect.currentframe().f_code.co_name, request.method))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Get github branches. method={}'.format(request.method))
 
         if request.method == 'GET':
             # git branches get
@@ -107,9 +105,7 @@ def call_github_commits_root():
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}]'.format(inspect.currentframe().f_code.co_name, request.method))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Get github commits. method={}'.format(request.method))
 
         if request.method == 'GET':
             # git commits get
@@ -362,9 +358,7 @@ def get_git_branches():
     """
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Get git branches information')
 
         # ヘッダ情報 header info.
         request_headers = {
@@ -394,6 +388,8 @@ def get_git_branches():
             rows = None
             globals.logger.debug("git branches get error:[{}] text:[{}]".format(response.status_code, response.text))
 
+        globals.logger.info('SUCCESS: Get git branches information. ret_status={}, git_branch_count={}'.format(ret_status, len(rows)))
+
         # 取得したGit branches情報を返却 Return the acquired Git branches information
         return jsonify({"result": ret_status, "rows": rows}), ret_status
 
@@ -413,11 +409,9 @@ def get_git_commits(revision = None):
         Response: HTTP Respose
     """
 
-    try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {} revision[{}]'.format(inspect.currentframe().f_code.co_name, revision))
-        globals.logger.debug('#' * 50)
+    globals.logger.info('Get git commits information. revision={}'.format(revision))
 
+    try:
         # ヘッダ情報 header info.
         request_headers = {
             'Authorization': 'token ' + request.headers["private-token"],
@@ -459,6 +453,8 @@ def get_git_commits(revision = None):
         else:
             rows = None
             globals.logger.debug("git commits get error:[{}] text:[{}]".format(response.status_code, response.text))
+
+        globals.logger.info('SUCCESS: Get git commits information. ret_status={}, git_commit_count={}'.format(ret_status, len(rows)))
 
         # 取得したGit commit情報を返却 Return the acquired Git commit information
         return jsonify({"result": ret_status, "rows": rows}), ret_status

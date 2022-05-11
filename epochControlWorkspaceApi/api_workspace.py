@@ -84,9 +84,7 @@ def call_manifest_templates(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Set manifest template. method={}, workspace_id={}'.format(request.method, workspace_id))
 
         if request.method == 'POST':
             # manifest テンプレートの設定

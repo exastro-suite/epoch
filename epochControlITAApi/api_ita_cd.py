@@ -58,14 +58,13 @@ def get_cd_operations(workspace_id):
         Response: HTTP Respose
     """
 
+    globals.logger.info('Get CD operations list. workspace_id={}'.format(workspace_id))
+
     app_name = "ワークスペース情報:"
     exec_stat = "Operation情報取得"
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
 
         # ワークスペースアクセス情報取得
         access_info = api_access_info.get_access_info(workspace_id)
@@ -102,6 +101,8 @@ def get_cd_operations(workspace_id):
         # 正常終了
         ret_status = 200
 
+        globals.logger.info('SUCCESS: Get CD operations list. workspace_id={}, opeletion_count={}, rows={}'.format(workspace_id, ret_status, len(rows)))
+
         # 戻り値をそのまま返却        
         return jsonify({"result": ret_status, "rows": rows}), ret_status
 
@@ -118,15 +119,13 @@ def cd_execute(workspace_id):
         Response: HTTP Respose
     """
 
+    globals.logger.info('Execute it-automation CD. workspace_id={}'.format(workspace_id))
+
     app_name = "ワークスペース情報:"
     exec_stat = "CD実行"
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
-
         # パラメータ情報(JSON形式) prameter save
         payload = request.json.copy()
 
@@ -200,6 +199,8 @@ def cd_execute(workspace_id):
         # 正常終了
         ret_status = 200
 
+        globals.logger.info('SUCCESS: Execute it-automation CD. workspace_id={}, ret_status={}, cd_result_id={}'.format(workspace_id, ret_status, cd_result_id))
+
         # 戻り値をそのまま返却        
         return jsonify({"result": ret_status, "cd_result_id": cd_result_id}), ret_status
 
@@ -220,11 +221,9 @@ def cd_execute_cancel(workspace_id, conductor_id):
         Response: HTTP Respose
     """
 
-    try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
+    globals.logger.info('Cancel it-automation cd execute. workspace_id={}, conductor_id={}'.format( workspace_id, conductor_id))
 
+    try:
         # ワークスペースアクセス情報取得 get workspace access info.
         access_info = api_access_info.get_access_info(workspace_id)
 
@@ -266,6 +265,8 @@ def cd_execute_cancel(workspace_id, conductor_id):
 
         # 正常終了 Successful completion
         ret_status = 200
+
+        globals.logger.info('SUCCESS: Cancel it-automation cd execute. workspace_id={}, conductor_id={}, ret_status={}'.format( workspace_id, conductor_id, ret_status))
 
         # 戻り値をそのまま返却 Return the return value as it is
         return jsonify({"result": ret_status}), ret_status

@@ -116,7 +116,7 @@ def get_tekton_task(workspace_id):
     """
 
     try:
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
+        globals.logger.info('Get CI result information. method={}, workspace_id={}'.format(request.method, workspace_id))
 
         with dbconnector() as db, dbcursor(db) as cursor:
             
@@ -125,6 +125,8 @@ def get_tekton_task(workspace_id):
 
         # Successful completion - 正常終了
         res_status = 200
+        
+        globals.logger.info('SUCCESS: Get CI result information. res_status={}, workspace_id={}, CI_result_information_count={}'.format(200, workspace_id, len(fetch_rows)))
         
         return jsonify({ "result": res_status, "rows": fetch_rows }), res_status
 

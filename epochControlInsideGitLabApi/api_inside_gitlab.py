@@ -12,6 +12,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+from http.client import responses
 from flask import Flask, request, abort, jsonify, render_template
 from datetime import datetime
 import inspect
@@ -165,7 +166,7 @@ def post_gitlab_repos(workspace_id):
     Returns:
         Response: HTTP Respose
     """
-    globals.logger.debug('CALL post_gitlab_repos:{}'.format(workspace_id))
+    globals.logger.info('Create GitLab repository. method={}, workspace_id={}'.format(request.method, workspace_id))
 
     try:
         #
@@ -180,6 +181,9 @@ def post_gitlab_repos(workspace_id):
         globals.logger.debug('CALL exists_repositry:ret:{}'.format(ret_exists))
         # すでにリポジトリが存在したので200で終了
         if ret_exists:
+            
+            globals.logger.info('SUCCESS: Create GitLab repository. workspace_id={}, ret_status={}, gitlab_project={}'.format(workspace_id, 200, "already exists repositry"))
+            
             return jsonify({"result": "200", "output": "gitlab_project{ already exists repositry}"}), 200
 
         # URLの分割
@@ -230,6 +234,8 @@ def post_gitlab_repos(workspace_id):
             "output": "gitlab_project{" + request_response.text + "}"
         }
 
+        globals.logger.info('SUCCESS: Create GitLab repository. workspace_id={}, ret_status={}, gitlab_project_count={}'.format(workspace_id, 201, len(response)))
+
         return jsonify(response), 201
 
     except Exception as e:
@@ -244,9 +250,7 @@ def call_gitlab_commits_root():
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}]'.format(inspect.currentframe().f_code.co_name, request.method))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Get gitlab commits. method={}'.format(request.method))
 
         if request.method == 'GET':
             # git commits get
@@ -267,9 +271,7 @@ def call_gitlab_branches_root():
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}]'.format(inspect.currentframe().f_code.co_name, request.method))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Get gitlab branch. method={}'.format(request.method))
 
         if request.method == 'GET':
             # git branches get
@@ -488,9 +490,7 @@ def get_git_branches():
     """
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Get git branch.')
 
         # ヘッダ情報 header info.
         post_headers = {
@@ -520,6 +520,8 @@ def get_git_branches():
             rows = None
             globals.logger.debug("git branches get error:[{}] text:[{}]".format(response.status_code, response.text))
 
+        globals.logger.info('SUCCESS: Get git branch. ret_status={}, git_branch_count={}'.format(ret_status, len(rows)))
+
         # 取得したGit branches情報を返却 Return the acquired Git branches information
         return jsonify({"result": ret_status, "rows": rows}), ret_status
 
@@ -541,9 +543,7 @@ def get_git_commits(revision=None):
     """
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {} revision[{}]'.format(inspect.currentframe().f_code.co_name, revision))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Get git commits information. revision={}'.format(revision))
 
         # ヘッダ情報 header info.
         post_headers = {
@@ -586,6 +586,8 @@ def get_git_commits(revision=None):
         else:
             rows = None
             globals.logger.debug("git commits get error:[{}] text:[{}]".format(response.status_code, response.text))
+
+        globals.logger.info('SUCCESS: Get git commits information. ret_status={}, git_commits_count={}'.format(ret_status, len(rows)))
 
         # 取得したGit commit情報を返却 Return the acquired Git commit information
         return jsonify({"result": ret_status, "rows": rows}), ret_status
