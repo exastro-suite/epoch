@@ -100,7 +100,7 @@ def call_cd_result_by_id(workspace_id, cd_result_id):
     """
 
     try:
-        globals.logger.info('Get updated CD result by cd_result_id. method={}'.format(request.method))
+        globals.logger.info('Get updated CD result by cd_result_id. method={}, workspace_id={}, cd_result_id={}'.format(request.method, workspace_id, cd_result_id))
 
         if request.method == 'PUT':
             # cd execute (get)
@@ -129,7 +129,7 @@ def call_cd_result_member(workspace_id, username, cd_result_id):
     """
 
     try:
-        globals.logger.info('Get CD result by members. method={}'.format(request.method))
+        globals.logger.info('Get or Create CD result by members. method={}, workspace_id={}, cd_result_id={}, username={}'.format(request.method, workspace_id, cd_result_id, username))
 
         if request.method == 'POST':
             # cd execute (post)
@@ -157,8 +157,7 @@ def cd_result_insert(workspace_id, cd_result_id, username):
     """
 
     try:
-        globals.logger.info('Insert CD result.')
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}] member[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id, username))
+        globals.logger.info('Insert CD result. workspace_id={}, cd_result_id={}, username={}'.format(workspace_id, cd_result_id, username))
 
         with dbconnector() as db, dbcursor(db) as cursor:
 
@@ -170,7 +169,7 @@ def cd_result_insert(workspace_id, cd_result_id, username):
 
             globals.logger.debug('insert lastrowid:{}'.format(lastrowid))
 
-        globals.logger.info('SUCCESS: Insert CD result. ret_result={}, workspace_id={}, cd_result_id={}, username'.format(200, workspace_id, cd_result_id, username))
+        globals.logger.info('SUCCESS: Insert CD result. ret_result={}, workspace_id={}, cd_result_id={}, username={}'.format(200, workspace_id, cd_result_id, username))
         return jsonify({"result": "200", "lastrowid": lastrowid}), 200
 
     except Exception as e:
@@ -188,8 +187,7 @@ def cd_result_update(workspace_id, cd_result_id):
     """
 
     try:
-        globals.logger.info('Get updated CD result by cd_result_id.')
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}] cd_result_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id, cd_result_id))
+        globals.logger.info('Get updated CD result by cd_result_id. workspace_id={}, cd_result_id={}'.format(workspace_id, cd_result_id))
 
         with dbconnector() as db, dbcursor(db) as cursor:
 
@@ -226,10 +224,8 @@ def cd_result_list(workspace_id=None, cd_result_id=None, username=None, latest=F
     """
 
     try:
-        globals.logger.info('Get CD result.')
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}] cd_result_id[{}] username[{}] latest[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id, cd_result_id, username, latest))
+        globals.logger.info('Get CD result. workspace_id={}, cd_result_id={}, username={}'.format(workspace_id, cd_result_id, username))
 
-        globals.logger.debug('CALL {}:args[{}]'.format(inspect.currentframe().f_code.co_name, request.args))
         #    latest (bool): 最新のみ
         if request.args.get('latest') is not None:
             latest = request.args.get('latest') == "True"
@@ -247,7 +243,7 @@ def cd_result_list(workspace_id=None, cd_result_id=None, username=None, latest=F
             # CD結果履歴の取得 Get CD result history
             fetch_rows = da_cd_result.select_cd_result(cursor, workspace_id, cd_result_id, cd_status_in, username, latest)
 
-        globals.logger.info('SUCCESS: Get CD result. ret_result={}'.format(200))
+        globals.logger.info('SUCCESS: Get CD result. ret_result={}, workspace_id={}, cd_result_id={}, username={}'.format(200, workspace_id, cd_result_id, username))
         return jsonify({"result": "200", "rows": fetch_rows })
 
     except Exception as e:
