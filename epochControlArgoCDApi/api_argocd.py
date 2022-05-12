@@ -60,16 +60,14 @@ def call_argocd(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Create ArgoCD environment. method={}, workspace_id={}'.format(request.method, workspace_id))
 
         if request.method == 'POST':
             # argocd pod 生成
             return create_argocd(workspace_id)
         else:
             # エラー
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'POST'))
 
     except Exception as e:
         return common.server_error(e)
@@ -93,7 +91,7 @@ def call_argocd_app(workspace_id, app_name):
             return get_argocd_app(workspace_id, app_name)
         else:
             # エラー
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'GET'))
 
     except Exception as e:
         return common.server_error(e)
@@ -117,7 +115,7 @@ def call_argocd_app_sync(workspace_id, app_name):
             return post_argocd_sync(workspace_id, app_name)
         else:
             # エラー
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'POST'))
 
     except Exception as e:
         return common.server_error(e)
@@ -142,7 +140,7 @@ def call_argocd_app_rollback(workspace_id, app_name):
             return post_argocd_rollback(workspace_id, app_name)
         else:
             # エラー
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'POST'))
 
     except Exception as e:
         return common.server_error(e)
@@ -163,9 +161,7 @@ def create_argocd(workspace_id):
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Create ArgoCD environment. workspace_id={}'.format(workspace_id))
 
         ret_status = 200
 
@@ -242,6 +238,7 @@ def create_argocd(workspace_id):
                 # globals.logger.debug(stdout_cd.decode('utf-8'))
 
         # 戻り値をそのまま返却
+        globals.logger.info('SUCCESS: Create ArgoCD environment. ret_result={}, workspace_id={}'.format(200, workspace_id))
         return jsonify({"result": ret_status}), ret_status
 
     except common.UserException as e:
@@ -420,7 +417,7 @@ def call_argocd_settings(workspace_id):
             return argocd_settings(workspace_id)
         else:
             # error
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'POST'))
 
     except Exception as e:
         return common.server_error(e)
