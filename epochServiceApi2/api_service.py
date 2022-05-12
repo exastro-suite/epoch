@@ -86,7 +86,7 @@ def call_workspace_by_id(workspace_id):
     """
     try:
         globals.logger.info('Get or Update workspace information. method={}, workspace_id={}'.format(request.method, workspace_id))
-                    
+
         if request.method == 'GET':
             # ワークスペース情報取得 Workspace info. get
             return api_service_workspace.get_workspace(workspace_id)
@@ -119,7 +119,7 @@ def call_pod(workspace_id):
             return api_service_workspace.post_pod(workspace_id)
         else:
             # Error
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'POST'))
 
     except Exception as e:
         return common.server_error(e)
@@ -143,7 +143,7 @@ def call_ci_pipeline(workspace_id):
             return api_service_ci.post_ci_pipeline(workspace_id)
         else:
             # Error
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'POST'))
 
     except Exception as e:
         return common.server_error(e)
@@ -165,7 +165,7 @@ def call_git_commits(workspace_id):
         if request.method == 'GET':
             return api_service_ci.get_git_commits(workspace_id)
         else:
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'GET'))
     except Exception as e:
         return common.server_error(e)
 
@@ -186,7 +186,7 @@ def call_git_hooks(workspace_id):
         if request.method == 'GET':
             return api_service_ci.get_git_hooks(workspace_id)
         else:
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'GET'))
     except Exception as e:
         return common.server_error(e)
 
@@ -208,7 +208,7 @@ def call_registry(workspace_id):
             # Get container registry information - コンテナレジストリ情報取得
             return api_service_ci.get_registry(workspace_id)
         else:
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'GET'))
     except Exception as e:
         return common.server_error(e)
 
@@ -231,7 +231,7 @@ def call_ci_result(workspace_id):
             return api_service_ci.get_ci_pipeline_result(workspace_id)
         else:
             # Error
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'GET'))
 
     except Exception as e:
         return common.server_error(e)
@@ -254,7 +254,7 @@ def call_ci_result_logs(workspace_id, taskrun_name):
             return api_service_ci.get_ci_pipeline_result_logs(workspace_id, taskrun_name)
         else:
             # Error
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'GET'))
 
     except Exception as e:
         return common.server_error(e)
@@ -278,7 +278,7 @@ def call_cd_pipeline(workspace_id):
             return api_service_cd.post_cd_pipeline(workspace_id)
         else:
             # Error
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'POST'))
 
     except Exception as e:
         return common.server_error(e)
@@ -302,7 +302,7 @@ def call_cd_pipeline_argocd(workspace_id):
             return api_service_cd.get_cd_pipeline_argocd(workspace_id)
         else:
             # Error
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'GET'))
 
     except Exception as e:
         return common.server_error(e)
@@ -320,13 +320,13 @@ def call_cd_pipeline_ita(workspace_id):
     """
     try:
         globals.logger.info('Get CD pipeline (it-automation) information. method={}, workspace_id={}'.format(request.method, workspace_id))
-        
+
         if request.method == 'GET':
             # Get CD pipeline (ArgoCD) information - CDパイプライン(ArgoCD)情報取得
             return api_service_cd.get_cd_pipeline_ita(workspace_id)
         else:
             # Error
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'GET'))
 
     except Exception as e:
         return common.server_error(e)
@@ -349,7 +349,7 @@ def call_cd_pipeline_git_commits(workspace_id):
         if request.method == 'GET':
             return api_service_cd.get_git_commits(workspace_id)
         else:
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'GET'))
     except Exception as e:
         return common.server_error(e)
 
@@ -373,7 +373,7 @@ def call_cd_pipeline_argocd_sync(workspace_id):
             return api_service_cd.post_cd_pipeline_argocd_sync(workspace_id)
         else:
             # Error
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'POST'))
 
     except Exception as e:
         return common.server_error(e)
@@ -397,7 +397,7 @@ def call_cd_pipeline_argocd_rollback(workspace_id):
             return api_service_cd.post_cd_pipeline_argocd_rollback(workspace_id)
         else:
             # Error
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'POST'))
 
     except Exception as e:
         return common.server_error(e)
@@ -421,7 +421,7 @@ def call_manifest_parameter(workspace_id):
             return api_service_manifest.post_manifest_parameter(workspace_id)
         else:
             # Error
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'POST'))
 
     except Exception as e:
         return common.server_error(e)
@@ -439,7 +439,7 @@ def call_manifest_template(workspace_id):
     """
     try:
         globals.logger.info('Get or Set manifest template. method={}, workspace_id={}'.format(request.method, workspace_id))
-        
+
         if request.method == 'POST':
             # manifest template setting (post)
             return api_service_manifest.post_manifest_template(workspace_id)
@@ -448,7 +448,7 @@ def call_manifest_template(workspace_id):
             return api_service_manifest.get_manifest_template_list(workspace_id)
         else:
             # Error
-            raise Exception("method not support!")
+            raise Exception('method not support! request_methods={}, expect_methods=[{}, {}]'.format(request.method, 'POST', 'GET'))
 
     except Exception as e:
         return common.server_error(e)
@@ -467,14 +467,14 @@ def call_manifest_template_id(workspace_id, file_id):
     """
     try:
         globals.logger.info('Delete manifest template. method={}, workspace_id={}, file_id={}'.format( request.method, workspace_id, file_id))
-        
+
 
         if request.method == 'DELETE':
             # parameter template delete (delete)
             return api_service_manifest.delete_manifest_template(workspace_id, file_id)
         else:
             # Error
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'DELETE'))
 
     except Exception as e:
         return common.server_error(e)
@@ -498,7 +498,7 @@ def call_cd_exec(workspace_id):
             return api_service_cd.cd_execute(workspace_id)
         else:
             # Error
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'POST'))
 
     except Exception as e:
         return common.server_error(e)
@@ -524,7 +524,7 @@ def call_cd_exec_trace_id(workspace_id, trace_id):
             return api_service_cd.cd_execute_cancel(workspace_id, trace_id)
         else:
             # Error
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'DELETE'))
 
     except Exception as e:
         return common.server_error(e)
@@ -548,7 +548,7 @@ def call_cd_environment(workspace_id):
             return api_service_cd.cd_environment_get(workspace_id)
         else:
             # Error
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'GET'))
 
     except Exception as e:
         return common.server_error(e)
@@ -568,7 +568,7 @@ def call_members():
             return api_service_member.get_users()
         else:
             # Error
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'GET'))
 
     except Exception as e:
         return common.server_error(e)
@@ -588,7 +588,7 @@ def call_user_current():
             return api_service_current.current_user_get()
         else:
             # Error
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'GET'))
 
     except Exception as e:
         return common.server_error(e)
@@ -605,7 +605,7 @@ def call_workspace_member(workspace_id):
     """
     try:
         globals.logger.info('Get or Set workspace member. method={}, workspace_id={}'.format(request.method, workspace_id))
-        
+
         if request.method == 'GET':
             # all workspace members get
             return api_service_member.get_workspace_members(workspace_id)
@@ -614,7 +614,7 @@ def call_workspace_member(workspace_id):
             return api_service_member.merge_workspace_members(workspace_id)
         else:
             # Error
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_methods=[{}, {}]'.format(request.method, 'GET', 'POST'))
 
     except Exception as e:
         return common.server_error(e)
@@ -637,7 +637,7 @@ def call_workspace_member_cdexec(workspace_id):
             return api_service_member.get_workspace_members_cdexec(workspace_id)
         else:
             # Error
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'GET'))
 
     except Exception as e:
         return common.server_error(e)

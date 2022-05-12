@@ -200,7 +200,7 @@ def update_workspace(workspace_id):
             return patch_workspace(workspace_id)
         else:
             # Error
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_methods={}'.format(request.method, 'PUT', 'PATCH'))
 
     except Exception as e:
         return common.serverError(e)
@@ -250,7 +250,7 @@ def put_workspace(workspace_id):
         response_rows = fetch_rows
 
         globals.logger.info('SUCCESS: Update workspace. ret_status={}, workspace_id={}, workspace_infomation_count={}'.format(200, workspace_id, len(response_rows)))
-        
+
         return jsonify({"result": "200", "rows": response_rows })
 
     except Exception as e:
@@ -308,7 +308,7 @@ def patch_workspace(workspace_id):
 
         # Response用のjsonに変換
         response_rows = fetch_rows
-        
+
         globals.logger.info("SUCCESS: Update part of workspace information. ret_status={}, workspace_id={}, workspace_information_count={}".format("200", workspace_id, len(response_rows)))
 
         return jsonify({"result": "200", "rows": response_rows }), 200
