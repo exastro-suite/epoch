@@ -200,7 +200,7 @@ def update_workspace(workspace_id):
             return patch_workspace(workspace_id)
         else:
             # Error
-            raise Exception('method not support! request_method={}, expect_methods={}'.format(request.method, 'PUT', 'PATCH'))
+            raise Exception('method not support! request_method={}, expect_methods=[{}, {}]'.format(request.method, 'PUT', 'PATCH'))
 
     except Exception as e:
         return common.serverError(e)
