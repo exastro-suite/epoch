@@ -198,7 +198,7 @@ def post_gitlab_repos(workspace_id):
             url_group_id = get_group_id(user, token, url)
             # グループが存在しない場合は、Exceptionで終了する
             if url_group_id is None:
-                raise Exception("group not found")
+                raise Exception("group not found. user={}, group_name={}".format(user, json_url['group_name']))
         else:
             url_group_id = None
 
@@ -230,7 +230,7 @@ def post_gitlab_repos(workspace_id):
         if request_response.status_code == 201:
             globals.logger.debug('gitlab project create SUCCEED')
         else:
-            raise Exception("project create error:{}".format(request_response.text))
+            raise Exception("project create error. error_information={}".format(request_response.text))
 
         response = {
             "result": "201",
