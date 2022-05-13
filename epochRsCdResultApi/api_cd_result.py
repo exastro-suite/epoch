@@ -228,15 +228,11 @@ def cd_result_list(workspace_id=None, cd_result_id=None, username=None, latest=F
     try:
         globals.logger.info('Get CD result. workspace_id={}, cd_result_id={}, username={}'.format(workspace_id, cd_result_id, username))
 
-        globals.logger.info('latest={}'.format(request.args.get('latest')))
-
         #    latest (bool): 最新のみ
         if request.args.get('latest') is not None:
             latest = request.args.get('latest') == "True"
         else:
             latest = False
-
-        globals.logger.info('cd_status_in={}'.format(request.args.get('cd_status_in')))
 
         #    cd_status_in (str): 最新のみ
         if request.args.get('cd_status_in') is not None:
