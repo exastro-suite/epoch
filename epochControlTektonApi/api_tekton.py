@@ -740,7 +740,7 @@ def get_tekton_taskrun_logs(workspace_id, taskrun_name):
                 if i < RETRY_GET_LOG:
                     globals.logger.debug('COMMAAND RETRY: kubectl tkn taskrun logs')
                 else:
-                    globals.logger.info('Can not try again. retry_count={}/{}'.format(i , RETRY_GET_LOG))
+                    globals.logger.info('Can not try again. retry_count={}/{}'.format(i, RETRY_GET_LOG))
                     raise
 
     except Exception as e:
