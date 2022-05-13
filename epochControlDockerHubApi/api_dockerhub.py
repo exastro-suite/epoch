@@ -77,6 +77,7 @@ def get_repositories(registry):
             globals.logger.debug('CALL {}'.format(api_url))
             api_response = requests.get( api_url, headers=api_headers)
             if api_response.status_code != 200:
+                globals.logger.info('Fail: Send a request. ret_status={}, URL={}'.format(api_response.status_code, api_url))
                 return jsonify({"result": api_response.status_code}), api_response.status_code
 
             api_response_json = json.loads(api_response.text)
