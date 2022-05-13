@@ -198,7 +198,7 @@ def post_gitlab_repos(workspace_id):
             url_group_id = get_group_id(user, token, url)
             # グループが存在しない場合は、Exceptionで終了する
             if url_group_id is None:
-                raise Exception("group not found")
+                raise Exception("group not found. user={}, group_name={}".format(user, json_url['group_name']))
         else:
             url_group_id = None
 
@@ -230,7 +230,7 @@ def post_gitlab_repos(workspace_id):
         if request_response.status_code == 201:
             globals.logger.debug('gitlab project create SUCCEED')
         else:
-            raise Exception("project create error:{}".format(request_response.text))
+            raise Exception("project create error. error_information={}".format(request_response.text))
 
         response = {
             "result": "201",
@@ -260,7 +260,7 @@ def call_gitlab_commits_root():
             return get_git_commits()
         else:
             # エラー
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'GET'))
 
     except Exception as e:
         return common.server_error(e)
@@ -281,7 +281,7 @@ def call_gitlab_branches_root():
             return get_git_branches()
         else:
             # エラー
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'GET'))
 
     except Exception as e:
         return common.server_error(e)
@@ -298,16 +298,14 @@ def call_gitlab_commits(revision):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] revision[{}]'.format(inspect.currentframe().f_code.co_name, request.method, revision))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Get gitlab commit. method={}, revision={}'.format(request.method, revision))
 
         if request.method == 'GET':
             # git commits get
             return get_git_commits(revision)
         else:
             # エラー
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'GET'))
 
     except Exception as e:
         return common.server_error(e)
@@ -324,16 +322,14 @@ def call_gitlab_commits_branch(revision):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] revision[{}]'.format(inspect.currentframe().f_code.co_name, request.method, revision))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Get gitlab branch commit. method={}, revision={}'.format(request.method, revision))
 
         if request.method == 'GET':
             # git commits branch get
             return get_git_commits_branch(revision)
         else:
             # エラー
-            raise Exception("method not support!")
+            raise Exception('method not support! request_method={}, expect_method={}'.format(request.method, 'GET'))
 
     except Exception as e:
         return common.server_error(e)

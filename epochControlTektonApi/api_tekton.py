@@ -208,7 +208,7 @@ def post_tekton_pipeline(workspace_id):
                 # 適用途中のpipelineを削除
                 delete_workspace_pipeline(workspace_id, YAML_KIND_PIPELINE)
             except Exception as e:
-                pass    # 失敗は無視
+                globals.logger.info('Fail: Delete workspace pipeline. workspace_id={}, KIND={}'.format(workspace_id, YAML_KIND_PIPELINE))
 
             raise   # エラーをスロー
         
@@ -487,7 +487,7 @@ def get_tekton_pipelinerun(workspace_id):
     Returns:
         Response: HTTP Respose
     """
-    globals.logger.debug('Get tekton pipelinerun result. method={}, workspace_id={}'.format(request.method, workspace_id))
+    globals.logger.info('Get tekton pipelinerun result. method={}, workspace_id={}'.format(request.method, workspace_id))
 
     try:
         #    latest (bool): 最新のみ
@@ -503,7 +503,7 @@ def get_tekton_pipelinerun(workspace_id):
 
         except subprocess.CalledProcessError as e:
             # コマンド実行エラー
-            globals.logger.debug('COMMAND ERROR RETURN:{}\n{}'.format(e.returncode, e.output.decode('utf-8')))
+            globals.logger.info('COMMAND ERROR. ret_code={}, error_information={}'.format(e.returncode, e.output.decode('utf-8')))
             raise # 再スロー
 
         # TEKTON CLIにてpipelinerunのListの結果jsonをdictに変換
@@ -740,6 +740,7 @@ def get_tekton_taskrun_logs(workspace_id, taskrun_name):
                 if i < RETRY_GET_LOG:
                     globals.logger.debug('COMMAAND RETRY: kubectl tkn taskrun logs')
                 else:
+                    globals.logger.info('Can not try again. retry_count={}/{}'.format(i, RETRY_GET_LOG))
                     raise
 
     except Exception as e:

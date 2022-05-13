@@ -58,7 +58,7 @@ def call_cd_result_root():
             return cd_result_list()
         else:
             # Error
-            raise Exception("method not support!")
+            raise Exception("method not support! request_method={}, expect_method={}".format(request.method, 'GET'))
 
     except Exception as e:
         return common.server_error(e, "{} error".format(inspect.currentframe().f_code.co_name))
@@ -82,7 +82,7 @@ def call_cd_result(workspace_id):
             return cd_result_list(workspace_id=workspace_id)
         else:
             # Error
-            raise Exception("method not support!")
+            raise Exception("method not support! request_method={}, expect_method={}".format(request.method, 'GET'))
 
     except Exception as e:
         return common.server_error(e, "{} error".format(inspect.currentframe().f_code.co_name))
@@ -110,7 +110,7 @@ def call_cd_result_by_id(workspace_id, cd_result_id):
             return cd_result_list(workspace_id=workspace_id, cd_result_id=cd_result_id)
         else:
             # Error
-            raise Exception("method not support!")
+            raise Exception("method not support! request_method={}, expect_method={}".format(request.method, '[GET,PUT]'))
 
     except Exception as e:
         return common.server_error(e, "{} error".format(inspect.currentframe().f_code.co_name))
@@ -139,7 +139,7 @@ def call_cd_result_member(workspace_id, username, cd_result_id):
             return cd_result_list(workspace_id=workspace_id, cd_result_id=cd_result_id, username=username)
         else:
             # Error
-            raise Exception("method not support!")
+            raise Exception("method not support! request_method={}, expect_method={}".format(request.method, '[GET,POST]'))
 
     except Exception as e:
         return common.server_error(e, "{} error".format(inspect.currentframe().f_code.co_name))

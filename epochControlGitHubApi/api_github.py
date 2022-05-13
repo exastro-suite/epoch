@@ -89,7 +89,7 @@ def call_github_branches_root():
             return get_git_branches()
         else:
             # エラー
-            raise Exception("method not support!")
+            raise Exception("method not support! request_method={}, expect_method={}".format(request.method, 'GET'))
 
     except Exception as e:
         return common.server_error(e)
@@ -110,7 +110,7 @@ def call_github_commits_root():
             return get_git_commits()
         else:
             # エラー
-            raise Exception("method not support!")
+            raise Exception("method not support! request_method={}, expect_method={}".format(request.method, 'GET'))
 
     except Exception as e:
         return common.server_error(e)
@@ -136,7 +136,7 @@ def call_github_commits(revision):
             return get_git_commits(revision)
         else:
             # エラー
-            raise Exception("method not support!")
+            raise Exception("method not support! request_method={}, expect_method={}".format(request.method, 'GET'))
 
     except Exception as e:
         return common.server_error(e)
@@ -162,7 +162,7 @@ def call_github_commits_branch(revision):
             return get_git_commits_branch(revision)
         else:
             # エラー
-            raise Exception("method not support!")
+            raise Exception("method not support! request_method={}, expect_method={}".format(request.method, 'GET'))
 
     except Exception as e:
         return common.server_error(e)
@@ -186,7 +186,7 @@ def call_github_hooks_root():
             return get_git_hooks()
         else:
             # エラー
-            raise Exception("method not support!")
+            raise Exception("method not support! request_method={}, expect_method={}".format(request.method, 'GET'))
 
     except Exception as e:
         return common.server_error(e)
@@ -212,7 +212,7 @@ def call_github_hook_deliveries(hook_id):
             return get_git_deliveries(hook_id)
         else:
             # エラー
-            raise Exception("method not support!")
+            raise Exception("method not support! request_method={}, expect_method={}".format(request.method, 'GET'))
 
     except Exception as e:
         return common.server_error(e)
