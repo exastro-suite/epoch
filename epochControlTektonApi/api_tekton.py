@@ -208,7 +208,7 @@ def post_tekton_pipeline(workspace_id):
                 # 適用途中のpipelineを削除
                 delete_workspace_pipeline(workspace_id, YAML_KIND_PIPELINE)
             except Exception as e:
-                globals.logger.info('Fail: Delete workspace pipeline. workspace={} KIND={}'.format(workspace_id, YAML_KIND_PIPELINE))
+                globals.logger.info('Fail: Delete workspace pipeline. workspace_id={}, KIND={}'.format(workspace_id, YAML_KIND_PIPELINE))
 
             raise   # エラーをスロー
         
