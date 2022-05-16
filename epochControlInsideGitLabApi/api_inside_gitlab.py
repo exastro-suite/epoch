@@ -113,7 +113,6 @@ def post_gitlab_webhooks(workspace_id):
         # webhookの存在チェック
         ret_exists = exists_webhook(user, token, url, webhooks_url)
         globals.logger.debug('CALL exists_webhook:ret:{}'.format(ret_exists))
-        globals.logger.info('exist_webhooks={}, workspace_id={}'.format(ret_exists, workspace_id))
         # すでにwebhookが存在したので200で終了
         if ret_exists:
             globals.logger.info('Already exist GitLab webhooks. ret_status={}, workspace_id={}'.format(200, workspace_id))
@@ -143,7 +142,6 @@ def post_gitlab_webhooks(workspace_id):
         request_response = requests.post(api_url, headers=post_headers, data=post_data)
 
         globals.logger.debug('code: {}, message: {}'.format(str(request_response.status_code), request_response.text))
-        globals.logger.info('status_code={}, workspace_id={}'.format(str(request_response.status_code), workspace_id))
         # 正常に作成された場合は201が応答されるので正常終了
         if request_response.status_code == 201:
             globals.logger.debug('gitlab webhook create SUCCEED')
@@ -185,7 +183,6 @@ def post_gitlab_repos(workspace_id):
         # リポジトリの存在チェック
         ret_exists = exists_repositry(user, token, url)
         globals.logger.debug('CALL exists_repositry:ret:{}'.format(ret_exists))
-        globals.logger.info('exist_webhooks={}, workspace_id={}'.format(ret_exists, workspace_id))
         # すでにリポジトリが存在したので200で終了
         if ret_exists:
             
@@ -231,7 +228,6 @@ def post_gitlab_repos(workspace_id):
         request_response = requests.post(api_url, headers=post_headers, data=post_data)
 
         globals.logger.debug('code: {}, message: {}'.format(str(request_response.status_code), request_response.text))
-        globals.logger.info('status_code={}, workspace_id={}'.format(str(request_response.status_code), workspace_id))
         # 正常に作成された場合は201が応答されるので正常終了
         if request_response.status_code == 201:
             globals.logger.debug('gitlab project create SUCCEED')
