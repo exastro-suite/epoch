@@ -488,6 +488,7 @@ def argocd_settings(workspace_id):
 
             # レポジトリの情報を追加
             globals.logger.debug ("argocd repo add :")
+            globals.logger.info('git repositry housing={}'.format(housing))
             if housing == "inner":
                 stdout_cd = subprocess.check_output(["argocd","repo","add","--insecure-ignore-host-key",gitUrl,"--username",gitUsername,"--password",gitPassword],stderr=subprocess.STDOUT)
             else:
@@ -531,6 +532,7 @@ def argocd_settings(workspace_id):
 
             argo_app = next(filter(lambda app: (argo_app_name == app['metadata']['name']), app_list), None)
 
+            globals.logger.info('argo_app={}'.format(argo_app))
             if argo_app is None:
                 # create application
                 exec_stat = multi_lang.get_text("EP035-0007", "ArgoCD設定 - アプリケーション作成")
@@ -560,6 +562,7 @@ def argocd_settings(workspace_id):
 
                 else:
                     # update application
+                    globals.logger.info('Update application.')
                     globals.logger.debug('argocd app set [app] {} / {}:'.format(argo_app_name, env['name']))
                     stdout_cd = subprocess.check_output(["argocd","app","set",argo_app_name,
                         "--repo",gitUrl,
