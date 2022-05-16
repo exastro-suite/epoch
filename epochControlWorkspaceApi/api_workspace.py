@@ -91,7 +91,7 @@ def call_manifest_templates(workspace_id):
             return api_workspace_manifests.settings_manifest_templates(workspace_id)
         else:
             # エラー
-            raise Exception("method not support!")
+            raise Exception("method not support! request_method={}, expect_method={}".format(request.method, 'POST'))
 
     except Exception as e:
         return common.server_error(e)
