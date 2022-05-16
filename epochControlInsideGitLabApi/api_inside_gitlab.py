@@ -113,6 +113,7 @@ def post_gitlab_webhooks(workspace_id):
         # webhookの存在チェック
         ret_exists = exists_webhook(user, token, url, webhooks_url)
         globals.logger.debug('CALL exists_webhook:ret:{}'.format(ret_exists))
+        globals.logger.info('exist_webhooks={}, workspace_id={}'.format(ret_exists, workspace_id))
         # すでにwebhookが存在したので200で終了
         if ret_exists:
             globals.logger.info('Already exist GitLab webhooks. ret_status={}, workspace_id={}'.format(200, workspace_id))
@@ -137,15 +138,17 @@ def post_gitlab_webhooks(workspace_id):
 
         api_url = "{}://{}:{}/api/v4/projects/{}%2F{}/hooks".format(API_PROTOCOL, API_BASE_URL, API_PORT, json_url['group_name'], json_url['repos_name'])
         globals.logger.debug('api_url: {}'.format(api_url))
+        globals.logger.info('Send a request. workspace_id={}, URL={}'.format(workspace_id, api_url))
         # create webhookのPOST送信
         request_response = requests.post(api_url, headers=post_headers, data=post_data)
 
         globals.logger.debug('code: {}, message: {}'.format(str(request_response.status_code), request_response.text))
+        globals.logger.info('status_code={}, workspace_id={}'.format(str(request_response.status_code), workspace_id))
         # 正常に作成された場合は201が応答されるので正常終了
         if request_response.status_code == 201:
             globals.logger.debug('gitlab webhook create SUCCEED')
         else:
-            raise Exception("webhook create error:{}".format(request_response.text))
+            raise Exception("webhook create error. error_information={}".format(request_response.text))
 
         response = {
             "result": "201",
@@ -182,10 +185,11 @@ def post_gitlab_repos(workspace_id):
         # リポジトリの存在チェック
         ret_exists = exists_repositry(user, token, url)
         globals.logger.debug('CALL exists_repositry:ret:{}'.format(ret_exists))
+        globals.logger.info('exist_webhooks={}, workspace_id={}'.format(ret_exists, workspace_id))
         # すでにリポジトリが存在したので200で終了
         if ret_exists:
             
-            globals.logger.info('SUCCESS: Create GitLab repository. workspace_id={}, ret_status={}, gitlab_project={}'.format(workspace_id, 200, "already exists repositry"))
+            globals.logger.info('SUCCESS: Create GitLab repository. ret_status={}, workspace_id={}, gitlab_project={}'.format(200, workspace_id, "already exists repositry"))
             
             return jsonify({"result": "200", "output": "gitlab_project{ already exists repositry}"}), 200
 
@@ -222,10 +226,12 @@ def post_gitlab_repos(workspace_id):
         post_data = json.dumps(post_data)
 
         api_url = "{}://{}:{}/api/v4/projects".format(API_PROTOCOL, API_BASE_URL, API_PORT)
+        globals.logger.info('Send a request. workspace_id={}, URL={}'.format(workspace_id, api_url))
         # create projectのPOST送信
         request_response = requests.post(api_url, headers=post_headers, data=post_data)
 
         globals.logger.debug('code: {}, message: {}'.format(str(request_response.status_code), request_response.text))
+        globals.logger.info('status_code={}, workspace_id={}'.format(str(request_response.status_code), workspace_id))
         # 正常に作成された場合は201が応答されるので正常終了
         if request_response.status_code == 201:
             globals.logger.debug('gitlab project create SUCCEED')
@@ -356,10 +362,10 @@ def exists_repositry(user, token, url):
     json_url = get_url_split(url)
 
     api_url = "{}://{}:{}/api/v4/projects/{}%2F{}".format(API_PROTOCOL, API_BASE_URL, API_PORT,json_url['group_name'],json_url['repos_name'])
-
+    globals.logger.info('Send a request. user={}, URL={}'.format(user, api_url))
     # 単一のプロジェクトを取得する
     response = requests.get(api_url, headers=post_headers)
-
+    globals.logger.info('status_code={}'.format(response.status_code))
     # リポジトリが存在する場合はTrueを返す
     if response.status_code == 200:
         ret = True
