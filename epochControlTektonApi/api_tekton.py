@@ -287,7 +287,7 @@ def sonarqube_initialize(workspace_id, param):
                 globals.logger.info('SUCCESS: Create SonarQube user.')
                 break
             if response.status_code == 400:
-                globals.logger.debug('Fail: Create SonarQube user.')
+                globals.logger.info('Fail: Create SonarQube user.')
                 break
 
         except Exception as e:
