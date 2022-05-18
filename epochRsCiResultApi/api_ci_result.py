@@ -51,7 +51,7 @@ def post_tekton_task(workspace_id):
     Returns:
         response: HTTP Respose
     """
-    globals.logger.debug('CALL post_tekton_task:{}'.format(workspace_id))
+    globals.logger.info('Register CI result information. workspace_id={}'.format(workspace_id))
 
     try:
         # image tagの生成
@@ -70,9 +70,12 @@ def post_tekton_task(workspace_id):
 
             globals.logger.debug('insert task_id:{}'.format(str(task_id)))
 
+        globals.logger.info('SUCCESS: Register CI result information. ret_status={}, workspace_id={}, task_id={}, task_status={}, container_registry_image_tag={}'.format(200, workspace_id, task_id, TASK_STATUS_RUNNING, image_tag))
+
         return jsonify({"result": "200", "param" : { "task_id": task_id, "container_registry_image_tag": image_tag }}), 200
 
     except Exception as e:
+        globals.logger.info('Fail: Register CI result information. workspace_id={}, task_id={}, task_status={}, container_registry_image_tag={}'.format(workspace_id, task_id, TASK_STATUS_RUNNING, image_tag))
         return common.serverError(e, "tekton_pipeline_task db registration error")
 
 @app.route('/workspace/<int:workspace_id>/tekton/task/<int:task_id>', methods=['PATCH'])
@@ -86,7 +89,7 @@ def patch_tekton_task(workspace_id, task_id):
     Returns:
         response: HTTP Respose
     """
-    globals.logger.debug('CALL patch_tekton_task:{}_{}'.format(workspace_id, task_id))
+    globals.logger.info('Update CI result information. workspace_id={}, task_id={}'.format(workspace_id, task_id))
 
     try:
         # Requestからinfo項目を生成する
@@ -95,13 +98,14 @@ def patch_tekton_task(workspace_id, task_id):
         with dbconnector() as db, dbcursor(db) as cursor:
             # CI結果情報更新
             upd_cnt = da_ci_result.update_tekton_pipeline_task(cursor, info, task_id)
-
             if upd_cnt == 0:
                 # データがないときは404応答
                 db.rollback()
+                globals.logger.info('Fail: Update CI result information update_information_count={}. ret_status={}, workspace_id={}, task_id={}, '.format(upd_cnt, 404, workspace_id, task_id))
                 return jsonify({"result": "404" }), 404
 
             # 正常終了
+            globals.logger.info('SUCCESS: Update CI result information. ret_status={}, workspace_id={}, task_id={} update_information_count={}'.format(200, workspace_id, task_id, upd_cnt))
             return jsonify({"result": "200"}), 200
 
     except Exception as e:
