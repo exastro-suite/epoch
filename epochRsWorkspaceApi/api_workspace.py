@@ -131,6 +131,8 @@ def get_workspace(workspace_id):
             # workspace情報データ取得
             fetch_rows = da_workspace.select_workspace_id(cursor, workspace_id)
 
+        globals.logger.info('fetch_rows_cnt={}'.format(len(fetch_rows)))
+
         if len(fetch_rows) > 0:
             # Response用のjsonに変換
             response_rows = convert_workspace_response(fetch_rows)
@@ -162,6 +164,8 @@ def get_workspace_before(workspace_id):
         with dbconnector() as db, dbcursor(db) as cursor:
             # get workspace history - workspace履歴取得
             fetch_rows = da_workspace.select_history(cursor, workspace_id)
+
+        globals.logger.info('fetch_rows_cnt={}'.format(len(fetch_rows)))
 
         if len(fetch_rows) > 0:
             # Convert to json for Response - Response用のjsonに変換
@@ -233,6 +237,8 @@ def put_workspace(workspace_id):
             exec_stat = "更新実行"
             upd_cnt = da_workspace.update_workspace(cursor, specification, workspace_id, update_at)
 
+            globals.logger.info('upd_cnt={}'.format(upd_cnt))
+
             if upd_cnt == 0:
                 # データがないときは404応答
                 db.rollback()
@@ -290,6 +296,8 @@ def patch_workspace(workspace_id):
             upd_cnt = da_workspace.patch_workspace(cursor, workspace_id, request_json)
 
             globals.logger.info('workspace update complete. workspace_id={} update_count={}'.format(workspace_id, upd_cnt))
+
+            globals.logger.info('upd_cnt={}'.format(upd_cnt))
 
             if upd_cnt == 0:
                 # データがないときは404応答
@@ -406,6 +414,9 @@ def manifest_file_update(workspace_id, file_id):
         with dbconnector() as db, dbcursor(db) as cursor:
             # workspace情報 update実行
             upd_cnt = da_manifest.update_manifest(cursor, workspace_id, specification, file_id)
+
+            globals.logger.info('upd_cnt={}'.format(upd_cnt))
+
             if upd_cnt == 0:
                 # データがないときは404応答
                 db.rollback()
@@ -443,6 +454,8 @@ def manifest_file_delete_all(workspace_id):
 
             globals.logger.debug("delete_manifests:ret:{}".format(upd_cnt))
 
+            globals.logger.info('upd_cnt={}'.format(upd_cnt))
+
             if upd_cnt == 0:
                 # データがないときは404応答
                 db.rollback()
@@ -472,6 +485,8 @@ def manifest_file_delete(workspace_id, manifest_id):
             upd_cnt = da_manifest.delete_manifest(cursor, workspace_id, manifest_id)
 
             globals.logger.debug("delete_manifest:ret:{}".format(upd_cnt))
+
+            globals.logger.info('upd_cnt={}'.format(upd_cnt))
 
             if upd_cnt == 0:
                 # データがないときは404応答
@@ -531,6 +546,8 @@ def manifest_file_get(workspace_id, file_id):
 
             # manifest情報の取得
             fetch_rows = da_manifest.select_manifest_id(cursor, workspace_id, file_id)
+
+            globals.logger.info('fetch_rows_cnt={}'.format(len(fetch_rows)))
 
             if len(fetch_rows) == 0:
                 # データがないときは404応答
@@ -612,6 +629,8 @@ def update_manifestParameter(workspace_id):
             # workspace情報 update実行
             upd_cnt = da_workspace.update_workspace(cursor, db_specification, workspace_id, update_at)
 
+            globals.logger.info('upd_cnt={}'.format(upd_cnt))
+
             if upd_cnt == 0:
                 # データがないときは404応答
                 db.rollback()
@@ -677,6 +696,8 @@ def workspace_access_update(workspace_id):
 
             globals.logger.debug('update workspace_id:{}'.format(workspace_id))
 
+            globals.logger.info('upd_cnt={}'.format(upd_cnt))
+
             if upd_cnt == 0:
                 # データがないときは404応答
                 db.rollback()
@@ -705,6 +726,8 @@ def workspace_access_get(workspace_id):
 
             # ワークスペースアクセス情報 select実行
             fetch_rows = da_workspace_access.select_workspace_access(cursor, workspace_id)
+
+            globals.logger.info('fetch_rows_cnt={}'.format(len(fetch_rows)))
 
             if len(fetch_rows) == 0:
                 # データがないときは404応答
@@ -740,6 +763,8 @@ def workspace_access_delete(workspace_id, id):
             upd_cnt = da_workspace_access.delete_workspace_access(cursor, workspace_id)
 
             globals.logger.debug("workspace_access:ret:{}".format(upd_cnt))
+
+            globals.logger.info('upd_cnt={}'.format(upd_cnt))
 
             if upd_cnt == 0:
                 # データがないときは404応答
@@ -802,6 +827,8 @@ def workspace_status_update(workspace_id):
 
             globals.logger.info('update workspace_id:{}'.format(workspace_id))
 
+            globals.logger.info('upd_cnt={}'.format(upd_cnt))
+
             if upd_cnt == 0:
                 # データがないときは404応答
                 db.rollback()
@@ -832,6 +859,8 @@ def workspace_status_get(workspace_id):
 
             # ワークスペース状態情報 select実行 worksapce status info. select
             fetch_rows = da_workspace_status.select_workspace_status(cursor, workspace_id)
+
+            globals.logger.info('fetch_rows_cnt={}'.format(len(fetch_rows)))
 
             if len(fetch_rows) == 0:
                 # データがないときは404応答
@@ -869,6 +898,8 @@ def workspace_status_delete(workspace_id, id):
             upd_cnt = da_workspace_status.delete_workspace_status(cursor, workspace_id)
 
             globals.logger.debug("workspace_status:ret:{}".format(upd_cnt))
+
+            globals.logger.info('upd_cnt={}'.format(upd_cnt))
 
             if upd_cnt == 0:
                 # データがないときは404応答
