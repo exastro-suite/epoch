@@ -264,7 +264,7 @@ def sonarqube_initialize(workspace_id, param):
                 globals.logger.info('SUCCESS: Change SonarQube password.')
 
             if response.status_code == 401:
-                globals.logger.info('Already change password.')
+                globals.logger.info('Already Change SonarQube password.')
 
         except Exception as e:
             pass
@@ -786,7 +786,7 @@ def get_access_info(workspace_id):
 
         # アクセス情報取得
         # Select送信（workspace_access取得）
-        globals.logger.info('Send a request. workspace_id={}, URL={}'.format(workspace_id, api_info))
+        globals.logger.info('Send a request. workspace_id={}, URL={}/workspace/{}/access'.format(workspace_id, api_info, workspace_id))
         request_response = requests.get( "{}/workspace/{}/access".format(api_info, workspace_id))
         # logger.debug (request_response)
 
@@ -858,7 +858,7 @@ def get_pv_node():
         globals.logger.info('Fail: Get node name. status_code={}, error_information={}'.format(e.returncode, e.output.decode('utf-8')))
         raise # 再スロー
     
-    globals.logger.info('SUCCESS: Get node name')
+    globals.logger.info('SUCCESS: Get node name. node_name={}'.format(node))
     
     return node
 
