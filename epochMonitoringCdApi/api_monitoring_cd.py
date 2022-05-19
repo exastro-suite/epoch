@@ -478,7 +478,6 @@ def main():
             # エラーリトライ回数超えた場合は、終了する
             # If the number of error retries is exceeded, the process will end.
             if ARGOCD_ERROR_RETRY_COUNT != 0 and global_argocd_error_count > ARGOCD_ERROR_RETRY_COUNT:
-                #谷本メモエラーカウントを超えたログを出す
                 globals.logger.error('The number of error retries is exceeded. error_count={}'.format(global_argocd_error_count))
                 break
 

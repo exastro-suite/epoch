@@ -143,7 +143,7 @@ def create_workspace(workspace_id):
         # アクセス情報取得
         # Select送信（workspace_access取得）
         globals.logger.debug("workspace_access get call: worksapce_id:{}".format(workspace_id))
-        globals.logger.info('Send a request. cd_status_in={} URL={}'.format(workspace_id, apiInfo))
+        globals.logger.info('Send a request. workspace_id={} URL={}/workspace/{}/access'.format(workspace_id, apiInfo ,workspace_id))
         request_response = requests.get("{}/workspace/{}/access".format(apiInfo, workspace_id))
         # globals.logger.debug(request_response)
 
@@ -162,7 +162,7 @@ def create_workspace(workspace_id):
         elif request_response.status_code == 404:
             # POST送信（workspace_access登録）
             globals.logger.debug("workspace_access post call: worksapce_id:{}".format(workspace_id))
-            globals.logger.info('Send a request. cd_status_in={} URL={}'.format(workspace_id, apiInfo))
+            globals.logger.info('Send a request. workspace_id={} URL={}/workspace/{}/access'.format(workspace_id, apiInfo, workspace_id))
             request_response = requests.post("{}/workspace/{}/access".format(apiInfo, workspace_id), headers=post_headers, data=post_data)
             globals.logger.info("status_code={}".format(request_response.status_code))
             # エラーの際は処理しない
