@@ -192,7 +192,7 @@ def settings_git_environment(workspace_id):
         #
         # オペレーションの追加処理
         #
-        globals.logger.info('Add operation data. cd config environments count={}'.format(len(payload['cd_config']['environments'])))
+        globals.logger.info('Add operation data. cd environments count={}'.format(len(payload['cd_config']['environments'])))
         opelist_edit = []
         for idx_req, row_req in enumerate(payload['cd_config']['environments']):
             if search_opration(opelist_json['resultdata']['CONTENTS']['BODY'], column_indexes_opelist, row_req['git_repositry']['url']) == -1:

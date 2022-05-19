@@ -219,6 +219,7 @@ def post_ci_pipeline(workspace_id):
                     error_detail = 'gitlab/repos post処理に失敗しました'
                     raise common.UserException(error_detail)
 
+            globals.logger.info('git repository housing={}'.format(request_body['ci_config']['pipelines_common']['git_repositry']['housing']))
             if request_body['ci_config']['pipelines_common']['git_repositry']['housing'] == 'outer':
                 # github/webhooks post送信
                 globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url_github))
@@ -333,6 +334,7 @@ def get_git_commits(workspace_id):
         for pipeline in workspace_info["ci_config"]["pipelines"]:
             git_url = pipeline["git_repositry"]["url"]
 
+            globals.logger.info('git repository housing={}'.format(workspace_info["ci_config"]["pipelines_common"]["git_repositry"]["housing"]))
             if workspace_info["ci_config"]["pipelines_common"]["git_repositry"]["housing"] == const.HOUSING_INNER:
                 # EPOCH内レジストリ ブランチの一覧取得 Get a list of registry branches in EPOCH
                 api_url = "{}://{}:{}/branches?git_url={}".format(os.environ['EPOCH_CONTROL_INSIDE_GITLAB_PROTOCOL'],
@@ -492,6 +494,7 @@ def get_git_hooks(workspace_id):
 
         rows = []
         # パイプライン数分処理する Process for a few minutes in the pipelines
+        globals.logger.info('git repository housing={}'.format(workspace_info["cd_config"]["environments_common"]["git_repositry"]["housing"]))
         for pipeline in workspace_info["ci_config"]["pipelines"]:
             git_url = pipeline["git_repositry"]["url"]
 
