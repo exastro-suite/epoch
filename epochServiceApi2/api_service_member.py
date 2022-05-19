@@ -634,7 +634,7 @@ def leave_workspace(workspace_id):
 
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0011", "ユーザクライアントロールの削除に失敗しました")
-            globals.logger.info('FAIL: Delete member from workspace. workspace_id={}, ret_status={}'.format(workspace_id, 400))
+            globals.logger.info('FAIL: Delete member from workspace. workspace_id={}, status_code={}'.format(workspace_id, response.status_code))
             return jsonify({"result": "400", "reason": multi_lang.get_text("EP020-0015", "ワークスペースからの退去に失敗しました")}), 400
 
         # ロールの更新日を現在時刻に変更 - Change the update date of the role to the current time
@@ -653,7 +653,7 @@ def leave_workspace(workspace_id):
 
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0012", "ロール更新日の変更に失敗しました")
-            globals.logger.info('FAIL: Delete member from workspace. workspace_id={}, ret_status={}'.format(workspace_id, 400))
+            globals.logger.info('FAIL: Delete member from workspace. workspace_id={}, status_code={}'.format(workspace_id, response.status_code))
             return jsonify({"result": "400", "reason": multi_lang.get_text("EP020-0015", "ワークスペースからの退去に失敗しました")}), 400
 
         #処理が成功したことのログを出力
