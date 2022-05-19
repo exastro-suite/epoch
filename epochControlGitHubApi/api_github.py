@@ -464,7 +464,7 @@ def get_git_commits_branch(revision):
     """
 
     try:
-        globals.logger.info('Get git commits branch information.')
+        globals.logger.info('Get git commits branch information. revision={}'.format(revision))
 
         # ヘッダ情報 header info.
         request_headers = {
@@ -562,7 +562,7 @@ def get_git_deliveries(hook_id):
     """
 
     try:
-        globals.logger.info('Get git commits branch information.')
+        globals.logger.info('Get git commits branch information. hook_id={}'.format(hook_id))
 
         # ヘッダ情報 header info.
         request_headers = {
