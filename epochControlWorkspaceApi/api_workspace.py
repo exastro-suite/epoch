@@ -58,16 +58,14 @@ def call_workspace(workspace_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Create workspace. method={}, workspace_id={}'.format(request.method, workspace_id))
 
         if request.method == 'POST':
             # workspace 生成
             return create_workspace(workspace_id)
         else:
             # エラー
-            raise Exception("method not support!")
+            raise Exception("method not support! request_method={}, expect_method={}".format(request.method, 'POST'))
 
     except Exception as e:
         return common.server_error(e)
@@ -111,9 +109,7 @@ def create_workspace(workspace_id):
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Create workspace. workspace_id={}'.format(workspace_id))
 
         error_detail = "workspace初期化失敗"
 
@@ -147,9 +143,11 @@ def create_workspace(workspace_id):
         # アクセス情報取得
         # Select送信（workspace_access取得）
         globals.logger.debug("workspace_access get call: worksapce_id:{}".format(workspace_id))
+        globals.logger.info('Send a request. workspace_id={} URL={}/workspace/{}/access'.format(workspace_id, apiInfo ,workspace_id))
         request_response = requests.get("{}/workspace/{}/access".format(apiInfo, workspace_id))
         # globals.logger.debug(request_response)
 
+        globals.logger.info("status_code={}".format(request_response.status_code))
         # 情報が存在する場合は、作成しない、存在しない場合は、登録
         if request_response.status_code == 200:
             globals.logger.debug("data found")
@@ -164,7 +162,9 @@ def create_workspace(workspace_id):
         elif request_response.status_code == 404:
             # POST送信（workspace_access登録）
             globals.logger.debug("workspace_access post call: worksapce_id:{}".format(workspace_id))
+            globals.logger.info('Send a request. workspace_id={} URL={}/workspace/{}/access'.format(workspace_id, apiInfo, workspace_id))
             request_response = requests.post("{}/workspace/{}/access".format(apiInfo, workspace_id), headers=post_headers, data=post_data)
+            globals.logger.info("status_code={}".format(request_response.status_code))
             # エラーの際は処理しない
             if request_response.status_code != 200:
                 raise common.UserException(request_response.text)
@@ -183,6 +183,8 @@ def create_workspace(workspace_id):
             api_kubernetes_call.create_namespace(name)
 
         ret_status = 200
+
+        globals.logger.info('SUCCESS: Create workspace. ret_status={}'.format(ret_status))
 
         # 戻り値をそのまま返却        
         return jsonify({"result": ret_status}), ret_status

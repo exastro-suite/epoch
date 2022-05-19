@@ -241,8 +241,8 @@ def monitoring_argo_cd():
             except common.UserException as e:
                 error_exists = True
                 global_argocd_error_count += 1
-                globals.logger.debug("UserException error count [{}]".format(global_argocd_error_count))
-                globals.logger.debug("UserException Exception error args [{}]".format(e.args))
+                globals.logger.warning("UserException error count [{}]".format(global_argocd_error_count))
+                globals.logger.warning("UserException Exception error args [{}]".format(e.args))
 
         if not error_exists:
             # 正常時はエラーをリセット Reset error when normal
@@ -250,8 +250,8 @@ def monitoring_argo_cd():
 
     except Exception as e:
         global_argocd_error_count += 1
-        globals.logger.debug("argocd Exception error count [{}]".format(global_argocd_error_count))
-        globals.logger.debug("argocd Exception error args [{}]".format(e.args))
+        globals.logger.warning("argocd Exception error count [{}]".format(global_argocd_error_count))
+        globals.logger.warning("argocd Exception error args [{}]".format(e.args))
         return common.serverError(e)
 
 
@@ -409,8 +409,8 @@ def monitoring_it_automation():
             except common.UserException as e:
                 error_exists = True
                 global_ita_error_count += 1
-                globals.logger.debug("UserException error count [{}]".format(global_ita_error_count))
-                globals.logger.debug("UserException Exception error args [{}]".format(e.args))
+                globals.logger.warning("UserException error count [{}]".format(global_ita_error_count))
+                globals.logger.warning("UserException Exception error args [{}]".format(e.args))
 
         if not error_exists:
             # 正常時はエラーをリセット Reset error when normal
@@ -418,8 +418,8 @@ def monitoring_it_automation():
 
     except Exception as e:
         global_ita_error_count += 1
-        globals.logger.debug("it-automation Exception error count [{}]".format(global_ita_error_count))
-        globals.logger.debug("it-automation Exception error args [{}]".format(e.args))
+        globals.logger.warning("it-automation Exception error count [{}]".format(global_ita_error_count))
+        globals.logger.warning("it-automation Exception error args [{}]".format(e.args))
         return common.serverError(e)
 
 
@@ -478,9 +478,11 @@ def main():
             # エラーリトライ回数超えた場合は、終了する
             # If the number of error retries is exceeded, the process will end.
             if ARGOCD_ERROR_RETRY_COUNT != 0 and global_argocd_error_count > ARGOCD_ERROR_RETRY_COUNT:
+                globals.logger.error('The number of error retries is exceeded. error_count={}'.format(global_argocd_error_count))
                 break
 
             if ITA_ERROR_RETRY_COUNT != 0 and global_ita_error_count > ITA_ERROR_RETRY_COUNT:
+                globals.logger.error('The number of error retries is exceeded. error_count={}'.format(global_argocd_error_count))
                 break
 
             time.sleep(1)

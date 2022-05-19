@@ -50,7 +50,7 @@ def alive():
     return jsonify({"result": "200", "time": str(datetime.now(globals.TZ))}), 200
 
 
-@app.route('/workspace/<int:workspace_id>/github/webhooks', methods=['GET','POST'])
+@app.route('/workspace/<int:workspace_id>/github/webhooks', methods=['GET', 'POST'])
 def call_github_webhooks(workspace_id):
     """workspace/workspace_id/github/wehbooks 呼び出し
 
@@ -127,9 +127,7 @@ def call_github_commits(revision):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] revision[{}]'.format(inspect.currentframe().f_code.co_name, request.method, revision))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Get github commit. method={}, revision={}'.format(request.method, revision))
 
         if request.method == 'GET':
             # git commits get
@@ -153,9 +151,7 @@ def call_github_commits_branch(revision):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] revision[{}]'.format(inspect.currentframe().f_code.co_name, request.method, revision))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Get github branch commit. method={}, revision={}'.format(request.method, revision))
 
         if request.method == 'GET':
             # git commits branch get
@@ -177,9 +173,7 @@ def call_github_hooks_root():
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}]'.format(inspect.currentframe().f_code.co_name, request.method))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Get github hooks information. method={}'.format(request.method))
 
         if request.method == 'GET':
             # git hooks get
@@ -203,9 +197,7 @@ def call_github_hook_deliveries(hook_id):
         Response: HTTP Respose
     """
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}:from[{}] hook_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, hook_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Get git commits branch information. method={}, hook_id={}'.format(request.method, hook_id))
 
         if request.method == 'GET':
             # git deliveries get
@@ -234,9 +226,7 @@ def create_github_webhooks(workspace_id):
     apache_path = '/api/listener/{}'.format(workspace_id)
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Create github webhook. workspace_id={}'.format(workspace_id))
 
         # 引数で指定されたCD環境を取得
         request_json = json.loads(request.data)
@@ -244,7 +234,7 @@ def create_github_webhooks(workspace_id):
 
         # パイプライン数分繰り返し
         for pipeline in request_ci_confg["pipelines"]:
-            git_repos = re.sub('\\.git$','',re.sub('^https?://[^/][^/]*/','',pipeline["git_repositry"]["url"]))
+            git_repos = re.sub('\\.git$', '', re.sub('^https?://[^/][^/]*/', '', pipeline["git_repositry"]["url"]))
             web_hooks_url = pipeline["webhooks_url"] + ':' + os.environ['EPOCH_WEBHOOK_PORT'] + apache_path
             token = request_ci_confg["pipelines_common"]["git_repositry"]["token"]
 
@@ -257,13 +247,13 @@ def create_github_webhooks(workspace_id):
 
             # 引数をJSON形式で構築
             post_data = json.dumps({
-                "config":{
+                "config": {
                     "url": web_hooks_url,
-                    "content_type":"json",
-                    "secret":"",
-                    "insecure_ssl":"1",
-                    "token":"token",
-                    "digest":"digest",
+                    "content_type": "json",
+                    "secret": "",
+                    "insecure_ssl": "1",
+                    "token": "token",
+                    "digest": "digest",
                 }
             })
 
@@ -272,7 +262,8 @@ def create_github_webhooks(workspace_id):
             globals.logger.debug('- https_proxy:{}, http_proxy:{}'.format(os.environ['HTTPS_PROXY'], os.environ['HTTP_PROXY']))
             globals.logger.debug('- request URL:' + github_webhook_base_url + git_repos + github_webhook_base_hooks)
             globals.logger.debug('- webhook URL :' + web_hooks_url)
-            request_response = requests.post( github_webhook_base_url + git_repos + github_webhook_base_hooks, headers=post_headers, data=post_data)
+            globals.logger.info('Send a request. workspace_id={}, URL={}{}{}'.format(workspace_id, github_webhook_base_url, git_repos, github_webhook_base_hooks))
+            request_response = requests.post(github_webhook_base_url + git_repos + github_webhook_base_hooks, headers=post_headers, data=post_data)
 
             globals.logger.debug('- response headers')
             globals.logger.debug(request_response.headers)
@@ -307,10 +298,7 @@ def get_github_webhooks(workspace_id):
     error_detail = ""
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
-
+        globals.logger.info('Get github webhook information. workspace_id={}'.format(workspace_id))
 
         # 引数で指定されたCD環境を取得
         request_json = json.loads(request.data)
@@ -318,7 +306,7 @@ def get_github_webhooks(workspace_id):
 
         # パイプライン数分繰り返し
         for pipeline in request_ci_confg["pipelines"]:
-            git_repos = re.sub('\\.git$','',re.sub('^https?://[^/][^/]*/','',pipeline["git_repositry"]["url"]))
+            git_repos = re.sub('\\.git$', '', re.sub('^https?://[^/][^/]*/', '', pipeline["git_repositry"]["url"]))
             token = request_ci_confg["pipelines_common"]["git_repositry"]["token"]
 
             # GitHubへGET送信
@@ -330,7 +318,7 @@ def get_github_webhooks(workspace_id):
 
             globals.logger.debug(git_repos)
             # GETリクエスト送信
-            request_response = requests.get( github_webhook_base_url + git_repos + github_webhook_base_hooks, headers=request_headers)
+            request_response = requests.get(github_webhook_base_url + git_repos + github_webhook_base_hooks, headers=request_headers)
 
         ret_status = request_response.status_code
 
@@ -368,19 +356,20 @@ def get_git_branches():
         if request.args.get('git_url') is not None:
             git_url = urllib.parse.unquote(request.args.get('git_url'))
         else:
-            raise Exception("gir_url parameter not found")
+            raise Exception("git_url parameter not found")
 
-        git_repos = re.sub('\\.git$','',re.sub('^https?://[^/][^/]*/','',git_url))
+        git_repos = re.sub('\\.git$', '', re.sub('^https?://[^/][^/]*/', '', git_url))
 
-        # github repo branches get call 
+        # github repo branches get call
         api_url = "{}{}/branches".format(github_webhook_base_url, git_repos)
 
+        globals.logger.info('Send a request. URL={}'.format(api_url))
         response = requests.get(api_url, headers=request_headers)
         globals.logger.debug("api_url:[{}]".format(api_url))
 
-        ret_status = response.status_code 
+        ret_status = response.status_code
         if response.status_code == 200:
-            rows = json.loads(response.text) 
+            rows = json.loads(response.text)
             # globals.logger.debug("rows:[{}]".format(rows))
         else:
             rows = None
@@ -397,7 +386,7 @@ def get_git_branches():
         return common.server_error(e)
 
 
-def get_git_commits(revision = None):
+def get_git_commits(revision=None):
     """git commits 情報の取得 Get git commits information
 
     Args:
@@ -428,9 +417,9 @@ def get_git_commits(revision = None):
         else:
             branch = None
 
-        git_repos = re.sub('\\.git$','',re.sub('^https?://[^/][^/]*/','',git_url))
+        git_repos = re.sub('\\.git$', '', re.sub('^https?://[^/][^/]*/', '', git_url))
 
-        # github repo commits get call 
+        # github repo commits get call
         api_url = "{}{}/commits".format(github_webhook_base_url, git_repos)
 
         # 個別指定がある場合のみ、条件を設定
@@ -442,11 +431,12 @@ def get_git_commits(revision = None):
             api_url += "?sha={}".format(urllib.parse.quote(branch))
 
         globals.logger.debug("api_url:[{}]".format(api_url))
+        globals.logger.info('Send a request. URL={}'.format(api_url))
         response = requests.get(api_url, headers=request_headers)
 
-        ret_status = response.status_code 
+        ret_status = response.status_code
         if response.status_code == 200:
-            rows = json.loads(response.text) 
+            rows = json.loads(response.text)
             # globals.logger.debug("rows:[{}]".format(rows))
         else:
             rows = None
@@ -474,9 +464,7 @@ def get_git_commits_branch(revision):
     """
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {} revision[{}]'.format(inspect.currentframe().f_code.co_name, revision))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Get git commits branch information. revision={}'.format(revision))
 
         # ヘッダ情報 header info.
         request_headers = {
@@ -490,17 +478,17 @@ def get_git_commits_branch(revision):
         else:
             raise Exception("gir_url parameter not found")
 
-        git_repos = re.sub('\\.git$','',re.sub('^https?://[^/][^/]*/','',git_url))
+        git_repos = re.sub('\\.git$', '', re.sub('^https?://[^/][^/]*/', '', git_url))
 
-        # github repo commits get call 
+        # github repo commits get call
         api_url = "{}{}/commits/{}/branches-where-head".format(github_webhook_base_url, git_repos, revision)
 
         response = requests.get(api_url, headers=request_headers)
         globals.logger.debug("api_url:[{}]".format(api_url))
 
-        ret_status = response.status_code 
+        ret_status = response.status_code
         if response.status_code == 200:
-            rows = json.loads(response.text) 
+            rows = json.loads(response.text)
             globals.logger.debug("rows:[{}]".format(rows))
         else:
             rows = None
@@ -523,9 +511,7 @@ def get_git_hooks():
     """
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Get git hooks information.')
 
         # ヘッダ情報 header info.
         request_headers = {
@@ -539,17 +525,18 @@ def get_git_hooks():
         else:
             raise Exception("gir_url parameter not found")
 
-        git_repos = re.sub('\\.git$','',re.sub('^https?://[^/][^/]*/','',git_url))
+        git_repos = re.sub('\\.git$', '', re.sub('^https?://[^/][^/]*/', '', git_url))
 
-        # github repo commits get call 
+        # github repo commits get call
         api_url = "{}{}/hooks".format(github_webhook_base_url, git_repos)
 
         globals.logger.debug("api_url:[{}]".format(api_url))
+        globals.logger.info('Send a request. URL={}'.format(api_url))
         response = requests.get(api_url, headers=request_headers)
 
-        ret_status = response.status_code 
+        ret_status = response.status_code
         if response.status_code == 200:
-            rows = json.loads(response.text) 
+            rows = json.loads(response.text)
             # globals.logger.debug("rows:[{}]".format(rows))
         else:
             rows = None
@@ -575,9 +562,7 @@ def get_git_deliveries(hook_id):
     """
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {} hook_id[{}]'.format(inspect.currentframe().f_code.co_name, hook_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Get git commits branch information. hook_id={}'.format(hook_id))
 
         # ヘッダ情報 header info.
         request_headers = {
@@ -591,17 +576,18 @@ def get_git_deliveries(hook_id):
         else:
             raise Exception("gir_url parameter not found")
 
-        git_repos = re.sub('\\.git$','',re.sub('^https?://[^/][^/]*/','',git_url))
+        git_repos = re.sub('\\.git$', '', re.sub('^https?://[^/][^/]*/', '', git_url))
 
-        # github repo commits get call 
+        # github repo commits get call
         api_url = "{}{}/hooks/{}/deliveries".format(github_webhook_base_url, git_repos, hook_id)
 
+        globals.logger.info('Send a request. hook_id={}, URL={}'.format(hook_id, api_url))
         response = requests.get(api_url, headers=request_headers)
         globals.logger.debug("api_url:[{}]".format(api_url))
 
-        ret_status = response.status_code 
+        ret_status = response.status_code
         if response.status_code == 200:
-            rows = json.loads(response.text) 
+            rows = json.loads(response.text)
             globals.logger.debug("rows:[{}]".format(rows))
         else:
             rows = None

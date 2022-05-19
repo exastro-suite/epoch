@@ -177,6 +177,7 @@ def settings_git_environment(workspace_id):
         #
         # オペレーションの取得
         #
+        globals.logger.info('Send a request. workspace_id={}, URL={}?no={}'.format(workspace_id, ita_restapi_endpoint, ite_menu_operation))
         opelist_resp = requests.post(ita_restapi_endpoint + '?no=' + ite_menu_operation, headers=filter_headers)
         opelist_json = json.loads(opelist_resp.text)
         globals.logger.debug('---- Operation ----')
@@ -191,6 +192,7 @@ def settings_git_environment(workspace_id):
         #
         # オペレーションの追加処理
         #
+        globals.logger.info('Add operation data. cd environments count={}'.format(len(payload['cd_config']['environments'])))
         opelist_edit = []
         for idx_req, row_req in enumerate(payload['cd_config']['environments']):
             if search_opration(opelist_json['resultdata']['CONTENTS']['BODY'], column_indexes_opelist, row_req['git_repositry']['url']) == -1:
@@ -208,6 +210,7 @@ def settings_git_environment(workspace_id):
             #
             # オペレーションの追加がある場合
             #
+            globals.logger.info('Send a request. workspace_id={}, URL={}?no={}'.format(workspace_id, ita_restapi_endpoint, ite_menu_operation))
             ope_add_resp = requests.post(ita_restapi_endpoint + '?no=' + ite_menu_operation, headers=edit_headers, data=json.dumps(opelist_edit))
 
             globals.logger.debug('---- ope_add_resp ----')
@@ -215,7 +218,8 @@ def settings_git_environment(workspace_id):
             globals.logger.debug(ope_add_resp.text)
 
             # 追加後再取得(オペレーションIDが決定する)
-            opelist_resp = requests.post(ita_restapi_endpoint + '?no=' + ite_menu_operation, headers=filter_headers)        
+            globals.logger.info('Send a request. workspace_id={}, URL={}?no={}'.format(workspace_id, ita_restapi_endpoint, ite_menu_operation))
+            opelist_resp = requests.post(ita_restapi_endpoint + '?no=' + ite_menu_operation, headers=filter_headers)
             opelist_json = json.loads(opelist_resp.text)
             globals.logger.debug('---- Operation ----')
             #logger.debug(opelist_resp.text.encode().decode('unicode-escape'))
@@ -223,6 +227,7 @@ def settings_git_environment(workspace_id):
         #
         # Git環境情報の取得
         #
+        globals.logger.info('Send a request. workspace_id={}, URL={}?no={}'.format(workspace_id, ita_restapi_endpoint, ita_menu_gitenv_param))
         gitlist_resp = requests.post(ita_restapi_endpoint + '?no=' + ita_menu_gitenv_param, headers=filter_headers)
         gitlist_json = json.loads(gitlist_resp.text)
         globals.logger.debug('---- Git Environments ----')
@@ -297,6 +302,7 @@ def settings_git_environment(workspace_id):
         #logger.debug(json.dumps(gitlist_edit).encode().decode('unicode-escape'))
         # logger.debug(json.dumps(gitlist_edit))
 
+        globals.logger.info('Send a request. workspace_id={}, URL={}?no={}'.format(workspace_id, ita_restapi_endpoint, ita_menu_gitenv_param))
         gitlist_edit_resp = requests.post(ita_restapi_endpoint + '?no=' + ita_menu_gitenv_param, headers=edit_headers, data=json.dumps(gitlist_edit))
 
         globals.logger.debug('---- Git Environments Post Response ----')
@@ -308,7 +314,7 @@ def settings_git_environment(workspace_id):
 
         globals.logger.info('SUCCESS: Set git environment. ret_status={}, workspace_id={}, git_environment_count={}'.format(ret_status, workspace_id, len(response["items"])))
 
-        # 戻り値をそのまま返却        
+        # 戻り値をそのまま返却
         return jsonify({"result": ret_status, "rows": response["items"]}), ret_status
 
     except common.UserException as e:
@@ -321,7 +327,7 @@ def column_indexes(column_names, row_header):
     """項目位置の取得 Get item position
 
     Args:
-        column_names (str[]): column names 
+        column_names (str[]): column names
         row_header (str): row header
 
     Returns:
@@ -336,12 +342,12 @@ def search_opration(opelist, column_indexes, git_url):
     """オペレーションの検索 search operation
 
     Args:
-        opelist (dict): operation info. 
+        opelist (dict): operation info.
         column_indexes (dict): column indexes
         git_url (str): git url
 
     Returns:
-        int: -1:error , other: index 
+        int: -1:error , other: index
     """
     for idx, row in enumerate(opelist):
         if idx == 0:
@@ -440,6 +446,7 @@ def settings_manifest_parameter(workspace_id):
         #
         # オペレーションの取得
         #
+        globals.logger.info('Send a request. workspace_id={}, URL={}?no={}'.format(workspace_id, ita_restapi_endpoint, ite_menu_operation))
         opelist_resp = requests.post(ita_restapi_endpoint + '?no=' + ite_menu_operation, headers=filter_headers)
         opelist_json = json.loads(opelist_resp.text)
         globals.logger.debug('---- Operation ----')
@@ -459,6 +466,7 @@ def settings_manifest_parameter(workspace_id):
                 "NORMAL": "0"
             }
         }
+        globals.logger.info('Send a request. workspace_id={}, URL={}?no={}'.format(workspace_id, ita_restapi_endpoint, ita_menu_manifest_param))
         response = requests.post(ita_restapi_endpoint + '?no=' + ita_menu_manifest_param, headers=filter_headers, data=json.dumps(content))
         if response.status_code != 200:
             globals.logger.error("call ita_menu_call error:{} menu_no:{}".format(response.status_code, ita_menu_manifest_param))
@@ -474,6 +482,7 @@ def settings_manifest_parameter(workspace_id):
         globals.logger.debug('---- Manifest Parameters Index ----')
         # logger.debug(column_indexes_maniparam)
 
+        globals.logger.info('Send a request. workspace_id={}, URL={}?no={}'.format(workspace_id, ita_restapi_endpoint, ita_menu_bluegreen_param))
         response = requests.post(ita_restapi_endpoint + '?no=' + ita_menu_bluegreen_param, headers=filter_headers, data=json.dumps(content))
         if response.status_code != 200:
             globals.logger.error("call ita_menu_call error:{} menu_no:{}".format(response.status_code, ita_menu_bluegreen_param))
@@ -497,7 +506,6 @@ def settings_manifest_parameter(workspace_id):
         maniparam_edit = []
         bluegreen_edit = []
         for environment in payload['ci_config']['environments']:
-            
             idx_ope = -1
             # cd_configの同一環境情報からgit_urlを取得する Get git_url from the same environment information in cd_config
             for cd_environment in payload['cd_config']['environments']:
@@ -724,7 +732,6 @@ def settings_manifest_parameter(workspace_id):
                     if row_edit[str(column_indexes_common['record_no'])] == row_param[column_indexes_common['record_no']]:
                         flgExists = True
                         break
-            
             # 該当するレコードがない場合は、廃止として追加する
             if not flgExists:
                 # 削除用のデータ設定
@@ -749,7 +756,7 @@ def settings_manifest_parameter(workspace_id):
                     if row_edit[str(column_indexes_common['record_no'])] == row_param[column_indexes_common['record_no']]:
                         flgExists = True
                         break
-            
+
             # 該当するレコードがない場合は、廃止として追加する
             if not flgExists:
                 # 削除用のデータ設定
@@ -764,6 +771,7 @@ def settings_manifest_parameter(workspace_id):
         globals.logger.debug('---- Updating Manifest Parameters ----')
         # globals.logger.debug(json.dumps(maniparam_edit))
 
+        globals.logger.info('Send a request. workspace_id={}, URL={}?no={}'.format(workspace_id, ita_restapi_endpoint, ita_menu_manifest_param))
         response = requests.post(ita_restapi_endpoint + '?no=' + ita_menu_manifest_param, headers=edit_headers, data=json.dumps(maniparam_edit))
         if response.status_code != 200:
             globals.logger.error("call ita_menu_call error:{} menu_no:{}".format(response.status_code, ita_menu_manifest_param))
@@ -784,6 +792,7 @@ def settings_manifest_parameter(workspace_id):
         globals.logger.debug('---- Updating BlueGreen Parameters ----')
         # globals.logger.debug(json.dumps(bluegreen_edit))
 
+        globals.logger.info('Send a request. workspace_id={}, URL={}?no={}'.format(workspace_id, ita_restapi_endpoint, ita_menu_bluegreen_param))
         response = requests.post(ita_restapi_endpoint + '?no=' + ita_menu_bluegreen_param, headers=edit_headers, data=json.dumps(bluegreen_edit))
         if response.status_code != 200:
             globals.logger.error("call ita_menu_call error:{} menu_no:{}".format(response.status_code, ita_menu_bluegreen_param))
@@ -803,7 +812,7 @@ def settings_manifest_parameter(workspace_id):
 
         globals.logger.info('SUCCESS: Set it-automation manifest parameter. ret_status={}, workspace_id={}'.format(ret_status, workspace_id))
 
-        # 戻り値をそのまま返却        
+        # 戻り値をそのまま返却
         return jsonify({"result": ret_status}), ret_status
 
     except common.UserException as e:
@@ -915,6 +924,7 @@ def settings_manifest_templates(workspace_id):
                 "NORMAL": "TPF_epoch_template_yaml"
             },
         }
+        globals.logger.info('Send a request. workspace_id={}, URL={}?no={}'.format(workspace_id, ita_restapi_endpoint, ita_menu_manifest_template))
         manitpl_resp = requests.post(ita_restapi_endpoint + '?no=' + ita_menu_manifest_template, headers=filter_headers, data=json.dumps(content))
         manitpl_json = json.loads(manitpl_resp.text)
         globals.logger.debug('---- Current Manifest Templates ----')
@@ -1019,6 +1029,7 @@ def settings_manifest_templates(workspace_id):
         # globals.logger.debug(edit_data)
 
         # ITAへREST実行
+        globals.logger.info('Send a request. workspace_id={}, URL={}?no={}'.format(workspace_id, ita_restapi_endpoint, ita_menu_manifest_template))
         manutemplate_edit_resp = requests.post(ita_restapi_endpoint + '?no=' + ita_menu_manifest_template, headers=edit_headers, data=json.dumps(edit_data))
         # manitemplate_json = json.loads(manutemplate_edit_resp.text)
 
@@ -1029,7 +1040,7 @@ def settings_manifest_templates(workspace_id):
 
         globals.logger.info('SUCCESS: Set it-automation manifest template. ret_status={}, workspace_id={}'.format(ret_status, workspace_id))
 
-        # 戻り値をそのまま返却        
+        # 戻り値をそのまま返却
         return jsonify({"result": ret_status}), ret_status
 
     except common.UserException as e:
