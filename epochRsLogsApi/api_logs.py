@@ -54,9 +54,9 @@ def call_logs():
     """
 
     try:
-        globals.logger.debug('=' * 50)
+
         globals.logger.debug('CALL {}:from[{}]'.format(inspect.currentframe().f_code.co_name, request.method))
-        globals.logger.debug('=' * 50)
+        # globals.logger.info('Output log. method={}'.format(request.method))
 
         # log出力 log output
         return logs_insert()
@@ -76,9 +76,9 @@ def call_logs_kind(log_kind):
     """
 
     try:
-        globals.logger.debug('=' * 50)
+
         globals.logger.debug('CALL {}:from[{}] log_kind[{}]'.format(inspect.currentframe().f_code.co_name, request.method, log_kind))
-        globals.logger.debug('=' * 50)
+        # globals.logger.info('Output log. method={}, log_kind={}'.format(request.method, log_kind))
 
         # log出力 log output
         return logs_insert(log_kind=log_kind)
@@ -99,9 +99,8 @@ def call_workspace_logs(workspace_id, log_kind):
     """
 
     try:
-        globals.logger.debug('=' * 50)
         globals.logger.debug('CALL {}:from[{}] workspace_id[{}] log_kind[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id, log_kind))
-        globals.logger.debug('=' * 50)
+        # globals.logger.info('Output log. method={}, workspace_id={}, log_kind={}'.format(request.method, workspace_id, log_kind))
 
         # log出力 log output
         return logs_insert(workspace_id=workspace_id, log_kind=log_kind)
