@@ -63,7 +63,7 @@ def post_manifest_parameter(workspace_id):
 
         # send put (workspace data update)
         apiInfo = "{}://{}:{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'], os.environ['EPOCH_RS_WORKSPACE_HOST'], os.environ['EPOCH_RS_WORKSPACE_PORT'])
-        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, apiInfo))
+        globals.logger.info('Send a request. workspace_id={}, URL={}/workspace/{}/manifestParameter'.format(workspace_id, apiInfo, workspace_id))
         request_response = requests.put( "{}/workspace/{}/manifestParameter".format(apiInfo, workspace_id), headers=post_headers, data=json.dumps(post_data))
         # エラーの際は処理しない
         if request_response.status_code == 404:
@@ -87,7 +87,7 @@ def post_manifest_parameter(workspace_id):
         globals.logger.debug("apiInfo:" + apiInfo)
 
         # Manifestパラメータ設定(ITA)
-        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, apiInfo))
+        globals.logger.info('Send a request. workspace_id={} URL="{}/workspace/{}/it-automation/manifest/parameter'.format(workspace_id, apiInfo, workspace_id))
         request_response = requests.post( "{}/workspace/{}/it-automation/manifest/parameter".format(apiInfo, workspace_id), headers=post_headers, data=json.dumps(post_data))
         # globals.logger.debug("ita/manifestParameter:response:" + request_response.text.encode().decode('unicode-escape'))
         ret = json.loads(request_response.text)
@@ -108,6 +108,7 @@ def post_manifest_parameter(workspace_id):
 
         # 正常以外はエラーを返す Returns an error if not normal
         if response.status_code != 200:
+            globals.logger.info('Fail: Get Workspace history before update. workspace_id={}'.format(workspace_id))
             if common.is_json_format(response.text):
                 ret = json.loads(response.text)
                 # 詳細エラーがある場合は詳細を設定
@@ -152,7 +153,7 @@ def post_manifest_template(workspace_id):
         # ファイルの存在チェック exists file check
         if 'manifest_files' not in request.files:
             error_detail = "アップロードファイルがありません"
-            globals.logger.debug('upload file not found')
+            globals.logger.info('Not exist manifest file.')
             raise common.UserException(error_detail)
 
         apiInfo = "{}://{}:{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'],
@@ -179,13 +180,13 @@ def post_manifest_template(workspace_id):
         }
 
         # RsWorkspace API呼び出し(全件取得)
-        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, apiInfo))
+        globals.logger.info('Send a request. workspace_id={} URL={}/workspace/{}/manifests'.format(workspace_id, apiInfo, workspace_id ))
         response = requests.get("{}/workspace/{}/manifests".format(apiInfo, workspace_id), headers=post_headers)
 
         # 戻り値が正常値以外の場合は、処理を終了
         if response.status_code != 200:
             error_detail = "manifestテンプレート情報取得失敗"
-            globals.logger.debug("CALL responseAPI /manifests Error")
+            globals.logger.info("Fail: Get manifest template information. workspace_id={}".format(workspace_id))
             raise common.UserException(error_detail)
 
         ret_manifests = json.loads(response.text)
@@ -221,13 +222,13 @@ def post_manifest_template(workspace_id):
                                                         os.environ['EPOCH_CONTROL_WORKSPACE_PORT'])
 
             # BlueGreen Deploymentの自動変換
-            globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_control_workspace))
+            globals.logger.info('Send a request. workspace_id={}, URL={}/workspace/{}/manifest/templates'.format(workspace_id, api_control_workspace, workspace_id))
             response = requests.post("{}/workspace/{}/manifest/templates".format(api_control_workspace, workspace_id), headers=post_headers, data=json.dumps(post_data))
 
             # 戻り値が正常値以外の場合は、処理を終了
             if response.status_code != 200:
                 error_detail = "manifestテンプレート変換失敗"
-                globals.logger.debug("CALL responseAPI /manifests Error")
+                globals.logger.info('Fail: Change manifest template. ret_status={}'.format(response.status_code))
                 raise common.UserException(error_detail)
 
             ret_template = json.loads(response.text)
@@ -268,14 +269,14 @@ def post_manifest_template(workspace_id):
             post_data = json.dumps(upd)
 
             # RsWorkspace API呼び出し(更新)
-            globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, apiInfo))
+            globals.logger.info('Send a request. workspace_id={}, URL={}/workspace/{}/manifests/{}'.format(workspace_id, apiInfo, workspace_id, upd["file_id"]))
             response = requests.put("{}/workspace/{}/manifests/{}".format(apiInfo, workspace_id, upd["file_id"]), headers=post_headers, data=post_data)
 
         # JSON形式に変換
         post_data = json.dumps(post_data_add)
 
         # RsWorkspace API呼び出し(登録)
-        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, apiInfo))
+        globals.logger.info('Send a request. workspace_id={}, URL={}/workspace/{}/manifests'.format(workspace_id, apiInfo, workspace_id))
         response = requests.post("{}/workspace/{}/manifests".format(apiInfo, workspace_id), headers=post_headers, data=post_data)
 
         # ITA呼び出し
@@ -287,7 +288,7 @@ def post_manifest_template(workspace_id):
         # 正常終了 normal return code
         ret_status = 200
 
-        globals.logger.info('SUCCESS: Set manifest template. workspace_id={}, ret_status={}, manifest_template_count={}'.format(workspace_id, ret_status, len(response)))
+        globals.logger.info('SUCCESS: Set manifest template. ret_status={}, workspace_id={}, manifest_template_count={}'.format(ret_status, workspace_id, len(response)))
 
         return jsonify({"result": ret_status, "rows": response}), ret_status
 
@@ -331,6 +332,7 @@ def get_manifest_template_list(workspace_id):
         globals.logger.debug(json.loads(response.text))
         globals.logger.debug("--------------------")
 
+        globals.logger.info('ret_status={}'.format(response.status_code))
         if response.status_code == 200 and common.is_json_format(response.text):
             # 200(正常)かつ、レスポンスデータがJSON形式の場合は、後続の処理を実行
             pass
@@ -351,7 +353,7 @@ def get_manifest_template_list(workspace_id):
         # 正常終了 normal return code
         ret_status = 200
 
-        globals.logger.info('SUCCESS: Get manifest template. workspace_id={}, ret_status={}, manifest_template_count={}'.format(workspace_id, ret_status, len(rows)))
+        globals.logger.info('SUCCESS: Get manifest template. ret_status={}, workspace_id={}, manifest_template_count={}'.format(ret_status, workspace_id, len(rows)))
 
         return jsonify({"result": ret_status, "rows": rows}), ret_status
 
@@ -392,6 +394,7 @@ def delete_manifest_template(workspace_id, file_id):
         globals.logger.info('Send a request. workspace_id={} file_id={} URL={}'.format(workspace_id, file_id, apiurl))
         response = requests.delete(apiurl, headers=headers)
 
+        globals.logger.info('ret_status={}'.format(response.status_code))
         if response.status_code == 200 and common.is_json_format(response.text):
             # 200(正常)かつ、レスポンスデータがJSON形式の場合は、後続の処理を実行
             pass
