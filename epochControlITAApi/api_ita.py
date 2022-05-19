@@ -468,6 +468,7 @@ def settings_ita(workspace_id):
 
         # すでに1度でもインポート済みの場合は、処理しない
         ret_is_import = is_already_imported(host, auth, init_auth)
+        globals.logger.info('ret_is_import_status={}'.format(ret_is_import))
         if ret_is_import == 200:
             globals.logger.debug("ITA initialize Imported.(success)")
             # 正常終了
@@ -516,6 +517,7 @@ def settings_ita(workspace_id):
                     raise common.UserException(error_detail)
 
                 # リクエスト送信
+                globals.logger.info('Send a request. workspace_id={}, URL=http://{}/default/menu/07_rest_api_ver1.php?no=2100000213'.format(workspace_id, host))
                 dialog_response = requests.post('http://' + host + '/default/menu/07_rest_api_ver1.php?no=2100000213', headers=header, data=json_data)
                 if dialog_response.status_code != 200:
                     globals.logger.error("no=2100000213 error:{}".format(dialog_response.status_code))
@@ -606,6 +608,7 @@ def is_already_imported(host, auth, init_auth):
     json_data = json.dumps(data)
 
     # インポート結果取得
+    globals.logger.info('Send a request. URL=http://{}/default/menu/07_rest_api_ver1.php?no=2100000213'.format(host))
     dialog_response = requests.post('http://' + host + '/default/menu/07_rest_api_ver1.php?no=2100000213', headers=header, data=json_data)
     if dialog_response.status_code != 200 and dialog_response.status_code != 401:
         globals.logger.error("no=2100000213 status_code:{}".format(dialog_response.status_code))
@@ -638,6 +641,7 @@ def is_already_imported(host, auth, init_auth):
     json_data = json.dumps(data)
 
     # インポート結果取得
+    globals.logger.info('Send a request. URL=http://{}/default/menu/07_rest_api_ver1.php?no=2100000213'.format(host))
     dialog_response = requests.post('http://' + host + '/default/menu/07_rest_api_ver1.php?no=2100000213', headers=header, data=json_data)
     if dialog_response.status_code != 200 and dialog_response.status_code != 401:
         globals.logger.error("no=2100000213 status_code:{}".format(dialog_response.status_code))
@@ -735,6 +739,7 @@ def kym_file_upload(host, auth):
 
     globals.logger.debug('---- ita file upload ---- HOST:' + host)
     # リクエスト送信
+    globals.logger.info('Send a request. URL=http://{}/default/menu/07_rest_api_ver1.php?no=2100000212'.format(host))
     upload_response = requests.post('http://' + host + '/default/menu/07_rest_api_ver1.php?no=2100000212', headers=header, data=json_data)
     if upload_response.status_code != 200:
         globals.logger.error("no=2100000212 status_code:{}".format(upload_response.status_code))
@@ -793,6 +798,7 @@ def import_execute(host, auth, upload_id, menu_list, upload_filename):
     json_data = json.dumps(data)
 
     # リクエスト送信
+    globals.logger.info('Send a request. URL=http://{}/default/menu/07_rest_api_ver1.php?no=2100000212'.format(host))
     exec_response = requests.post('http://' + host + '/default/menu/07_rest_api_ver1.php?no=2100000212', headers=header, data=json_data)
     if exec_response.status_code != 200:
         globals.logger.error("no=2100000212 status_code:{}".format(exec_response.status_code))

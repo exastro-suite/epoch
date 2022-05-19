@@ -52,6 +52,7 @@ def get_access_info(workspace_id):
         # アクセス情報取得
         # Select送信（workspace_access取得）
         globals.logger.debug ("workspace_access get call: worksapce_id:{}".format(workspace_id))
+        globals.logger.info('Send a request. workspace_id={}, URL={}/workspace/{}/access'.format(workspace_id, api_info, workspace_id))
         request_response = requests.get( "{}/workspace/{}/access".format(api_info, workspace_id))
 
         # 情報が存在する場合は、更新、存在しない場合は、登録

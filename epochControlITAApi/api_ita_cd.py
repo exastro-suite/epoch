@@ -87,6 +87,7 @@ def get_cd_operations(workspace_id):
         #
         # オペレーションの取得
         #
+        globals.logger.info('Send a request. workspace_id={}, URL={}?no={}'.format(workspace_id, ita_restapi_endpoint, ite_menu_operation))
         opelist_resp = requests.post(ita_restapi_endpoint + '?no=' + ite_menu_operation, headers=filter_headers)
         globals.logger.debug('---- Operation ----')
         globals.logger.debug(opelist_resp.text)
@@ -103,7 +104,7 @@ def get_cd_operations(workspace_id):
 
         globals.logger.info('SUCCESS: Get CD operations list. ret_status={}, workspace_id={}, operation_count={}'.format(ret_status, workspace_id, len(rows)))
 
-        # 戻り値をそのまま返却        
+        # 戻り値をそのまま返却
         return jsonify({"result": ret_status, "rows": rows}), ret_status
 
     except common.UserException as e:
@@ -132,7 +133,7 @@ def cd_execute(workspace_id):
         # ワークスペースアクセス情報取得 get workspace access info.
         access_info = api_access_info.get_access_info(workspace_id)
 
-        # namespaceの取得 get namespace 
+        # namespaceの取得 get namespace
         namespace = common.get_namespace_name(workspace_id)
 
         ita_restapi_endpoint = "http://{}.{}.svc:{}/default/menu/07_rest_api_ver1.php".format(EPOCH_ITA_HOST, namespace, EPOCH_ITA_PORT)
@@ -163,6 +164,7 @@ def cd_execute(workspace_id):
         json_data = json.dumps(data)
 
         # リクエスト送信
+        globals.logger.info('Send a request. workspace_id={}, URL={}?no={}'.format(workspace_id, ita_restapi_endpoint, ite_menu_conductor_exec))
         exec_response = requests.post(ita_restapi_endpoint + '?no=' + ite_menu_conductor_exec, headers=filter_headers, data=json_data)
 
         if exec_response.status_code != 200:
@@ -201,7 +203,7 @@ def cd_execute(workspace_id):
 
         globals.logger.info('SUCCESS: Execute it-automation CD. ret_status={}, workspace_id={}, cd_result_id={}'.format(ret_status, workspace_id, cd_result_id))
 
-        # 戻り値をそのまま返却        
+        # 戻り値をそのまま返却
         return jsonify({"result": ret_status, "cd_result_id": cd_result_id}), ret_status
 
     except common.UserException as e:
@@ -227,7 +229,7 @@ def cd_execute_cancel(workspace_id, conductor_id):
         # ワークスペースアクセス情報取得 get workspace access info.
         access_info = api_access_info.get_access_info(workspace_id)
 
-        # namespaceの取得 get namespace 
+        # namespaceの取得 get namespace
         namespace = common.get_namespace_name(workspace_id)
 
         ita_restapi_endpoint = "http://{}.{}.svc:{}/default/menu/07_rest_api_ver1.php".format(EPOCH_ITA_HOST, namespace, EPOCH_ITA_PORT)
@@ -251,6 +253,7 @@ def cd_execute_cancel(workspace_id, conductor_id):
         json_data = json.dumps(data)
 
         # リクエスト送信
+        globals.logger.info('Send a request. workspace_id={}, URL={}?no={}'.format(workspace_id, ita_restapi_endpoint, ite_menu_conductor_cancel))
         response = requests.post(ita_restapi_endpoint + '?no=' + ite_menu_conductor_cancel, headers=filter_headers, data=json_data)
 
         globals.logger.debug(response.text)
@@ -296,7 +299,7 @@ def cd_result_get(workspace_id, conductor_id):
         # ワークスペースアクセス情報取得 get workspace access info.
         access_info = api_access_info.get_access_info(workspace_id)
 
-        # namespaceの取得 get namespace 
+        # namespaceの取得 get namespace
         namespace = common.get_namespace_name(workspace_id)
 
         ita_restapi_endpoint = "http://{}.{}.svc:{}/default/menu/07_rest_api_ver1.php".format(EPOCH_ITA_HOST, namespace, EPOCH_ITA_PORT)
@@ -321,6 +324,7 @@ def cd_result_get(workspace_id, conductor_id):
         json_data = json.dumps(data)
 
         # リクエスト送信 request post
+        globals.logger.info('Send a request. workspace_id={}, URL={}?no={}'.format(workspace_id, ita_restapi_endpoint, ite_menu_conductor_result))
         exec_response = requests.post(ita_restapi_endpoint + '?no=' + ite_menu_conductor_result, headers=filter_headers, data=json_data)
 
         if exec_response.status_code != 200:
@@ -345,7 +349,7 @@ def cd_result_get(workspace_id, conductor_id):
         # 正常終了 normal end
         ret_status = 200
 
-        # 戻り値をそのまま返却 return to it-automation results        
+        # 戻り値をそのまま返却 return to it-automation results
         return jsonify({"result": ret_status, "rows": rows}), ret_status
 
     except common.UserException as e:
@@ -373,7 +377,7 @@ def cd_result_logs_get(workspace_id, conductor_id):
         # ワークスペースアクセス情報取得 get workspace access info.
         access_info = api_access_info.get_access_info(workspace_id)
 
-        # namespaceの取得 get namespace 
+        # namespaceの取得 get namespace
         namespace = common.get_namespace_name(workspace_id)
 
         ita_restapi_endpoint = "http://{}.{}.svc:{}/default/menu/07_rest_api_ver1.php".format(EPOCH_ITA_HOST, namespace, EPOCH_ITA_PORT)
@@ -399,6 +403,7 @@ def cd_result_logs_get(workspace_id, conductor_id):
         json_data = json.dumps(data)
 
         # リクエスト送信 request post
+        globals.logger.info('Send a request. workspace_id={}, URL={}?no={}'.format(workspace_id, ita_restapi_endpoint, ite_menu_conductor_download))
         exec_response = requests.post(ita_restapi_endpoint + '?no=' + ite_menu_conductor_download, headers=filter_headers, data=json_data)
 
         if exec_response.status_code != 200:
@@ -425,7 +430,7 @@ def cd_result_logs_get(workspace_id, conductor_id):
             # 実行途中の正常終了として返す Returns as normal termination during execution
             globals.logger.debug("not start!")
             ret_status = 404
-            # 実行前なので404を返却 Return 404 because it is before execution  
+            # 実行前なので404を返却 Return 404 because it is before execution
             return jsonify({"result": ret_status, "rows": rows}), ret_status
 
         resp_data = json.loads(exec_response.text)
@@ -452,7 +457,7 @@ def cd_result_logs_get(workspace_id, conductor_id):
                 # globals.logger.debug(f"path_zip_file:{path_zip_file}")
                 with open(path_zip_file, mode='bw') as fp:
                     fp.write(binary_result_log_zip)
-                
+
                 # zipファイルに含まれているファイル名の取得
                 # Get the file name contained in the zip file
                 with zipfile.ZipFile(path_zip_file) as log_zip:
@@ -513,7 +518,7 @@ def cd_result_logs_get(workspace_id, conductor_id):
         # 正常終了 normal end
         ret_status = 200
 
-        # 戻り値をそのまま返却        
+        # 戻り値をそのまま返却
         return jsonify({"result": ret_status, "rows": rows}), ret_status
 
     except common.UserException as e:
