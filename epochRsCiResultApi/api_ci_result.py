@@ -70,12 +70,12 @@ def post_tekton_task(workspace_id):
 
             globals.logger.debug('insert task_id:{}'.format(str(task_id)))
 
-        globals.logger.info('SUCCESS: Register CI result information. workspace_id={}, task_id={}, pipeline_id={}, status={}'.format(workspace_id, task_id,info['pipeline_id'], 200))
+        globals.logger.info('SUCCESS: Register CI result information. workspace_id={}, task_id={}, pipeline_id={}, status={}'.format(workspace_id, task_id, info['pipeline_id'], TASK_STATUS_RUNNING))
 
         return jsonify({"result": "200", "param" : { "task_id": task_id, "container_registry_image_tag": image_tag }}), 200
 
     except Exception as e:
-        globals.logger.info('Fail: Register CI result information. workspace_id={}, task_id={}, pipeline_id={}, status={}'.format(workspace_id, task_id, task_id,info['pipeline_id'], 500))
+        globals.logger.info('Fail: Register CI result information. workspace_id={}'.format(workspace_id))
         return common.serverError(e, "tekton_pipeline_task db registration error")
 
 @app.route('/workspace/<int:workspace_id>/tekton/task/<int:task_id>', methods=['PATCH'])
