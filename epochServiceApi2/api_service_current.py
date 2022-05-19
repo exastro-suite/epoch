@@ -196,7 +196,7 @@ def user_get():
             "composite_roles": all_composite_roles,
         }
         # globals.logger.debug(f"ret_user:{ret_user}")
-        globals.logger.info('SUCCESS: Get user infomation. user_name={}, user_information_count={}'.format(users['info']['username'], len(ret_user)))
+        globals.logger.info('SUCCESS: Get user infomation. user_id={}'.format(user_id))
 
         return ret_user
 
