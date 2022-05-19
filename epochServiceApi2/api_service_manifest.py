@@ -103,12 +103,12 @@ def post_manifest_parameter(workspace_id):
                                                     os.environ['EPOCH_RS_WORKSPACE_HOST'],
                                                     os.environ['EPOCH_RS_WORKSPACE_PORT'],
                                                     workspace_id)
-        globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, api_url))
+        globals.logger.info('Send a request. workspace_id={}, URL={}'.format(workspace_id, api_url))
         response = requests.get(api_url)
 
         # 正常以外はエラーを返す Returns an error if not normal
         if response.status_code != 200:
-            globals.logger.info('Fail: Get Workspace history before update. workspace_id={}'.format(workspace_id))
+            globals.logger.info('Fail: Get workspace detail. workspace_id={}'.format(workspace_id))
             if common.is_json_format(response.text):
                 ret = json.loads(response.text)
                 # 詳細エラーがある場合は詳細を設定
