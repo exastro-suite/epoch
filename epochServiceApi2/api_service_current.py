@@ -88,6 +88,7 @@ def user_get():
         globals.logger.info("Send a request. URL={}".format(api_url))
         response = requests.get(api_url)
         if response.status_code != 200 and response.status_code != 404:
+            globals.logger.info('Fail: Get user information. user_id={}'.format(user_id))
             error_detail = multi_lang.get_text("EP020-0008", "ユーザー情報の取得に失敗しました")
             raise common.UserException("{} Error user get status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
 
@@ -108,6 +109,7 @@ def user_get():
         globals.logger.info("Send a request. URL={}".format(api_url))
         response = requests.get(api_url)
         if response.status_code != 200:
+            globals.logger.info('Fail: Get user role information. user_name={}'.format(users["info"]["username"]))
             error_detail = multi_lang.get_text("EP020-0009", "ユーザーロール情報の取得に失敗しました")
             raise common.UserException("{} Error user role get status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
 
@@ -160,6 +162,7 @@ def user_get():
                 globals.logger.info("Send a request. URL={}".format(api_url))
                 response = requests.get(api_url)
                 if response.status_code != 200:
+                    globals.logger.info('Fail: Get workspace information. workspace_id={}'.format(workspace_id))
                     error_detail = multi_lang.get_text("EP020-0013", "ワークスペース情報の取得に失敗しました")
                     raise common.UserException("{} Error workspace get status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
 
@@ -193,6 +196,7 @@ def user_get():
             "composite_roles": all_composite_roles,
         }
         # globals.logger.debug(f"ret_user:{ret_user}")
+        globals.logger.info('SUCCESS: Get user infomation. username={}'.format(users['info']['username']))
 
         return ret_user
 
