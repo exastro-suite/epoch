@@ -58,7 +58,7 @@ def post_tekton_task(workspace_id):
         image_tag = '{}.{}'.format(re.sub(r'.*/', '', request.json['git_branch']), datetime.now(globals.TZ).strftime("%Y%m%d-%H%M%S"))
 
         with dbconnector() as db, dbcursor(db) as cursor:
-            
+
             # Requestからinfo項目を生成する
             info = request.json
             info['workspace_id'] = workspace_id
@@ -67,8 +67,6 @@ def post_tekton_task(workspace_id):
 
             # CI結果情報 insert実行(戻り値：追加したtask_id)
             task_id = da_ci_result.insert_tekton_pipeline_task(cursor, info)
-
-            globals.logger.debug('insert task_id:{}'.format(str(task_id)))
 
         globals.logger.info('SUCCESS: Register CI result information. workspace_id={}, task_id={}, pipeline_id={}, status={}'.format(workspace_id, task_id, info['pipeline_id'], TASK_STATUS_RUNNING))
 
@@ -123,15 +121,15 @@ def get_tekton_task(workspace_id):
         globals.logger.info('Get CI result information. method={}, workspace_id={}'.format(request.method, workspace_id))
 
         with dbconnector() as db, dbcursor(db) as cursor:
-            
+
             # CI result information select execution - CI結果情報 select実行
             fetch_rows = da_ci_result.select_tekton_pipeline_task(cursor, workspace_id)
 
         # Successful completion - 正常終了
         res_status = 200
-        
+
         globals.logger.info('SUCCESS: Get CI result information. res_status={}, workspace_id={}, CI_result_information_count={}'.format(200, workspace_id, len(fetch_rows)))
-        
+
         return jsonify({ "result": res_status, "rows": fetch_rows }), res_status
 
     except Exception as e:

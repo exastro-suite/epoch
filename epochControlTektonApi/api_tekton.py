@@ -159,7 +159,7 @@ def post_tekton_pipeline(workspace_id):
             # else:
             #     giturl = urlparse('http://' + pipeline['container_registry']['image'])
             #     pipeline['container_registry']['secret_server'] = giturl.netloc + '/'
-            
+
             pipeline['container_registry']['auth'] = base64.b64encode('{}:{}'.format(pipeline['container_registry']['user'], pipeline['container_registry']['password']).encode()).decode()
 
             # build branchの設定
@@ -211,9 +211,9 @@ def post_tekton_pipeline(workspace_id):
                 globals.logger.info('Fail: Delete workspace pipeline. workspace_id={}, KIND={}'.format(workspace_id, YAML_KIND_PIPELINE))
 
             raise   # エラーをスロー
-        
+
         globals.logger.info('SUCCESS: Create tekton pipeline. ret_status={}, workspace_id={}'.format(200, workspace_id))
-        
+
         return jsonify({"result": "200"}), 200
 
     except Exception as e:
@@ -228,11 +228,11 @@ def sonarqube_initialize(workspace_id, param):
         workspace_id (int): ワークスペースID
         param (dict): ワークスペースパラメータ
     """
-    
+
     globals.logger.info('Set SonarQube initial information. workspace_id={}'.format(workspace_id))
-    
+
     access_data = get_access_info(workspace_id)
-    
+
     host = "http://sonarqube.{}.svc:9000/".format(param["ci_config"]["pipeline_namespace"])
     sonarqube_user_name = access_data['SONARQUBE_USER']
     sonarqube_user_password = access_data['SONARQUBE_PASSWORD']
@@ -259,7 +259,6 @@ def sonarqube_initialize(workspace_id, param):
             globals.logger.info('Send a request. workspace_id={}, URL={}'.format(workspace_id, api_uri))
             response = requests.post(api_uri, auth=HTTPBasicAuth(sonarqube_user_name, sonarqube_user_initial_password), timeout=3)
 
-            globals.logger.debug('code: {}, message: {}'.format(str(response.status_code), response.text))
             if response.status_code == 204:
                 globals.logger.info('SUCCESS: Change SonarQube password.')
 
@@ -281,8 +280,7 @@ def sonarqube_initialize(workspace_id, param):
             globals.logger.info('Send a request. workspace_id={}, URL={}'.format(workspace_id, api_uri))
             # ユーザ作成API呼び出し
             response = requests.post(api_uri, auth=HTTPBasicAuth(sonarqube_user_name, sonarqube_user_password), timeout=3)
-            
-            globals.logger.debug('code: {}, message: {}'.format(str(response.status_code), response.text))
+
             if response.status_code == 200:
                 globals.logger.info('SUCCESS: Create SonarQube user.')
                 break
@@ -446,9 +444,10 @@ def delete_tekton_pipeline(workspace_id):
     Returns:
         Response: HTTP Respose
     """
-    globals.logger.debug('CALL delete_tekton_pipeline:{}'.format(workspace_id))
 
     try:
+        globals.logger.info('Delete TEKTON pipeline. method={}, workspace_id={}'.format(request.method, workspace_id))
+
         # pipelineを削除
         delete_workspace_pipeline(workspace_id, YAML_KIND_PIPELINE)
         # tektonの実行情報を削除（削除しないと止まってしまうため）
@@ -475,7 +474,7 @@ def delete_tekton_pipelinerun(workspace_id):
             ['kubectl', 'tkn', 'pipelinerun', 'delete', '--all', '-f',
             '-n', tekton_pipeline_namespace(workspace_id),
             ], stderr=subprocess.STDOUT)
-        
+
         globals.logger.debug('COMMAAND SUCCEED: kubectl tkn pipelinerun delete --all -f\n{}'.format(result_kubectl.decode('utf-8')))
         globals.logger.info('SUCCESS: Delete tekton pipelinerun. workspace_id={}'.format(workspace_id))
 
@@ -529,7 +528,7 @@ def get_tekton_pipelinerun(workspace_id):
                         idx = int(resPlRunitem['pipeline_id'])
 
                         if idx in resRowsDict:
-                            # そのpipeline idの結果が既に存在するときはstart_timeで比較し、大きい方を残す                
+                            # そのpipeline idの結果が既に存在するときはstart_timeで比較し、大きい方を残す
                             if resRowsDict[idx]['start_time'] < resPlRunitem['start_time']:
                                 resRowsDict[idx] = resPlRunitem
                         else:
@@ -609,7 +608,7 @@ def get_responsePipelineRunItem(plRunitem):
     resPlRunitem['tasks'] = []
     for task in plRunitem['status']['pipelineSpec']['tasks']:
         resPlRunitem['tasks'].append(
-            dict({'name' : task['name']}, **get_taskStatus(plRunitem, task['name']))            
+            dict({'name' : task['name']}, **get_taskStatus(plRunitem, task['name']))
         )
     globals.logger.info('SUCCESS: Analyze pipelinerun result.')
     return  resPlRunitem
@@ -728,9 +727,9 @@ def get_tekton_taskrun_logs(workspace_id, taskrun_name):
     Returns:
         Response: HTTP Respose
     """
-    globals.logger.debug('CALL get_tekton_taskrun:{},{}'.format(workspace_id, taskrun_name))
 
     try:
+        globals.logger.info('Get TEKTON log. method={}, workspace_id={}, taskrun_name={}'.format(request.method, workspace_id, taskrun_name))
         # TEKTON log acquisition sometimes times out, so retry - TEKTONのログ取得がたまにtimeoutするのでリトライする
         for i in range(RETRY_GET_LOG):
             try:
@@ -738,7 +737,7 @@ def get_tekton_taskrun_logs(workspace_id, taskrun_name):
                     ['kubectl', 'tkn', 'taskrun', 'logs', taskrun_name,
                     '-n', tekton_pipeline_namespace(workspace_id),
                     ], stderr=subprocess.STDOUT)
-                
+
                 globals.logger.debug('COMMAAND SUCCEED: kubectl tkn taskrun logs')
 
                 # 正常応答
@@ -777,9 +776,9 @@ def get_access_info(workspace_id):
     Returns:
         json: アクセス情報
     """
-    
+
     globals.logger.info('Get workspace access information. workspace_id={}'.format(workspace_id))
-    
+
     try:
         # url設定
         api_info = "{}://{}:{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'], os.environ['EPOCH_RS_WORKSPACE_HOST'], os.environ['EPOCH_RS_WORKSPACE_PORT'])
@@ -796,9 +795,9 @@ def get_access_info(workspace_id):
         else:
             globals.logger.info('Fail: Get workspace access information. ret_status={}, workspace_id={}'.format(request_response.status_code, workspace_id))
             raise Exception("workspace_access get error status:{}, responce:{}".format(request_response.status_code, request_response.text))
-        
+
         globals.logger.info('SUCCESS: Get workspace access information. workspace_id={}, access_information_count={}'.format(workspace_id, len(ret)))
-        
+
         return ret
 
     except Exception as e:
@@ -842,9 +841,9 @@ def get_pv_node():
         string: Node名
     """
     node = ""
-    
+
     globals.logger.info('Get node name')
-    
+
     try:
         # TEKTON CLIにてpipelinerunのListを取得
         result = subprocess.check_output(
@@ -857,9 +856,9 @@ def get_pv_node():
         # コマンド実行エラー
         globals.logger.info('Fail: Get node name. status_code={}, error_information={}'.format(e.returncode, e.output.decode('utf-8')))
         raise # 再スロー
-    
+
     globals.logger.info('SUCCESS: Get node name. node_name={}'.format(node))
-    
+
     return node
 
 if __name__ == "__main__":

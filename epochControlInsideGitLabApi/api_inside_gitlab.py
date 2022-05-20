@@ -22,7 +22,7 @@ import tempfile
 import subprocess
 import time
 import re
-import urllib.parse 
+import urllib.parse
 import base64
 import requests
 from requests.auth import HTTPBasicAuth
@@ -136,7 +136,6 @@ def post_gitlab_webhooks(workspace_id):
         })
 
         api_url = "{}://{}:{}/api/v4/projects/{}%2F{}/hooks".format(API_PROTOCOL, API_BASE_URL, API_PORT, json_url['group_name'], json_url['repos_name'])
-        globals.logger.debug('api_url: {}'.format(api_url))
         globals.logger.info('Send a request. workspace_id={}, URL={}'.format(workspace_id, api_url))
         # create webhookのPOST送信
         request_response = requests.post(api_url, headers=post_headers, data=post_data)
@@ -152,7 +151,7 @@ def post_gitlab_webhooks(workspace_id):
             "result": "201",
             "output": "gitlab_webhook{" + request_response.text + "}"
         }
-        
+
         globals.logger.info('SUCCESS: Set GitLab webhooks. ret_status={}, workspace_id={}'.format(str(request_response.status_code), workspace_id))
 
         return jsonify(response), 201
@@ -185,9 +184,9 @@ def post_gitlab_repos(workspace_id):
         globals.logger.debug('CALL exists_repositry:ret:{}'.format(ret_exists))
         # すでにリポジトリが存在したので200で終了
         if ret_exists:
-            
+
             globals.logger.info('SUCCESS: Create GitLab repository. ret_status={}, workspace_id={}, gitlab_project={}'.format(200, workspace_id, "already exists repositry"))
-            
+
             return jsonify({"result": "200", "output": "gitlab_project{ already exists repositry}"}), 200
 
         # URLの分割
@@ -227,7 +226,6 @@ def post_gitlab_repos(workspace_id):
         # create projectのPOST送信
         request_response = requests.post(api_url, headers=post_headers, data=post_data)
 
-        globals.logger.debug('code: {}, message: {}'.format(str(request_response.status_code), request_response.text))
         # 正常に作成された場合は201が応答されるので正常終了
         if request_response.status_code == 201:
             globals.logger.debug('gitlab project create SUCCEED')
@@ -464,6 +462,7 @@ def exists_webhook(user, token, url, webhooks_url):
     api_url = "{}://{}:{}/api/v4/projects/{}%2F{}/hooks".format(API_PROTOCOL, API_BASE_URL, API_PORT,json_url['group_name'],json_url['repos_name'])
 
     # webhookの一覧を取得する
+    globals.logger.info('Send a request. URL={}'.format(api_url))
     response = requests.get(api_url, headers=post_headers)
 
     # webhookが存在する場合はTrueを返す
@@ -503,19 +502,19 @@ def get_git_branches():
         if request.args.get('git_url') is not None:
             git_url = urllib.parse.unquote(request.args.get('git_url'))
         else:
-            raise Exception("gir_url parameter not found")
+            raise Exception("git_url parameter not found")
 
         json_url = get_url_split(git_url)
 
-        # gitlab repo branches get call 
+        # gitlab repo branches get call
         api_url = "{}://{}:{}/api/v4/projects/{}%2F{}/repository/branches".format(API_PROTOCOL, API_BASE_URL, API_PORT, json_url['group_name'], json_url['repos_name'])
 
-        globals.logger.debug("api_url:[{}]".format(api_url))
+        globals.logger.info('Send a request. URL={}'.format(api_url))
         response = requests.get(api_url, headers=post_headers)
 
-        ret_status = response.status_code 
+        ret_status = response.status_code
         if response.status_code == 200:
-            rows = json.loads(response.text) 
+            rows = json.loads(response.text)
             # globals.logger.debug("rows:[{}]".format(rows))
         else:
             rows = None
@@ -566,7 +565,7 @@ def get_git_commits(revision=None):
 
         json_url = get_url_split(git_url)
 
-        # gitlab repo commits get call 
+        # gitlab repo commits get call
         api_url = "{}://{}:{}/api/v4/projects/{}%2F{}/repository/commits".format(API_PROTOCOL, API_BASE_URL, API_PORT, json_url['group_name'], json_url['repos_name'])
 
         # 個別指定がある場合のみ、条件を設定
@@ -580,9 +579,9 @@ def get_git_commits(revision=None):
         globals.logger.debug("api_url:[{}]".format(api_url))
         response = requests.get(api_url, headers=post_headers)
 
-        ret_status = response.status_code 
+        ret_status = response.status_code
         if response.status_code == 200:
-            rows = json.loads(response.text) 
+            rows = json.loads(response.text)
             # globals.logger.debug("rows:[{}]".format(rows))
         else:
             rows = None
@@ -611,9 +610,7 @@ def get_git_commits_branch(revision):
     """
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {} revision[{}]'.format(inspect.currentframe().f_code.co_name, revision))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Get git commits branch information. revision={}'.format(revision))
 
         # ヘッダ情報 header info.
         post_headers = {
@@ -625,19 +622,18 @@ def get_git_commits_branch(revision):
         if request.args.get('git_url') is not None:
             git_url = urllib.parse.unquote(request.args.get('git_url'))
         else:
-            raise Exception("gir_url parameter not found")
+            raise Exception("git_url parameter not found")
 
         json_url = get_url_split(git_url)
 
-        # gitlab repo commits brach get call 
+        # gitlab repo commits brach get call
         api_url = "{}://{}:{}/api/v4/projects/{}%2F{}/repository/commits/{}/refs".format(API_PROTOCOL, API_BASE_URL, API_PORT, json_url['group_name'], json_url['repos_name'], revision)
 
-        globals.logger.debug("api_url:[{}]".format(api_url))
         response = requests.get(api_url, headers=post_headers)
 
-        ret_status = response.status_code 
+        ret_status = response.status_code
         if response.status_code == 200:
-            rows = json.loads(response.text) 
+            rows = json.loads(response.text)
             # globals.logger.debug("rows:[{}]".format(rows))
         else:
             rows = None
