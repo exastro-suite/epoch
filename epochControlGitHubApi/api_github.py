@@ -274,6 +274,7 @@ def create_github_webhooks(workspace_id):
         if request_response.status_code == 201 or request_response.status_code == 422:
             ret_status = 200
 
+        globals.logger.info('SUCCESS: Create github webhook. ret_status={}, workspace_id={}'.format(ret_status, workspace_id))
         # 戻り値をそのまま返却
         return jsonify({"result": ret_status}), ret_status
 
@@ -317,6 +318,7 @@ def get_github_webhooks(workspace_id):
             }
 
             globals.logger.debug(git_repos)
+            globals.logger.info('Send a request. workspace_id={}, URL={}{}{}'.format(workspace_id, github_webhook_base_url, git_repos, github_webhook_base_hooks))
             # GETリクエスト送信
             request_response = requests.get(github_webhook_base_url + git_repos + github_webhook_base_hooks, headers=request_headers)
 
@@ -326,6 +328,8 @@ def get_github_webhooks(workspace_id):
             rows = request_response.text
         else:
             rows = []
+
+        globals.logger.info('SUCCESS: Get github webhook information. ret_status={}, workspace_id={} row={}'.format(ret_status, workspace_id, rows))
 
         # 戻り値をそのまま返却
         return jsonify({"result": ret_status, "rows": rows}), ret_status
@@ -365,17 +369,16 @@ def get_git_branches():
 
         globals.logger.info('Send a request. URL={}'.format(api_url))
         response = requests.get(api_url, headers=request_headers)
-        globals.logger.debug("api_url:[{}]".format(api_url))
 
         ret_status = response.status_code
         if response.status_code == 200:
             rows = json.loads(response.text)
             # globals.logger.debug("rows:[{}]".format(rows))
+            globals.logger.info('SUCCESS: Get git branches information. ret_status={}, git_branch_count={}'.format(ret_status, len(rows) if rows is not None else None))
         else:
             rows = None
-            globals.logger.debug("git branches get error:[{}] text:[{}]".format(response.status_code, response.text))
+            globals.logger.info("Fail: Get git branches information.:[{}] text:[{}]".format(response.status_code, response.text))
 
-        globals.logger.info('SUCCESS: Get git branches information. ret_status={}, git_branch_count={}'.format(ret_status, len(rows) if rows is not None else None))
 
         # 取得したGit branches情報を返却 Return the acquired Git branches information
         return jsonify({"result": ret_status, "rows": rows}), ret_status
@@ -430,7 +433,6 @@ def get_git_commits(revision=None):
         if branch is not None:
             api_url += "?sha={}".format(urllib.parse.quote(branch))
 
-        globals.logger.debug("api_url:[{}]".format(api_url))
         globals.logger.info('Send a request. URL={}'.format(api_url))
         response = requests.get(api_url, headers=request_headers)
 
@@ -438,11 +440,11 @@ def get_git_commits(revision=None):
         if response.status_code == 200:
             rows = json.loads(response.text)
             # globals.logger.debug("rows:[{}]".format(rows))
+            globals.logger.info('SUCCESS: Get git commits information. ret_status={}, git_commit_count={}'.format(ret_status, len(rows) if rows is not None else None))
         else:
             rows = None
-            globals.logger.debug("git commits get error:[{}] text:[{}]".format(response.status_code, response.text))
+            globals.logger.info("Fail: Get git commits. ret_status={}, error_information={}".format(response.status_code, response.text))
 
-        globals.logger.info('SUCCESS: Get git commits information. ret_status={}, git_commit_count={}'.format(ret_status, len(rows) if rows is not None else None))
 
         # 取得したGit commit情報を返却 Return the acquired Git commit information
         return jsonify({"result": ret_status, "rows": rows}), ret_status
@@ -483,8 +485,8 @@ def get_git_commits_branch(revision):
         # github repo commits get call
         api_url = "{}{}/commits/{}/branches-where-head".format(github_webhook_base_url, git_repos, revision)
 
+        globals.logger.info('Send a request. URL={}'.format(api_url))
         response = requests.get(api_url, headers=request_headers)
-        globals.logger.debug("api_url:[{}]".format(api_url))
 
         ret_status = response.status_code
         if response.status_code == 200:
