@@ -84,7 +84,6 @@ def post_manifest_parameter(workspace_id):
 
         # 呼び出すapiInfoは、環境変数より取得
         apiInfo = "{}://{}:{}".format(os.environ["EPOCH_CONTROL_ITA_PROTOCOL"], os.environ["EPOCH_CONTROL_ITA_HOST"], os.environ["EPOCH_CONTROL_ITA_PORT"])
-        globals.logger.debug("apiInfo:" + apiInfo)
 
         # Manifestパラメータ設定(ITA)
         globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, apiInfo))
@@ -449,7 +448,6 @@ def ita_registration(workspace_id):
             'Content-Type': 'application/json',
         }
 
-        globals.logger.debug("CALL manifests get : url:{}".format(apiurl))
         # RsWorkspace API呼び出し RsWorkspace API call
         globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, apiurl))
         response = requests.get(apiurl, headers=post_headers)
