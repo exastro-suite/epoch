@@ -292,9 +292,7 @@ def cd_result_get(workspace_id, conductor_id):
     """
 
     try:
-        globals.logger.debug('#' * 50)
-        globals.logger.debug('CALL {} workspace_id[{}] conductor_id[{}]'.format(inspect.currentframe().f_code.co_name, workspace_id, conductor_id))
-        globals.logger.debug('#' * 50)
+        globals.logger.info('Get CD execution result. workspace_id={}, conductor_id={}'.format(workspace_id, conductor_id))
 
         # ワークスペースアクセス情報取得 get workspace access info.
         access_info = api_access_info.get_access_info(workspace_id)
