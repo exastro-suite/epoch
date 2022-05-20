@@ -450,8 +450,6 @@ def manifest_file_delete_all(workspace_id):
             # manifests情報 delete実行
             upd_cnt = da_manifest.delete_manifests(cursor, workspace_id)
 
-            globals.logger.debug("delete_manifests:ret:{}".format(upd_cnt))
-
             globals.logger.info('Delete manifest file. update_count={}'.format(upd_cnt))
 
             if upd_cnt == 0:
@@ -481,8 +479,6 @@ def manifest_file_delete(workspace_id, manifest_id):
         with dbconnector() as db, dbcursor(db) as cursor:
             # manifests情報 delete実行
             upd_cnt = da_manifest.delete_manifest(cursor, workspace_id, manifest_id)
-
-            globals.logger.debug("delete_manifest:ret:{}".format(upd_cnt))
 
             globals.logger.info('Delete manifest file. update_count={}'.format(upd_cnt))
 
@@ -692,9 +688,7 @@ def workspace_access_update(workspace_id):
             # ワークスペースアクセス情報 update実行
             upd_cnt = da_workspace_access.update_workspace_access(cursor, workspace_id, info)
 
-            globals.logger.debug('update workspace_id:{}'.format(workspace_id))
-
-            globals.logger.info('Workspace access update. update_count={}'.format(upd_cnt))
+            globals.logger.info('Workspace access update. update_count={}, workspace_id={}'.format(upd_cnt, workspace_id))
 
             if upd_cnt == 0:
                 # データがないときは404応答
@@ -821,9 +815,7 @@ def workspace_status_update(workspace_id):
             # ワークスペース状態情報 update実行 worksapce status info. update
             upd_cnt = da_workspace_status.update_workspace_status(cursor, workspace_id, info_upadate_colums)
 
-            globals.logger.info('update workspace_id:{}'.format(workspace_id))
-
-            globals.logger.info('Update workspace status. update_count={}'.format(upd_cnt))
+            globals.logger.info('Update workspace status. update_count={}, workspace_id={}'.format(upd_cnt, workspace_id))
 
             if upd_cnt == 0:
                 # データがないときは404応答
@@ -892,8 +884,6 @@ def workspace_status_delete(workspace_id, id):
         with dbconnector() as db, dbcursor(db) as cursor:
             # ワークスペース状態情報 delete実行 worksapce status info. delete
             upd_cnt = da_workspace_status.delete_workspace_status(cursor, workspace_id)
-
-            globals.logger.debug("workspace_status:ret:{}".format(upd_cnt))
 
             globals.logger.info('Delete workspace status. update_count={}'.format(upd_cnt))
 
