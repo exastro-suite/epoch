@@ -197,14 +197,12 @@ def cd_result_update(workspace_id, cd_result_id):
             # cd-result update実行
             upd_cnt = da_cd_result.update_cd_result(cursor, workspace_id, cd_result_id, update_contents_items)
 
-            globals.logger.info('upd_cnt={}'.format(upd_cnt))
+            globals.logger.info('Update CD result. update_count={}'.format(upd_cnt))
 
             if upd_cnt == 0:
                 # データがないときは404応答
                 db.rollback()
                 return jsonify({"result": "404"}), 404
-
-            globals.logger.debug('update cd_result_id:{}'.format(cd_result_id))
 
         globals.logger.info('SUCCESS: Get updated CD result by cd_result_id. ret_result={}, workspace_id={}, cd_result_id={}'.format(200, workspace_id, cd_result_id))
         return jsonify({"result": "200"}), 200
