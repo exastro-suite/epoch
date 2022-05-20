@@ -46,12 +46,13 @@ def get_access_info(workspace_id):
         json: アクセス情報
     """
     try:
+        globals.logger.info('Get workspace access information. workspace_id={}'.format(workspace_id))
+
         # url設定
         api_info = "{}://{}:{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'], os.environ['EPOCH_RS_WORKSPACE_HOST'], os.environ['EPOCH_RS_WORKSPACE_PORT'])
 
         # アクセス情報取得
         # Select送信（workspace_access取得）
-        globals.logger.debug ("workspace_access get call: worksapce_id:{}".format(workspace_id))
         globals.logger.info('Send a request. workspace_id={}, URL={}/workspace/{}/access'.format(workspace_id, api_info, workspace_id))
         request_response = requests.get( "{}/workspace/{}/access".format(api_info, workspace_id))
 
