@@ -228,7 +228,7 @@ def post_gitlab_repos(workspace_id):
 
         # 正常に作成された場合は201が応答されるので正常終了
         if request_response.status_code == 201:
-            globals.logger.debug('gitlab project create SUCCEED')
+            globals.logger.info('gitlab project create SUCCEED')
         else:
             raise Exception("project create error. error_information={}".format(request_response.text))
 
