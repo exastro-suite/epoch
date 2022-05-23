@@ -49,9 +49,7 @@ def call_cd_result_root():
     """
 
     try:
-        globals.logger.debug('=' * 50)
-        globals.logger.debug('CALL {}:from[{}]'.format(inspect.currentframe().f_code.co_name, request.method))
-        globals.logger.debug('=' * 50)
+        globals.logger.info('Get CD result not conditons. method={}'.format(request.method))
 
         if request.method == 'GET':
             # cd execute (get)
