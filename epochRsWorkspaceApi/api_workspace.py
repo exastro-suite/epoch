@@ -332,7 +332,7 @@ def delete_workspace(workspace_id):
     Returns:
         response: HTTP Respose
     """
-    globals.logger.debug('CALL delete_workspace:{}'.format(workspace_id))
+    globals.logger.info('Delete workspace. workspace_id={}'.format(workspace_id))
 
     return jsonify({"result": "200", "time": str(datetime.now(globals.TZ))}), 200
 
@@ -443,7 +443,7 @@ def manifest_file_delete_all(workspace_id):
     Returns:
         response: HTTP Respose
     """
-    globals.logger.debug("CALL manifest_file_delete_all:workspace_id:{}".format(workspace_id))
+    globals.logger.info("Delete all manifest file. workspace_id={}".format(workspace_id))
 
     try:
         with dbconnector() as db, dbcursor(db) as cursor:
@@ -533,7 +533,7 @@ def manifest_file_get(workspace_id, file_id):
     Returns:
         response: HTTP Respose
     """
-    globals.logger.debug("CALL manifest_file_get: [ workspace_id: {}, manifest_id: {} ]".format(workspace_id, file_id))
+    globals.logger.info("Get manifest file. workspace_id={}, manifest_id={}".format(workspace_id, file_id))
 
     try:
         with dbconnector() as db, dbcursor(db) as cursor:
@@ -651,7 +651,7 @@ def workspace_access_registration(workspace_id):
     Returns:
         response: HTTP Respose
     """
-    globals.logger.debug("CALL workspace_access_registration:{}".format(workspace_id))
+    globals.logger.info("Set workspace access information. workspace_id={}".format(workspace_id))
 
     try:
         # 登録内容は基本的に、引数のJsonの値を使用する(追加項目があればここで記載)
@@ -678,7 +678,7 @@ def workspace_access_update(workspace_id):
     Returns:
         response: HTTP Respose
     """
-    globals.logger.debug("CALL workspace_access_update:{}".format(workspace_id))
+    globals.logger.info("Update workspace access information. workspace_id={}".format(workspace_id))
 
     try:
         # 登録内容は基本的に、引数のJsonの値を使用する(追加項目があればここで記載)
@@ -745,14 +745,12 @@ def workspace_access_delete(workspace_id, id):
     Returns:
         response: HTTP Respose
     """
-    globals.logger.debug("CALL workspace_access_delete:workspace_id:{}".format(workspace_id))
+    globals.logger.info("Delete workspace access information. workspace_id={}".format(workspace_id))
 
     try:
         with dbconnector() as db, dbcursor(db) as cursor:
             # ワークスペースアクセス情報 delete実行
             upd_cnt = da_workspace_access.delete_workspace_access(cursor, workspace_id)
-
-            globals.logger.debug("workspace_access:ret:{}".format(upd_cnt))
 
             globals.logger.info('Workspace access delete. update_count={}'.format(upd_cnt))
 
@@ -878,7 +876,7 @@ def workspace_status_delete(workspace_id, id):
     Returns:
         response: HTTP Respose
     """
-    globals.logger.debug("CALL workspace_status_delete:workspace_id:{}".format(workspace_id))
+    globals.logger.info("Delete workspace status information. workspace_id={}".format(workspace_id))
 
     try:
         with dbconnector() as db, dbcursor(db) as cursor:
