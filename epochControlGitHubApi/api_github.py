@@ -260,7 +260,6 @@ def create_github_webhooks(workspace_id):
             # hooksのPOST送信
             globals.logger.debug('- github.webhooks setting to git')
             globals.logger.debug('- https_proxy:{}, http_proxy:{}'.format(os.environ['HTTPS_PROXY'], os.environ['HTTP_PROXY']))
-            globals.logger.debug('- request URL:' + github_webhook_base_url + git_repos + github_webhook_base_hooks)
             globals.logger.debug('- webhook URL :' + web_hooks_url)
             globals.logger.info('Send a request. workspace_id={}, URL={}{}{}'.format(workspace_id, github_webhook_base_url, git_repos, github_webhook_base_hooks))
             request_response = requests.post(github_webhook_base_url + git_repos + github_webhook_base_hooks, headers=post_headers, data=post_data)
@@ -374,10 +373,10 @@ def get_git_branches():
         if response.status_code == 200:
             rows = json.loads(response.text)
             # globals.logger.debug("rows:[{}]".format(rows))
-            globals.logger.info('SUCCESS: Get git branches information. ret_status={}, git_branch_count={}'.format(ret_status, len(rows) if rows is not None else None))
+            globals.logger.info('SUCCESS: Get git branches information. ret_status={}, git_branch_information_count={}'.format(ret_status, len(rows) if rows is not None else None))
         else:
             rows = None
-            globals.logger.info("Fail: Get git branches information.:[{}] text:[{}]".format(response.status_code, response.text))
+            globals.logger.warning("Fail: Get git branches information. ret_status={}, error_information={}".format(ret_status, response.text))
 
 
         # 取得したGit branches情報を返却 Return the acquired Git branches information
@@ -440,10 +439,10 @@ def get_git_commits(revision=None):
         if response.status_code == 200:
             rows = json.loads(response.text)
             # globals.logger.debug("rows:[{}]".format(rows))
-            globals.logger.info('SUCCESS: Get git commits information. ret_status={}, git_commit_count={}'.format(ret_status, len(rows) if rows is not None else None))
+            globals.logger.info('SUCCESS: Get git commits information. ret_status={}, git_commit_information_count={}'.format(ret_status, len(rows) if rows is not None else None))
         else:
             rows = None
-            globals.logger.info("Fail: Get git commits. ret_status={}, error_information={}".format(response.status_code, response.text))
+            globals.logger.warning("Fail: Get git commits information. ret_status={}, error_information={}".format(ret_status, response.text))
 
 
         # 取得したGit commit情報を返却 Return the acquired Git commit information
@@ -491,10 +490,10 @@ def get_git_commits_branch(revision):
         ret_status = response.status_code
         if response.status_code == 200:
             rows = json.loads(response.text)
-            globals.logger.debug("rows:[{}]".format(rows))
+            globals.logger.info('SUCCESS: Get git commits branch information. ret_status={}, git_commit_branch_information_count={}'.format(ret_status, len(rows) if rows is not None else None))
         else:
             rows = None
-            globals.logger.debug("git commits branch get error:[{}] text:[{}]".format(response.status_code, response.text))
+            globals.logger.warning("Fail: Get git commits branch infromation. ret_status={}, error_information={}".format(ret_status, response.text))
 
         # 取得したGit commit branch情報を返却 Return the acquired Git commit branch information
         return jsonify({"result": ret_status, "rows": rows}), ret_status
@@ -532,7 +531,6 @@ def get_git_hooks():
         # github repo commits get call
         api_url = "{}{}/hooks".format(github_webhook_base_url, git_repos)
 
-        globals.logger.debug("api_url:[{}]".format(api_url))
         globals.logger.info('Send a request. URL={}'.format(api_url))
         response = requests.get(api_url, headers=request_headers)
 
@@ -540,9 +538,10 @@ def get_git_hooks():
         if response.status_code == 200:
             rows = json.loads(response.text)
             # globals.logger.debug("rows:[{}]".format(rows))
+            globals.logger.info('SUCCESS: Get git hooks information. ret_status={}, git_commit_branch_information_count={}'.format(ret_status, len(rows) if rows is not None else None))
         else:
             rows = None
-            globals.logger.debug("git hooks get error:[{}] text:[{}]".format(response.status_code, response.text))
+            globals.logger.warning("Fail: Get git hooks information. ret_status={}, error_information={}".format(ret_status, response.text))
 
         # 取得したGit commit情報を返却 Return the acquired Git commit information
         return jsonify({"result": ret_status, "rows": rows}), ret_status
@@ -585,15 +584,14 @@ def get_git_deliveries(hook_id):
 
         globals.logger.info('Send a request. hook_id={}, URL={}'.format(hook_id, api_url))
         response = requests.get(api_url, headers=request_headers)
-        globals.logger.debug("api_url:[{}]".format(api_url))
 
         ret_status = response.status_code
         if response.status_code == 200:
             rows = json.loads(response.text)
-            globals.logger.debug("rows:[{}]".format(rows))
+            globals.logger.info('SUCCESS: Get git commits branch information. ret_status={}, git_commit_branch_information_count={}'.format(ret_status, len(rows) if rows is not None else None))
         else:
             rows = None
-            globals.logger.debug("git hooks deliveries get error:[{}] text:[{}]".format(response.status_code, response.text))
+            globals.logger.warning("Fail: Get git commits branch information. ret_status={}, error_information={}".format(ret_status, response.text))
 
         # 取得したGit commit branch情報を返却 Return the acquired Git commit branch information
         return jsonify({"result": ret_status, "rows": rows}), ret_status
