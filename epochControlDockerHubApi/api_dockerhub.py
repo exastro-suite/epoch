@@ -59,7 +59,7 @@ def get_repositories(registry):
     error_detail = ""
 
     try:
-        globals.logger.info('Get DockerHub container image. method={}'.format(request.method))
+        globals.logger.debug('Get DockerHub container image. method={}'.format(request.method))
 
         # Get Dockerhub TOKEN
         token = get_token(request.headers["username"], request.headers["password"])
@@ -74,10 +74,10 @@ def get_repositories(registry):
 
         rows = []
         while True:
-            globals.logger.debug('CALL {}'.format(api_url))
+            globals.logger.debug('Send a request. URL={}'.format(api_url))
             api_response = requests.get( api_url, headers=api_headers)
             if api_response.status_code != 200:
-                globals.logger.info('Fail: Send a request. ret_status={}, URL={}'.format(api_response.status_code, api_url))
+                globals.logger.warning('Fail: Send a request. ret_status={}, URL={}'.format(api_response.status_code, api_url))
                 return jsonify({"result": api_response.status_code}), api_response.status_code
 
             api_response_json = json.loads(api_response.text)
@@ -96,7 +96,7 @@ def get_repositories(registry):
             else:
                 api_url = api_response_json["next"]
 
-        globals.logger.info('SUCCESS: Get DockerHub container image. ret_status={}, DockerHub_container_image_count={}'.format(200, len(rows)))
+        globals.logger.debug('SUCCESS: Get DockerHub container image. ret_status={}, DockerHub_container_image_count={}'.format(200, len(rows)))
 
         return jsonify({"result": 200, "rows": rows}), 200
 
@@ -127,14 +127,15 @@ def get_token(username, password):
         "password" :    password
     })
 
-    globals.logger.debug('CALL {}'.format(api_base_url + api_path["get_token"]))
+    globals.logger.debug('Send a request. username={}, URL={}'.format(username, api_base_url + api_path["get_token"]))
     api_response = requests.post( api_base_url + api_path["get_token"], headers=api_headers, data=api_data)
     if api_response.status_code != 200:
+        globals.logger.warning('Fail: Get token process. username={}, URL={}'.format(username, api_base_url + api_path["get_token"]))
         return None
     
     api_response_json = json.loads(api_response.text)
 
-    globals.logger.info('SUCCESS: Get token process. username={}'.format(username))
+    globals.logger.debug('SUCCESS: Get token process. username={}'.format(username))
 
     return api_response_json["token"]
 
