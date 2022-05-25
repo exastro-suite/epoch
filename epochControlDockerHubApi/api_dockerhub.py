@@ -59,7 +59,7 @@ def get_repositories(registry):
     error_detail = ""
 
     try:
-        globals.logger.debug('Get DockerHub container image. method={}'.format(request.method))
+        globals.logger.info('Get DockerHub container image. method={}, registry={}, '.format(request.method, registry))
 
         # Get Dockerhub TOKEN
         token = get_token(request.headers["username"], request.headers["password"])
@@ -117,7 +117,7 @@ def get_token(username, password):
         str: token
     """
 
-    globals.logger.info('Get token process. username={}'.format(username))
+    globals.logger.debug('Get token process. username={}'.format(username))
 
     api_headers = {
         'Content-Type': 'application/json',
