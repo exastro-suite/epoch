@@ -12,7 +12,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import datetime
+from datetime import datetime as dtlogging
 from logging import config, Handler, Formatter, LogRecord, LoggerAdapter, Filter
 
 from flask import has_request_context, request as flrequest
@@ -40,7 +40,7 @@ class RequireDebugTrue(Filter):
 # Format
 class ExastroFormatter(Formatter):
 
-    converter = datetime.datetime.fromtimestamp
+    converter = dtlogging.fromtimestamp
 
     def formatTime(self, record, datefmt=None):
         """log datetime format
