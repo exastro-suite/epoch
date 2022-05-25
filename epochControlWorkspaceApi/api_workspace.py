@@ -135,7 +135,6 @@ def create_workspace(workspace_id):
         }
 
         apiInfo = "{}://{}:{}".format(os.environ['EPOCH_RS_WORKSPACE_PROTOCOL'], os.environ['EPOCH_RS_WORKSPACE_HOST'], os.environ['EPOCH_RS_WORKSPACE_PORT'])
-        globals.logger.debug("workspace_access {}/workspace/{}/access".format(apiInfo, workspace_id))
 
         # 引数をJSON形式で受け取りそのまま引数に設定
         post_data = json.dumps(info)
