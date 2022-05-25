@@ -27,6 +27,8 @@ import requests
 from requests.auth import HTTPBasicAuth
 import traceback
 from datetime import timedelta, timezone
+import logging
+from logging.config import dictConfig as dictLogConf
 
 import globals
 import common
@@ -36,12 +38,20 @@ import api_service_manifest
 import api_service_cd
 import api_service_member
 import api_service_current
+from exastro_logging import *
 
 
 # 設定ファイル読み込み・globals初期化
 app = Flask(__name__)
 app.config.from_envvar('CONFIG_API_SERVICE_PATH')
 globals.init(app)
+
+
+org_factory = logging.getLogRecordFactory()
+logging.setLogRecordFactory(ExastroLogRecordFactory(org_factory, request))
+globals.logger = logging.getLogger('root')
+dictLogConf(LOGGING)
+
 
 @app.route('/alive', methods=["GET"])
 def alive():
