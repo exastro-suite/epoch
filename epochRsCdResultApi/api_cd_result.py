@@ -18,18 +18,25 @@ import inspect
 import os
 import json
 import re
+import logging
+from logging.config import dictConfig as dictLogConf
 
 import globals
 import common
 from dbconnector import dbconnector
 from dbconnector import dbcursor
 import da_cd_result
+from exastro_logging import *
 
 # 設定ファイル読み込み・globals初期化
 app = Flask(__name__)
 app.config.from_envvar('CONFIG_API_CD_RESULT_PATH')
 globals.init(app)
 
+org_factory = logging.getLogRecordFactory()
+logging.setLogRecordFactory(ExastroLogRecordFactory(org_factory, request))
+globals.logger = logging.getLogger('root')
+dictLogConf(LOGGING)
 
 @app.route('/alive', methods=['GET'])
 def alive():
