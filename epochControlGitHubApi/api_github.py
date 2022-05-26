@@ -27,14 +27,24 @@ import requests
 from requests.auth import HTTPBasicAuth
 import traceback
 from datetime import timedelta, timezone
+import logging
+from logging.config import dictConfig as dictLogConf
 
 import globals
 import common
+from exastro_logging import *
 
 # 設定ファイル読み込み・globals初期化
 app = Flask(__name__)
 app.config.from_envvar('CONFIG_API_GITHUB_PATH')
 globals.init(app)
+
+
+org_factory = logging.getLogRecordFactory()
+logging.setLogRecordFactory(ExastroLogRecordFactory(org_factory, request))
+globals.logger = logging.getLogger('root')
+dictLogConf(LOGGING)
+
 
 # github webhook base url
 github_webhook_base_url = 'https://api.github.com/repos/'

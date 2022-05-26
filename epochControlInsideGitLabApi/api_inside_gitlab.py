@@ -45,10 +45,12 @@ app = Flask(__name__)
 app.config.from_envvar('CONFIG_API_INSIDE_GITLAB_PATH')
 globals.init(app)
 
+
 org_factory = logging.getLogRecordFactory()
 logging.setLogRecordFactory(ExastroLogRecordFactory(org_factory, request))
 globals.logger = logging.getLogger('root')
 dictLogConf(LOGGING)
+
 
 @app.route('/alive', methods=["GET"])
 def alive():
