@@ -28,12 +28,15 @@ from requests.auth import HTTPBasicAuth
 import traceback
 from datetime import timedelta, timezone
 import hashlib
+import logging
+from logging.config import dictConfig as dictLogConf
 
 import globals
 import common
 import api_access_info
 import api_ita_manifests
 import api_ita_cd
+from exastro_logging import *
 
 WAIT_SEC_ITA_POD_UP = 600 # ITA Pod 起動待ち時間(sec) ready check wait time
 WAIT_SEC_ITA_IMPORT = 60 # ITA Import最大待ち時間(sec) import wait time
@@ -44,6 +47,11 @@ EPOCH_ITA_PORT = "8084"
 app = Flask(__name__)
 app.config.from_envvar('CONFIG_API_ITA_PATH')
 globals.init(app)
+
+org_factory = logging.getLogRecordFactory()
+logging.setLogRecordFactory(ExastroLogRecordFactory(org_factory, request))
+globals.logger = logging.getLogger('root')
+dictLogConf(LOGGING)
 
 @app.route('/alive', methods=["GET"])
 def alive():
@@ -318,7 +326,6 @@ def create_ita(workspace_id):
         # namespace定義
         name = common.get_namespace_name(workspace_id)
 
-        globals.logger.debug("ita-pod create start")
         # templateの展開
         with tempfile.TemporaryDirectory() as tempdir:
             file_name = 'ita_install.yaml'
@@ -427,7 +434,7 @@ def settings_ita(workspace_id):
             # timeout
             current_time = time.time()
             if (current_time - start_time) > WAIT_SEC_ITA_POD_UP:
-                globals.logger.debug("ITA pod start Time out S:{} sec:{}".format(start_time, (current_time - start_time)))
+                globals.logger.warning("ITA pod start Time out S:{} sec:{}".format(start_time, (current_time - start_time)))
                 error_detail = "IT-Automation 初期設定でタイムアウトしました。再度、実行してください。"
                 raise common.UserException(error_detail)
 
@@ -445,7 +452,7 @@ def settings_ita(workspace_id):
             # timeout
             current_time = time.time()
             if (current_time - start_time) > WAIT_SEC_ITA_POD_UP:
-                globals.logger.debug("ITA mariaDB start Time out S:{} sec:{}".format(start_time, (current_time - start_time)))
+                globals.logger.warning("ITA mariaDB start Time out S:{} sec:{}".format(start_time, (current_time - start_time)))
                 error_detail = "IT-Automation 初期設定でタイムアウトしました。再度、実行してください。"
                 raise common.UserException(error_detail)
 
@@ -482,7 +489,7 @@ def settings_ita(workspace_id):
             task_id = import_process(host, init_auth)
 
             # *-*-*-* インポート結果確認 *-*-*-*
-            globals.logger.debug('---- monitoring import dialog ----')
+            globals.logger.info('task_id={}'.format(task_id))
 
             # POST送信する
             # ヘッダ情報
@@ -512,7 +519,7 @@ def settings_ita(workspace_id):
                 # timeout
                 current_time = time.time()
                 if (current_time - start_time) > WAIT_SEC_ITA_IMPORT:
-                    globals.logger.debug("ITA menu import Time out")
+                    globals.logger.warning("ITA menu import Time out S:{} sec:{}".format(start_time, (current_time - start_time)))
                     error_detail = "IT-Automation 初期設定でタイムアウトしました。再度、実行してください。"
                     raise common.UserException(error_detail)
 
@@ -591,6 +598,7 @@ def is_already_imported(host, auth, init_auth):
     """
 
     # *-*-*-* 新しいパスワードでのimport確認 *-*-*-*
+    globals.logger.info('Confirm import with new password. host={}'.format(host))
 
     # POST送信する
     # ヘッダ情報
@@ -653,6 +661,7 @@ def is_already_imported(host, auth, init_auth):
         return 0
 
     # *-*-*-* システムが認識している以外のパスワードになっている *-*-*-*
+    globals.logger.info('status_code={}'.format(dialog_response.status_code))
     raise common.UserException('IT-Automation Import error password not abnormal')
 
 
@@ -705,7 +714,7 @@ def kym_file_upload(host, auth):
         [str]: upload id, filename, menu items
     """
 
-    globals.logger.debug('---- upload kym file ----')
+    globals.logger.info('Upload export file. host={}'.format(host))
 
     # インポートファイルのパス設定
     upload_filename = 'epoch_initialize.kym'
@@ -778,7 +787,7 @@ def import_execute(host, auth, upload_id, menu_list, upload_filename):
     Returns:
         str: task id
     """
-    globals.logger.debug('---- execute menu import ----')
+    globals.logger.info('Execute import. upload_id={}, host={}'.format(upload_id, host))
 
     # POST送信する
     # ヘッダ情報
