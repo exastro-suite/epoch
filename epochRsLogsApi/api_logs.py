@@ -18,12 +18,15 @@ import inspect
 import os
 import json
 import re
+import logging
+from logging.config import dictConfig as dictLogConf
 
 import globals
 import common
 from dbconnector import dbconnector
 from dbconnector import dbcursor
 import da_logs
+from exastro_logging import *
 
 # ログの種類 Log kind
 LOG_KIND_ERROR='Error'
@@ -35,6 +38,10 @@ app = Flask(__name__)
 app.config.from_envvar('CONFIG_API_LOGS_PATH')
 globals.init(app)
 
+org_factory = logging.getLogRecordFactory()
+logging.setLogRecordFactory(ExastroLogRecordFactory(org_factory, request))
+globals.logger = logging.getLogger('root')
+dictLogConf(LOGGING)
 
 @app.route('/alive', methods=['GET'])
 def alive():

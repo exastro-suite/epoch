@@ -27,16 +27,24 @@ import requests
 from requests.auth import HTTPBasicAuth
 import traceback
 from datetime import timedelta, timezone
+import logging
+from logging.config import dictConfig as dictLogConf
 
 import globals
 import common
 import api_kubernetes_call
 import api_workspace_manifests
+from exastro_logging import *
 
 # 設定ファイル読み込み・globals初期化
 app = Flask(__name__)
 app.config.from_envvar('CONFIG_API_WORKSPACE_PATH')
 globals.init(app)
+
+org_factory = logging.getLogRecordFactory()
+logging.setLogRecordFactory(ExastroLogRecordFactory(org_factory, request))
+globals.logger = logging.getLogger('root')
+dictLogConf(LOGGING)
 
 @app.route('/alive', methods=["GET"])
 def alive():
