@@ -28,9 +28,12 @@ import requests
 from requests.auth import HTTPBasicAuth
 import traceback
 from datetime import timedelta, timezone
+import logging
+from logging.config import dictConfig as dictLogConf
 
 import globals
 import common
+from exastro_logging import *
 
 # GitLab api url
 API_PROTOCOL = "http"
@@ -41,6 +44,13 @@ API_PORT = "8181"
 app = Flask(__name__)
 app.config.from_envvar('CONFIG_API_INSIDE_GITLAB_PATH')
 globals.init(app)
+
+
+org_factory = logging.getLogRecordFactory()
+logging.setLogRecordFactory(ExastroLogRecordFactory(org_factory, request))
+globals.logger = logging.getLogger('root')
+dictLogConf(LOGGING)
+
 
 @app.route('/alive', methods=["GET"])
 def alive():
@@ -112,7 +122,6 @@ def post_gitlab_webhooks(workspace_id):
 
         # webhookの存在チェック
         ret_exists = exists_webhook(user, token, url, webhooks_url)
-        globals.logger.debug('CALL exists_webhook:ret:{}'.format(ret_exists))
         # すでにwebhookが存在したので200で終了
         if ret_exists:
             globals.logger.info('Already exist GitLab webhooks. ret_status={}, workspace_id={}'.format(200, workspace_id))
@@ -140,7 +149,6 @@ def post_gitlab_webhooks(workspace_id):
         # create webhookのPOST送信
         request_response = requests.post(api_url, headers=post_headers, data=post_data)
 
-        globals.logger.debug('code: {}, message: {}'.format(str(request_response.status_code), request_response.text))
         # 正常に作成された場合は201が応答されるので正常終了
         if request_response.status_code == 201:
             globals.logger.debug('gitlab webhook create SUCCEED')
@@ -181,7 +189,6 @@ def post_gitlab_repos(workspace_id):
 
         # リポジトリの存在チェック
         ret_exists = exists_repositry(user, token, url)
-        globals.logger.debug('CALL exists_repositry:ret:{}'.format(ret_exists))
         # すでにリポジトリが存在したので200で終了
         if ret_exists:
 
@@ -237,7 +244,7 @@ def post_gitlab_repos(workspace_id):
             "output": "gitlab_project{" + request_response.text + "}"
         }
 
-        globals.logger.info('SUCCESS: Create GitLab repository. workspace_id={}, ret_status={}, gitlab_project_count={}'.format(workspace_id, 201, len(response)))
+        globals.logger.info('SUCCESS: Create GitLab repository. ret_status={}, workspace_id={}, gitlab_project_count={}'.format(201, workspace_id, len(response)))
 
         return jsonify(response), 201
 
@@ -396,9 +403,11 @@ def get_group_id(user, token, url):
 
     api_url = "{}://{}:{}/api/v4/groups/{}".format(API_PROTOCOL, API_BASE_URL, API_PORT,json_url['group_name'])
 
+    globals.logger.info('Send a request. URL={}'.format(api_url))
     # 単一のグループ詳細を取得する
     response = requests.get(api_url, headers=post_headers)
 
+    globals.logger.info('ret_status={}'.format(response.status_code))
     # グループが存在する場合はグループIDを返す
     if response.status_code == 200:
         ret_data = json.loads(response.text)
@@ -465,6 +474,7 @@ def exists_webhook(user, token, url, webhooks_url):
     globals.logger.info('Send a request. URL={}'.format(api_url))
     response = requests.get(api_url, headers=post_headers)
 
+    globals.logger.info('ret_status={}'.format(response.status_code))
     # webhookが存在する場合はTrueを返す
     if response.status_code == 200:
         webhook_list = json.loads(response.text)
@@ -516,11 +526,10 @@ def get_git_branches():
         if response.status_code == 200:
             rows = json.loads(response.text)
             # globals.logger.debug("rows:[{}]".format(rows))
+            globals.logger.info('SUCCESS: Get git branch. ret_status={}, git_branch_count={}'.format(ret_status, len(rows) if rows is not None else None))
         else:
             rows = None
-            globals.logger.debug("git branches get error:[{}] text:[{}]".format(response.status_code, response.text))
-
-        globals.logger.info('SUCCESS: Get git branch. ret_status={}, git_branch_count={}'.format(ret_status, len(rows) if rows is not None else None))
+            globals.logger.warning("Fail: Get git branch. ret_status={}, error_information={}".format(ret_status, response.text))
 
         # 取得したGit branches情報を返却 Return the acquired Git branches information
         return jsonify({"result": ret_status, "rows": rows}), ret_status
@@ -528,7 +537,7 @@ def get_git_branches():
     except common.UserException as e:
         return common.server_error(e)
     except Exception as e:
-        globals.logger.debug("Exception:[{}]".format(e.args))
+        globals.logger.warning("Exception:[{}]".format(e.args))
         return common.server_error(e)
 
 
@@ -576,18 +585,18 @@ def get_git_commits(revision=None):
         if branch is not None:
             api_url += "?ref_name={}".format(urllib.parse.quote(branch))
 
-        globals.logger.debug("api_url:[{}]".format(api_url))
+        globals.logger.info("Send a request. URL={}".format(api_url))
         response = requests.get(api_url, headers=post_headers)
 
         ret_status = response.status_code
         if response.status_code == 200:
             rows = json.loads(response.text)
             # globals.logger.debug("rows:[{}]".format(rows))
+            globals.logger.info('SUCCESS: Get git commits information. ret_status={}, git_commits_count={}'.format(ret_status, len(rows) if rows is not None else None))
         else:
             rows = None
-            globals.logger.debug("git commits get error:[{}] text:[{}]".format(response.status_code, response.text))
+            globals.logger.warning("Fail: Get git commits information. ret_status={}, error_information{}".format(ret_status, response.text))
 
-        globals.logger.info('SUCCESS: Get git commits information. ret_status={}, git_commits_count={}'.format(ret_status, len(rows) if rows is not None else None))
 
         # 取得したGit commit情報を返却 Return the acquired Git commit information
         return jsonify({"result": ret_status, "rows": rows}), ret_status
@@ -595,7 +604,7 @@ def get_git_commits(revision=None):
     except common.UserException as e:
         return common.server_error(e)
     except Exception as e:
-        globals.logger.debug("Exception:[{}]".format(e.args))
+        globals.logger.warning("Exception:[{}]".format(e.args))
         return common.server_error(e)
 
 
@@ -629,15 +638,18 @@ def get_git_commits_branch(revision):
         # gitlab repo commits brach get call
         api_url = "{}://{}:{}/api/v4/projects/{}%2F{}/repository/commits/{}/refs".format(API_PROTOCOL, API_BASE_URL, API_PORT, json_url['group_name'], json_url['repos_name'], revision)
 
+        globals.logger.info('Send a request. revision={}, URL={}'.format(revision, api_url))
         response = requests.get(api_url, headers=post_headers)
 
         ret_status = response.status_code
+
         if response.status_code == 200:
             rows = json.loads(response.text)
             # globals.logger.debug("rows:[{}]".format(rows))
+            globals.logger.info('SUCCESS: Get git commits branch information. ret_status={}, git_commits_count={}'.format(ret_status, len(rows) if rows is not None else None))
         else:
             rows = None
-            globals.logger.debug("git commits branch get error:[{}] text:[{}]".format(response.status_code, response.text))
+            globals.logger.warning("Fail: Get git commits branch information. ret_status={}, error_information={}".format(ret_status, response.text))
 
         # 取得したGit commit branch 情報を返却 Return the acquired Git commit branch information
         return jsonify({"result": ret_status, "rows": rows}), ret_status
@@ -645,7 +657,7 @@ def get_git_commits_branch(revision):
     except common.UserException as e:
         return common.server_error(e)
     except Exception as e:
-        globals.logger.debug("Exception:[{}]".format(e.args))
+        globals.logger.warning("Exception:[{}]".format(e.args))
         return common.server_error(e)
 
 if __name__ == "__main__":
