@@ -23,6 +23,9 @@ import common
 from dbconnector import dbconnector
 from dbconnector import dbcursor
 import da_ci_result
+import logging
+from logging.config import dictConfig as dictLogConf
+from exastro_logging import *
 
 # タスクのステータス保存用
 TASK_STATUS_RUNNING='RUNNING'
@@ -33,6 +36,11 @@ TASK_STATUS_ERROR='ERROR'
 app = Flask(__name__)
 app.config.from_envvar('CONFIG_API_CI_RESULT_PATH')
 globals.init(app)
+
+org_factory = logging.getLogRecordFactory()
+logging.setLogRecordFactory(ExastroLogRecordFactory(org_factory, request))
+globals.logger = logging.getLogger('root')
+dictLogConf(LOGGING)
 
 
 @app.route('/alive', methods=['GET'])
@@ -51,9 +59,10 @@ def post_tekton_task(workspace_id):
     Returns:
         response: HTTP Respose
     """
-    globals.logger.info('Register CI result information. workspace_id={}'.format(workspace_id))
 
     try:
+        globals.logger.info('Register CI result information. workspace_id={}'.format(workspace_id))
+
         # image tagの生成
         image_tag = '{}.{}'.format(re.sub(r'.*/', '', request.json['git_branch']), datetime.now(globals.TZ).strftime("%Y%m%d-%H%M%S"))
 
@@ -87,9 +96,10 @@ def patch_tekton_task(workspace_id, task_id):
     Returns:
         response: HTTP Respose
     """
-    globals.logger.info('Update CI result information. workspace_id={}, task_id={}'.format(workspace_id, task_id))
 
     try:
+        globals.logger.info('Update CI result information. workspace_id={}, task_id={}'.format(workspace_id, task_id))
+
         # Requestからinfo項目を生成する
         info = request.json
 

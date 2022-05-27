@@ -18,6 +18,8 @@ from dateutil import parser
 import inspect
 import os
 import json
+import logging
+from logging.config import dictConfig as dictLogConf
 
 import globals
 import common
@@ -27,6 +29,7 @@ import da_workspace
 import da_manifest
 import da_workspace_access
 import da_workspace_status
+from exastro_logging import *
 
 # 設定ファイル読み込み・globals初期化
 app = Flask(__name__)
@@ -35,6 +38,11 @@ globals.init(app)
 app_name = ""
 exec_stat = ""
 exec_detail = ""
+
+org_factory = logging.getLogRecordFactory()
+logging.setLogRecordFactory(ExastroLogRecordFactory(org_factory, request))
+globals.logger = logging.getLogger('root')
+dictLogConf(LOGGING)
 
 @app.route('/alive', methods=['GET'])
 def alive():
