@@ -27,10 +27,13 @@ from datetime import timedelta, timezone
 import urllib.parse
 import requests
 import schedule
+import logging
+from logging.config import dictConfig as dictLogConf
 
 import globals
 import common
 import const
+from exastro_logging import *
 
 # エラー時のリトライ回数(0は止めない) Number of retries on error (0 does not stop)
 ARGOCD_ERROR_RETRY_COUNT = 0
@@ -42,6 +45,11 @@ global_ita_error_count = 0
 app = Flask(__name__)
 app.config.from_envvar('CONFIG_API_MONITORING_CD_PATH')
 globals.init(app)
+
+org_factory = logging.getLogRecordFactory()
+logging.setLogRecordFactory(ExastroLogRecordFactory(org_factory, request))
+globals.logger = logging.getLogger('root')
+dictLogConf(LOGGING)
 
 def monitoring_argo_cd():
     """Argo CD 監視
@@ -61,7 +69,7 @@ def monitoring_argo_cd():
 
         # ArgoCDの監視する状態は、ITA完了, ArgoCD同期中、ArgoCD処理中とする
         # The monitoring status of IT-Automation is CD execution start, ITA reservation, and ITA execution.
-        cd_status_in = "{}.{}.{}".format(const.CD_STATUS_ITA_COMPLETE, const.CD_STATUS_ARGOCD_SYNC, const.CD_STATUS_ARGOCD_PROCESSING) 
+        cd_status_in = "{}.{}.{}".format(const.CD_STATUS_ITA_COMPLETE, const.CD_STATUS_ARGOCD_SYNC, const.CD_STATUS_ARGOCD_PROCESSING)
 
         # cd-result get
         api_url = "{}://{}:{}/cd/result?cd_status_in={}".format(os.environ['EPOCH_RS_CD_RESULT_PROTOCOL'],
@@ -96,7 +104,7 @@ def monitoring_argo_cd():
                                 contents["workspace_info"]["cd_config"]["environments"],
                                 contents["environment_name"])
 
-                    # ArgoCD Sync call 
+                    # ArgoCD Sync call
                     api_url = "{}://{}:{}/workspace/{}/argocd/app/{}/sync".format(os.environ['EPOCH_CONTROL_ARGOCD_PROTOCOL'],
                                                             os.environ['EPOCH_CONTROL_ARGOCD_HOST'],
                                                             os.environ['EPOCH_CONTROL_ARGOCD_PORT'],
@@ -134,7 +142,7 @@ def monitoring_argo_cd():
                                 contents["workspace_info"]["cd_config"]["environments"],
                                 contents["environment_name"])
 
-                    # ArgoCD app get call 
+                    # ArgoCD app get call
                     api_url = "{}://{}:{}/workspace/{}/argocd/app/{}".format(os.environ['EPOCH_CONTROL_ARGOCD_PROTOCOL'],
                                                             os.environ['EPOCH_CONTROL_ARGOCD_HOST'],
                                                             os.environ['EPOCH_CONTROL_ARGOCD_PORT'],
@@ -156,7 +164,7 @@ def monitoring_argo_cd():
                     if "revision" not in ret_argocd_app["result"]["status"]["sync"]:
                         continue
 
-                    # manifestのrivisionを元に該当のトレースIDの履歴かチェックする 
+                    # manifestのrivisionを元に該当のトレースIDの履歴かチェックする
                     # Check if the history of the corresponding trace ID is based on the revision of the manifest
                     revision = ret_argocd_app["result"]["status"]["sync"]["revision"]
                     manifest_url = ret_argocd_app["result"]["status"]["sync"]["comparedTo"]["source"]["repoURL"]
@@ -203,7 +211,7 @@ def monitoring_argo_cd():
                     globals.logger.debug("trace_id:[{}] vs commit_message10[{}]".format(contents["trace_id"], commit_message[:10]))
                     # 上10桁が一致している場合のみステータスのチェックを行う
                     if contents["trace_id"] != commit_message[:10]:
-                        continue 
+                        continue
 
                     # ArgoCDの戻り値が正常化どうかチェックして該当のステータスを設定
                     # Check if the return value of ArgoCD is normal and set the corresponding status
@@ -274,7 +282,7 @@ def monitoring_it_automation():
 
         # IT-Automationの監視する状態は、CD実行開始, ITA予約、ITA実行中とする
         # The monitoring status of IT-Automation is CD execution start, ITA reservation, and ITA execution.
-        cd_status_in = "{}.{}.{}".format(const.CD_STATUS_START, const.CD_STATUS_ITA_RESERVE, const.CD_STATUS_ITA_EXECUTE) 
+        cd_status_in = "{}.{}.{}".format(const.CD_STATUS_START, const.CD_STATUS_ITA_RESERVE, const.CD_STATUS_ITA_EXECUTE)
 
         # cd-result get
         api_url = "{}://{}:{}/cd/result?cd_status_in={}".format(os.environ['EPOCH_RS_CD_RESULT_PROTOCOL'],
@@ -465,7 +473,7 @@ def main():
         ita_interval_sec = int(os.environ["EPOCH_MONITORING_ITA_INTERVAL_SEC"])
 
         ARGOCD_ERROR_RETRY_COUNT = int(os.environ["EPOCH_MONITORING_ARGOCD_ERROR_RETRY_COUNT"])
-        ITA_ERROR_RETRY_COUNT = int(os.environ["EPOCH_MONITORING_ITA_ERROR_RETRY_COUNT"]) 
+        ITA_ERROR_RETRY_COUNT = int(os.environ["EPOCH_MONITORING_ITA_ERROR_RETRY_COUNT"])
         global_argocd_error_count = 0
         global_ita_error_count = 0
 
