@@ -27,12 +27,15 @@ import requests
 from requests.auth import HTTPBasicAuth
 import traceback
 from datetime import timedelta, timezone
+import logging
+from logging.config import dictConfig as dictLogConf
 
 import globals
 import common
 from dbconnector import dbconnector
 from dbconnector import dbcursor
 import da_tekton
+from exastro_logging import *
 
 # Number of retrys to get TEKTON logs - TEKTONのログ取得のretry回数
 RETRY_GET_LOG=1
@@ -41,6 +44,13 @@ RETRY_GET_LOG=1
 app = Flask(__name__)
 app.config.from_envvar('CONFIG_API_TEKTON_PATH')
 globals.init(app)
+
+
+org_factory = logging.getLogRecordFactory()
+logging.setLogRecordFactory(ExastroLogRecordFactory(org_factory, request))
+globals.logger = logging.getLogger('root')
+dictLogConf(LOGGING)
+
 
 # yamlテンプレートファイル
 templates = {
@@ -208,7 +218,7 @@ def post_tekton_pipeline(workspace_id):
                 # 適用途中のpipelineを削除
                 delete_workspace_pipeline(workspace_id, YAML_KIND_PIPELINE)
             except Exception as e:
-                globals.logger.info('Fail: Delete workspace pipeline. workspace_id={}, KIND={}'.format(workspace_id, YAML_KIND_PIPELINE))
+                globals.logger.error('Fail: Delete workspace pipeline. workspace_id={}, KIND={}'.format(workspace_id, YAML_KIND_PIPELINE))
 
             raise   # エラーをスロー
 
@@ -260,10 +270,10 @@ def sonarqube_initialize(workspace_id, param):
             response = requests.post(api_uri, auth=HTTPBasicAuth(sonarqube_user_name, sonarqube_user_initial_password), timeout=3)
 
             if response.status_code == 204:
-                globals.logger.info('SUCCESS: Change SonarQube password.')
+                globals.logger.info('SUCCESS: Change SonarQube password. workspace_id={}'.format(workspace_id))
 
             if response.status_code == 401:
-                globals.logger.info('Already Change SonarQube password.')
+                globals.logger.info('Already Change SonarQube password. workspace_id={}'.format(workspace_id))
 
         except Exception as e:
             pass
@@ -282,10 +292,10 @@ def sonarqube_initialize(workspace_id, param):
             response = requests.post(api_uri, auth=HTTPBasicAuth(sonarqube_user_name, sonarqube_user_password), timeout=3)
 
             if response.status_code == 200:
-                globals.logger.info('SUCCESS: Create SonarQube user.')
+                globals.logger.info('SUCCESS: Create SonarQube user. workspace_id={}'.format(workspace_id))
                 break
             if response.status_code == 400:
-                globals.logger.info('Fail: Create SonarQube user.')
+                globals.logger.info('Fail: Create SonarQube user. workspace_id={}'.format(workspace_id))
                 break
 
         except Exception as e:
@@ -298,6 +308,7 @@ def sonarqube_initialize(workspace_id, param):
         # 削除
         api_path = 'api/user_tokens/revoke'
         api_uri = host + api_path + get_query
+        globals.logger.info('Send a request. workspace_id={}, URL={}'.format(workspace_id, api_uri))
         response = requests.post(api_uri, auth=HTTPBasicAuth(sonarqube_user_name, sonarqube_user_password), timeout=3)
 
         # 払い出し
@@ -475,7 +486,6 @@ def delete_tekton_pipelinerun(workspace_id):
             '-n', tekton_pipeline_namespace(workspace_id),
             ], stderr=subprocess.STDOUT)
 
-        globals.logger.debug('COMMAAND SUCCEED: kubectl tkn pipelinerun delete --all -f\n{}'.format(result_kubectl.decode('utf-8')))
         globals.logger.info('SUCCESS: Delete tekton pipelinerun. workspace_id={}'.format(workspace_id))
 
     except subprocess.CalledProcessError as e:
@@ -563,7 +573,6 @@ def get_responsePipelineRunItem(plRunitem):
     Returns:
         dict: レスポンスの1明細分データ
     """
-    globals.logger.info('Analyze pipelinerun result.')
     # レスポンス用情報格納変数の初期化
     resPlRunitem = {}
 
@@ -610,7 +619,6 @@ def get_responsePipelineRunItem(plRunitem):
         resPlRunitem['tasks'].append(
             dict({'name' : task['name']}, **get_taskStatus(plRunitem, task['name']))
         )
-    globals.logger.info('SUCCESS: Analyze pipelinerun result.')
     return  resPlRunitem
 
 
@@ -793,7 +801,7 @@ def get_access_info(workspace_id):
         if request_response.status_code == 200:
             ret = json.loads(request_response.text)
         else:
-            globals.logger.info('Fail: Get workspace access information. ret_status={}, workspace_id={}'.format(request_response.status_code, workspace_id))
+            globals.logger.warning('Fail: Get workspace access information. ret_status={}, workspace_id={}'.format(request_response.status_code, workspace_id))
             raise Exception("workspace_access get error status:{}, responce:{}".format(request_response.status_code, request_response.text))
 
         globals.logger.info('SUCCESS: Get workspace access information. workspace_id={}, access_information_count={}'.format(workspace_id, len(ret)))
