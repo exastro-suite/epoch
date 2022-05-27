@@ -29,9 +29,12 @@ import traceback
 from datetime import timedelta, timezone
 import bcrypt
 import pytz
+import logging
+from logging.config import dictConfig as dictLogConf
 
 import globals
 import common, multi_lang
+from exastro_logging import *
 
 # 設定ファイル読み込み・globals初期化
 app = Flask(__name__)
@@ -39,6 +42,11 @@ app.config.from_envvar('CONFIG_API_ARGOCD_PATH')
 globals.init(app)
 
 WAIT_APPLICATION_DELETE = 180 # アプリケーションが削除されるまでの最大待ち時間
+
+org_factory = logging.getLogRecordFactory()
+logging.setLogRecordFactory(ExastroLogRecordFactory(org_factory, request))
+globals.logger = logging.getLogger('root')
+dictLogConf(LOGGING)
 
 @app.route('/alive', methods=["GET"])
 def alive():
