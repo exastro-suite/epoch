@@ -92,7 +92,7 @@ def post_cd_pipeline(workspace_id):
 
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0013", "ワークスペース情報の取得に失敗しました")
-            globals.logger.debug(error_detail)
+            globals.logger.info('status_code={}'.format(response.status_code))
             raise common.UserException(error_detail)
 
         # 取得したワークスペース情報を退避 Save the acquired workspace information
@@ -110,7 +110,7 @@ def post_cd_pipeline(workspace_id):
 
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0026", "ワークスペース状態情報の取得に失敗しました")
-            globals.logger.debug(error_detail)
+            globals.logger.info('status_code={}'.format(response.status_code))
             raise common.UserException(error_detail)
 
         # 取得したワークスペース状態を退避 Save the acquired workspace status
@@ -141,7 +141,7 @@ def post_cd_pipeline(workspace_id):
                 before_data = None
             elif response.status_code != 200:
                 error_detail = multi_lang.get_text("EP020-0013", "ワークスペース情報の取得に失敗しました")
-                globals.logger.debug(error_detail)
+                globals.logger.info('status_code={}'.format(response.status_code))
                 raise common.UserException(error_detail)
         else:
             # OK以外は、必ずCD設定を実行
@@ -188,7 +188,7 @@ def post_cd_pipeline(workspace_id):
 
             if response.status_code != 200:
                 error_detail = multi_lang.get_text("EP020-0027", "ワークスペース状態情報の更新に失敗しました")
-                globals.logger.debug(error_detail)
+                globals.logger.info('status_code={}'.format(response.status_code))
                 raise common.UserException(error_detail)
 
             # Automatic generation of IaC repository - IaCリポジトリの自動生成
@@ -220,6 +220,7 @@ def post_cd_pipeline(workspace_id):
 
                 if response.status_code != 200 and response.status_code != 201:
                     error_detail = 'gitlab/repos post処理に失敗しました'
+                    globals.logger.info('status_code={}'.format(response.status_code))
                     raise common.UserException(error_detail)
 
 
@@ -277,7 +278,7 @@ def post_cd_pipeline(workspace_id):
 
             if response.status_code != 200:
                 error_detail = multi_lang.get_text("EP020-0027", "ワークスペース状態情報の更新に失敗しました")
-                globals.logger.debug(error_detail)
+                globals.logger.info('status_code={}'.format(response.status_code))
                 raise common.UserException(error_detail)
 
         ret_status = 200
@@ -341,7 +342,7 @@ def get_cd_pipeline_ita(workspace_id):
 
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0078", "CDパイプライン(IT-Automation)情報の取得に失敗しました")
-            globals.logger.debug(error_detail)
+            globals.logger.info('status_code={}'.format(response.status_code))
             raise common.UserException(error_detail)
 
         res_json = json.loads(response.text)
@@ -432,7 +433,7 @@ def get_git_commits(workspace_id):
 
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0013", "ワークスペース情報の取得に失敗しました")
-            globals.logger.debug(error_detail)
+            globals.logger.info('status_code={}'.format(response.status_code))
             raise common.UserException(error_detail)
 
         # 取得したワークスペース情報を退避 Save the acquired workspace information
@@ -464,7 +465,7 @@ def get_git_commits(workspace_id):
 
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0091", "manifest情報の取得に失敗しました")
-            globals.logger.debug(error_detail)
+            globals.logger.info('status_code={}'.format(response.status_code))
             raise common.UserException(error_detail)
 
         ret = json.loads(response.text)
@@ -638,7 +639,7 @@ def get_cd_pipeline_argocd(workspace_id):
 
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0032", "CDパイプライン(ArgoCD)情報の取得に失敗しました")
-            globals.logger.debug(error_detail)
+            globals.logger.info('status_code={}'.format(response.status_code))
             raise common.UserException(error_detail)
 
         res_json = json.loads(response.text)
@@ -861,7 +862,7 @@ def post_cd_pipeline_argocd_sync(workspace_id):
 
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0033", "CDパイプライン(ArgoCD)同期実行に失敗しました")
-            globals.logger.debug(error_detail)
+            globals.logger.info('status_code={}'.format(response.status_code))
             raise common.UserException(error_detail)
 
         ret_status = 200
@@ -914,7 +915,7 @@ def post_cd_pipeline_argocd_rollback(workspace_id):
 
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0093", "CDパイプライン(ArgoCD)rollback実行に失敗しました")
-            globals.logger.debug(error_detail)
+            globals.logger.info('status_code={}'.format(response.status_code))
             raise common.UserException(error_detail)
 
         ret_status = 200
@@ -1245,7 +1246,7 @@ def cd_execute_cancel(workspace_id, trace_id):
         response = requests.get(api_url)
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0009", "ユーザーロール情報の取得に失敗しました")
-            globals.logger.debug(error_detail)
+            globals.logger.info('status_code={}'.format(response.status_code))
             raise common.UserException("{} Error user role get status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
 
         ret_roles = json.loads(response.text)
@@ -1263,7 +1264,7 @@ def cd_execute_cancel(workspace_id, trace_id):
         # 権限がない場合はエラーとする If you do not have permission, an error will occur.
         if not exist_role:
             error_detail = multi_lang.get_text("EP020-0020", "CD実行権限がありません")
-            globals.logger.debug(error_detail)
+            globals.logger.info("Not have permission")
             raise common.AuthException(error_detail)
 
 
@@ -1278,7 +1279,7 @@ def cd_execute_cancel(workspace_id, trace_id):
         # 取得できなかった場合は、終了する If it cannot be obtained, it will end.
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0013", "ワークスペース情報の取得に失敗しました")
-            globals.logger.debug(error_detail)
+            globals.logger.info('status_code={}'.format(response.status_code))
             raise common.UserException("{} Error workspace info get status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
 
         # 取得したJSON結果が正常でない場合、例外を返す If the JSON result obtained is not normal, an exception will be returned.
@@ -1298,7 +1299,7 @@ def cd_execute_cancel(workspace_id, trace_id):
         # 取得できなかった場合は、終了する If it cannot be obtained, it will end.
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0087", "CD実行結果情報の取得に失敗しました")
-            globals.logger.debug(error_detail)
+            globals.logger.info('status_code={}'.format(response.status_code))
             raise common.UserException("{} Error cd-result info get status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
 
         # 取得したJSON結果が正常でない場合、例外を返す If the JSON result obtained is not normal, an exception will be returned.
@@ -1328,7 +1329,7 @@ def cd_execute_cancel(workspace_id, trace_id):
         # 最終的に実行可能かチェックする Check if it is finally feasible
         if not found_user:
             error_detail = multi_lang.get_text("EP020-0020", "CD実行権限がありません")
-            globals.logger.debug(error_detail)
+            globals.logger.info("Not have permission")
             raise common.AuthException(error_detail)
 
         api_url = "{}://{}:{}/{}/user/{}".format(os.environ['EPOCH_EPAI_API_PROTOCOL'],
@@ -1369,7 +1370,7 @@ def cd_execute_cancel(workspace_id, trace_id):
         # 戻り値がJson形式かチェックする return parameter is json?
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0086", "CD実行の取り消しに失敗しました")
-            globals.logger.debug(error_detail)
+            globals.logger.info('status_code={}'.format(response.status_code))
             raise common.UserException("{} Error it-automation cd exec cancel status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
 
         #
@@ -1393,7 +1394,7 @@ def cd_execute_cancel(workspace_id, trace_id):
         response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0023", "ログ出力に失敗しました")
-            globals.logger.debug(error_detail)
+            globals.logger.info('status_code={}'.format(response.status_code))
             raise common.UserException("{} Error log output status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
 
         # 正常終了 normal return code
