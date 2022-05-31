@@ -1166,7 +1166,7 @@ def post_pod(workspace_id):
 
         if response.status_code != 200:
             error_detail = multi_lang.get_test("EP020-0013", "ワークスペース情報の取得に失敗しました")
-            globals.logger.debug(error_detail)
+            globals.logger.info('Fail: Get Workspace. status_code={}'.format(response.status_code))
             raise common.UserException(error_detail)
 
         # 取得したワークスペース情報を退避 Save the acquired workspace information
@@ -1189,7 +1189,7 @@ def post_pod(workspace_id):
 
         if response.status_code != 200:
             error_detail = multi_lang.get_test("EP020-0027", "ワークスペース状態情報の更新に失敗しました")
-            globals.logger.debug(error_detail)
+            globals.logger.info('Fail: Update Workspace status. status_code={}'.format(response.status_code))
             raise common.UserException(error_detail)
 
         # workspace post送信
@@ -1203,7 +1203,7 @@ def post_pod(workspace_id):
 
         if response.status_code != 200:
             error_detail = 'workspace post処理に失敗しました'
-            globals.logger.debug(error_detail)
+            globals.logger.info('Fail: Set workspace. status_code={}'.format(response.status_code))
             raise common.UserException(error_detail)
 
         # argocd post送信
@@ -1217,7 +1217,7 @@ def post_pod(workspace_id):
 
         if response.status_code != 200:
             error_detail = 'argocd post処理に失敗しました'
-            globals.logger.debug(error_detail)
+            globals.logger.info('Fail: Set argocd. status_code={}'.format(response.status_code))
             raise common.UserException(error_detail)
 
         # ita post送信
@@ -1245,6 +1245,7 @@ def post_pod(workspace_id):
         globals.logger.debug("post it-automation/settings response:{}".format(response.text))
 
         if response.status_code != 200:
+            globals.logger.info('Fail: Set it-automation/settings. status_code={}'.format(response.status_code))
             error_detail = 'it-automation/settings post処理に失敗しました'
             raise common.UserException(error_detail)
 
@@ -1261,7 +1262,7 @@ def post_pod(workspace_id):
 
         if response.status_code != 200:
             error_detail = multi_lang.get_test("EP020-0027", "ワークスペース状態情報の更新に失敗しました")
-            globals.logger.debug(error_detail)
+            globals.logger.info('Fail: Update workspace status. status_code={}'.format(response.status_code))
             raise common.UserException(error_detail)
 
         ret_status = 200

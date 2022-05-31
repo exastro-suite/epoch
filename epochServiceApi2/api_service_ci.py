@@ -71,7 +71,7 @@ def post_ci_pipeline(workspace_id):
 
         if response.status_code != 200:
             error_detail = multi_lang.get_test("EP020-0013", "ワークスペース情報の取得に失敗しました")
-            globals.logger.debug(error_detail)
+            globals.logger.info('Fail: Get workspace. status_code={}'.format(response.status_code))
             raise common.UserException(error_detail)
 
         # 取得したワークスペース情報を退避 Save the acquired workspace information
@@ -89,7 +89,7 @@ def post_ci_pipeline(workspace_id):
 
         if response.status_code != 200:
             error_detail = multi_lang.get_test("EP020-0026", "ワークスペース状態情報の取得に失敗しました")
-            globals.logger.debug(error_detail)
+            globals.logger.info('Fail: Get workspace status. status_code={}'.format(response.status_code))
             raise common.UserException(error_detail)
 
         # 取得したワークスペース状態を退避 Save the acquired workspace status
@@ -119,7 +119,7 @@ def post_ci_pipeline(workspace_id):
                 before_data = None
             elif response.status_code != 200:
                 error_detail = multi_lang.get_test("EP020-0013", "ワークスペース情報の取得に失敗しました")
-                globals.logger.debug(error_detail)
+                globals.logger.info('Fail: Get workspace before update. status_code={}'.format(response.status_code))
                 raise common.UserException(error_detail)
         else:
             # OK以外は、必ずCI設定を実行
@@ -160,7 +160,7 @@ def post_ci_pipeline(workspace_id):
 
             if response.status_code != 200:
                 error_detail = multi_lang.get_test("EP020-0027", "ワークスペース状態情報の更新に失敗しました")
-                globals.logger.debug(error_detail)
+                globals.logger.info('Fail: Update workspace status. status_code={}'.format(response.status_code))
                 raise common.UserException(error_detail)
 
             # epoch-control-inside-gitlab-api の呼び先設定
@@ -270,7 +270,7 @@ def post_ci_pipeline(workspace_id):
 
             if response.status_code != 200:
                 error_detail = multi_lang.get_test("EP020-0027", "ワークスペース状態情報の更新に失敗しました")
-                globals.logger.debug(error_detail)
+                globals.logger.info('Fail: Update workspace status. status_code={}'.format(response.status_code))
                 raise common.UserException(error_detail)
 
         ret_status = 200
@@ -312,7 +312,7 @@ def get_git_commits(workspace_id):
 
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0013", "ワークスペース情報の取得に失敗しました")
-            globals.logger.debug(error_detail)
+            globals.logger.info('Fail: Get workspace. status_code={}'.format(response.status_code))
             raise common.UserException(error_detail)
 
         # 取得したワークスペース情報を退避 Save the acquired workspace information
@@ -475,7 +475,7 @@ def get_git_hooks(workspace_id):
 
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0013", "ワークスペース情報の取得に失敗しました")
-            globals.logger.debug(error_detail)
+            globals.logger.info('Fail: Get workspace. status_code={}'.format(response.status_code))
             raise common.UserException(error_detail)
 
         # 取得したワークスペース情報を退避 Save the acquired workspace information
@@ -595,7 +595,7 @@ def get_registry(workspace_id):
 
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0089", "ワークスペース情報の取得に失敗しました")
-            globals.logger.debug(error_detail)
+            globals.logger.info('Fail: Get workspace. status_code={}'.format(response.status_code))
             raise common.UserException(error_detail)
 
         git_user = workspace_json["rows"][0]["ci_config"]["pipelines_common"]["git_repositry"]["user"]
@@ -620,7 +620,7 @@ def get_registry(workspace_id):
 
         if response.status_code != 200:
             error_detail = multi_lang.get_text("EP020-0088", "CI結果情報の取得に失敗しました")
-            globals.logger.debug(error_detail)
+            globals.logger.info('Fail: Get CI result information. status_code={}'.format(response.status_code))
             raise common.UserException(error_detail)
 
         rows = []
@@ -642,7 +642,7 @@ def get_registry(workspace_id):
 
             if response.status_code != 200:
                 error_detail = multi_lang.get_text("EP020-0075", "コンテナレジストリ情報の取得に失敗しました")
-                globals.logger.debug(error_detail)
+                globals.logger.info('Fail: Get container registry information. status_code={}'.format(response.status_code))
                 raise common.UserException(error_detail)
 
             for registry in registry_json["rows"]:
