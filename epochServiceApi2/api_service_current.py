@@ -88,7 +88,7 @@ def user_get():
         globals.logger.info("Send a request. URL={}".format(api_url))
         response = requests.get(api_url)
         if response.status_code != 200 and response.status_code != 404:
-            globals.logger.info('Fail: Get user information. ret_status={}, user_id={}'.format(response.status_code, user_id))
+            globals.logger.warning('Fail: Get user information. ret_status={}, user_id={}'.format(response.status_code, user_id))
             error_detail = multi_lang.get_text("EP020-0008", "ユーザー情報の取得に失敗しました")
             raise common.UserException("{} Error user get status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
 
