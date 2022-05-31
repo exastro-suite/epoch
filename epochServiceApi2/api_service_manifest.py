@@ -70,7 +70,7 @@ def post_manifest_parameter(workspace_id):
             error_detail = multi_lang.get_text("EP000-0023", "対象の情報(workspace)が他で更新されたため、更新できません\n画面更新後、再度情報を入力・選択して実行してください", "workspace")
             raise common.UpdateException("{} Exclusive check error".format(inspect.currentframe().f_code.co_name))
         elif request_response.status_code != 200:
-            globals.logger.error("call rs workspace error:{}".format(request_response.status_code))
+            globals.logger.error("Fail: Update manifestParameter. ret_status={}, workspace_id={}".format(request_response.status_code, workspace_id))
             error_detail = "ワークスペース情報更新失敗"
             raise common.UserException(error_detail)
 
@@ -93,7 +93,7 @@ def post_manifest_parameter(workspace_id):
         #ret = request_response.text
         # globals.logger.debug(ret["result"])
         if request_response.status_code != 200:
-            globals.logger.error("call ita/manifestParameter error:{}".format(request_response.status_code))
+            globals.logger.error("Fail: Set it-automation manifest parameter. ret_status={}, workspace_id={}".format(request_response.status_code, workspace_id))
             error_detail = "IT-Automation パラメータ登録失敗"
             raise common.UserException(error_detail)
 
@@ -503,7 +503,6 @@ def ita_registration(workspace_id):
         # RsWorkspace API呼び出し RsWorkspace API call
         globals.logger.info('Send a request. workspace_id={} URL={}'.format(workspace_id, apiurl))
         response = requests.post(apiurl, headers=post_headers, data=send_data)
-        globals.logger.debug("CALL it-automation/manifest/templates : status:{}".format(response.status_code))
 
         # 正常時はmanifest情報取得した内容を返却
         # When normal, the acquired information is returned.
@@ -513,7 +512,7 @@ def ita_registration(workspace_id):
 
             return ret_manifests['rows']
         else:
-            globals.logger.debug("CALL it-automation/manifest/templates : response:{}".format(response.text))
+            globals.logger.info("Fail: Register with it-automation. ret_status={}, error_information={}".format(response.status_code, response.text))
             raise Exception("post it-automation/manifest/templates Error")
 
     except Exception:

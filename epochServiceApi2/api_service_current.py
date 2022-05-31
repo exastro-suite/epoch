@@ -109,7 +109,7 @@ def user_get():
         globals.logger.info("Send a request. URL={}".format(api_url))
         response = requests.get(api_url)
         if response.status_code != 200:
-            globals.logger.info('Fail: Get user role information. ret_status={}, user_name={}'.format(response.status_code, users["info"]["username"]))
+            globals.logger.warning('Fail: Get user role information. ret_status={}, user_name={}'.format(response.status_code, users["info"]["username"]))
             error_detail = multi_lang.get_text("EP020-0009", "ユーザーロール情報の取得に失敗しました")
             raise common.UserException("{} Error user role get status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
 
@@ -162,7 +162,7 @@ def user_get():
                 globals.logger.info("Send a request. URL={}".format(api_url))
                 response = requests.get(api_url)
                 if response.status_code != 200:
-                    globals.logger.info('Fail: Get workspace information. ret_status={}, workspace_id={}'.format(response.status_code, workspace_id))
+                    globals.logger.error('Fail: Get workspace information. ret_status={}, workspace_id={}'.format(response.status_code, workspace_id))
                     error_detail = multi_lang.get_text("EP020-0013", "ワークスペース情報の取得に失敗しました")
                     raise common.UserException("{} Error workspace get status:{}".format(inspect.currentframe().f_code.co_name, response.status_code))
 
