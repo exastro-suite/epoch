@@ -10,7 +10,7 @@
 
 ## 前提条件
 
-1. Kubernetes クラスター バージョン 1.18 ～ 1.21が必要です。
+1. Kubernetes クラスター バージョン 1.18 ～ 1.2が必要です。
 
 1. 使用するServiceAccountにcluster-adminロールを付与してください。
 
