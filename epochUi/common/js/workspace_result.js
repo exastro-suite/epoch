@@ -282,6 +282,7 @@ function wsAppCodeRepoCheck( gitService ) {
               {'className': 'message lb rs', 'title': 'メッセージ', 'type': 'text', 'sort': 'on', 'filter': 'on'},        
               {'className': 'changer lb rs', 'title': '更新者', 'type': 'text', 'sort': 'on', 'filter': 'on'},        
               {'className': 'update rs', 'title': '更新日時', 'type': 'date', 'sort': 'on', 'filter': 'on'},
+              {'className': 'rebuild lb rs', 'title': 'Rebuild', 'type': 'button', 'buttonClass': 'rebuild-button table-button icon'},
               {'className': 'commit-id lb rs', 'title': 'Commit ID', 'align': 'center', 'type': 'link', 'sort': 'on', 'filter': 'on'}
           ],
           'option': {
@@ -294,7 +295,7 @@ function wsAppCodeRepoCheck( gitService ) {
                 const d = data[i],
                       cid = d.commit_id.slice( 0, 6 ),
                       cDate = ws.cmn.fn.formatDate( d.date, 'yyyy/MM/dd HH:mm:ss');
-                body.push([ [ d.git_url, d.repository ], d.branch, d.message, d.name, cDate, [ d.html_url, cid ] ]);
+                body.push([ [ d.git_url, d.repository ], d.branch, d.message, d.name, cDate, JSON.stringify(d).replace(/&/g,"&amp;").replace(/"/g,"&quot;"), [ d.html_url, cid ] ]);
               }
               return body;
           }
@@ -402,6 +403,41 @@ function wsAppCodeRepoCheck( gitService ) {
       }
     }, '640');
   });
+
+  if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ws-cd-update".replace('{ws_id}',(new URLSearchParams(window.location.search)).get('workspace_id'))) == -1) {
+    ws.cmn.modal.fn.$modal.find(".rebuild-button").prop("disabled", true);
+  } else {
+    ws.cmn.modal.fn.$modal.on('click','.rebuild-button', function() {
+        let d = $( this ).attr('data-button');
+    
+        new Promise((resolve, reject)=> {
+            console.log("[CALL] POST " + workspace_api_conf.api.ci_pipeline.execute.post);
+            $.ajax({
+                "type": "POST",
+                "url": workspace_api_conf.api.ci_pipeline.execute.post.replace('{workspace_id}', (new URLSearchParams(window.location.search)).get('workspace_id')),
+                "data": JSON.stringify({
+                    "git_url": d.git_url,
+                    "commit_id": d.commit_id,
+                    "branch": d.branch,
+                }),
+                contentType: "application/json",
+                dataType: "json",
+            }).done((data) => {
+                console.log("[DONE] POST " + workspace_api_conf.api.ci_pipeline.execute.post);
+
+            }).fail((jqXHR, textStatus, errorThrown) => {
+                console.log("[FAIL] POST " + workspace_api_conf.api.ci_pipeline.execute.post);
+                alert("Rebuildの実行が失敗しました");
+                reject();
+            });
+
+        }).then(() => {
+            //setTimeout(() => {ws.cmn.modal.fn.$modal.find(".rebuild-button").prop("disabled", true);},0);
+
+        }).catch(() => {
+        });
+    });
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
