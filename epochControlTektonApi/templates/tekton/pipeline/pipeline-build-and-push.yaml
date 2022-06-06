@@ -34,7 +34,6 @@ spec:
     - name: git_repository_url
     - name: git_clone_revision
     - name: git_branch
-    - name: git_repository_name
     - name: git_sender_user
     - name: git_webhook_header
     - name: git_webhook_body
