@@ -21,7 +21,7 @@ spec:
   - name: git_repository_url
     value: $(body.repository.git_http_url)
   - name: git_clone_revision
-    value: $(body.ref)
+    value: $(body.after)
   - name: git_branch
     value: $(body.ref)
   - name: git_repository_name
@@ -40,7 +40,7 @@ spec:
   - name: git_repository_url
     value: $(body.repository.clone_url)
   - name: git_clone_revision
-    value: $(body.ref)
+    value: $(body.after)
   - name: git_branch
     value: $(body.ref)
   - name: git_repository_name
