@@ -55,7 +55,11 @@ def post_tekton_task(workspace_id):
 
     try:
         # image tagの生成
-        image_tag = '{}.{}'.format(re.sub(r'.*/', '', request.json['git_branch']), datetime.now(globals.TZ).strftime("%Y%m%d-%H%M%S"))
+        image_tag = '{}.{}.{}'.format(
+                re.sub(r'.*/', '', request.json['git_branch']),
+                request.json['git_revision'][0:6],
+                datetime.now(globals.TZ).strftime("%Y%m%d-%H%M%S")
+            )
 
         with dbconnector() as db, dbcursor(db) as cursor:
             
