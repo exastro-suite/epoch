@@ -597,13 +597,14 @@ def get_responsePipelineRunItem(plRunitem):
     resPlRunitem['task_id'] = int(get_taskResult(plRunitem, 'task-start', 'task_id'))
     resPlRunitem['pipeline_id'] = int(plRunitem['metadata']['labels']['pipeline_id'])
     resPlRunitem['pipelinerun_name'] = plRunitem['metadata']['name']
-    resPlRunitem['repository_url'] = get_pipelineParameter(plRunitem,'git_repository_url')
+    resPlRunitem['repository_url'] =  get_pipelineParameter(plRunitem,'git_repository_url')
     resPlRunitem['build_branch'] = convert_branch(get_pipelineParameter(plRunitem,'git_branch'))
     resPlRunitem['start_time'] = start_time
     resPlRunitem['finish_time'] = completion_time
     resPlRunitem['status'] = status
     resPlRunitem['container_image'] = '{}:{}'.format(get_pipelineParameter(plRunitem,'container_registry_image'), get_taskResult(plRunitem, 'task-start', 'container_registry_image_tag'))
     resPlRunitem['git_sender_user'] = get_pipelineParameter(plRunitem,'git_sender_user')
+    resPlRunitem['commit_id'] = get_pipelineParameter(plRunitem,'git_clone_revision')
 
     # タスク情報の格納
     resPlRunitem['tasks'] = []
