@@ -854,21 +854,38 @@ def post_pipeline_execute(workspace_id):
         }
 
         # ボディ情報 body info.
-        post_data = {
-            "repository": {
-                "git_http_url": payload["git_url"],
-            },
-            "after": payload["commit_id"],
-            "ref": "refs/heads/{}".format(payload["branch"]),
-            "user_username": user_id,
-        }
+        if payload["interface"] == const.INTERFACE_GITLAB:
+            # gitlab
+            post_data = {
+                "repository": {
+                    "git_http_url": payload["git_url"],
+                },
+                "after": payload["commit_id"],
+                "ref": "refs/heads/{}".format(payload["branch"]),
+                "user_username": user_id,
+            }
+        else:
+            # github
+            post_data = {
+                "repository": {
+                    "clone_url": payload["git_url"],
+                },
+                "after": payload["commit_id"],
+                "ref": "refs/heads/{}".format(payload["branch"]),
+                "sender": {
+                    "login": user_id,
+                },
+            }
 
         # event listener send
         response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
 
-        if response.status_code != 200:
+        if response.status_code >= 300:
             globals.logger.error(response.text)
-            raise common.UserException("post listenner error:[{}]".format(response.status_code))
+            raise common.UserException("post listener error:[{}]".format(response.status_code))
+
+        globals.logger.debug(response.text)
+        globals.logger.debug("res code:[{}]".format(response.status_code))
 
         ret_status = 200
 
