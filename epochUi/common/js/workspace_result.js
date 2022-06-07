@@ -457,6 +457,7 @@ function wsAppCodeRepoCheck( gitService ) {
                     "git_url": execItem.git_url,
                     "commit_id": execItem.commit_id,
                     "branch": execItem.branch,
+                    "interface": ( RefWsDataJSON['git-service']['git-service-select']=='epoch'? 'gitlab': RefWsDataJSON['git-service']['git-service-select'] )
                 }),
                 contentType: "application/json",
                 dataType: "json",
