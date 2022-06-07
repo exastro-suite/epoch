@@ -463,7 +463,7 @@ function wsAppCodeRepoCheck( gitService ) {
                 dataType: "json",
             }).done((data) => {
                 console.log("[DONE] POST " + workspace_api_conf.api.ci_pipeline.execute.post);
-
+                resolve();
             }).fail((jqXHR, textStatus, errorThrown) => {
                 console.log("[FAIL] POST " + workspace_api_conf.api.ci_pipeline.execute.post);
                 alert("Rebuildの実行が失敗しました");
