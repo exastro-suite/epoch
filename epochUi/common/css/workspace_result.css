@@ -201,6 +201,7 @@ color: #FFF;
 .commit-status .rebuild button {
   margin-left: 11px;
   margin-right: 11px;
+  cursor: pointer;
 }
 .commit-status .rebuild button::before {
   content: "\e91c";
@@ -217,6 +218,11 @@ color: #FFF;
   -moz-osx-font-smoothing: grayscale;
 }
 .commit-status .rebuild button:disabled {
+  cursor: default!important;
+  transform: scale(1)!important;
+  opacity: .2;
+}
+.commit-status .rebuild button.disabled {
   cursor: default!important;
   transform: scale(1)!important;
   opacity: .2;

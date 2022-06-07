@@ -271,7 +271,9 @@ function wsAppCodeRepoCheck( gitService ) {
           }
       }
   };
-  
+
+  let rebuild_class = currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ws-cd-update".replace('{ws_id}',(new URLSearchParams(window.location.search)).get('workspace_id'))) == -1 ? " disabled": "";
+
   // 表示データ
   ws.cmn.data = {
       'commit': {
@@ -282,7 +284,7 @@ function wsAppCodeRepoCheck( gitService ) {
               {'className': 'message lb rs', 'title': 'メッセージ', 'type': 'text', 'sort': 'on', 'filter': 'on'},        
               {'className': 'changer lb rs', 'title': '更新者', 'type': 'text', 'sort': 'on', 'filter': 'on'},        
               {'className': 'update rs', 'title': '更新日時', 'type': 'date', 'sort': 'on', 'filter': 'on'},
-              {'className': 'rebuild lb rs', 'title': 'Rebuild', 'type': 'button', 'buttonClass': 'rebuild-button table-button icon'},
+              {'className': 'rebuild lb rs', 'title': 'Rebuild', 'type': 'button', 'buttonClass': 'rebuild-button table-button icon ' + rebuild_class, 'popup': false},
               {'className': 'commit-id lb rs', 'title': 'Commit ID', 'align': 'center', 'type': 'link', 'sort': 'on', 'filter': 'on'}
           ],
           'option': {
@@ -404,21 +406,57 @@ function wsAppCodeRepoCheck( gitService ) {
     }, '640');
   });
 
-  if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ws-cd-update".replace('{ws_id}',(new URLSearchParams(window.location.search)).get('workspace_id'))) == -1) {
-    ws.cmn.modal.fn.$modal.find(".rebuild-button").prop("disabled", true);
-  } else {
+  if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ws-cd-update".replace('{ws_id}',(new URLSearchParams(window.location.search)).get('workspace_id'))) != -1) {
     ws.cmn.modal.fn.$modal.on('click','.rebuild-button', function() {
-        let d = $( this ).attr('data-button');
+        const execItem = JSON.parse($( this ).attr('data-button'));
     
         new Promise((resolve, reject)=> {
+            const confirmModal = new modalFunction({
+                'message': {
+                    'id': 'message',
+                    'title': '確認',
+                    'footer': {
+                        'OK': {
+                            'text': 'OK',
+                            'type': 'negative'
+                        },
+                        'CANCEL': {
+                            'text': 'キャンセル',
+                            'type': 'negative'
+                        }
+                    },
+                    'block': {
+                        'message': {
+                            'item': {
+                                'message': {
+                                    'type': 'message',
+                                    'text': 'Rebuildしますか？'
+                                }
+                            }
+                        }
+                    }
+                }
+            }, {});
+            confirmModal.open('message', {
+                'OK': function(){       
+                    confirmModal.close();
+                    resolve();
+                },
+                'CANCEL': function(){
+                    confirmModal.close();
+                    reject();
+                }
+            });     
+        }).then(() => { return new Promise((resolve, reject) => {
             console.log("[CALL] POST " + workspace_api_conf.api.ci_pipeline.execute.post);
+
             $.ajax({
                 "type": "POST",
                 "url": workspace_api_conf.api.ci_pipeline.execute.post.replace('{workspace_id}', (new URLSearchParams(window.location.search)).get('workspace_id')),
                 "data": JSON.stringify({
-                    "git_url": d.git_url,
-                    "commit_id": d.commit_id,
-                    "branch": d.branch,
+                    "git_url": execItem.git_url,
+                    "commit_id": execItem.commit_id,
+                    "branch": execItem.branch,
                 }),
                 contentType: "application/json",
                 dataType: "json",
@@ -431,10 +469,77 @@ function wsAppCodeRepoCheck( gitService ) {
                 reject();
             });
 
-        }).then(() => {
-            //setTimeout(() => {ws.cmn.modal.fn.$modal.find(".rebuild-button").prop("disabled", true);},0);
+        })}).then(() => { return new Promise((resolve, reject) => {
+            const progress = new modalFunction({
+                'progress': {
+                    'id': 'progress',
+                    'title': 'Rebuildを開始しています',
+                    'footer': {
+                    },
+                    'block': {
+                        'progress': {
+                            'item': {
+                                'date': {
+                                    'type': 'loading'
+                                }
+                            }
+                        }
+                    }
+                }
+            }, {});
 
+            progress.open('progress', {
+                'callback': function(){
+                    const watchRun = () => {
+                        for(let i in current_pipelineruns) {
+                            let run = current_pipelineruns[i];
+                            if( ['Pending', 'Running'].includes(run.status)
+                            &&  run.repository_url == execItem.git_url
+                            &&  run.commit_id == execItem.commit_id ) {
+                                try {
+                                    progress.close();
+                                } catch(e) {}
+                                resolve();
+                                return;
+                            }
+                        }
+                        if(progress.$modal !== undefined) {
+                            setTimeout(() => { watchRun(); }, 500);
+                        }
+                    }
+                    watchRun();
+                }
+            });
+        })}).then(() => {
+            const msgmodal = new modalFunction({
+                'message': {
+                    'id': 'message',
+                    'title': '確認',
+                    'footer': {
+                        'OK': {
+                            'text': 'OK',
+                            'type': 'negative'
+                        }
+                    },
+                    'block': {
+                        'message': {
+                            'item': {
+                                'message': {
+                                    'type': 'message',
+                                    'text': 'Rebuildを開始しました'
+                                }
+                            }
+                        }
+                    }
+                }
+            }, {});
+            msgmodal.open('message', {
+                'OK': function(){       
+                    msgmodal.close();
+                }
+            });     
         }).catch(() => {
+            return;
         });
     });
   }
