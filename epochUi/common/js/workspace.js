@@ -22,6 +22,7 @@ var workspace_client_urls = {
   "sonarqube": null
 }
 var RefWsDataJSON = null;
+var current_pipelineruns = [];
 
 // function workspace()
 // ├ initWorkspaceType: 初期タブ
@@ -3873,7 +3874,7 @@ const compareInfo = function( modalID, compareData ){
         "url": workspace_api_conf.api.ciResult.pipelinerun.get.replace('{workspace_id}', workspace_id),
         "data": {'latest': "True", "log": "False"}
       }).done(function(response) {
-        var current_pipelineruns = response.rows;
+        current_pipelineruns = response.rows;
         var visibility = "hidden";
         for(let i = 0; i < current_pipelineruns.length; i++) {
           if(['Pending', 'Running'].includes(current_pipelineruns[i].status)) {
