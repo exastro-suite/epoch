@@ -97,7 +97,7 @@ def post_ci_pipeline(workspace_id):
         get_workspace_status = json.loads(response.text)
         # 更新で使用する項目のみを展開する Expand only the items used in the update
         workspace_status = {
-            const.STATUS_CI_SETTING : get_workspace_status[const.STATUS_CI_SETTING] 
+            const.STATUS_CI_SETTING : get_workspace_status[const.STATUS_CI_SETTING]
         }
 
         # 前回の結果が正常終了しているかチェックする
@@ -164,20 +164,20 @@ def post_ci_pipeline(workspace_id):
                 raise common.UserException(error_detail)
 
             # epoch-control-inside-gitlab-api の呼び先設定
-            api_url_gitlab = "{}://{}:{}/workspace/{}/gitlab".format(os.environ["EPOCH_CONTROL_INSIDE_GITLAB_PROTOCOL"], 
-                                                                    os.environ["EPOCH_CONTROL_INSIDE_GITLAB_HOST"], 
+            api_url_gitlab = "{}://{}:{}/workspace/{}/gitlab".format(os.environ["EPOCH_CONTROL_INSIDE_GITLAB_PROTOCOL"],
+                                                                    os.environ["EPOCH_CONTROL_INSIDE_GITLAB_HOST"],
                                                                     os.environ["EPOCH_CONTROL_INSIDE_GITLAB_PORT"],
                                                                     workspace_id)
 
             # epoch-control-github-api の呼び先設定
-            api_url_github = "{}://{}:{}/workspace/{}/github/webhooks".format(os.environ["EPOCH_CONTROL_GITHUB_PROTOCOL"], 
-                                                                            os.environ["EPOCH_CONTROL_GITHUB_HOST"], 
+            api_url_github = "{}://{}:{}/workspace/{}/github/webhooks".format(os.environ["EPOCH_CONTROL_GITHUB_PROTOCOL"],
+                                                                            os.environ["EPOCH_CONTROL_GITHUB_HOST"],
                                                                             os.environ["EPOCH_CONTROL_GITHUB_PORT"],
                                                                             workspace_id)
 
             # epoch-control-tekton-api の呼び先設定
-            api_url_tekton = "{}://{}:{}/workspace/{}/tekton/pipeline".format(os.environ["EPOCH_CONTROL_TEKTON_PROTOCOL"], 
-                                                                            os.environ["EPOCH_CONTROL_TEKTON_HOST"], 
+            api_url_tekton = "{}://{}:{}/workspace/{}/tekton/pipeline".format(os.environ["EPOCH_CONTROL_TEKTON_PROTOCOL"],
+                                                                            os.environ["EPOCH_CONTROL_TEKTON_HOST"],
                                                                             os.environ["EPOCH_CONTROL_TEKTON_PORT"],
                                                                             workspace_id)
 
@@ -271,7 +271,7 @@ def post_ci_pipeline(workspace_id):
 
         ret_status = 200
 
-        # 戻り値をそのまま返却        
+        # 戻り値をそのまま返却
         return jsonify({"result": ret_status}), ret_status
 
     except common.UserException as e:
@@ -557,7 +557,7 @@ def get_registry(workspace_id):
         Response: HTTP Respose
     """
     app_name = multi_lang.get_text("EP020-0003", "ワークスペース情報:")
-    exec_stat = multi_lang.get_text("EP020-0074", "CIパイプライン コンテナレジストリ情報取得") 
+    exec_stat = multi_lang.get_text("EP020-0074", "CIパイプライン コンテナレジストリ情報取得")
     error_detail = ""
 
     try:
@@ -605,11 +605,11 @@ def get_registry(workspace_id):
             raise common.UserException(error_detail)
 
         rows = []
-        
+
         # Extract the repository information from the acquired CI result information and format it
         # 取得したCI結果情報の内、リポジトリ情報を抜き出して整形
         for ci_result in ci_result_json["rows"]:
-            
+
             # Container registry information acquisition URL - コンテナレジストリ情報取得URL
             api_url = "{}://{}:{}/registry/{}".format(os.environ['EPOCH_CONTROL_DOCKERHUB_PROTOCOL'],
                                                         os.environ['EPOCH_CONTROL_DOCKERHUB_HOST'],
@@ -619,7 +619,7 @@ def get_registry(workspace_id):
             # Get container registry information - コンテナレジストリ情報取得
             response = requests.post(api_url, headers=request_headers)
             registry_json = json.loads(response.text)
-            
+
             if response.status_code != 200:
                 error_detail = multi_lang.get_text("EP020-0075", "コンテナレジストリ情報の取得に失敗しました")
                 globals.logger.debug(error_detail)
@@ -630,7 +630,7 @@ def get_registry(workspace_id):
                 # レジストリ名とイメージタグが一致する、リポジトリ情報と、レジストリ情報をマージする
                 if ci_result["container_registry_image"] in registry["name"] \
                 and ci_result["container_registry_image_tag"] in registry["tag"]:
-                
+
                     rows.append(
                         {
                             "registry": registry,
@@ -680,8 +680,8 @@ def get_ci_pipeline_result(workspace_id):
         }
 
         # epoch-control-tekton-api の呼び先設定
-        api_url_tekton = "{}://{}:{}/workspace/{}/tekton/pipelinerun".format(os.environ["EPOCH_CONTROL_TEKTON_PROTOCOL"], 
-                                                                          os.environ["EPOCH_CONTROL_TEKTON_HOST"], 
+        api_url_tekton = "{}://{}:{}/workspace/{}/tekton/pipelinerun".format(os.environ["EPOCH_CONTROL_TEKTON_PROTOCOL"],
+                                                                          os.environ["EPOCH_CONTROL_TEKTON_HOST"],
                                                                           os.environ["EPOCH_CONTROL_TEKTON_PORT"],
                                                                           workspace_id)
         # TEKTONパイプライン情報取得
@@ -719,8 +719,8 @@ def get_ci_pipeline_result(workspace_id):
 
                         # epoch-control-tekton-api の呼び先設定
                         api_url_tekton = "{}://{}:{}/workspace/{}/tekton/taskrun/{}/logs".format(
-                                                                                        os.environ["EPOCH_CONTROL_TEKTON_PROTOCOL"], 
-                                                                                        os.environ["EPOCH_CONTROL_TEKTON_HOST"], 
+                                                                                        os.environ["EPOCH_CONTROL_TEKTON_PROTOCOL"],
+                                                                                        os.environ["EPOCH_CONTROL_TEKTON_HOST"],
                                                                                         os.environ["EPOCH_CONTROL_TEKTON_PORT"],
                                                                                         workspace_id,
                                                                                         taskrun_name)
@@ -757,7 +757,7 @@ def get_ci_pipeline_result(workspace_id):
             "rows" : rows,
         }
 
-        # 戻り値をそのまま返却        
+        # 戻り値をそのまま返却
         return jsonify(response), ret_status
 
     except common.UserException as e:
@@ -787,8 +787,8 @@ def get_ci_pipeline_result_logs(workspace_id, taskrun_name):
 
         # epoch-control-tekton-api の呼び先設定
         api_url_tekton = "{}://{}:{}/workspace/{}/tekton/taskrun/{}/logs".format(
-                                                                        os.environ["EPOCH_CONTROL_TEKTON_PROTOCOL"], 
-                                                                        os.environ["EPOCH_CONTROL_TEKTON_HOST"], 
+                                                                        os.environ["EPOCH_CONTROL_TEKTON_PROTOCOL"],
+                                                                        os.environ["EPOCH_CONTROL_TEKTON_HOST"],
                                                                         os.environ["EPOCH_CONTROL_TEKTON_PORT"],
                                                                         workspace_id,
                                                                         taskrun_name)
@@ -811,7 +811,88 @@ def get_ci_pipeline_result_logs(workspace_id, taskrun_name):
             "log" : ret["log"],
         }
 
-        # 戻り値をそのまま返却        
+        # 戻り値をそのまま返却
+        return jsonify(response), ret_status
+
+    except common.UserException as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+    except Exception as e:
+        return common.server_error_to_message(e, app_name + exec_stat, error_detail)
+
+
+def post_pipeline_execute(workspace_id):
+    """Post Pipeline execute - パイプライン実行
+
+    Args:
+        workspace_id (int): workspace ID
+    Returns:
+        Response: HTTP Respose
+    """
+    app_name = "ワークスペース情報:"
+    exec_stat = "CIパイプライン実行"
+    error_detail = ""
+
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}'.format(inspect.currentframe().f_code.co_name))
+        globals.logger.debug('#' * 50)
+
+        user_id = common.get_current_user(request.headers)
+
+        # 引数取得 Get arguments
+        payload = request.json.copy()
+
+        # event lstener呼び出し event lstener call
+        api_url = "{}://{}:{}/listener/{}".format(os.environ['EPOCH_CONTROL_TEKTON_PROTOCOL'],
+                                                os.environ['EPOCH_CONTROL_TEKTON_HOST'],
+                                                os.environ['EPOCH_CONTROL_TEKTON_PORT'],
+                                                workspace_id)
+
+        # ヘッダ情報 header info.
+        post_headers = {
+            'Content-Type': 'application/json',
+        }
+
+        # ボディ情報 body info.
+        if payload["interface"] == const.INTERFACE_GITLAB:
+            # gitlab
+            post_data = {
+                "repository": {
+                    "git_http_url": payload["git_url"],
+                },
+                "after": payload["commit_id"],
+                "ref": "refs/heads/{}".format(payload["branch"]),
+                "user_username": user_id,
+            }
+        else:
+            # github
+            post_data = {
+                "repository": {
+                    "clone_url": payload["git_url"],
+                },
+                "after": payload["commit_id"],
+                "ref": "refs/heads/{}".format(payload["branch"]),
+                "sender": {
+                    "login": user_id,
+                },
+            }
+
+        # event listener send
+        response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
+
+        if response.status_code >= 300:
+            globals.logger.error(response.text)
+            raise common.UserException("post listener error:[{}]".format(response.status_code))
+
+        globals.logger.debug(response.text)
+        globals.logger.debug("res code:[{}]".format(response.status_code))
+
+        ret_status = 200
+
+        response = {
+            "result": ret_status,
+        }
+
         return jsonify(response), ret_status
 
     except common.UserException as e:
