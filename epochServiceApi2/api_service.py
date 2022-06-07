@@ -277,6 +277,29 @@ def call_ci_result_logs(workspace_id, taskrun_name):
         return common.server_error(e)
 
 
+@app.route('/workspace/<int:workspace_id>/ci/pipeline/execute', methods=['POST'])
+def call_pipeline_execute(workspace_id):
+    """workspace/workspace_id/ci/pipeline/execute Call
+
+    Args:
+        workspace_id (int): workspace ID
+
+    Returns:
+        Response: HTTP Respose
+    """
+    try:
+        globals.logger.debug('#' * 50)
+        globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
+        globals.logger.debug('#' * 50)
+
+        if request.method == 'POST':
+            return api_service_ci.post_pipeline_execute(workspace_id)
+        else:
+            raise Exception("method not support!")
+    except Exception as e:
+        return common.server_error(e)
+
+
 @app.route('/workspace/<int:workspace_id>/cd/pipeline', methods=['POST'])
 def call_cd_pipeline(workspace_id):
     """workspace/workspace_id/cd/pipeline Call
