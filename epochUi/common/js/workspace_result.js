@@ -284,7 +284,7 @@ function wsAppCodeRepoCheck( gitService ) {
               {'className': 'message lb rs', 'title': 'メッセージ', 'type': 'text', 'sort': 'on', 'filter': 'on'},        
               {'className': 'changer lb rs', 'title': '更新者', 'type': 'text', 'sort': 'on', 'filter': 'on'},        
               {'className': 'update rs', 'title': '更新日時', 'type': 'date', 'sort': 'on', 'filter': 'on'},
-              {'className': 'rebuild lb rs', 'title': 'Rebuild', 'type': 'button', 'buttonClass': 'rebuild-button table-button icon ' + rebuild_class, 'popup': false},
+              {'className': 'rebuild lb rs', 'title': '再実行', 'type': 'button', 'buttonClass': 'rebuild-button table-button icon ' + rebuild_class, 'popup': false},
               {'className': 'commit-id lb rs', 'title': 'Commit ID', 'align': 'center', 'type': 'link', 'sort': 'on', 'filter': 'on'}
           ],
           'option': {
@@ -409,7 +409,23 @@ function wsAppCodeRepoCheck( gitService ) {
   if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ws-cd-update".replace('{ws_id}',(new URLSearchParams(window.location.search)).get('workspace_id'))) != -1) {
     ws.cmn.modal.fn.$modal.on('click','.rebuild-button', function() {
         const execItem = JSON.parse($( this ).attr('data-button'));
-    
+        
+        // Check branch
+        const pipelines = RefWsDataJSON['application-code'];
+        let buildTarget = false;
+        for( let i in pipelines ) {
+            if(pipelines[i][i+"-git-repository-url"] !== execItem.git_url)  continue;
+
+            let branch = ("," + pipelines[i][i+"-pipeline-tekton-branch"] + ",").replace(/ ,/g,",").replace(/, /g,",");
+            if(branch.indexOf("," + execItem.branch + ",") !== -1) {
+                buildTarget = true;
+            }
+        }
+        if(!buildTarget) {
+            alert("実行対象のブランチではありません。パイプラインの設定を確認してください");
+            return;
+        }
+
         new Promise((resolve, reject)=> {
             const confirmModal = new modalFunction({
                 'message': {
@@ -430,7 +446,7 @@ function wsAppCodeRepoCheck( gitService ) {
                             'item': {
                                 'message': {
                                     'type': 'message',
-                                    'text': 'Rebuildしますか？'
+                                    'text': 'パイプラインを再実行しますか？'
                                 }
                             }
                         }
@@ -466,7 +482,7 @@ function wsAppCodeRepoCheck( gitService ) {
                 resolve();
             }).fail((jqXHR, textStatus, errorThrown) => {
                 console.log("[FAIL] POST " + workspace_api_conf.api.ci_pipeline.execute.post);
-                alert("Rebuildの実行が失敗しました");
+                alert("パイプラインの起動に失敗しました");
                 reject();
             });
 
@@ -474,7 +490,7 @@ function wsAppCodeRepoCheck( gitService ) {
             const progress = new modalFunction({
                 'progress': {
                     'id': 'progress',
-                    'title': 'Rebuildを開始しています',
+                    'title': 'パイプラインを開始しています',
                     'footer': {
                     },
                     'block': {
@@ -527,7 +543,7 @@ function wsAppCodeRepoCheck( gitService ) {
                             'item': {
                                 'message': {
                                     'type': 'message',
-                                    'text': 'Rebuildを開始しました'
+                                    'text': 'パイプラインを開始しました'
                                 }
                             }
                         }
