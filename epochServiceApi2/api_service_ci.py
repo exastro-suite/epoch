@@ -422,6 +422,10 @@ def get_git_commits(workspace_id):
 
                         rows.append(row)
 
+        # 日付の降順でソート
+        # Sort by date in descending order
+        rows = sorted(rows, key=lambda x:x['date'], reverse=True)
+
         response = {
             "result":"200",
             "rows" : rows,
@@ -533,6 +537,9 @@ def get_git_hooks(workspace_id):
 
                             rows.append(row)
 
+        # 日付の降順でソート
+        # Sort by date in descending order
+        rows = sorted(rows, key=lambda x:x['date'], reverse=True)
 
         response = {
             "result":"200",
@@ -641,6 +648,10 @@ def get_registry(workspace_id):
                             }
                         }
                     )
+
+        # 日付の降順でソート
+        # Sort by date in descending order
+        rows = sorted(rows, key=lambda x:x['registry']['tag_last_pushed'], reverse=True)
 
         ret_status = 200
 
