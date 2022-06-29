@@ -141,7 +141,7 @@ def create_workspace():
 
         ret_status = 200
 
-        # 戻り値をそのまま返却        
+        # 戻り値をそのまま返却
         return jsonify({"result": ret_status, "rows": rows}), ret_status
 
     except common.UserException as e:
@@ -173,7 +173,7 @@ def create_workspace_setting_roles(workspace_id, user_id):
 
         # rolesの取得 get a roles
         post_data = set_roles(workspace_id)
-        
+
         response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
 
         #
@@ -219,8 +219,8 @@ def create_workspace_setting_auth_infra(workspace_id, user_id):
         }
 
         # authentication-infra-api の呼び先設定
-        api_url_epai = "{}://{}:{}/".format(os.environ["EPOCH_EPAI_API_PROTOCOL"], 
-                                            os.environ["EPOCH_EPAI_API_HOST"], 
+        api_url_epai = "{}://{}:{}/".format(os.environ["EPOCH_EPAI_API_PROTOCOL"],
+                                            os.environ["EPOCH_EPAI_API_HOST"],
                                             os.environ["EPOCH_EPAI_API_PORT"])
 
         # get namespace
@@ -581,9 +581,9 @@ def get_workspace_list():
                                                                         os.environ["EPOCH_EPAI_REALM_NAME"],
                                                                         user_id)
         epai_resp_user_role = requests.get(epai_api_url, headers=post_headers)
-        
+
         rows = []
-        
+
         if users_response.status_code == 200 and common.is_json_format(users_response.text) \
         and epai_resp_user_role.status_code == 200 and common.is_json_format(epai_resp_user_role.text):
             user_roles = json.loads(epai_resp_user_role.text)
@@ -608,7 +608,7 @@ def get_workspace_list():
                         epai_resp_role_disp_name = requests.get(epai_api_url, headers=post_headers)
                         role_info = json.loads(epai_resp_role_disp_name.text)["rows"]
                         # globals.logger.debug("role_info:{}".format(role_info))
-                        
+
                         disp_row = {
                             "id": role["name"],
                             "name": "",
@@ -619,10 +619,10 @@ def get_workspace_list():
                             if "display" in role_info["attributes"]:
                                 disp_row["name"] = multi_lang.get_text(role_info["attributes"]["display"], role_info["attributes"]["display_default"])
 
-                        roles.append(disp_row)           
+                        roles.append(disp_row)
 
                         break
-                
+
                 # Display in list with reference role - 参照ロールありで一覧に表示する
                 if find:
                     all_roles = const.ALL_ROLES
@@ -673,15 +673,15 @@ def get_workspace_list():
                         raise common.UserException("{} Error user role get status:{}".format(inspect.currentframe().f_code.co_name, users_response.status_code))
 
                     user_roles = json.loads(user_role_response.text)
-                    # globals.logger.debug("user_roles: {}".format(user_roles["rows"])) 
-                    
+                    # globals.logger.debug("user_roles: {}".format(user_roles["rows"]))
+
                     #
                     # Processing for all roles of the acquired login user - 取得したログインユーザの全ロールに対しての処理
                     #
                     for get_role in user_roles["rows"]:
                         kind = common.get_role_kind(get_role["name"])
-                        
-                        # Check only the corresponding role - 該当のロールのみチェック 
+
+                        # Check only the corresponding role - 該当のロールのみチェック
                         if kind is not None:
                             # ワークスペース作成権限は読み飛ばし Skip workspace creation authority
                             if get_role["name"] == const.ROLE_WS_CREATE[0]:
@@ -689,21 +689,21 @@ def get_workspace_list():
 
                             ex_role = re.match("ws-({}|\d+)-(.+)", get_role["name"])
                             # globals.logger.debug("role_workspace_id:{} kind:{}".format(ex_role[1], kind))
-                            
-                            # Narrow down only the applicable workspace - 該当のワークスペースのみの絞り込み 
+
+                            # Narrow down only the applicable workspace - 該当のワークスペースのみの絞り込み
                             if ex_role[1] == str(data_row["workspace_id"]):
                                 role_info = common.get_role_info(get_role["name"])
                                 set_role_kind.append(
                                     {
                                         "kind" : kind,
-                                        "sort" : role_info[3]  
+                                        "sort" : role_info[3]
                                     }
                                 )
 
                     # ロールの表示順を並び替え Sort the display order of roles
-                    set_role_kind_sorted = sorted(set_role_kind, key=lambda x:x['sort']) 
+                    set_role_kind_sorted = sorted(set_role_kind, key=lambda x:x['sort'])
 
-                    # Return value JSON formatting - 返り値 JSON整形 
+                    # Return value JSON formatting - 返り値 JSON整形
                     row = {
                         "workspace_id": data_row["workspace_id"],
                         "workspace_name": data_row["common"]["name"],
@@ -778,6 +778,10 @@ def get_workspace(workspace_id):
             if const.ROLE_WS_ROLE_WS_CD_UPDATE[0].format(workspace_id) not in roles:
                 rows[0]["cd_config"]["environments_common"]["git_repositry"]["password"] = common.str_mask(rows[0]["ci_config"]["pipelines_common"]["git_repositry"]["password"])
                 rows[0]["cd_config"]["environments_common"]["git_repositry"]["token"] = common.str_mask(rows[0]["ci_config"]["pipelines_common"]["git_repositry"]["token"])
+                for env_idx, environment in enumerate(rows[0]["cd_config"]["environments"]):
+                    rows[0]["cd_config"]["environments"][env_idx]["deploy_destination"]["authentication_token"] = common.str_mask(environment["deploy_destination"]["authentication_token"])
+                    rows[0]["cd_config"]["environments"][env_idx]["deploy_destination"]["base64_encoded_certificate"] = common.str_mask(environment["deploy_destination"]["base64_encoded_certificate"])
+
 
         elif response.status_code == 404:
             # 情報が取得できない場合は、0件で返す
@@ -879,7 +883,7 @@ def put_workspace(workspace_id):
         if const.ROLE_WS_ROLE_MANIFEST_SETTING[0].format(workspace_id) in roles:
             # Manifestパラメータの更新権限がある場合はパラメータの内容を差し替える
             # If you have permission to update Manifest parameters, replace the contents of the parameters.
-            row["ci_config"]["environments"] = req_data["ci_config"]["environments"] 
+            row["ci_config"]["environments"] = req_data["ci_config"]["environments"]
 
         elif const.ROLE_WS_ROLE_WS_CD_UPDATE[0].format(workspace_id) in roles:
             # マニフェスト更新権限が無くてワークスペース更新 (CD)有の場合、環境の増減だけ行う
@@ -1048,7 +1052,7 @@ def put_workspace(workspace_id):
 
         ret_status = 200
 
-        # 戻り値をそのまま返却        
+        # 戻り値をそのまま返却
         return jsonify({"result": ret_status}), ret_status
 
     except common.UserException as e:
@@ -1106,7 +1110,7 @@ def patch_workspace(workspace_id):
 
         ret_status = response.status_code
 
-        # 戻り値をそのまま返却        
+        # 戻り値をそのまま返却
         return jsonify({"result": ret_status}), ret_status
 
     except common.UserException as e:
@@ -1184,7 +1188,7 @@ def post_pod(workspace_id):
                                                     workspace_id)
         response = requests.post(api_url, headers=post_headers, data=json.dumps(post_data))
         globals.logger.debug("post workspace response:{}".format(response.text))
-        
+
         if response.status_code != 200:
             error_detail = 'workspace post処理に失敗しました'
             globals.logger.debug(error_detail)
@@ -1246,7 +1250,7 @@ def post_pod(workspace_id):
 
         ret_status = 200
 
-        # 戻り値をそのまま返却        
+        # 戻り値をそのまま返却
         return jsonify({"result": ret_status}), ret_status
 
     except common.UserException as e:
