@@ -68,9 +68,9 @@ class encrypt_workspace_info():
             ret_workspace_info['cd_config']['environments_common']['git_repositry']['token'] = self._enc.encrypt(ret_workspace_info['cd_config']['environments_common']['git_repositry']['token'])
 
         for env_idx, environment in enumerate(ret_workspace_info["cd_config"]["environments"]):
-            if 'authentication_token' in environment.get('deploy_destination',{}).get('authentication_token',{}):
+            if 'authentication_token' in environment.get('deploy_destination',{}):
                 ret_workspace_info['cd_config']['environments'][env_idx]["deploy_destination"]["authentication_token"] = self._enc.encrypt(environment['deploy_destination']['authentication_token'])
-            if 'base64_encoded_certificate' in environment.get('deploy_destination',{}).get('base64_encoded_certificate',{}):
+            if 'base64_encoded_certificate' in environment.get('deploy_destination',{}):
                 ret_workspace_info['cd_config']['environments'][env_idx]["deploy_destination"]["base64_encoded_certificate"] = self._enc.encrypt(environment['deploy_destination']['base64_encoded_certificate'])
 
         return ret_workspace_info
@@ -96,11 +96,17 @@ class encrypt_workspace_info():
             ret_workspace_info['cd_config']['environments_common']['git_repositry']['token'] = self._enc.decrypt(ret_workspace_info['cd_config']['environments_common']['git_repositry']['token'])
 
         for env_idx, environment in enumerate(ret_workspace_info["cd_config"]["environments"]):
-            if 'authentication_token' in environment.get('deploy_destination',{}).get('authentication_token',{}):
-                ret_workspace_info['cd_config']['environments'][env_idx]["deploy_destination"]["authentication_token"] = self._enc.decrypt(environment['deploy_destination']['authentication_token'])
+            if 'authentication_token' in environment.get('deploy_destination',{}):
+                try:
+                    ret_workspace_info['cd_config']['environments'][env_idx]["deploy_destination"]["authentication_token"] = self._enc.decrypt(environment['deploy_destination']['authentication_token'])
+                except Exception:
+                    pass
 
-            if 'base64_encoded_certificate' in environment.get('deploy_destination',{}).get('base64_encoded_certificate',{}):
-                ret_workspace_info['cd_config']['environments'][env_idx]["deploy_destination"]["base64_encoded_certificate"] = self._enc.decrypt(environment['deploy_destination']['base64_encoded_certificate'])
+            if 'base64_encoded_certificate' in environment.get('deploy_destination',{}):
+                try:
+                    ret_workspace_info['cd_config']['environments'][env_idx]["deploy_destination"]["base64_encoded_certificate"] = self._enc.decrypt(environment['deploy_destination']['base64_encoded_certificate'])
+                except Exception:
+                    pass
 
         return ret_workspace_info
 
