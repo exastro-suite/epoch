@@ -49,3 +49,4 @@ class TextList:
     lang_array['EP035-0006'] = "IaCリポジトリの設定内容を確認してください"
     lang_array['EP035-0007'] = "ArgoCD設定 - アプリケーション作成"
     lang_array['EP035-0008'] = "ArgoCDの入力内容を確認してください"
+    lang_array['EP035-0009'] = "ArgoCD設定 - クラスター登録"
