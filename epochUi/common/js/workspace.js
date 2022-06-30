@@ -650,7 +650,7 @@ const wsModalJSON = {
               'class': 'input-pickup-select',
               'item': {
                 'internal': 'EPOCHと同じKubernetes',
-                //'external': '以外のKubernetes'
+                'external': '以外のKubernetes'
               },
               'note': 'Deploy先のKubernetesを選択してください'
             },  
@@ -671,14 +671,14 @@ const wsModalJSON = {
               'inputError': '実行環境のNamespaceの形式が正しくありません',
             },
             'environmentToken': {
-              'type': 'input',
+              'type': 'password',
               'title': 'Authentication token',
               'name': 'environment-authentication-token',
               'class': 'input-pickup input-pickup-external',
               'placeholder': '実行環境のAuthentication tokenを入力してください'
             },
             'environmentCertificate': {
-              'type': 'input',
+              'type': 'password',
               'title': 'Base64 encoded certificate',
               'name': 'environment-certificate',
               'class': 'input-pickup input-pickup-external',
