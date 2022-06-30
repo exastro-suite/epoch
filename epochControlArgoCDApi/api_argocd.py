@@ -556,6 +556,66 @@ def argocd_settings(workspace_id):
             globals.logger.debug(stdout_cd.decode('utf-8'))
 
         #
+        # cluster setting
+        #
+        # クラスタ情報の一覧を取得する
+        globals.logger.debug("argocd cluster list :")
+        stdout_cd = subprocess.check_output(["argocd","cluster","list","-o","json"],stderr=subprocess.STDOUT)
+        # globals.logger.debug(stdout_cd.decode('utf-8'))
+
+        #
+        # cluster rm
+        #
+        # 設定済みのクラスタ情報をクリア
+        cluster_list = json.loads(stdout_cd)
+        for cluster in cluster_list:
+            if cluster['name'] == 'in-cluster':
+                # 内部クラスターは削除しない
+                continue
+
+            globals.logger.debug("argocd cluster rm [cluster] {} :".format(cluster['name']))
+            stdout_cd = subprocess.check_output(["argocd","cluster","rm",cluster['name']],stderr=subprocess.STDOUT)
+            globals.logger.debug(stdout_cd.decode('utf-8'))
+
+        #
+        # cluster add each environment
+        #
+        # 環境群数分処理を実行
+        for env in request_cd_env:
+            cluster_kind = env["deploy_destination"]["cluster_kind"]
+            if cluster_kind == 'internal':
+                # 内部クラスターは追加しない
+                continue
+
+            cluster_name = get_argo_cluster_name(workspace_id, env['environment_id'])
+            cluster_url = env["deploy_destination"]["cluster_url"]
+            authentication_token = env["deploy_destination"]["authentication_token"]
+            base64_encoded_certificate = env["deploy_destination"]["base64_encoded_certificate"]
+
+            exec_stat = multi_lang.get_text("EP035-0009", "ArgoCD設定 - クラスター登録")
+            error_detail = multi_lang.get_text("EP035-0008", "ArgoCDの入力内容を確認してください")
+
+            # クラスタ情報を追加
+            with tempfile.TemporaryDirectory() as tempdir:
+                # テンプレートファイルからyamlの生成
+                yamltext = render_template(
+                    'argocd_cluster_secret.yaml',
+                    param={
+                        "environment_id": env['environment_id'],
+                        "cluster_name": cluster_name,
+                        "cluster_url": cluster_url,
+                        "authentication_token": authentication_token,
+                        "base64_encoded_certificate": base64_encoded_certificate,
+                })
+                path_yamlfile = '{}/{}'.format(tempdir, "argocd_cluster_secret_{}.yaml".format(env['environment_id']))
+                with open(path_yamlfile, mode='w') as fp:
+                    fp.write(yamltext)
+                # yamlの適用
+                globals.logger.debug('apply : argocd_cluster_secret.yaml')
+                stdout_cd = subprocess.check_output(["kubectl","apply","-n",workspace_namespace(workspace_id),"-f",path_yamlfile],stderr=subprocess.STDOUT)
+                globals.logger.debug(stdout_cd.decode('utf-8'))
+
+        #
         # app setting
         #
         # アプリケーション情報の一覧を取得する
@@ -575,7 +635,7 @@ def argocd_settings(workspace_id):
         # 環境群数分処理を実行
         for env in request_cd_env:
             argo_app_name = get_argo_app_name(workspace_id, env['environment_id'])
-            cluster = env["deploy_destination"]["cluster_url"]
+            cluster = get_argo_cluster_name(workspace_id, env['environment_id'])
             namespace = env["deploy_destination"]["namespace"]
             gitUrl = env["git_repositry"]["url"]
 
@@ -603,8 +663,9 @@ def argocd_settings(workspace_id):
                 stdout_cd = subprocess.check_output(["argocd","app","create",argo_app_name,
                     "--repo",gitUrl,
                     "--path","./",
-                    "--dest-server",cluster,
+                    "--dest-name",cluster,
                     "--dest-namespace",namespace,
+                    "--sync-option","CreateNamespace=true",
                     ],stderr=subprocess.STDOUT)
                 globals.logger.debug(stdout_cd.decode('utf-8'))
 
@@ -625,8 +686,9 @@ def argocd_settings(workspace_id):
                     stdout_cd = subprocess.check_output(["argocd","app","set",argo_app_name,
                         "--repo",gitUrl,
                         "--path","./",
-                        "--dest-server",cluster,
+                        "--dest-name",cluster,
                         "--dest-namespace",namespace,
+                        "--sync-option","CreateNamespace=true",
                         ],stderr=subprocess.STDOUT)
 
                     globals.logger.debug(stdout_cd.decode('utf-8'))
@@ -681,6 +743,18 @@ def workspace_namespace(workspace_id):
         str: workspace用namespace
     """
     return  'epoch-ws-{}'.format(workspace_id)
+
+def get_argo_cluster_name(workspace_id, environment_id):
+    """ArgoCD cluster name
+
+    Args:
+        workspace_id (int): workspace_id
+        environment_id (str): environment_id
+
+    Returns:
+        str: ArgoCD cluster name
+    """
+    return 'ws-{}-cluster-{}'.format(workspace_id,environment_id)
 
 def get_argo_app_name(workspace_id,environment_id):
     """ArgoCD app name
