@@ -573,8 +573,8 @@ def argocd_settings(workspace_id):
                 # 内部クラスターは削除しない
                 continue
 
-            globals.logger.debug("argocd cluster rm [cluster] {} :".format(cluster['name']))
-            stdout_cd = subprocess.check_output(["argocd","cluster","rm",cluster['name']],stderr=subprocess.STDOUT)
+            globals.logger.debug('delete : secret {}'.format(cluster['name']))
+            stdout_cd = subprocess.check_output(["kubectl","delete","secret","-n",workspace_namespace(workspace_id),cluster['name']],stderr=subprocess.STDOUT)
             globals.logger.debug(stdout_cd.decode('utf-8'))
 
         #
@@ -635,20 +635,16 @@ def argocd_settings(workspace_id):
         # 環境群数分処理を実行
         for env in request_cd_env:
             argo_app_name = get_argo_app_name(workspace_id, env['environment_id'])
-            cluster = get_argo_cluster_name(workspace_id, env['environment_id'])
+            cluster_kind = env["deploy_destination"]["cluster_kind"]
+
+            if cluster_kind == 'internal':
+                # 内部Cluster
+                cluster = 'in-cluster'
+            else:
+                cluster = get_argo_cluster_name(workspace_id, env['environment_id'])
+
             namespace = env["deploy_destination"]["namespace"]
             gitUrl = env["git_repositry"]["url"]
-
-            # namespaceの存在チェック
-            ret = common.get_namespace(namespace)
-            if ret is None:
-                # 存在しない(None)ならnamespace作成
-                ret = common.create_namespace(namespace)
-
-                if ret is None:
-                    # namespaceの作成で失敗(None)が返ってきた場合はエラー
-                    error_detail = 'create namespace処理に失敗しました'
-                    raise common.UserException(error_detail)
 
             argo_app = next(filter(lambda app: (argo_app_name == app['metadata']['name']), app_list), None)
 
@@ -674,7 +670,7 @@ def argocd_settings(workspace_id):
                 exec_stat = multi_lang.get_text("EP035-0009", "ArgoCD設定 - アプリケーション更新")
                 error_detail = multi_lang.get_text("EP035-0008", "ArgoCDの入力内容を確認してください")
 
-                if cluster == argo_app["spec"]["destination"]["server"] \
+                if cluster == argo_app["spec"]["destination"]["name"] \
                 and namespace == argo_app["spec"]["destination"]["namespace"] \
                 and gitUrl == argo_app["spec"]["source"]["repoURL"]:
                     # unchanged
