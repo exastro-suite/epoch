@@ -39,6 +39,7 @@ app.config.from_envvar('CONFIG_API_ARGOCD_PATH')
 globals.init(app)
 
 WAIT_APPLICATION_DELETE = 180 # アプリケーションが削除されるまでの最大待ち時間
+ARGO_CONFIG_PATH = "/tmp/argocd/config/"
 
 @app.route('/alive', methods=["GET"])
 def alive():
@@ -283,14 +284,14 @@ def get_argocd_app(workspace_id, app_name):
         # argocd login
         #
         globals.logger.debug("argocd login :")
-        stdout_cd = common.subprocess_check_output_with_retry(["argocd","login",argo_host,"--insecure","--username",argo_id,"--password",argo_password],stderr=subprocess.STDOUT)
+        stdout_cd = common.subprocess_check_output_with_retry(["argocd","login",argo_host,"--insecure","--username",argo_id,"--password",argo_password,"--config",ARGO_CONFIG_PATH + argo_host],stderr=subprocess.STDOUT)
         # globals.logger.debug(stdout_cd.decode('utf-8'))
 
         #
         # argocd app get
         #
         globals.logger.debug("argocd app get :")
-        stdout_cd = subprocess.check_output(["argocd","app","get", app_name, "-o","json","--server",argo_host],stderr=subprocess.STDOUT)
+        stdout_cd = subprocess.check_output(["argocd","app","get", app_name, "-o","json","--server",argo_host,"--config",ARGO_CONFIG_PATH + argo_host],stderr=subprocess.STDOUT)
         # globals.logger.debug(stdout_cd.decode('utf-8'))
 
         result = json.loads(stdout_cd)
@@ -383,7 +384,7 @@ def post_argocd_sync(workspace_id, app_name):
         # argocd login
         #
         globals.logger.debug("argocd login :")
-        stdout_cd = common.subprocess_check_output_with_retry(["argocd","login",argo_host,"--insecure","--username",argo_id,"--password",argo_password],stderr=subprocess.STDOUT)
+        stdout_cd = common.subprocess_check_output_with_retry(["argocd","login",argo_host,"--insecure","--username",argo_id,"--password",argo_password,"--config",ARGO_CONFIG_PATH + argo_host],stderr=subprocess.STDOUT)
         # globals.logger.debug(stdout_cd.decode('utf-8'))
 
         #
@@ -391,7 +392,7 @@ def post_argocd_sync(workspace_id, app_name):
         #
         globals.logger.debug("argocd app sync :")
         try:
-            stdout_cd = subprocess.check_output(["argocd","app","sync",app_name,"--server",argo_host],stderr=subprocess.STDOUT)
+            stdout_cd = subprocess.check_output(["argocd","app","sync",app_name,"--server",argo_host,"--config",ARGO_CONFIG_PATH + argo_host],stderr=subprocess.STDOUT)
             # globals.logger.debug(stdout_cd.decode('utf-8'))
         except subprocess.CalledProcessError as e:
             globals.logger.debug("command '{}' return with error (code {})".format(e.cmd, e.returncode))
@@ -436,7 +437,7 @@ def post_argocd_rollback(workspace_id, app_name):
         # argocd login
         #
         globals.logger.debug("argocd login :")
-        stdout_cd = common.subprocess_check_output_with_retry(["argocd","login",argo_host,"--insecure","--username",argo_id,"--password",argo_password],stderr=subprocess.STDOUT)
+        stdout_cd = common.subprocess_check_output_with_retry(["argocd","login",argo_host,"--insecure","--username",argo_id,"--password",argo_password,"--config",ARGO_CONFIG_PATH + argo_host],stderr=subprocess.STDOUT)
         # globals.logger.debug(stdout_cd.decode('utf-8'))
 
         #
@@ -444,7 +445,7 @@ def post_argocd_rollback(workspace_id, app_name):
         #
         globals.logger.debug("argocd app rollback :")
         try:
-            stdout_cd = subprocess.check_output(["argocd","app","rollback",app_name,"--server",argo_host],stderr=subprocess.STDOUT)
+            stdout_cd = subprocess.check_output(["argocd","app","rollback",app_name,"--server",argo_host,"--config",ARGO_CONFIG_PATH + argo_host],stderr=subprocess.STDOUT)
             # globals.logger.debug(stdout_cd.decode('utf-8'))
         except subprocess.CalledProcessError as e:
             globals.logger.debug("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
@@ -520,7 +521,7 @@ def argocd_settings(workspace_id):
         # argocd login
         #
         globals.logger.debug("argocd login :")
-        stdout_cd = common.subprocess_check_output_with_retry(["argocd","login",argo_host,"--insecure","--username",argo_id,"--password",argo_password],stderr=subprocess.STDOUT)
+        stdout_cd = common.subprocess_check_output_with_retry(["argocd","login",argo_host,"--insecure","--username",argo_id,"--password",argo_password,"--config",ARGO_CONFIG_PATH + argo_host],stderr=subprocess.STDOUT)
         globals.logger.debug(stdout_cd.decode('utf-8'))
 
         #
@@ -528,14 +529,14 @@ def argocd_settings(workspace_id):
         #
         # リポジトリ情報の一覧を取得する
         globals.logger.debug("argocd repo list :")
-        stdout_cd = subprocess.check_output(["argocd","repo","list","-o","json","--server",argo_host],stderr=subprocess.STDOUT)
+        stdout_cd = subprocess.check_output(["argocd","repo","list","-o","json","--server",argo_host,"--config",ARGO_CONFIG_PATH + argo_host],stderr=subprocess.STDOUT)
         globals.logger.debug(stdout_cd.decode('utf-8'))
 
         # 設定済みのリポジトリ情報をクリア
         repo_list = json.loads(stdout_cd)
         for repo in repo_list:
             globals.logger.debug("argocd repo rm [repo] {} :".format(repo['repo']))
-            stdout_cd = subprocess.check_output(["argocd","repo","rm",repo['repo'],"--server",argo_host],stderr=subprocess.STDOUT)
+            stdout_cd = subprocess.check_output(["argocd","repo","rm",repo['repo'],"--server",argo_host,"--config",ARGO_CONFIG_PATH + argo_host],stderr=subprocess.STDOUT)
             globals.logger.debug(stdout_cd.decode('utf-8'))
 
 
@@ -550,9 +551,9 @@ def argocd_settings(workspace_id):
             # レポジトリの情報を追加
             globals.logger.debug ("argocd repo add :")
             if housing == "inner":
-                stdout_cd = subprocess.check_output(["argocd","repo","add","--insecure-ignore-host-key",gitUrl,"--username",gitUsername,"--password",gitPassword,"--server",argo_host],stderr=subprocess.STDOUT)
+                stdout_cd = subprocess.check_output(["argocd","repo","add","--insecure-ignore-host-key",gitUrl,"--username",gitUsername,"--password",gitPassword,"--server",argo_host,"--config",ARGO_CONFIG_PATH + argo_host],stderr=subprocess.STDOUT)
             else:
-                stdout_cd = subprocess.check_output(["argocd","repo","add",gitUrl,"--username",gitUsername,"--password",gitPassword,"--server",argo_host],stderr=subprocess.STDOUT)
+                stdout_cd = subprocess.check_output(["argocd","repo","add",gitUrl,"--username",gitUsername,"--password",gitPassword,"--server",argo_host,"--config",ARGO_CONFIG_PATH + argo_host],stderr=subprocess.STDOUT)
             globals.logger.debug(stdout_cd.decode('utf-8'))
 
         #
@@ -560,7 +561,7 @@ def argocd_settings(workspace_id):
         #
         # クラスタ情報の一覧を取得する
         globals.logger.debug("argocd cluster list :")
-        stdout_cd = subprocess.check_output(["argocd","cluster","list","-o","json","--server",argo_host],stderr=subprocess.STDOUT)
+        stdout_cd = subprocess.check_output(["argocd","cluster","list","-o","json","--server",argo_host,"--config",ARGO_CONFIG_PATH + argo_host],stderr=subprocess.STDOUT)
         # globals.logger.debug(stdout_cd.decode('utf-8'))
 
         #
@@ -620,7 +621,7 @@ def argocd_settings(workspace_id):
         #
         # アプリケーション情報の一覧を取得する
         globals.logger.debug("argocd app list :")
-        stdout_cd = subprocess.check_output(["argocd","app","list","-o","json","--server",argo_host],stderr=subprocess.STDOUT)
+        stdout_cd = subprocess.check_output(["argocd","app","list","-o","json","--server",argo_host,"--config",ARGO_CONFIG_PATH + argo_host],stderr=subprocess.STDOUT)
         # globals.logger.debug(stdout_cd.decode('utf-8'))
 
 
@@ -630,7 +631,7 @@ def argocd_settings(workspace_id):
             not_found_env = (next(filter(lambda env: (get_argo_app_name(workspace_id, env['environment_id']) == app['metadata']['name']), request_cd_env), None) is None)
             if not_found_env:
                 globals.logger.debug('argocd app delete [app] {} :'.format(app['metadata']['name']))
-                stdout_cd = subprocess.check_output(["argocd","app","delete",app['metadata']['name'],"--cascade=false","--server",argo_host],stderr=subprocess.STDOUT)
+                stdout_cd = subprocess.check_output(["argocd","app","delete",app['metadata']['name'],"--cascade=false","--server",argo_host,"--config",ARGO_CONFIG_PATH + argo_host],stderr=subprocess.STDOUT)
 
         # 環境群数分処理を実行
         for env in request_cd_env:
@@ -656,7 +657,7 @@ def argocd_settings(workspace_id):
                 globals.logger.debug('argocd app create [app] {} / {}'.format(argo_app_name, env['name']))
 
                 # アプリケーション作成
-                stdout_cd = subprocess.check_output(["argocd","app","create",argo_app_name,"--server",argo_host,
+                stdout_cd = subprocess.check_output(["argocd","app","create",argo_app_name,"--server",argo_host,"--config",ARGO_CONFIG_PATH + argo_host,
                     "--repo",gitUrl,
                     "--path","./",
                     "--dest-name",cluster,
@@ -679,7 +680,7 @@ def argocd_settings(workspace_id):
                 else:
                     # update application
                     globals.logger.debug('argocd app set [app] {} / {}:'.format(argo_app_name, env['name']))
-                    stdout_cd = subprocess.check_output(["argocd","app","set",argo_app_name,"--server",argo_host,
+                    stdout_cd = subprocess.check_output(["argocd","app","set",argo_app_name,"--server",argo_host,"--config",ARGO_CONFIG_PATH + argo_host,
                         "--repo",gitUrl,
                         "--path","./",
                         "--dest-name",cluster,
