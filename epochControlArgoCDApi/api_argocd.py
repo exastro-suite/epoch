@@ -670,7 +670,7 @@ def argocd_settings(workspace_id):
                 exec_stat = multi_lang.get_text("EP035-0009", "ArgoCD設定 - アプリケーション更新")
                 error_detail = multi_lang.get_text("EP035-0008", "ArgoCDの入力内容を確認してください")
 
-                if cluster == argo_app["spec"]["destination"]["name"] \
+                if ( 'name' in argo_app["spec"]["destination"] and cluster == argo_app["spec"]["destination"]["name"] ) \
                 and namespace == argo_app["spec"]["destination"]["namespace"] \
                 and gitUrl == argo_app["spec"]["source"]["repoURL"]:
                     # unchanged
