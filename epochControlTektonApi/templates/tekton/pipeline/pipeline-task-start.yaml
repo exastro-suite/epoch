@@ -28,6 +28,7 @@ spec:
     - name: pipeline_id
     - name: git_repositry_interface
     - name: git_repository_url
+    - name: git_revision
     - name: git_branch
     - name: git_sender_user
     - name: container_registry_image
@@ -66,6 +67,7 @@ spec:
           'pipeline_id' :             $(params.pipeline_id),
           'git_repositry_interface' : '$(params.git_repositry_interface)',
           'git_repository_url' :      '$(params.git_repository_url)',
+          'git_revision' :            '$(params.git_revision)',
           'git_branch' :              '$(params.git_branch)',
           'git_sender_user' :         '$(params.git_sender_user)',
           'container_registry_image' :'$(params.container_registry_image)',

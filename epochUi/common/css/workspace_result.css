@@ -114,6 +114,7 @@ padding-right: 28px;
 .commit-status .repository { grid-area: repository; }
 .commit-status .branch { grid-area: branch; }
 .commit-status .commit-id { grid-area: commit-id; }
+.commit-status .rebuild { grid-area: rebuild; }
 .commit-status .changer { grid-area: changer; }
 .commit-status .message { grid-area: message; }
 .commit-status .update { grid-area: update; }
@@ -131,8 +132,8 @@ border-left: 4px solid #CCC;
 
 .commit-status.application-code .et-r {
 grid-template-areas:
-    "repository message message commit-id"
-    "branch changer update commit-id";
+    "repository message message commit-id rebuild"
+    "branch changer update commit-id rebuild";
 grid-template-columns: 240px min-content 1fr 100px;
 }
 .commit-status.webhook .et-r {
@@ -191,10 +192,42 @@ white-space: nowrap;
 text-decoration: none;
 cursor: pointer;
 }
+
 .commit-status .commit-id a:hover {
 background-color: #0969DA;
 color: #FFF;
 }
+
+.commit-status .rebuild button {
+  margin-left: 11px;
+  margin-right: 11px;
+  cursor: pointer;
+}
+.commit-status .rebuild button::before {
+  content: "\e91c";
+  display: inline-block;
+  margin-right: 8px;
+  font-family: 'exastro-ui-icons' !important;
+  speak: never;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.commit-status .rebuild button:disabled {
+  cursor: default!important;
+  transform: scale(1)!important;
+  opacity: .2;
+}
+.commit-status .rebuild button.disabled {
+  cursor: default!important;
+  transform: scale(1)!important;
+  opacity: .2;
+}
+  
 
 #manifest-repository-check .item-block {
 display: flex;

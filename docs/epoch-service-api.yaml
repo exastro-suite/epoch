@@ -1,4 +1,4 @@
-openapi: 3.0.0
+openapi: 2.0.0
 
 # 基本情報
 info:
@@ -23,7 +23,7 @@ tags:
     description: CIパイプライン情報に関するAPI
   - name: "CD Pipeline"
     description: CDパイプライン情報に関するAPI
-    
+
 # エンドポイント
 paths:
   #
@@ -277,7 +277,7 @@ paths:
       description:
         指定されたワークスペースIDのワークスペース情報のマニフェストパラメータを登録する
       # リクエストパラメータ
-      parameters: 
+      parameters:
         - $ref: '#/definitions/parameters/Workspace_Id'
 
       requestBody: # リクエストボディ
@@ -322,7 +322,7 @@ paths:
       description:
         指定されたワークスペースIDのmanifestテンプレートを登録する
       # リクエストパラメータ
-      parameters: 
+      parameters:
         - $ref: '#/definitions/parameters/Workspace_Id'
 
       requestBody: # リクエストボディ
@@ -379,7 +379,7 @@ paths:
       description:
         指定されたワークスペースIDのmanifestテンプレート情報を取得する
       # リクエストパラメータ
-      parameters: 
+      parameters:
         - $ref: '#/definitions/parameters/Workspace_Id'
 
       # レスポンス結果
@@ -418,7 +418,7 @@ paths:
       description:
         指定されたワークスペースIDのmanifestテンプレート情報を削除する
       # リクエストパラメータ
-      parameters: 
+      parameters:
         - $ref: '#/definitions/parameters/Workspace_Id'
         - $ref: '#/definitions/parameters/File_Id'
 
@@ -452,13 +452,13 @@ paths:
   #
   # CI Pipeline
   #
-  /workspace/{workspace_id}/ci/pipeline: 
-    post: 
-      tags: 
+  /workspace/{workspace_id}/ci/pipeline:
+    post:
+      tags:
         - CI Pipeline
-      summary: 
+      summary:
         CIパイプライン情報設定
-      description: 
+      description:
         指定したワークスペースIDに対して、CIパイプライン情報を設定する
       parameters:
         - $ref: '#/definitions/parameters/Workspace_Id'
@@ -471,12 +471,12 @@ paths:
           $ref: '#/definitions/responses/CommonException'
 
   /workspace/{workspace_id}/ci/pipeline/git/commits:
-    get: 
+    get:
       tags:
         - CI Pipeline
-      summary: 
+      summary:
         gitコミット履歴取得
-      description: 
+      description:
         指定したワークスペースIDに対して、CIパイプラインのGitコミット履歴を取得する
       parameters:
         - $ref: '#/definitions/parameters/Workspace_Id'
@@ -487,14 +487,14 @@ paths:
           $ref: '#/definitions/responses/Cipipeline_GitCommits'
         500:
           $ref: '#/definitions/responses/CommonException'
-      
+
   /workspace/{workspace_id}/ci/pipeline/git/hooks:
-    get: 
+    get:
       tags:
         - CI Pipeline
-      summary: 
+      summary:
         webhook履歴取得
-      description: 
+      description:
         指定したワークスペースIDに対して、CIパイプラインのWebhook実行履歴を取得する
       parameters:
         - $ref: '#/definitions/parameters/Workspace_Id'
@@ -510,9 +510,9 @@ paths:
     get:
       tags:
         - CI Pipeline
-      summary: 
+      summary:
         CIパイプライン結果取得
-      description: 
+      description:
         指定したワークスペースIDに対して、CIパイプライン実行結果を取得する
       parameters:
         - $ref: '#/definitions/parameters/Workspace_Id'
@@ -530,9 +530,9 @@ paths:
     get:
       tags:
         - CI Pipeline
-      summary: 
+      summary:
         タスク実行ログ情報取得
-      description: 
+      description:
         指定したワークスペースIDとタスクラン名に対する、CIパイプライン結果のログを取得する
       parameters:
         - $ref: '#/definitions/parameters/Workspace_Id'
@@ -550,9 +550,9 @@ paths:
     get:
       tags:
         - CI Pipeline
-      summary: 
+      summary:
         コンテナレジストリ情報取得
-      description: 
+      description:
         指定したワークスペースIDに対する、CIパイプライン結果のコンテナレジストリ情報を取得する
       parameters:
         - $ref: '#/definitions/parameters/Workspace_Id'
@@ -564,6 +564,48 @@ paths:
         500:
           $ref: '#/definitions/responses/CommonException'
 
+  /workspace/{workspace_id}/ci/pipeline/exec:
+    post:
+      tags:
+        - CI Pipeline
+      summary:
+        CIパイプライン実行
+      description:
+        指定したワークスペースID、GitURL、Commit履歴のCIパイプラインを実行する
+      parameters:
+        - $ref: '#/definitions/parameters/Workspace_Id'
+      requestBody: # リクエストボディ
+        description: GitCommit情報
+        content:
+          項目説明:
+            schema: # POSTするオブジェクト
+              $ref: '#/definitions/schemas/Cipipeline_Exec_Example'
+          application/json:
+            schema: # POSTするオブジェクト
+              $ref: '#/definitions/schemas/Cipipeline_Exec'
+
+      # レスポンス結果
+      responses:
+        200:
+          description: "成功時のレスポンス"
+          content:
+            項目説明: # レスポンスの形式指定
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: "200 正常終了"
+            application/json: # レスポンスの形式指定
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: 200
+        500:
+          $ref: '#/definitions/responses/CommonException'
+
   #
   # CD Pipeline
   #
@@ -571,9 +613,9 @@ paths:
     post:
       tags:
         - CD Pipeline
-      summary: 
+      summary:
         CDパイプライン情報設定
-      description: 
+      description:
         指定したワークスペースIDに対して、CDパイプライン情報を設定する
       parameters:
         - $ref: '#/definitions/parameters/Workspace_Id'
@@ -589,9 +631,9 @@ paths:
     get:
       tags:
         - CD Pipeline
-      summary: 
+      summary:
         CDパイプライン(IT-Automation)情報取得
-      description: 
+      description:
         指定したワークスペースIDに対して、CDパイプライン実行結果（IT-Automation情報）を取得する
       parameters:
         - $ref: '#/definitions/parameters/Workspace_Id'
@@ -608,9 +650,9 @@ paths:
     get:
       tags:
         - CD Pipeline
-      summary: 
+      summary:
         CDパイプライン(IaCリポジトリ)情報取得
-      description: 
+      description:
         指定したワークスペースIDに対して、CDパイプライン実行結果（IaCリポジトリ情報）を取得する
       parameters:
         - $ref: '#/definitions/parameters/Workspace_Id'
@@ -626,9 +668,9 @@ paths:
     get:
       tags:
         - CD Pipeline
-      summary: 
+      summary:
         CDパイプライン(ArgoCD)情報取得
-      description: 
+      description:
         指定したワークスペースIDに対して、CDパイプライン実行結果（ArgoCD情報）を取得する
       parameters:
         - $ref: '#/definitions/parameters/Workspace_Id'
@@ -645,9 +687,9 @@ paths:
     post:
       tags:
         - CD Pipeline
-      summary: 
+      summary:
         CDパイプライン(ArgoCD)同期
-      description: 
+      description:
         指定したワークスペースIDに対して、CDパイプラインのArgoCD情報の同期を実行する
       parameters:
         - $ref: '#/definitions/parameters/Workspace_Id'
@@ -666,15 +708,15 @@ paths:
     post:
       tags:
         - CD Pipeline
-      summary: 
+      summary:
         CDパイプライン(ArgoCD)ロールバック
-      description: 
+      description:
         指定したワークスペースIDに対して、実施したデプロイをロールバックする
       parameters:
         - $ref: '#/definitions/parameters/Workspace_Id'
 
       requestBody: # リクエストボディ
-        $ref: '#/definitions/requestBodies/Cdpipeline_Argocd_Rollback'
+        $ref: '#/definitions/schemas/Cdpipeline_Argocd_Rollback'
 
       # レスポンス結果
       responses:
@@ -687,9 +729,9 @@ paths:
     post:
       tags:
         - CD Pipeline
-      summary: 
+      summary:
         CD実行
-      description: 
+      description:
         指定したワークスペースIDに対して、CDを実行する
       parameters:
         - $ref: '#/definitions/parameters/Workspace_Id'
@@ -710,9 +752,9 @@ paths:
     delete:
       tags:
         - CD Pipeline
-      summary: 
+      summary:
         CD実行の予約取り消し
-      description: 
+      description:
         指定したCD実行予約に対して、CD実行の予約を取り消しする
       parameters:
         - $ref: '#/definitions/parameters/Workspace_Id'
@@ -731,9 +773,9 @@ paths:
     get:
       tags:
         - CD Pipeline
-      summary: 
+      summary:
         CD実行環境取得
-      description: 
+      description:
         指定したワークスペースIDに対して、CD実行する対象の環境情報を取得する
       parameters:
         - $ref: '#/definitions/parameters/Workspace_Id'
@@ -754,17 +796,17 @@ paths:
         - Member
       summary:
         ワークスペース該当メンバー登録
-      description: 
+      description:
         指定したワークスペースIDに、メンバーを登録する
 
       # リクエストパラメータ
-      parameters: 
+      parameters:
         - $ref: '#/definitions/parameters/Workspace_Id'
       requestBody: # リクエストボディ
         description: リクエストパラメータ
         # required: true
         content:
-          項目説明: 
+          項目説明:
             schema: # POSTするオブジェクト
               description: 説明用の内容
               $ref: '#/definitions/schemas/Member_Post_Example'
@@ -776,8 +818,8 @@ paths:
       responses:
         200:
           description: "成功時のレスポンス"
-          content: 
-            項目説明: 
+          content:
+            項目説明:
               schema:
                 type: object
                 properties:
@@ -786,7 +828,7 @@ paths:
                     example: 200
                   rows:
                     $ref: '#/definitions/schemas/Member_Example'
-                    
+
             application/json: # レスポンスの形式指定
               schema:
                 type: object
@@ -800,7 +842,7 @@ paths:
         400:
           description: "エラー時のレスポンス"
           content:
-            項目説明: 
+            項目説明:
               schema:
                 type: object
                 $ref: '#/definitions/schemas/http_return_member_400_Example'
@@ -817,7 +859,7 @@ paths:
         ワークスペース該当メンバー情報取得
       tags:
         - Member
-      description: 
+      description:
         指定したワークスペースIDの、メンバー情報を取得する
       parameters:
         - $ref: '#/definitions/parameters/Workspace_Id'
@@ -827,7 +869,7 @@ paths:
         200:
           description: "成功時のレスポンス"
           content:
-            項目説明: 
+            項目説明:
               schema:
                 type: object
                 properties:
@@ -851,12 +893,12 @@ paths:
           $ref: '#/definitions/responses/CommonException'
 
   /workspace/{workspace_id}/member/cdexec:
-    get: 
-      tags: 
+    get:
+      tags:
         - Member
-      summary: 
+      summary:
         ワークスペース CD実行メンバー情報取得
-      description: 
+      description:
         指定したワークスペースIDの、CD実行メンバーの情報を取得する
       parameters:
         - $ref: '#/definitions/parameters/Workspace_Id'
@@ -888,12 +930,12 @@ paths:
           $ref: '#/definitions/responses/CommonException'
 
   /workspace/{workspace_id}/member/current:
-    delete: 
-      tags: 
+    delete:
+      tags:
         - Member
-      summary: 
+      summary:
         ワークスペースのメンバーから退去
-      description: 
+      description:
         指定したワークスペースIDから退去する
       parameters:
         - $ref: '#/definitions/parameters/Workspace_Id'
@@ -901,10 +943,10 @@ paths:
         200:
           $ref: '#/definitions/responses/200'
 
-        400: 
+        400:
           description: "エラー時のレスポンス"
           content:
-            項目説明: 
+            項目説明:
               schema:
                 type: object
                 $ref: '#/definitions/schemas/http_return_member_current_400_Example'
@@ -918,12 +960,12 @@ paths:
           $ref: '#/definitions/responses/CommonException'
 
   /user/current:
-    get: 
+    get:
       tags:
         - User
-      summary: 
+      summary:
         ユーザー情報取得
-      description: 
+      description:
         現在ログイン中のユーザ情報を取得する
       responses:
         200:
@@ -953,11 +995,11 @@ definitions:
   #
   # 共通のPOSTデータ定義
   #
-  requestBodies: 
+  requestBodies:
     Cdpipeline_Argocd_Sync:
       description: リクエストパラメータ
       content:
-        項目説明: 
+        項目説明:
           schema: # POSTするオブジェクト
             description: 説明用の内容
             $ref: '#/definitions/schemas/Cdpipeline_Argocd_Sync_Example'
@@ -965,10 +1007,10 @@ definitions:
           schema: # POSTするオブジェクト
             $ref: '#/definitions/schemas/Cdpipeline_Argocd_Sync'
 
-    Cdpipeline_Cd_Exec:  
+    Cdpipeline_Cd_Exec:
       description: リクエストパラメータ
       content:
-        項目説明: 
+        項目説明:
           schema: # POSTするオブジェクト
             description: 説明用の内容
             $ref: '#/definitions/schemas/Cdpipeline_Cd_Exec_Example'
@@ -979,7 +1021,7 @@ definitions:
   #
   # 共通パラメータ定義
   #
-  parameters: 
+  parameters:
     Workspace_Id:
       name: workspace_id
       in: path
@@ -1033,14 +1075,14 @@ definitions:
       schema:
         type: string
 
-  responses: 
+  responses:
     #
     # 共通レスポンス定義
     #
-    200: 
+    200:
       description: "成功時のレスポンス"
       content:
-        項目説明: 
+        項目説明:
           schema:
             $ref: '#/definitions/schemas/return_200_Example'
 
@@ -1048,10 +1090,10 @@ definitions:
           schema:
             $ref: '#/definitions/schemas/return_200'
 
-    CommonException: 
+    CommonException:
       description: "エラー時のレスポンス"
       content:
-        項目説明: 
+        項目説明:
           schema:
             $ref: '#/definitions/schemas/http_return_Example'
 
@@ -1065,7 +1107,7 @@ definitions:
     Cipipeline_GitCommits:
       description: "成功時のレスポンス"
       content:
-        項目説明: 
+        項目説明:
           schema:
             $ref: '#/definitions/schemas/Cipipeline_GitCommits_Example'
 
@@ -1076,7 +1118,7 @@ definitions:
     Cipipeline_GitHooks:
       description: "成功時のレスポンス"
       content:
-        項目説明: 
+        項目説明:
           schema:
             $ref: '#/definitions/schemas/Cipipeline_GitHooks_Example'
 
@@ -1087,7 +1129,7 @@ definitions:
     Cipipeline_Result:
       description: "成功時のレスポンス"
       content:
-        項目説明: 
+        項目説明:
           schema:
             $ref: '#/definitions/schemas/Cipipeline_Result_Example'
 
@@ -1098,7 +1140,7 @@ definitions:
     Cipipeline_ResultTaskrunLogs:
       description: "成功時のレスポンス"
       content:
-        項目説明: 
+        項目説明:
           schema:
             $ref: '#/definitions/schemas/Cipipeline_ResultTaskrunLogs_Example'
 
@@ -1109,7 +1151,7 @@ definitions:
     Cipipeline_Registry:
       description: "成功時のレスポンス"
       content:
-        項目説明: 
+        項目説明:
           schema:
             $ref: '#/definitions/schemas/Cipipeline_Registry_Example'
 
@@ -1123,7 +1165,7 @@ definitions:
     Cdpipeline_Argocd:
       description: "成功時のレスポンス"
       content:
-        項目説明: 
+        項目説明:
           schema:
             $ref: '#/definitions/schemas/Cdpipeline_Argocd_Example'
 
@@ -1134,7 +1176,7 @@ definitions:
     Cdpipeline_ITA:
       description: "成功時のレスポンス"
       content:
-        項目説明: 
+        項目説明:
           schema:
             $ref: '#/definitions/schemas/Cdpipeline_ITA_Example'
 
@@ -1145,7 +1187,7 @@ definitions:
     Cdpipeline_GitCommits:
       description: "成功時のレスポンス"
       content:
-        項目説明: 
+        項目説明:
           schema:
             $ref: '#/definitions/schemas/Cdpipeline_GitCommits_Example'
 
@@ -1156,7 +1198,7 @@ definitions:
     Cdpipeline_Cd_Exec_401:
       description: "権限なしエラー時のレスポンス"
       content:
-        項目説明: 
+        項目説明:
           schema:
             $ref: '#/definitions/schemas/Cdpipeline_Cd_Exec_401_Example'
 
@@ -1167,7 +1209,7 @@ definitions:
     Cdpipeline_Cd_Env:
       description: "成功時のレスポンス"
       content:
-        項目説明: 
+        項目説明:
           schema:
             $ref: '#/definitions/schemas/Cdpipeline_Cd_Env_Example'
 
@@ -1190,7 +1232,7 @@ definitions:
                 "name": "ワークスペース名",
                 "note": "備考",
                 "organization_id": "1固定",
-                "owners": "[]固定" 
+                "owners": "[]固定"
               },
               "ci_config": {
                 "pipelines_common": {
@@ -1310,7 +1352,7 @@ definitions:
               "name": "Exampleワークスペース",
               "note": "",
               "organization_id": 1,
-              "owners": [] 
+              "owners": []
             },
             "ci_config": {
               "pipelines_common": {
@@ -1431,7 +1473,7 @@ definitions:
             "name": "ワークスペース名",
             "note": "備考",
             "organization_id": "1固定",
-            "owners": "[]固定" 
+            "owners": "[]固定"
           },
           "ci_config": {
             "pipelines_common": {
@@ -1546,7 +1588,7 @@ definitions:
             "name": "Exampleワークスペース",
             "note": "",
             "organization_id": 1,
-            "owners": [] 
+            "owners": []
           },
           "ci_config": {
             "pipelines_common": {
@@ -1702,7 +1744,7 @@ definitions:
           {
             "workspace_id": "ワークスペースID",
             "workspace_name": "ワークスペース名",
-            "roles": [ 
+            "roles": [
               {
                 "kind": "ワークスペースに該当する自分自身ロール [owner (オーナー), manager (管理者), member-mg (メンバー管理), ci-setting (CI設定), ci-result (CI確認), cd-setting (CD設定), cd-execute (CD実行), cd-result (CD確認)]",
                 "sort": "内部の並び替え用の値",
@@ -1819,7 +1861,7 @@ definitions:
             "update_at": "Thu, 10 Feb 2022 02:42:55 GMT"
           }
         ]
-        
+
     #
     # CI Pipelineの共通モデル
     #
@@ -1827,15 +1869,15 @@ definitions:
       type: object # 型
       example:
         {
-          "result": "HTTPステータスコード", 
+          "result": "HTTPステータスコード",
           "rows": [
             {
-              "branch": "コミット先のブランチ名", 
-              "commit_id": "コミットID", 
-              "date": "コミットした日付", 
-              "git_url": "コミットしたリポジトリURL", 
-              "html_url": "コミット詳細へのURL", 
-              "message": "コミットメッセ―ジ", 
+              "branch": "コミット先のブランチ名",
+              "commit_id": "コミットID",
+              "date": "コミットした日付",
+              "git_url": "コミットしたリポジトリURL",
+              "html_url": "コミット詳細へのURL",
+              "message": "コミットメッセ―ジ",
               "name": "コミットしたユーザ名"
             }
           ]
@@ -1845,15 +1887,15 @@ definitions:
       type: object # 型
       example:
         {
-          "result": "200", 
+          "result": "200",
           "rows": [
             {
-              "branch": "feature", 
-              "commit_id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxx", 
-              "date": "2021-12-10T01:22:14Z", 
-              "git_url": "https://github.com/[git-user]/epoch-sample-app.git", 
-              "html_url": "https://github.com/[git-user]/epoch-sample-app/commit/6ba4f2321c0524b454ba4354c05e3318d1ef792b", 
-              "message": "add text", 
+              "branch": "feature",
+              "commit_id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+              "date": "2021-12-10T01:22:14Z",
+              "git_url": "https://github.com/[git-user]/epoch-sample-app.git",
+              "html_url": "https://github.com/[git-user]/epoch-sample-app/commit/6ba4f2321c0524b454ba4354c05e3318d1ef792b",
+              "message": "add text",
               "name": "git-user"
             }
           ]
@@ -1863,15 +1905,15 @@ definitions:
       type: object # 型
       example:
         {
-          "result": "HTTPステータスコード", 
+          "result": "HTTPステータスコード",
           "rows": [
             {
-              "branch": "ブランチ名", 
-              "date": "webhook実行日付", 
-              "event": "webhook実行契機 push固定", 
-              "git_url": "Webhook実行したリポジトリURL", 
-              "status": "メッセージ", 
-              "status_code": "ステータスコード", 
+              "branch": "ブランチ名",
+              "date": "webhook実行日付",
+              "event": "webhook実行契機 push固定",
+              "git_url": "Webhook実行したリポジトリURL",
+              "status": "メッセージ",
+              "status_code": "ステータスコード",
               "url": "Webhook実行先のURL"
             }
           ]
@@ -1881,15 +1923,15 @@ definitions:
       type: object # 型
       example:
         {
-          "result": "200", 
+          "result": "200",
           "rows": [
             {
-              "branch": "", 
-              "date": "2022-01-19T07:25:41Z", 
-              "event": "push", 
-              "git_url": "https://github.com/[git-user]/epoch-sample-app.git", 
-              "status": "failed to connect to host", 
-              "status_code": 502, 
+              "branch": "",
+              "date": "2022-01-19T07:25:41Z",
+              "event": "push",
+              "git_url": "https://github.com/[git-user]/epoch-sample-app.git",
+              "status": "failed to connect to host",
+              "status_code": 502,
               "url": "https://localhost:xxxxx/api/listener/1"
             }
           ]
@@ -1899,25 +1941,25 @@ definitions:
       type: object # 型
       example:
         {
-          "result": "HTTPステータスコード", 
+          "result": "HTTPステータスコード",
           "rows": [
             {
-              "build_branch": "ビルド対象のブランチ", 
-              "container_image": "コンテナイメージの出力先", 
-              "finish_time": "終了日時", 
-              "git_sender_user": "webhook送信者", 
-              "pipeline_id": "パイプラインID", 
-              "pipelinerun_name": "パイプライン名", 
-              "repository_url": "実行対象のリポジトリURL", 
-              "start_time": "開始日時", 
-              "status": "パイプラインのステータス", 
-              "task_id": "タスクID", 
+              "build_branch": "ビルド対象のブランチ",
+              "container_image": "コンテナイメージの出力先",
+              "finish_time": "終了日時",
+              "git_sender_user": "webhook送信者",
+              "pipeline_id": "パイプラインID",
+              "pipelinerun_name": "パイプライン名",
+              "repository_url": "実行対象のリポジトリURL",
+              "start_time": "開始日時",
+              "status": "パイプラインのステータス",
+              "task_id": "タスクID",
               "tasks": [
                 {
-                  "finish_time": "終了日時", 
-                  "name": "タスク名", 
-                  "start_time": "開始日時", 
-                  "status": "タスクのステータス", 
+                  "finish_time": "終了日時",
+                  "name": "タスク名",
+                  "start_time": "開始日時",
+                  "status": "タスクのステータス",
                   "taskrun_name": "task run名",
                   "log": "TEKTONのタスクラン実行ログ"
                 }
@@ -1930,25 +1972,25 @@ definitions:
       type: object # 型
       example:
         {
-          "result": "200", 
+          "result": "200",
           "rows": [
             {
-              "build_branch": "main", 
-              "container_image": "docker-user/epoch-sample-api:main.20220214-171235", 
-              "finish_time": "", 
-              "git_sender_user": "yamada-tarou", 
-              "pipeline_id": 1, 
-              "pipelinerun_name": "pipeline-run-1-8zrjt", 
-              "repository_url": "https://github.com/[git-user]/epoch-sample-app.git", 
-              "start_time": "2022/02/14 17:12:25", 
-              "status": "Running", 
-              "task_id": 2, 
+              "build_branch": "main",
+              "container_image": "docker-user/epoch-sample-api:main.20220214-171235",
+              "finish_time": "",
+              "git_sender_user": "yamada-tarou",
+              "pipeline_id": 1,
+              "pipelinerun_name": "pipeline-run-1-8zrjt",
+              "repository_url": "https://github.com/[git-user]/epoch-sample-app.git",
+              "start_time": "2022/02/14 17:12:25",
+              "status": "Running",
+              "task_id": 2,
               "tasks": [
                 {
-                  "finish_time": "", 
-                  "name": "task-build-and-push", 
-                  "start_time": "2022/02/14 17:13:14", 
-                  "status": "Running", 
+                  "finish_time": "",
+                  "name": "task-build-and-push",
+                  "start_time": "2022/02/14 17:13:14",
+                  "status": "Running",
                   "taskrun_name": "pipeline-run-1-8zrjt-task-build-and-push-7h2ck",
                   "log": "task task-build-and-push has failed: ..."
                 }
@@ -1957,7 +1999,7 @@ definitions:
           ]
         }
 
-    Cipipeline_ResultTaskrunLogs_Example: 
+    Cipipeline_ResultTaskrunLogs_Example:
       type: object # 型
       example:
         {
@@ -1973,7 +2015,7 @@ definitions:
           "log": "task task-build-and-push has failed: ..."
         }
 
-    Cipipeline_Registry_Example: 
+    Cipipeline_Registry_Example:
       type: object # 型
       example:
         {
@@ -2015,10 +2057,28 @@ definitions:
           }
         }
 
+    Cipipeline_Exec_Example: # モデル名
+      type: object # 型
+      example:
+        {
+          "git_url": "コミットしたリポジトリURL",
+          "commit_id": "コミットID",
+          "branch": "ブランチ名"
+        }
+
+    Cipipeline_Exec: # モデル名
+      type: object # 型
+      example:
+        {
+          "git_url": "https://github.com/[git-user]/epoch-sample-app.git",
+          "commit_id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "branch": "main"
+        }
+
     #
     # CD Pipelineの共通モデル
     #
-    Cdpipeline_Argocd_Example: 
+    Cdpipeline_Argocd_Example:
       type: object # 型
       example:
         {
@@ -2116,7 +2176,7 @@ definitions:
           "environment_name": "staging"
         }
 
-    Cdpipeline_ITA_Example: 
+    Cdpipeline_ITA_Example:
       type: object # 型
       example:
         {
@@ -2203,7 +2263,7 @@ definitions:
                             {
                               "file_id": "manifestテンプレートID",
                               "file": "manifestテンプレートファイル名",
-                              "parameters": {	
+                              "parameters": {
                                 "image": "imageのmanifestパラメータ入力値",
                                 "image_tag": "image_tagのmanifestパラメータ入力値",
                                 "param01": "param01~20までのmanifestパラメータ入力値",
@@ -2213,7 +2273,7 @@ definitions:
                         },
                     }
                 }
-              }            
+              }
             }
           ]
         }
@@ -2328,24 +2388,24 @@ definitions:
       type: object # 型
       example:
         {
-          "result": "HTTPステータスコード", 
+          "result": "HTTPステータスコード",
           "rows": [
             {
-              "environment_id": "環境ID", 
-              "environment_name": "環境名", 
-              "git_url": "コミットしたリポジトリURL", 
+              "environment_id": "環境ID",
+              "environment_name": "環境名",
+              "git_url": "コミットしたリポジトリURL",
               "commits":[
                 {
-                  "branch": "コミット先のブランチ名", 
-                  "commit_id": "コミットID", 
-                  "date": "コミットした日付", 
-                  "git_url": "コミットしたリポジトリURL", 
-                  "html_url": "コミット詳細へのURL", 
-                  "message": "コミットメッセ―ジ", 
+                  "branch": "コミット先のブランチ名",
+                  "commit_id": "コミットID",
+                  "date": "コミットした日付",
+                  "git_url": "コミットしたリポジトリURL",
+                  "html_url": "コミット詳細へのURL",
+                  "message": "コミットメッセ―ジ",
                   "name": "コミットしたユーザ名"
                 }
               ]
-            }    
+            }
           ]
         }
 
@@ -2353,20 +2413,20 @@ definitions:
       type: object # 型
       example:
         {
-          "result": "200", 
+          "result": "200",
           "rows": [
             {
-              "environment_id": "xxxxxxxxxxx", 
-              "environment_name": "staging", 
-              "git_url": "https://github.com/[git-user]/epoch-sample-staging-manifest.git", 
+              "environment_id": "xxxxxxxxxxx",
+              "environment_name": "staging",
+              "git_url": "https://github.com/[git-user]/epoch-sample-staging-manifest.git",
               "commits":[
                 {
-                  "branch": "feature", 
-                  "commit_id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxx", 
-                  "date": "2021-12-10T01:22:14Z", 
-                  "git_url": "https://github.com/[git-user]/epoch-sample-staging-manifest.git", 
-                  "html_url": "https://github.com/[git-user]/epoch-sample-staging-manifest/commit/6ba4f2321c0524b454ba4354c05e3318d1ef792b", 
-                  "message": "0000000001_deploy_xxxxx", 
+                  "branch": "feature",
+                  "commit_id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                  "date": "2021-12-10T01:22:14Z",
+                  "git_url": "https://github.com/[git-user]/epoch-sample-staging-manifest.git",
+                  "html_url": "https://github.com/[git-user]/epoch-sample-staging-manifest/commit/6ba4f2321c0524b454ba4354c05e3318d1ef792b",
+                  "message": "0000000001_deploy_xxxxx",
                   "name": "git-user"
                 }
               ]
@@ -2396,7 +2456,7 @@ definitions:
       type: object # 型
       example:
         {
-          "result": "HTTPステータスコード", 
+          "result": "HTTPステータスコード",
           "environments": [
             {
               "id": "各環境に割り当てられるID",
@@ -2409,7 +2469,7 @@ definitions:
       type: object # 型
       example:
         {
-          "result": "200", 
+          "result": "200",
           "environments": [
             {
               "id": "t17ef747cdd0246d",
@@ -2446,7 +2506,7 @@ definitions:
       type: object # 型
       # required: # 必須フィールド
       #   - id
-      example: 
+      example:
         [
           {
             "user_id": "74fd1988-0906-4697-9499-38078cb26b20",
@@ -2458,9 +2518,9 @@ definitions:
           }
         ]
 
-    Member_Example: 
+    Member_Example:
       type: object
-      example: 
+      example:
         [
           {
             "roles": [
@@ -2472,43 +2532,43 @@ definitions:
                     cd-setting (CD設定), cd-execute (CD実行), \
                     cd-result (CD確認) ]"
               }
-            ], 
-            "user_id": "各ユーザに割り当てられているID", 
+            ],
+            "user_id": "各ユーザに割り当てられているID",
             "username": "ユーザ名"
           }
         ]
 
     Member:
       type: object
-      example: 
+      example:
         [
           {
             "roles": [
               {
                 "kind": "owner"
               }
-            ], 
-            "user_id": "74fd1988-0906-4697-9499-38078cb26b20", 
+            ],
+            "user_id": "74fd1988-0906-4697-9499-38078cb26b20",
             "username": "user-01"
           }
         ]
 
-    MemberExec_Example: 
+    MemberExec_Example:
       type: object
-      example: 
+      example:
         [
           {
-            "user_id": "各ユーザに割り当てられているID", 
+            "user_id": "各ユーザに割り当てられているID",
             "username": "ユーザ名"
           }
         ]
 
-    MemberExec: 
+    MemberExec:
       type: object
-      example: 
+      example:
         [
           {
-            "user_id": "74fd1988-0906-4697-9499-38078cb26b20", 
+            "user_id": "74fd1988-0906-4697-9499-38078cb26b20",
             "username": "user-01"
           }
         ]
@@ -2518,7 +2578,7 @@ definitions:
     #
     User_Example: # モデル名
       type: object # 型
-      example: 
+      example:
         {
           "composite_roles": [
               "ユーザに割り当てられている権限のリスト \
@@ -2555,7 +2615,7 @@ definitions:
 
     User: # モデル名
       type: object # 型
-      example: 
+      example:
         {
           "composite_roles": [
               "ws-1-role-cd-execute",
@@ -2591,61 +2651,61 @@ definitions:
       type: object # 型
       properties:
         result:
-          type: string # 型 
+          type: string # 型
           example: 'HTTPステータスコード'
         errorDetail:
-          type: string # 型 
+          type: string # 型
           example: 'エラー詳細内容'
 
     http_return_member_400:
       type: object # 型
       properties:
         result:
-          type: string # 型 
+          type: string # 型
           example: '400'
         errorDetail:
-          type: string # 型 
+          type: string # 型
           example: 'エラー詳細内容'
 
     http_return_member_current_400_Example:
       type: object # 型
       properties:
         result:
-          type: string # 型 
+          type: string # 型
           example: 'HTTPステータスコード'
         reason:
-          type: string # 型 
+          type: string # 型
           example: 'エラー詳細内容'
 
     http_return_member_current_400:
       type: object # 型
       properties:
         result:
-          type: string # 型 
+          type: string # 型
           example: '400'
         reason:
-          type: string # 型 
+          type: string # 型
           example: 'エラー詳細内容'
 
     return_200_Example:
       type: object # 型
       properties:
         result:
-          type: string # 型 
+          type: string # 型
           example: 'HTTPステータスコード'
 
     return_200:
       type: object # 型
       properties:
         result:
-          type: string # 型 
+          type: string # 型
           example: '200'
 
     Cdpipeline_Cd_Exec_401_Example:
       type: object # 型
       example:
         {
-          "result": "HTTPステータスコード", 
+          "result": "HTTPステータスコード",
           "errorDetail": "エラー詳細内容"
         }
 
@@ -2661,30 +2721,30 @@ definitions:
       type: object # 型
       properties:
         result:
-          type: string # 型 
+          type: string # 型
           example: '200 or 201 or 400,404,500'
         errorStatement:
-          type: string # 型 
+          type: string # 型
           example: 'エラー処理名'
         error_statement:
-          type: string # 型 
+          type: string # 型
           example: 'エラー詳細内容'
         exception:
-          type: string # 型 
+          type: string # 型
           example: 'エラー時のトレースバック'
 
     http_return:
       type: object # 型
       properties:
         result:
-          type: string # 型 
+          type: string # 型
           example: '500'
         errorStatement:
-          type: string # 型 
+          type: string # 型
           example: 'ワークスペース情報:作成'
         error_statement:
-          type: string # 型 
+          type: string # 型
           example: 'ユーザー情報の取得に失敗しました'
         exception:
-          type: string # 型 
+          type: string # 型
           example: 'xxxxxx'

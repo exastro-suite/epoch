@@ -46,7 +46,6 @@ var workspace_api_conf = {
         },
         "ci_pipeline": {
             "post":     URL_BASE + "/api/workspace/{workspace_id}/ci/pipeline",
-
             "git": {
                 "commits": {
                     "get":     URL_BASE + "/api/workspace/{workspace_id}/ci/pipeline/git/commits",
@@ -57,6 +56,9 @@ var workspace_api_conf = {
             },
             "registry": {
                 "get":      URL_BASE + "/api/workspace/{workspace_id}/ci/pipeline/registry",
+            },
+            "execute": {
+                "post": URL_BASE + "/api/workspace/{workspace_id}/ci/pipeline/execute",
             },
         },
         "cd_pipeline": {

@@ -28,7 +28,6 @@ spec:
   - name: git_repository_url
   - name: git_clone_revision
   - name: git_branch
-  - name: git_repository_name
   - name: git_sender_user
   - name: git_webhook_header
   - name: git_webhook_body
@@ -66,8 +65,6 @@ spec:
         value: $(tt.params.git_clone_revision)
       - name: git_branch
         value: $(tt.params.git_branch)
-      - name: git_repository_name
-        value: $(tt.params.git_repository_name)
       - name: git_sender_user
         value: $(tt.params.git_sender_user)
       - name: git_webhook_header

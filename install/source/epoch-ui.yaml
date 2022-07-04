@@ -28,7 +28,7 @@ spec:
     spec:
       containers:
       - name: epoch-ui
-        image: exastro/epoch-ui:1.0.0_20220428_1700
+        image: exastro/epoch-ui:1.1.0_20220704_1500
 
 ---
 apiVersion: v1

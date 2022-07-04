@@ -39,6 +39,7 @@ app.config.from_envvar('CONFIG_API_ARGOCD_PATH')
 globals.init(app)
 
 WAIT_APPLICATION_DELETE = 180 # アプリケーションが削除されるまでの最大待ち時間
+ARGO_CONFIG_PATH = "/tmp/argocd/config/"
 
 @app.route('/alive', methods=["GET"])
 def alive():
@@ -283,14 +284,14 @@ def get_argocd_app(workspace_id, app_name):
         # argocd login
         #
         globals.logger.debug("argocd login :")
-        stdout_cd = common.subprocess_check_output_with_retry(["argocd","login",argo_host,"--insecure","--username",argo_id,"--password",argo_password],stderr=subprocess.STDOUT)
+        stdout_cd = common.subprocess_check_output_with_retry(["argocd","login",argo_host,"--insecure","--username",argo_id,"--password",argo_password,"--config",ARGO_CONFIG_PATH + argo_host],stderr=subprocess.STDOUT)
         # globals.logger.debug(stdout_cd.decode('utf-8'))
 
         #
         # argocd app get
         #
         globals.logger.debug("argocd app get :")
-        stdout_cd = subprocess.check_output(["argocd","app","get", app_name, "-o","json"],stderr=subprocess.STDOUT)
+        stdout_cd = subprocess.check_output(["argocd","app","get", app_name, "-o","json","--server",argo_host,"--config",ARGO_CONFIG_PATH + argo_host],stderr=subprocess.STDOUT)
         # globals.logger.debug(stdout_cd.decode('utf-8'))
 
         result = json.loads(stdout_cd)
@@ -383,7 +384,7 @@ def post_argocd_sync(workspace_id, app_name):
         # argocd login
         #
         globals.logger.debug("argocd login :")
-        stdout_cd = common.subprocess_check_output_with_retry(["argocd","login",argo_host,"--insecure","--username",argo_id,"--password",argo_password],stderr=subprocess.STDOUT)
+        stdout_cd = common.subprocess_check_output_with_retry(["argocd","login",argo_host,"--insecure","--username",argo_id,"--password",argo_password,"--config",ARGO_CONFIG_PATH + argo_host],stderr=subprocess.STDOUT)
         # globals.logger.debug(stdout_cd.decode('utf-8'))
 
         #
@@ -391,7 +392,7 @@ def post_argocd_sync(workspace_id, app_name):
         #
         globals.logger.debug("argocd app sync :")
         try:
-            stdout_cd = subprocess.check_output(["argocd","app","sync",app_name],stderr=subprocess.STDOUT)
+            stdout_cd = subprocess.check_output(["argocd","app","sync",app_name,"--server",argo_host,"--config",ARGO_CONFIG_PATH + argo_host],stderr=subprocess.STDOUT)
             # globals.logger.debug(stdout_cd.decode('utf-8'))
         except subprocess.CalledProcessError as e:
             globals.logger.debug("command '{}' return with error (code {})".format(e.cmd, e.returncode))
@@ -436,7 +437,7 @@ def post_argocd_rollback(workspace_id, app_name):
         # argocd login
         #
         globals.logger.debug("argocd login :")
-        stdout_cd = common.subprocess_check_output_with_retry(["argocd","login",argo_host,"--insecure","--username",argo_id,"--password",argo_password],stderr=subprocess.STDOUT)
+        stdout_cd = common.subprocess_check_output_with_retry(["argocd","login",argo_host,"--insecure","--username",argo_id,"--password",argo_password,"--config",ARGO_CONFIG_PATH + argo_host],stderr=subprocess.STDOUT)
         # globals.logger.debug(stdout_cd.decode('utf-8'))
 
         #
@@ -444,7 +445,7 @@ def post_argocd_rollback(workspace_id, app_name):
         #
         globals.logger.debug("argocd app rollback :")
         try:
-            stdout_cd = subprocess.check_output(["argocd","app","rollback",app_name],stderr=subprocess.STDOUT)
+            stdout_cd = subprocess.check_output(["argocd","app","rollback",app_name,"--server",argo_host,"--config",ARGO_CONFIG_PATH + argo_host],stderr=subprocess.STDOUT)
             # globals.logger.debug(stdout_cd.decode('utf-8'))
         except subprocess.CalledProcessError as e:
             globals.logger.debug("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
@@ -520,7 +521,7 @@ def argocd_settings(workspace_id):
         # argocd login
         #
         globals.logger.debug("argocd login :")
-        stdout_cd = common.subprocess_check_output_with_retry(["argocd","login",argo_host,"--insecure","--username",argo_id,"--password",argo_password],stderr=subprocess.STDOUT)
+        stdout_cd = common.subprocess_check_output_with_retry(["argocd","login",argo_host,"--insecure","--username",argo_id,"--password",argo_password,"--config",ARGO_CONFIG_PATH + argo_host],stderr=subprocess.STDOUT)
         globals.logger.debug(stdout_cd.decode('utf-8'))
 
         #
@@ -528,14 +529,14 @@ def argocd_settings(workspace_id):
         #
         # リポジトリ情報の一覧を取得する
         globals.logger.debug("argocd repo list :")
-        stdout_cd = subprocess.check_output(["argocd","repo","list","-o","json"],stderr=subprocess.STDOUT)
+        stdout_cd = subprocess.check_output(["argocd","repo","list","-o","json","--server",argo_host,"--config",ARGO_CONFIG_PATH + argo_host],stderr=subprocess.STDOUT)
         globals.logger.debug(stdout_cd.decode('utf-8'))
 
         # 設定済みのリポジトリ情報をクリア
         repo_list = json.loads(stdout_cd)
         for repo in repo_list:
             globals.logger.debug("argocd repo rm [repo] {} :".format(repo['repo']))
-            stdout_cd = subprocess.check_output(["argocd","repo","rm",repo['repo']],stderr=subprocess.STDOUT)
+            stdout_cd = subprocess.check_output(["argocd","repo","rm",repo['repo'],"--server",argo_host,"--config",ARGO_CONFIG_PATH + argo_host],stderr=subprocess.STDOUT)
             globals.logger.debug(stdout_cd.decode('utf-8'))
 
 
@@ -550,17 +551,77 @@ def argocd_settings(workspace_id):
             # レポジトリの情報を追加
             globals.logger.debug ("argocd repo add :")
             if housing == "inner":
-                stdout_cd = subprocess.check_output(["argocd","repo","add","--insecure-ignore-host-key",gitUrl,"--username",gitUsername,"--password",gitPassword],stderr=subprocess.STDOUT)
+                stdout_cd = subprocess.check_output(["argocd","repo","add","--insecure-ignore-host-key",gitUrl,"--username",gitUsername,"--password",gitPassword,"--server",argo_host,"--config",ARGO_CONFIG_PATH + argo_host],stderr=subprocess.STDOUT)
             else:
-                stdout_cd = subprocess.check_output(["argocd","repo","add",gitUrl,"--username",gitUsername,"--password",gitPassword],stderr=subprocess.STDOUT)
+                stdout_cd = subprocess.check_output(["argocd","repo","add",gitUrl,"--username",gitUsername,"--password",gitPassword,"--server",argo_host,"--config",ARGO_CONFIG_PATH + argo_host],stderr=subprocess.STDOUT)
             globals.logger.debug(stdout_cd.decode('utf-8'))
+
+        #
+        # cluster setting
+        #
+        # クラスタ情報の一覧を取得する
+        globals.logger.debug("argocd cluster list :")
+        stdout_cd = subprocess.check_output(["argocd","cluster","list","-o","json","--server",argo_host,"--config",ARGO_CONFIG_PATH + argo_host],stderr=subprocess.STDOUT)
+        # globals.logger.debug(stdout_cd.decode('utf-8'))
+
+        #
+        # cluster rm
+        #
+        # 設定済みのクラスタ情報をクリア
+        cluster_list = json.loads(stdout_cd)
+        for cluster in cluster_list:
+            if cluster['name'] == 'in-cluster':
+                # 内部クラスターは削除しない
+                continue
+
+            globals.logger.debug('delete : secret {}'.format(cluster['name']))
+            stdout_cd = subprocess.check_output(["kubectl","delete","secret","-n",workspace_namespace(workspace_id),cluster['name']],stderr=subprocess.STDOUT)
+            globals.logger.debug(stdout_cd.decode('utf-8'))
+
+        #
+        # cluster add each environment
+        #
+        # 環境群数分処理を実行
+        for env in request_cd_env:
+            cluster_kind = env["deploy_destination"]["cluster_kind"]
+            if cluster_kind == 'internal':
+                # 内部クラスターは追加しない
+                continue
+
+            cluster_name = get_argo_cluster_name(workspace_id, env['environment_id'])
+            cluster_url = env["deploy_destination"]["cluster_url"]
+            authentication_token = env["deploy_destination"]["authentication_token"]
+            base64_encoded_certificate = env["deploy_destination"]["base64_encoded_certificate"]
+
+            exec_stat = multi_lang.get_text("EP035-0009", "ArgoCD設定 - クラスター登録")
+            error_detail = multi_lang.get_text("EP035-0008", "ArgoCDの入力内容を確認してください")
+
+            # クラスタ情報を追加
+            with tempfile.TemporaryDirectory() as tempdir:
+                # テンプレートファイルからyamlの生成
+                yamltext = render_template(
+                    'argocd_cluster_secret.yaml',
+                    param={
+                        "environment_id": env['environment_id'],
+                        "cluster_name": cluster_name,
+                        "cluster_url": cluster_url,
+                        "authentication_token": authentication_token,
+                        "base64_encoded_certificate": base64_encoded_certificate,
+                })
+                path_yamlfile = '{}/{}'.format(tempdir, "argocd_cluster_secret_{}.yaml".format(env['environment_id']))
+                with open(path_yamlfile, mode='w') as fp:
+                    fp.write(yamltext)
+                # yamlの適用
+                globals.logger.debug('apply : argocd_cluster_secret.yaml')
+                stdout_cd = subprocess.check_output(["kubectl","apply","-n",workspace_namespace(workspace_id),"-f",path_yamlfile],stderr=subprocess.STDOUT)
+                globals.logger.debug(stdout_cd.decode('utf-8'))
 
         #
         # app setting
         #
         # アプリケーション情報の一覧を取得する
         globals.logger.debug("argocd app list :")
-        stdout_cd = subprocess.check_output(["argocd","app","list","-o","json"],stderr=subprocess.STDOUT)
+        stdout_cd = subprocess.check_output(["argocd","app","list","-o","json","--server",argo_host,"--config",ARGO_CONFIG_PATH + argo_host],stderr=subprocess.STDOUT)
         # globals.logger.debug(stdout_cd.decode('utf-8'))
 
 
@@ -568,31 +629,27 @@ def argocd_settings(workspace_id):
         app_list = json.loads(stdout_cd)
         for app in app_list:
             not_found_env = (next(filter(lambda env: (get_argo_app_name(workspace_id, env['environment_id']) == app['metadata']['name']), request_cd_env), None) is None)
-            if not_found_env:
+            if not_found_env or not 'name' in app["spec"]["destination"]:
                 globals.logger.debug('argocd app delete [app] {} :'.format(app['metadata']['name']))
-                stdout_cd = subprocess.check_output(["argocd","app","delete",app['metadata']['name'],"--cascade=false"],stderr=subprocess.STDOUT)
+                stdout_cd = subprocess.check_output(["argocd","app","delete",app['metadata']['name'],"--cascade=false","--server",argo_host,"--config",ARGO_CONFIG_PATH + argo_host],stderr=subprocess.STDOUT)
 
         # 環境群数分処理を実行
         for env in request_cd_env:
             argo_app_name = get_argo_app_name(workspace_id, env['environment_id'])
-            cluster = env["deploy_destination"]["cluster_url"]
+            cluster_kind = env["deploy_destination"]["cluster_kind"]
+
+            if cluster_kind == 'internal':
+                # 内部Cluster
+                cluster = 'in-cluster'
+            else:
+                cluster = get_argo_cluster_name(workspace_id, env['environment_id'])
+
             namespace = env["deploy_destination"]["namespace"]
             gitUrl = env["git_repositry"]["url"]
 
-            # namespaceの存在チェック
-            ret = common.get_namespace(namespace)
-            if ret is None:
-                # 存在しない(None)ならnamespace作成
-                ret = common.create_namespace(namespace)
-
-                if ret is None:
-                    # namespaceの作成で失敗(None)が返ってきた場合はエラー
-                    error_detail = 'create namespace処理に失敗しました'
-                    raise common.UserException(error_detail)
-
             argo_app = next(filter(lambda app: (argo_app_name == app['metadata']['name']), app_list), None)
 
-            if argo_app is None:
+            if argo_app is None or not 'name' in argo_app["spec"]["destination"]:
                 # create application
                 exec_stat = multi_lang.get_text("EP035-0007", "ArgoCD設定 - アプリケーション作成")
                 error_detail = multi_lang.get_text("EP035-0008", "ArgoCDの入力内容を確認してください")
@@ -600,11 +657,12 @@ def argocd_settings(workspace_id):
                 globals.logger.debug('argocd app create [app] {} / {}'.format(argo_app_name, env['name']))
 
                 # アプリケーション作成
-                stdout_cd = subprocess.check_output(["argocd","app","create",argo_app_name,
+                stdout_cd = subprocess.check_output(["argocd","app","create",argo_app_name,"--server",argo_host,"--config",ARGO_CONFIG_PATH + argo_host,
                     "--repo",gitUrl,
                     "--path","./",
-                    "--dest-server",cluster,
+                    "--dest-name",cluster,
                     "--dest-namespace",namespace,
+                    "--sync-option","CreateNamespace=true",
                     ],stderr=subprocess.STDOUT)
                 globals.logger.debug(stdout_cd.decode('utf-8'))
 
@@ -613,7 +671,7 @@ def argocd_settings(workspace_id):
                 exec_stat = multi_lang.get_text("EP035-0009", "ArgoCD設定 - アプリケーション更新")
                 error_detail = multi_lang.get_text("EP035-0008", "ArgoCDの入力内容を確認してください")
 
-                if cluster == argo_app["spec"]["destination"]["server"] \
+                if ( 'name' in argo_app["spec"]["destination"] and cluster == argo_app["spec"]["destination"]["name"] ) \
                 and namespace == argo_app["spec"]["destination"]["namespace"] \
                 and gitUrl == argo_app["spec"]["source"]["repoURL"]:
                     # unchanged
@@ -622,11 +680,12 @@ def argocd_settings(workspace_id):
                 else:
                     # update application
                     globals.logger.debug('argocd app set [app] {} / {}:'.format(argo_app_name, env['name']))
-                    stdout_cd = subprocess.check_output(["argocd","app","set",argo_app_name,
+                    stdout_cd = subprocess.check_output(["argocd","app","set",argo_app_name,"--server",argo_host,"--config",ARGO_CONFIG_PATH + argo_host,
                         "--repo",gitUrl,
                         "--path","./",
-                        "--dest-server",cluster,
+                        "--dest-name",cluster,
                         "--dest-namespace",namespace,
+                        "--sync-option","CreateNamespace=true",
                         ],stderr=subprocess.STDOUT)
 
                     globals.logger.debug(stdout_cd.decode('utf-8'))
@@ -681,6 +740,18 @@ def workspace_namespace(workspace_id):
         str: workspace用namespace
     """
     return  'epoch-ws-{}'.format(workspace_id)
+
+def get_argo_cluster_name(workspace_id, environment_id):
+    """ArgoCD cluster name
+
+    Args:
+        workspace_id (int): workspace_id
+        environment_id (str): environment_id
+
+    Returns:
+        str: ArgoCD cluster name
+    """
+    return 'ws-{}-cluster-{}'.format(workspace_id,environment_id)
 
 def get_argo_app_name(workspace_id,environment_id):
     """ArgoCD app name

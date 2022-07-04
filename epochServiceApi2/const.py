@@ -85,3 +85,6 @@ CD_STATUS_CANCEL = "Cancel"
 
 HOUSING_INNER = "inner"
 HOUSING_OUTER = "outer"
+
+INTERFACE_GITLAB = "gitlab"
+INTERFACE_GITHUB = "github"
