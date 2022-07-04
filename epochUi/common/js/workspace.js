@@ -35,7 +35,7 @@ backgroundAurora();
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //   JSON
-// 
+//
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // ワークスペースの説明
@@ -68,7 +68,7 @@ const wsDescription = {
 };
 
 const wsDataJSON = {
-  // 
+  //
   'parameter-info': {
   },
   'workspace': {
@@ -309,7 +309,7 @@ const wsModalJSON = {
             'item': {
               //'epoch': 'EPOCH内レジストリ',
               'dockerhub': 'DockerHub'
-            }            
+            }
           }
         }
       },
@@ -473,7 +473,7 @@ const wsModalJSON = {
             }
           ]
         }
-      }      
+      }
     }
   },
   /* -------------------------------------------------- *\
@@ -649,11 +649,11 @@ const wsModalJSON = {
               'name': 'environment-deploy-select',
               'class': 'input-pickup-select',
               'item': {
-                'internal': 'EPOCHと同じKubernetes',
-                'external': '以外のKubernetes'
+                'internal': '簡易Deploy(EPOCHと同じKubernetes)',
+                'external': '手動Deploy'
               },
               'note': 'Deploy先のKubernetesを選択してください'
-            },  
+            },
             'environmentURL': {
               'type': 'input',
               'title': 'Kubernetes API Server URL',
@@ -775,7 +775,7 @@ const wsModalJSON = {
               'applicationCode': 'アプリケーションコードリポジトリと同一',
               'separate': '入力する'
             }
-          },  
+          },
           'gitServiceArgoAccountUserApplicationCode': {
             'type': 'reference',
             'title': 'ユーザ名（アプリケーションコードリポジトリと同一）',
@@ -858,13 +858,13 @@ const wsModalJSON = {
             'type': 'html',
             'mainClass': 'item-horizontal',
             'title': 'CD実行日時',
-            'id': 'deploy-condition'            
+            'id': 'deploy-condition'
           },
           {
             'type': 'html',
             'mainClass': 'item-horizontal',
             'title': '環境',
-            'id': 'deploy-environment'            
+            'id': 'deploy-environment'
           }
         ]
       },
@@ -890,7 +890,7 @@ const wsModalJSON = {
         'item': [
           {
             'type': 'loading',
-            'id': 'cd-execution-argo'            
+            'id': 'cd-execution-argo'
           }
         ]
       }
@@ -902,7 +902,7 @@ const modal = new modalFunction( wsModalJSON, wsDataJSON );
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //   初期設定
-// 
+//
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // 共通Function
@@ -934,7 +934,7 @@ $workspaceEpoch.get(0).setAttribute('viewBox', '0 0 ' + workspace.w + ' ' + work
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //   結線用SVG
-// 
+//
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 const newSVG = function( type ) {
@@ -949,14 +949,14 @@ const newSVG = function( type ) {
 
     // SVGエリアに追加
     $workspaceLine.prepend( $svgLineBack ).append( $svgLine );
-      
+
     return $svgLine.add( $svgLineBack );
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //   ワークスペース配置
-// 
+//
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 const getSize = function( $t ) {
@@ -1009,18 +1009,18 @@ const setWorkspacePosition = function(){
 
     git.w = blockWidth;
     git.h = $git.outerHeight();
-    
+
     tekton.w = blockWidth;
     tekton.h = $tekton.outerHeight();
     tekton.l = workspace.w / 2 - tekton.w / 2;
-    
+
     git.l = tekton.l - blockMargin * 4 - git.w;
     git.t = positioning + blockMargin * 2;
-    
+
     tekton.t = git.t + git.h - tekton.h;
     tekton.xc = tekton.l + tekton.w / 2;
     tekton.yc = tekton.t + tekton.h / 2;
-    
+
     $git.css({'width': git.w, 'left': git.l, 'top' : git.t });
     $tekton.css({'width': tekton.w, 'left': tekton.l, 'top' : tekton.t });
 
@@ -1085,13 +1085,13 @@ const setWorkspacePosition = function(){
     epoch.l = docker.l + docker.w - epoch.w;
     epoch.t = argo.t + argo.h + blockMargin * 2;
     $epoch.css({'width': epoch.w, 'left': epoch.l, 'top' : epoch.t });
-    
+
     appArea.l = git.l - blockMargin * 1.5;
     appArea.t = git.t - blockMargin;
     appArea.w = docker.l + docker.w - git.l + blockMargin * 3;
     appArea.h = tekton.t + tekton.h - git.t + blockMargin * 2;
     $appArea.css({'width': appArea.w, 'height': appArea.h, 'left': appArea.l, 'top' : appArea.t });
-    
+
     // 横直線
     const connectH = function( t1, t2, type ){
         const $line = newSVG('path');
@@ -1120,7 +1120,7 @@ const setWorkspacePosition = function(){
     'd': order('M',docker.xc-12,argo.t,docker.xc-12,docker.t+docker.h+12,'c',0,-24,24,-24,24,0,'L',docker.xc+12,argo.t+4,'l',-a,-a,a,a,a,-a,-a,a ),
     'data-type': 'cd'});
 
-    // ITA Frow --> Kubernetes Manifest 
+    // ITA Frow --> Kubernetes Manifest
     const $line3 = newSVG('path');
     $line3.attr({
     'd': order('M',itaF.xc,itaF.t+itaF.h,itaF.xc,itaF.t+itaF.h+blockMargin*2,km.xc,itaF.t+itaF.h+blockMargin*2,km.xc,km.t+km.h-4,'l',-a,a,a,-a,a,a,-a,-a ),
@@ -1154,10 +1154,10 @@ const setWorkspacePosition = function(){
         'x5': epoch.l - epockPadding,
         'x6': epoch.l + epoch.w + epockPadding
     }
-    
+
     workspace.h = ep.y7 + positioning * 1.5;
     $workspaceImage.css('height', workspace.h );
-    
+
     setEpochFrame();
     sizeAdjustment();
 };
@@ -1165,7 +1165,7 @@ const setWorkspacePosition = function(){
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //   EPOCH枠
-// 
+//
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 const setEpochFrame = function(){
@@ -1173,27 +1173,27 @@ const setEpochFrame = function(){
         registryServiceType = $('#ws-registry-service').attr('data-service'),
         gitServiceArgoType = $('#ws-git-argo').attr('data-service'),
         points = new Array();
-  
+
   if ( gitServiceType !== 'epoch') {
     points.push(ep.x1,ep.y4,ep.x2,ep.y4,ep.x3,ep.y3);
   } else {
     points.push(ep.x1,ep.y2,ep.x2,ep.y2,ep.x3,ep.y3);
   }
-  
+
   if ( registryServiceType !== 'epoch') {
     points.push(ep.x4,ep.y3,ep.x5,ep.y4,ep.x6,ep.y4);
   } else {
     points.push(ep.x4,ep.y3,ep.x6,ep.y3);
   }
-  
+
   if ( gitServiceArgoType !== 'epoch') {
     points.push(ep.x6,ep.y6,ep.x5,ep.y6,ep.x4,ep.y5,ep.x3,ep.y5,ep.x2,ep.y7);
   } else {
     points.push(ep.x6,ep.y6,ep.x5,ep.y6,ep.x4,ep.y7);
   }
-  
+
   points.push(ep.x1,ep.y7);
-  
+
   $workspaceEpoch.find('polygon').attr('points', points.join(' ') );
 };
 
@@ -1206,7 +1206,7 @@ const workspaceReload = function(){
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //   ワークスペースのサイズを画面に合わせる
-// 
+//
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 const sizeAdjustment = function(){
@@ -1216,10 +1216,10 @@ const sizeAdjustment = function(){
     const maxScaling = 99,
           scalingVertical = Math.floor( ( w - 48 ) / workspace.w * 1000 ) / 1000,
           scalingHorizontal = Math.floor( ( h - 16 ) / workspace.h * 1000 ) / 1000;
-          
+
     let scaling = ( scalingVertical < scalingHorizontal ) ? scalingVertical : scalingHorizontal;
     if ( scaling > maxScaling ) scaling = maxScaling;
-    
+
     const top = ( h - workspace.h * scaling ) / 2,
           left = ( w - workspace.w * scaling ) / 2;
 
@@ -1227,7 +1227,7 @@ const sizeAdjustment = function(){
       'transform': 'scale(' + scaling + ')',
       'top': top,
       'left': left
-    }).addClass('ready');  
+    }).addClass('ready');
 };
 setWorkspacePosition();
 
@@ -1251,7 +1251,7 @@ $('#side').on('transitionend', function(e){
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //   ワークスペースフッターボタンセット
-// 
+//
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // ボタンをセット
@@ -1362,7 +1362,7 @@ $workspaceFooter.on('click', '.workspace-footer-menu-button', function(){
       if (confirm("入力値をリセットしてもよろしいですか？"))
         if(workspace_id == null) {
           // 新規のときは画面リロード
-          top.location.reload();        
+          top.location.reload();
         } else {
           // ワークスペース情報の読み込み
           getWorksapce();
@@ -1381,14 +1381,14 @@ $workspaceFooter.on('click', '.workspace-footer-menu-button', function(){
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //   モーダル入力内容
-// 
+//
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // モーダル内の入力データを wsDataJSON に入れる
 const setInputData = function( tabTarget, commonTarget ){
   //const inputTarget = 'input[type="text"], input[type="password"], input[type="radio"]:checked, textarea, input[type="hidden"], .item-freeitem';
   const inputTarget = 'input[type="text"], input[type="password"], input[type="radio"]:checked, textarea, input[type="hidden"], input[type="number"], .item-freeitem';
-  
+
   // タブリストの作成
   modal.$modal.find('.modal-tab-item').each( function(){
     const $tab = $( this ),
@@ -1440,7 +1440,7 @@ const setInputData = function( tabTarget, commonTarget ){
     } else {
         if ( wsDataJSON[ commonTarget ] === undefined ) wsDataJSON[ commonTarget ] = {};
         wsDataJSON[ commonTarget ][ name ] = setData();
-    }    
+    }
   });
 };
 
@@ -1457,13 +1457,13 @@ const deleteTabData = function( target ){
         alert( deleteArray[i] + ' error.');
       }
     }
-  }  
+  }
 };
 
 // 入力されたパラメータを wsDataJSON に入れる
 const setParameterData = function(){
   const inputTarget = 'input[type="text"], input[type="password"], input[type="radio"]:checked, textarea, input[type="hidden"]';
-  
+
   modal.$modal.find( inputTarget ).each( function(){
     const $input = $( this ),
           fileID = $input.attr('data-file'),
@@ -1490,13 +1490,13 @@ const setParameterData = function(){
       wsDataJSON['parameter-info'][ fileID ][ name ] = value;
     }
   });
-  
+
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //   レジストリサービス
-// 
+//
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // ユーザ名の入力に合わせてイメージ出力先に値をセットする
@@ -1539,7 +1539,7 @@ const setRegistryServiceInput = function(){
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //   テンプレートファイルリスト
-// 
+//
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 const templateFileList = function(){
   const $modal = $('#kubernetes-manifest-template'),
@@ -1547,7 +1547,7 @@ const templateFileList = function(){
         $moveButton = $modal.find('.epoch-button[data-button="move"]'),
         fileList = wsDataJSON['manifests'],
         fileLength = fileList.length;
-  
+
   const moveButton = function( disabled ){
     $moveButton.prop('disabled', disabled );
   };
@@ -1564,7 +1564,7 @@ const templateFileList = function(){
     + '</tr>'
   + '</thead>'
   + '<tbody>';
-  
+
   if ( fileLength > 0 ) {
     for ( let i = 0; i < fileLength; i++ ) {
       // var update_at = (new Date(fn.textEntities(fileList[i]["update_at"]))).toLocaleString('ja-JP');
@@ -1602,9 +1602,9 @@ const templateFileList = function(){
   } else {
     listHtml += '<div class="empty-block"></div>';
   }
-  
+
   $fileList.html( listHtml );
-  
+
   $fileList.find('.c-table-menu-button').on('click', function(){
     const $button = $( this ),
           key = $button.attr('data-key'),
@@ -1631,7 +1631,7 @@ const templateFileList = function(){
 
           // data-key再設定
           $fileList.find('.c-table-menu-button').each((index, elm) => {
-            $(elm).attr('data-key',index);       
+            $(elm).attr('data-key',index);
           });
 
           // 件数によって入力画面ボタンを制御
@@ -1641,10 +1641,10 @@ const templateFileList = function(){
             moveButton( false );
           }
         }
-        break;      
+        break;
     }
   });
-  
+
   $moveButton.on('click', function(){
     modal.change('manifestParametar', {
       'ok': function(){
@@ -1674,7 +1674,7 @@ const templateFileList = function(){
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //   テンプレートファイル選択
-// 
+//
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 const templateFileSelect = function( type ){
   if ( type === undefined ) type = ' multiple';
@@ -1683,9 +1683,9 @@ const templateFileSelect = function( type ){
         $file = $modal.find('#template-file-upload-body'),
         $upload = $modal.find('.modal-menu-button[data-button="ok"]'),
         $reSelect = $modal.find('.modal-menu-button[data-button="reselect"]');
-  
+
   $upload.add( $reSelect ).prop('disabled', true );
-  
+
   let uploadHtml = ''
   + '<div class="item-file-block">'
     + '<form id="template-files" method="post" enctype="multipart/form-data">'
@@ -1723,11 +1723,11 @@ const templateFileSelect = function( type ){
     if ( $inputFile.val() !== '') {
       const files = $inputFile.prop('files'),
             fileLength = files.length;
-      
+
       let $fileTable = $('<tbody/>'),
           fileCount = 0,
           errorCount = 0;
-      
+
       const createTable = function() {
         fileCount++;
         // すべての処理が終わったら
@@ -1739,13 +1739,13 @@ const templateFileSelect = function( type ){
 
             // Uploadボタン押下時にはformが無くなっているのでここに移動
             const formData = new FormData( $('#template-files').get(0) );
-            
+
             // アップロード、再選択ボタン
             $upload.add( $reSelect ).prop('disabled', false ).on('click', function(){
               const $button = $( this ),
                     type = $button.attr('data-button');
               switch( type ) {
-                case 'ok': {         
+                case 'ok': {
                 $button.prop('disabled', true );
                 // フォームデータ取得
                 // Uploadボタン押下時にはformが無くなっているので上に移動
@@ -1776,15 +1776,15 @@ const templateFileSelect = function( type ){
                           file_id = data['rows'][fileidx]['id'];
                           console.log('file_id:' + file_id);
                           item_name = env + "-" + file_id + '-' + 'bluegreen_sdd_sec';
-                          if (!('parameter' in wsDataJSON['environment'][env])) 
+                          if (!('parameter' in wsDataJSON['environment'][env]))
                           {
                             wsDataJSON['environment'][env]['parameter'] = {}
                           }
-                          if (!(file_id in wsDataJSON['environment'][env]['parameter'])) 
+                          if (!(file_id in wsDataJSON['environment'][env]['parameter']))
                           {
                             wsDataJSON['environment'][env]['parameter'][file_id] = {}
                           }
-                          if (!(item_name in wsDataJSON['environment'][env]['parameter'][file_id])) 
+                          if (!(item_name in wsDataJSON['environment'][env]['parameter'][file_id]))
                           {
                             if(wsDataJSON['argocd']['argocd-bluegreen-scaledown-wait'] === undefined || wsDataJSON['argocd']['argocd-bluegreen-scaledown-wait'] === "") {
                               wsDataJSON['environment'][env]['parameter'][file_id][item_name] = "0";
@@ -1826,18 +1826,18 @@ const templateFileSelect = function( type ){
           }
         }
       }
-      
+
       // ファイル数分FileReaderで処理する
       for ( let i = 0; i < fileLength; i++ ) {
         //if ( files[i].type === 'text/plain') {
         if ( files[i].name.match(/\.yaml$/) ) {
             const reader = new FileReader();
           $( reader ).on('load', function( data ){
-            
+
             const filename = fn.textEntities(files[i].name),
                   date = new Date( files[i].lastModifiedDate ),
                   formatDate = fn.formatDate( date, 'yyyy/MM/dd HH:mm:ss');
-            
+
             const $row = $(''
             + '<tr class="c-table-row">'
               + '<td class="template-name c-table-col"><div class="c-table-ci">' + filename + '</div></td>'
@@ -1852,7 +1852,7 @@ const templateFileSelect = function( type ){
                 // + '</ul>'
               + '</div></td>'
             + '</tr>');
-            
+
             // ファイルプレビュー
             $row.find('.c-table-menu-button').on('click', function(){
               modal.open('yamlPreview',{
@@ -1869,9 +1869,9 @@ const templateFileSelect = function( type ){
                 }
               }, 960, 'sub');
             });
-            
+
             $fileTable.append( $row );
-            
+
             createTable();
           });
           reader.readAsText(files[i]);
@@ -1882,7 +1882,7 @@ const templateFileSelect = function( type ){
       }
     }
   });
-  
+
   // ファイルドロップ
   $file.find('.item-file-droparea').on({
     'click': function(){
@@ -1911,10 +1911,10 @@ const templateFileSelect = function( type ){
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //   Manifestテンプレートファイル削除実行
-// 
+//
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 function templateFileDelete(key, file_id){
-  
+
   // API呼び出し
   new Promise(function(resolve, reject) {
     //
@@ -1989,13 +1989,13 @@ function templateFileDelete(key, file_id){
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //   パラメータ入力
-// 
+//
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-const inputParameter = function(){  
-  
+const inputParameter = function(){
+
   // タブごとに処理
   $('#manifest-parameter').find('.modal-tab-body-block').each(function(i){
-  
+
     // yamlファイルを読み込む
     const dummyYaml = wsDataJSON['manifests'][i]['file_text'];
 
@@ -2003,7 +2003,7 @@ const inputParameter = function(){
     const $tabBlock = $( this ),
           tabID = $tabBlock.attr('id'),
           parameterSpan = '<span class="item-parameter" data-value="$2">$1</span>';
-          
+
     let $parameter = $(''
     + '<div class="item-parameter-block">'
       + '<div class="item-parameter-input-area">'
@@ -2016,7 +2016,7 @@ const inputParameter = function(){
         + '</pre>'
       + '</div>'
     + '</div>');
-    
+
     // パラメータリストの作成
     const parameterList = {};
     $parameter.find('.item-parameter').each(function(){
@@ -2026,7 +2026,7 @@ const inputParameter = function(){
         parameterList[ parameterID ] = $( this ).text()
       }
     });
-    
+
     let parameterArea = '';
 
     // 予約項目説明
@@ -2035,7 +2035,7 @@ const inputParameter = function(){
       'image_tag': 'イメージタグ名',
       'bluegreen_sdd_sec': getText('EP010-0609','BlueGreen切替待機時間')
     };
-    
+
     // 環境が登録済みか？
     if ( Object.keys( wsDataJSON.environment ).length ) {
       parameterArea += ''
@@ -2044,7 +2044,7 @@ const inputParameter = function(){
           + '<tr class="item-parameter-row">'
             + '<th class="item-parameter-cell"><div class="item-parameter-cell-i">パラメータ</div></th>';
       // thead 環境名
-      for ( const key in wsDataJSON.environment ) {          
+      for ( const key in wsDataJSON.environment ) {
         parameterArea += ''
         + '<th class="item-parameter-cell">'
           + '<div class="item-parameter-cell-i">'
@@ -2097,7 +2097,7 @@ const inputParameter = function(){
             + 'data-parameter="' + parameterID + '">';
         } else {
           parameterArea += '<span class="item-parameter-fixed-info">' + itemFixedInfo[parameterName] + '</span>';
-        }        
+        }
         parameterArea += '</div></td></tr>';
       }
       parameterArea += '</tbody>'
@@ -2106,9 +2106,9 @@ const inputParameter = function(){
       parameterArea += '<div class="item-parameter-empty-block"><div class="modal-empty-block">環境の登録がありません。</div></div>'
     }
     $parameter.find('.item-parameter-input-area').html( parameterArea );
-    
+
     $tabBlock.html( $parameter );
-    
+
     $parameter.find('.item-text').on({
       // フォーカスでコードを指定位置にスクロール
       'focus': function(){
@@ -2120,7 +2120,7 @@ const inputParameter = function(){
         $code.find('.select').removeClass('select');
         $p.addClass('select');
         $code.stop( 0,0 ).animate({ scrollTop: $l.position().top + $code.scrollTop() }, 300, 'swing');
-      }  
+      }
     });
 
     $parameter.find('.item-parameter-move').on({
@@ -2137,18 +2137,18 @@ const inputParameter = function(){
               bSize = $blockB.outerHeight(),
               minHeight = 80,
               maxHeight = parentSize - minHeight - ( moveSize * 2 );
-        
+
         let   aSetSize, bSetSize,
               moveY = 0;
-        
+
         getSelection().removeAllRanges();
-        
+
         const sizeSet = function( a, b ){
           $blockA.css('height', a );
           $blockB.css('height', b );
         };
         sizeSet( aSize, bSize );
-        
+
         $parent.addClass('active');
         $window.on({
           'mousemove.parameterSlide': function( mm ){
@@ -2180,15 +2180,15 @@ const inputParameter = function(){
     if ( PR !== undefined ) {
       PR.prettyPrint();
     }
-    
+
   });
-  
+
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //   CD実行
-// 
+//
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 const cdExecution = function(){
   const envList = wsDataJSON['environment'],
@@ -2204,7 +2204,7 @@ const cdExecution = function(){
   $okButton.prop('disabled', true );
 
   // Deployジョブ
-  const itaURL = workspace_client_urls.ita;  
+  const itaURL = workspace_client_urls.ita;
   $deployJobLink.attr('href', itaURL );
 
   // CD execution environment information processing - CD実行環境情報処理
@@ -2249,19 +2249,19 @@ const cdExecution = function(){
     + '</ul>'
     + '<div class="execution-date"><input type="text" class="execution-date-input item-text" placeholder="' + today + '" value="' + today + '" disabled></div>';
       $deployCondition.html( deployCondition );
-      
+
       const deployEnviroment = ''
       + '<div class="item-select-area">'
         + '<select id="cd-execution-environment-select" class="item-select">'
           + exeSettingOptionHTML
         + '</select>'
       + '</div>';
-      
+
       $deployEnvironment.html( deployEnviroment );
 
       const $executionDateInput = $modal.find('.execution-date-input');
       $executionDateInput.datePicker({'s': 'none'});
-      
+
       $modal.find('.item-radio[name="execution-date"]').on('change', function(){
         const value = $( this ).val();
         if ( value === 'dateset') {
@@ -2270,15 +2270,15 @@ const cdExecution = function(){
           $executionDateInput.prop('disabled', true );
         }
       });
-      
+
       // 選択されていません。
       const notSelected = function(){
         return '<div class="modal-empty-block">環境が選択されていません。</div>';
       };
-      
+
       // Manifestパラメータ
       $manifest.find('.modal-tab-body-block').html( notSelected() );
-      
+
       // テーブルHTML
       const tableHTML = function( table ){
         let html = '<table class="c-table">';
@@ -2293,7 +2293,7 @@ const cdExecution = function(){
         return html;
       };
       $argo.html( notSelected() );
-      
+
       // 環境選択
       $modal.find('#cd-execution-environment-select').on('change', function(){
         const envID = $( this ).val(),
@@ -2303,10 +2303,10 @@ const cdExecution = function(){
               sKey = envID + '-environment-deploy-select',
               uKey = envID + '-environment-url',
               uDefault = 'https://kubernetes.default.svc';
-        
+
         console.log('cd-execution-environment-select change');
         if ( envID !== 'none') {
-        
+
           // パラメーター
           $manifest.find('.modal-tab-body-block').each(function(){
             const $parameter = $( this ),
@@ -2317,13 +2317,13 @@ const cdExecution = function(){
               for ( const key in envPara ) {
                 const paraReg = new RegExp('^' + envID + '-' + fileID + '-');
                 paraList[ key.replace( paraReg, '') ] = envPara[key];
-              }          
+              }
               $parameter.html( tableHTML( paraList ) );
             } else {
               $parameter.html('<div class="modal-empty-block">Manifestパラメータの登録がありません。</div>')
             }
-          });  
-        
+          });
+
           // Deploy環境
           const name = deploy['text'],
                 repository = ( deploy[rKey] !== undefined )? deploy[rKey]: '',
@@ -2353,7 +2353,7 @@ const cdExecution = function(){
             }
             return items.join('');
           };
-        
+
           $argo.html('<p class="deploy-confirm-message">以下の内容でDeployします。よろしいですか？</p>'
           + itemList({
             '環境名': name,
@@ -2362,7 +2362,7 @@ const cdExecution = function(){
             'Namespace': namespace
           }) );
           $okButton.prop('disabled', false );
-  
+
           // wsDataJSON['cd-execution-param']['operation-search-key'] = repository;
           // wsDataJSON['cd-execution-param']['environment-name'] = name;
           // $argo.html('<p>以下の内容でDeployします。よろしいですか？</p>'
@@ -2380,7 +2380,7 @@ const cdExecution = function(){
           $okButton.prop('disabled', true );
         }
       });
-  
+
     }).catch(() => {
       console.log(getText('EP010-0302', '[FAIL] 環境取得'));
   });
@@ -2403,7 +2403,7 @@ const get_cdexec_member = function() {
     console.log('[DONE] /workspace/{id}/member/cdexec');
 
     deployMembers.list = []
-    
+
     // Set the acquired member list - 取得したメンバーリストを設定
     for(var useridx = 0; useridx < data['rows'].length; useridx++ ) {
       deployMembers.list.push([
@@ -2459,10 +2459,10 @@ const argoCdAddDeployMembersModal = function(){
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //   CD実行
-// 
+//
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 const cdRunning = function(){
-  
+
   // API呼び出し
   new Promise(function(resolve, reject) {
     // 実行中ダイアログ表示
@@ -2524,7 +2524,7 @@ const cdRunning = function(){
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //   モーダルオープン
-// 
+//
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 $('#content').find('.modal-open').on('click', function(e){
   e.stopPropagation();
@@ -2544,7 +2544,7 @@ $('#content').find('.modal-open').on('click', function(e){
         wsDataCompare();
         workspaceImageUpdate();
         modal.close();
-      };   
+      };
       } break;
     // Gitサービス
     case 'gitService': {
@@ -2554,7 +2554,7 @@ $('#content').find('.modal-open').on('click', function(e){
         wsDataCompare();
         workspaceImageUpdate();
         modal.close();
-      };   
+      };
       } break;
     // レジストリサービス
     case 'registryService': {
@@ -2563,7 +2563,7 @@ $('#content').find('.modal-open').on('click', function(e){
         wsDataCompare();
         workspaceImageUpdate();
         modal.close();
-      };      
+      };
       funcs.callback = setRegistryServiceInput;
     } break;
     // Argo CD
@@ -2584,7 +2584,7 @@ $('#content').find('.modal-open').on('click', function(e){
         wsDataCompare();
         workspaceImageUpdate();
         modal.close();
-      };      
+      };
       } break;
     // Argo CD Gitサービス
     case 'gitServiceArgo': {
@@ -2595,7 +2595,7 @@ $('#content').find('.modal-open').on('click', function(e){
         modal.close();
       };
     } break;
-    
+
     // Kubernetes Manifest テンプレート
     case 'kubernetesManifestTemplate': {
       funcs.callback = templateFileList;
@@ -2622,14 +2622,14 @@ $('#content').find('.modal-open').on('click', function(e){
 //
 //   各種サービス結果確認
 //   > workspace_result.js
-// 
+//
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 $workspace.find('.modal-check').on('click', function(e){
   e.stopPropagation();
-  
+
   const $b = $( this ),
         type = $b.attr('data-button');
-  
+
   switch( type ) {
       // アプリケーションコードリポジトリ
       case 'gitServiceCheck':
@@ -2655,13 +2655,13 @@ $workspace.find('.modal-check').on('click', function(e){
           wsItaCheck();
       break;
   }
-  
+
 });
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //   文字がはみ出てる場合調整する
-// 
+//
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 const workspaceTextAdjust = function( ) {
   $workspace.find('.adjust-text').each(function(){
@@ -2679,7 +2679,7 @@ const workspaceTextAdjust = function( ) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //   ワークスペース情報の更新
-// 
+//
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // 変更フラグ
 const compareFlag = {
@@ -2697,10 +2697,10 @@ $workspace.on('click', '.button-box-area, .button-document-area', function(){
 });
 
 const workspaceImageUpdate = function( ) {
-  
+
   // ワークスペースタイプ
   const type = $content.attr('data-workspace-type');
-  
+
   // ワークスペース名
   const $workspaceName = $content.find('.content-title-heading'),
         $workspaceNote = $content.find('.content-note-inner'),
@@ -2737,21 +2737,21 @@ const workspaceImageUpdate = function( ) {
         gitServiceText = wsModalJSON.gitService.block.gitServiceSelect.item.gitServiceSelectRadio.item[gitServiceID];
   $gitService.find('.workspace-block-name-inner').text( gitServiceText );
   $gitService.attr('data-service', gitServiceID );
-  
+
   // レジストリサービス
   const $registryService = $('#ws-registry-service'),
         registryServiceID = wsDataJSON['registry-service']['registry-service-select'],
         registryServiceText = wsModalJSON.registryService.block.registryServiceSelect.item.registryServiceSelectRadio.item[registryServiceID];
   $registryService.find('.workspace-block-name-inner').text( registryServiceText );
   $registryService.attr('data-service', registryServiceID );
-  
+
   // Argo CD Gitサービス
   const $gitServiceArgo = $('#ws-git-argo'),
         gitServiceArgoID = wsDataJSON['git-service-argo']['git-service-argo-select'],
         gitServiceArgoText = wsModalJSON.gitServiceArgo.block.gitServiceArgoSelect.item.gitServiceArgoSelectRadio.item[gitServiceArgoID];
   $gitServiceArgo.find('.workspace-block-name-inner').text( gitServiceArgoText );
   $gitServiceArgo.attr('data-service', gitServiceArgoID );
-  
+
   // 重なり共通
   const multipleMax = 5;
   const cloneBlock = function( number ){
@@ -2760,7 +2760,7 @@ const workspaceImageUpdate = function( ) {
     }
     return '';
   };
-  
+
   // 環境数
   const $envTarget = $('#ws-ita-parameter, #ws-git-epoch, #ws-system, #ws-kubernetes-manifest'),
         envNumber = Object.keys( wsDataJSON['environment'] ).length,
@@ -2770,7 +2770,7 @@ const workspaceImageUpdate = function( ) {
   $envTarget.find('.multiple-number').text( envNumber );
   $envTarget.find('.multiple-block').html( divEnvClone );
   $status.find('.environment').text( envNumber );
-  
+
   // アプリケーションコード数
   const $appTarget = $('#ws-ci-area'),
         appNumber = Object.keys( wsDataJSON['application-code'] ).length,
@@ -2780,27 +2780,27 @@ const workspaceImageUpdate = function( ) {
   $appTarget.find('.multiple-number').text( appNumber );
   $appTarget.find('.multiple-block').html( divAppClone );
   $status.find('.application').text( appNumber );
-  
+
   // Kubernetes Manifestテンプレート数
   const $tempTarget = $('#ws-kubernetes-manifest-template'),
         tempNumber = Object.keys( wsDataJSON['manifests'] ).length,
         limitTempNumber = ( multipleMax >= tempNumber )? tempNumber: multipleMax,
         divTempClone = cloneBlock( limitTempNumber );
-        
-  $status.find('.template').text( tempNumber ); 
+
+  $status.find('.template').text( tempNumber );
   $tempTarget.attr('data-multiple', limitTempNumber );
   $tempTarget.find('.multiple-number').text( tempNumber );
   $tempTarget.find('.multiple-block').html( divTempClone );
-  
+
   const done = 'done',
         unentered = 'unentered';
 
         // 入力チェック
   if ( type === 'setting') {
-    
+
     let inputF = false,
         compareF = false;
-    
+
     // 共通
     const checkList = {
       'gitService': {'num': appNumber, 'block': 'ws-git-service'},
@@ -2819,54 +2819,54 @@ const workspaceImageUpdate = function( ) {
         $content.find('.workspace-button[data-button="' + key + '"]')
           .attr('data-status', inputChack );
     }
-        
+
     // ワークスペース名
     const workspaceInput = ( modal.inputCheck('workspace') )? done: unentered;
     $content.find('.content-header .workspace-button').attr('data-status', workspaceInput );
     if ( inputF === false && workspaceInput === 'unentered') inputF = true;
-    
+
     // 変更チェック
     for ( const key in compareFlag ) {
       if ( compareFlag[key] ) compareF = true;
     }
-    
+
     // 作成・更新ボタン
     const createF = ( inputF === false && compareF === true )? false: true;
     // 現段階では常に押下可能に
     //$workspaceFooter.find('.workspace-footer-menu-button[data-button="create"], .workspace-footer-menu-button[data-button="update"]').prop('disabled', createF );
     $workspaceFooter.find('.workspace-footer-menu-button[data-button="create"], .workspace-footer-menu-button[data-button="update"]').prop('disabled', false );
-    
+
     // リセットボタン
     const resetF = ( compareF === true )? false: true;
     // 現段階では常に押下可能に
     // $workspaceFooter.find('.workspace-footer-menu-button[data-button="reset"]').prop('disabled', resetF );
     $workspaceFooter.find('.workspace-footer-menu-button[data-button="reset"]').prop('disabled', false );
-    
+
   } else if ( type === 'deploy') {
     const manifestTemp = ( tempNumber > 0 )? done: unentered;
     $content.find('.workspace-document-button[data-button="kubernetesManifestTemplate"]').attr('data-status', manifestTemp );
   }
-  
+
   workspaceReload();
   workspaceTextAdjust();
   setEpochFrame();
-  
+
   console.log(wsDataJSON);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //   ワークスペースの切り替え
-// 
+//
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 const $tabList = $workspace.find('.workspace-tab-list');
 
 const workspaceChange = function( workspaceType ){
   $tabList.find('.current').removeClass('current');
   $tabList.find('.workspace-tab-link[href="#' + workspaceType + '"]').addClass('current');
-  
+
   $content.attr('data-workspace-type', workspaceType );
-  
+
   setFotter( workspaceType );
   workspaceImageUpdate();
   workspaceReload();
@@ -2878,9 +2878,9 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
   e.preventDefault();
   const $tab = $( this ),
         target = $tab.attr('href').replace(/^#/,'');
-  
+
   if ( !$tab.is('.current') ) {
-    workspaceChange( target );    
+    workspaceChange( target );
   }
 
 });
@@ -2888,7 +2888,7 @@ $tabList.find('.workspace-tab-link[href^="#"]').on('click', function(e){
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //   変更チェック
-// 
+//
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // 変更ステータス
@@ -2904,10 +2904,10 @@ let beforeWsData = $.extend( true, {}, wsDataJSON );
 
 // 比較データ作成（ beforeWsData <> wsDataJSON ）
 const wsDataCompare = function(){
-    
+
     const tempBeforeData = $.extend( true, {}, beforeWsData ),
           tempAfterData =  $.extend( true, {}, wsDataJSON );
-    
+
     // 比較
     const compare = function( a, b ){
         if ( b === undefined || b === null || b === '') {
@@ -2922,12 +2922,12 @@ const wsDataCompare = function(){
             return [ compareStatus.change, b, a ];
         }
     };
-    
+
     const result = {
       'compare': {},
       'html': {}
     };
-    
+
     // 変更・追加チェック
     const changeCheck = function( a, b, r ){
         const type = modal.typeJudgment( a );
@@ -2941,15 +2941,15 @@ const wsDataCompare = function(){
                             if ( !r[k] ) r[k] = {};
                         break;
                         case 'string':
-                            r[k] = compare( a[k], b[k] );     
+                            r[k] = compare( a[k], b[k] );
                     }
                     changeCheck( a[k], b[k], r[k] );
                 }
             break;
         }
-    };    
+    };
     changeCheck( tempAfterData, tempBeforeData, result.compare );
-    
+
     // 削除チェック
     const deleteCheck = function( b, a, r ) {
         const type = modal.typeJudgment( b );
@@ -2979,29 +2979,29 @@ const wsDataCompare = function(){
             break;
         }
     };
-    deleteCheck( tempBeforeData, tempAfterData, result.compare );    
-    
+    deleteCheck( tempBeforeData, tempAfterData, result.compare );
+
     // モーダルごとにチェック
     for ( const key in compareFlag ) {
       const info = compareInfo( key, result.compare );
       compareFlag[key] = info.flag;
       result.html[key] = info.html;
-    }    
+    }
 
     //console.log( result );
     return result;
 };
-  
+
 // 比較データから比較内容を表示する
 const compareInfo = function( modalID, compareData ){
 
     const m = wsModalJSON[modalID];
     let h = '',
         flag = false;
-    
+
     const title = m['title'],
           block = m['block'];
-    
+
     const compareRow = function( title, status, before, after ) {
       let rowHTML = '<tr class="compareRow" data-status="' + status + '">';
       if ( title !== '') rowHTML += '<th class="compareTh compareItemTitle"><span>' + title + '</span></th>';
@@ -3011,19 +3011,19 @@ const compareInfo = function( modalID, compareData ){
       + '</tr>';
       return rowHTML;
     }
-    
+
     const itemBlock = function( item, searchData, tabID ){
       let ih = '';
       for ( const itemKey in item ) {
         const block = item[itemKey],
               id = ( tabID )? tabID + '-': '';
-              
+
         let t = ( block['title'] )? block['title']: '',
             p = block['type'];
 
         if ( p !== 'reference' ) {
           const n = id + block['name'];
-          
+
           const typeCheck = function( v ){
             switch( p ) {
               case 'radio':
@@ -3033,7 +3033,7 @@ const compareInfo = function( modalID, compareData ){
                 const n = block['list'].filter( function(f) {
                   if ( v.split(',').indexOf( String( f[0] )) !== -1 ) return f;
                 });
-                
+
                 const nL = n.length,
                       l = [];
                 for ( let i = 0; i < nL; i++ ) {
@@ -3047,7 +3047,7 @@ const compareInfo = function( modalID, compareData ){
                 return v;
             }
           };
-          
+
           const addRow = function( targetID ){
             const search = modal.searchValue( searchData, targetID );
             if ( search ) {
@@ -3068,8 +3068,8 @@ const compareInfo = function( modalID, compareData ){
             t += '(Select)';
             p = 'listSelectID'
             addRow( n + '-id');
-          }        
-                    
+          }
+
         }
       }
       if ( ih === '') {
@@ -3078,7 +3078,7 @@ const compareInfo = function( modalID, compareData ){
         return '<div class="comparaItemBody"><table class="compareTable"><tbody>' + ih + '</tbody></table></div>';
       }
     };
-    
+
     const tabBlock = function( tab ){
       let th = '';
       const p = tab['type'];
@@ -3089,7 +3089,7 @@ const compareInfo = function( modalID, compareData ){
           const r = compareData[t['key1']][tabKey][t['key2']],
                 n = ( r[2] )? r[2]: r[1];
           if ( r[0] === compareStatus.add ) flag = true;
-          
+
           const kh = itemBlock( tab['item'], compareData[t['key1']][tabKey], tabKey );
           if ( kh !== '') {
             th += '<div class="compareTabBlock">'
@@ -3098,10 +3098,10 @@ const compareInfo = function( modalID, compareData ){
             + '</div>';
           }
         }
-      }  
+      }
       return th;
     };
-    
+
     for ( const key in block ) {
       const b = block[key];
       let r = '';
@@ -3116,7 +3116,7 @@ const compareInfo = function( modalID, compareData ){
         + '<div class="compareBlockBody">' + r + '</div>';
       }
     }
-    
+
     if ( h !== '') {
       h = '<div class="compare">'
           + '<div class="compareTitle">' + title + '</div>'
@@ -3150,21 +3150,21 @@ const compareInfo = function( modalID, compareData ){
     new Promise((resolve, reject) => {
 
       console.log("[CALL] GET " + workspace_api_conf.api.resource.get);
- 
+
       $.ajax({
         "type": "GET",
         "url": workspace_api_conf.api.resource.get.replace('{workspace_id}', workspace_id),
       }).done(function(data) {
         console.log("[DONE] GET " + workspace_api_conf.api.resource.get + " response\n" + JSON.stringify(data));
-  
+
         workspace_id = data['rows'][0]['workspace_id'];
-  
+
         data_workspace = data['rows'][0];
 
         if(data_workspace['parameter-info']) {
           wsDataJSON['parameter-info'] = data_workspace['parameter-info']
         }
-        
+
         if(data_workspace['common']) {
           wsDataJSON['workspace'] = {
             'workspace-name' :                    data_workspace['common']['name'],
@@ -3181,7 +3181,7 @@ const compareInfo = function( modalID, compareData ){
           'registry-service-account-user' :     data_workspace['ci_config']['pipelines_common']['container_registry']['user'],
           'registry-service-account-password' : data_workspace['ci_config']['pipelines_common']['container_registry']['password'],
         };
-  
+
         wsDataJSON['application-code'] = {};
         data_pipelines = data_workspace['ci_config']['pipelines'];
         for(var i in data_pipelines) {
@@ -3262,7 +3262,7 @@ const compareInfo = function( modalID, compareData ){
         } else {
           reject();
         }
-      });        
+      });
 
     }).then(() => {return new Promise((resolve, reject) => {
 
@@ -3290,7 +3290,7 @@ const compareInfo = function( modalID, compareData ){
         console.log("FAIL : テンプレート情報取得");
         // 失敗
         reject();
-      });        
+      });
     })}).then(() => {
       // Reset the information before the change - 変更前の情報を再設定
       beforeWsData = $.extend( true, {}, wsDataJSON );
@@ -3324,19 +3324,19 @@ const compareInfo = function( modalID, compareData ){
   }
 
   function apply_workspace() {
-  
+
     console.log('CALL apply_workspace()');
     console.log('---- wsDataJSON ----');
     console.log(JSON.stringify(wsDataJSON));
-  
+
     // API Body生成
     reqbody = create_api_body();
-  
+
     console.log('---- reqbody ----');
     console.log(JSON.stringify(reqbody));
-  
+
     created_workspace_id = null;
-  
+
     // API呼び出し
     new Promise(function(resolve, reject) {
       // 実行中ダイアログ表示
@@ -3362,7 +3362,7 @@ const compareInfo = function( modalID, compareData ){
           contentType: "application/json",
           dataType: "json",
         }
-        update_mode = "作成"; 
+        update_mode = "作成";
       } else {
         created_workspace_id = workspace_id;
         api_param = {
@@ -3372,9 +3372,9 @@ const compareInfo = function( modalID, compareData ){
           contentType: "application/json",
           dataType: "json",
         }
-        update_mode = "更新"; 
+        update_mode = "更新";
       }
-  
+
       $.ajax(api_param).done(function(data) {
         console.log("DONE : ワークスペース情報登録");
         console.log("--- data ----");
@@ -3404,7 +3404,7 @@ const compareInfo = function( modalID, compareData ){
       //
       $('#progress_message').html('STEP 2/3 : ワークスペースを' + update_mode + 'しています');
       console.log("CALL : ワークスペース作成");
-  
+
       $.ajax({
         type:"POST",
         url: workspace_api_conf.api.workspace.post.replace('{workspace_id}', workspace_id),
@@ -3415,7 +3415,7 @@ const compareInfo = function( modalID, compareData ){
         console.log("DONE : ワークスペース作成");
         console.log("--- data ----");
         console.log(JSON.stringify(data));
-  
+
         if(data.result == '200') {
           // 成功
           // TEKTON起動まで待つため、WAIT
@@ -3434,7 +3434,7 @@ const compareInfo = function( modalID, compareData ){
       $('#progress_message').html('STEP 3/3 :   パイプラインを' + update_mode + 'しています');
       return Promise.all([
         new Promise((resolve, reject) => {
-          // CI pipeline 
+          // CI pipeline
           if((new URLSearchParams(window.location.search)).get('workspace_id') != null
           && currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ws-ci-update".replace('{ws_id}',workspace_id)) == -1) {
             // If you do not have permission to update the CI pipeline, proceed to the next without calling the API
@@ -3456,7 +3456,7 @@ const compareInfo = function( modalID, compareData ){
             console.log("DONE : CIパイプライン設定");
             console.log("--- data ----");
             console.log(JSON.stringify(data));
-      
+
             if(data.result == '200') {
               // 成功
               resolve();
@@ -3580,7 +3580,7 @@ const compareInfo = function( modalID, compareData ){
     reqbody = {
       'update_at':   workspace_update_at
     };
-  
+
     // 新IFの設定
 
     // manifestパラメータの項目名
@@ -3593,10 +3593,10 @@ const compareInfo = function( modalID, compareData ){
       "organization_id"  : 1,
       "owners"  :  [],
     };
-  
+
     // パラメータ設定 - CI環境設定
     reqbody['ci_config'] = {};
-  
+
     reqbody['ci_config']['pipelines_common'] = {};
     reqbody['ci_config']['pipelines_common']['git_repositry'] = {
       'housing' :   (wsDataJSON['git-service']['git-service-select']=='epoch'? 'inner': 'outer'),
@@ -3611,7 +3611,7 @@ const compareInfo = function( modalID, compareData ){
       'user' :      (wsDataJSON['registry-service']['registry-service-account-user']? wsDataJSON['registry-service']['registry-service-account-user']: ""),
       'password' :  (wsDataJSON['registry-service']['registry-service-account-password']? wsDataJSON['registry-service']['registry-service-account-password']: ""),
     };
-  
+
     reqbody['ci_config']['pipelines'] = [];
     for(var i in wsDataJSON['application-code']) {
       const wsPipelineItem = wsDataJSON['application-code'][i];
@@ -3674,7 +3674,7 @@ const compareInfo = function( modalID, compareData ){
         var r = 0;
         if( Number(a.file_id) < Number(b.file_id) ){ r = -1; }
         else if( Number(a.file_id) > Number(b.file_id) ){ r = 1; }
-    
+
         return r;
       } );
 
@@ -3744,17 +3744,17 @@ const compareInfo = function( modalID, compareData ){
 
   function apply_manifest() {
     var date = new Date();
-  
+
     console.log('CALL apply_manifest()');
     console.log('---- wsDataJSON ----');
     console.log(JSON.stringify(wsDataJSON));
-  
+
     // API Body生成
     reqbody = create_api_body();
-  
+
     console.log('---- reqbody ----');
     console.log(JSON.stringify(reqbody));
-  
+
     // API呼び出し
     new Promise(function(resolve, reject) {
       // 実行中ダイアログ表示
@@ -3837,7 +3837,7 @@ const compareInfo = function( modalID, compareData ){
       window.location = window.location + "?workspace_id=" + workspace_id;
     } else if((new URLSearchParams(window.location.search)).get('workspace_id') != null) {
       // Reload to update the update date and time - 更新日時をアップデートするため再読込する
-      window.location.reload();      
+      window.location.reload();
     }
   });
   //
@@ -4048,7 +4048,7 @@ const compareInfo = function( modalID, compareData ){
       if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ws-ci-update".replace('{ws_id}',ws_id)) == -1) {
         delete wsModalJSON.pipelineTekton.footer.ok;
       }
-      
+
       // Set buttons for registry service modal dialog - レジストリサービスモーダルダイアログのボタンを設定する
       if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ws-ci-update".replace('{ws_id}',ws_id)) == -1) {
         delete wsModalJSON.registryService.footer.ok;
@@ -4066,7 +4066,7 @@ const compareInfo = function( modalID, compareData ){
         // ロール変更＋ワークスペース更新 (CD)以外の権限では「Deploy権限」項目を非表示にする
         delete wsModalJSON.pipelineArgo.block.environmentList.tab.item.environmentDeployMember;
       }
-      
+
       // Set buttons for IaC repository modal dialog - IaCリポジトリモーダルダイアログのボタンを設定する
       if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ws-cd-update".replace('{ws_id}',ws_id)) == -1) {
         delete wsModalJSON.gitServiceArgo.footer.ok;
@@ -4095,7 +4095,7 @@ const compareInfo = function( modalID, compareData ){
       // if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-cd-execute".replace('{ws_id}',ws_id)) != -1) {
       //   $('#cdExecutionButtonArea').css("display","");
       // }
-      
+
       // Set the manifest upload button - マニフェストアップロードのボタンを設定する
       if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-manifest-upload".replace('{ws_id}',ws_id)) != -1) {
         $('#ManifestTemplateButtonArea').css("display","");
