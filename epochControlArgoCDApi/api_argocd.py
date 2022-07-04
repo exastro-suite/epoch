@@ -629,7 +629,7 @@ def argocd_settings(workspace_id):
         app_list = json.loads(stdout_cd)
         for app in app_list:
             not_found_env = (next(filter(lambda env: (get_argo_app_name(workspace_id, env['environment_id']) == app['metadata']['name']), request_cd_env), None) is None)
-            if not_found_env:
+            if not_found_env or not 'name' in app["spec"]["destination"]:
                 globals.logger.debug('argocd app delete [app] {} :'.format(app['metadata']['name']))
                 stdout_cd = subprocess.check_output(["argocd","app","delete",app['metadata']['name'],"--cascade=false","--server",argo_host,"--config",ARGO_CONFIG_PATH + argo_host],stderr=subprocess.STDOUT)
 
@@ -649,7 +649,7 @@ def argocd_settings(workspace_id):
 
             argo_app = next(filter(lambda app: (argo_app_name == app['metadata']['name']), app_list), None)
 
-            if argo_app is None:
+            if argo_app is None or not 'name' in argo_app["spec"]["destination"]:
                 # create application
                 exec_stat = multi_lang.get_text("EP035-0007", "ArgoCD設定 - アプリケーション作成")
                 error_detail = multi_lang.get_text("EP035-0008", "ArgoCDの入力内容を確認してください")
