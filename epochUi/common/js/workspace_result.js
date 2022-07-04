@@ -22,7 +22,7 @@ var rollback_execute_traceid = {};
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //   結果表示共通
-// 
+//
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 function wsResultCommon(){
   const ws = this;
@@ -51,7 +51,7 @@ function wsResultCommon(){
 }
 wsResultCommon.prototype = {
     's': {
-        
+
     },
     'open': function( width ){
         const ws = this;
@@ -115,7 +115,7 @@ wsResultCommon.prototype = {
         ws.modal.sub.$modal.find('#result-detail').html(
             ws.data[key].detail.$detail
         );
-        
+
         // トレースID
         ws.modal.sub.$modal.find('.status-trace-id-button').on('click', function(){
             clearTimeout(ws.detailTimerID);
@@ -140,14 +140,14 @@ wsResultCommon.prototype = {
                 return true;
               }
             })[0];
-            
+
             if ( num !== -1 ) {
                 // トレースID移動ボタン有効・無効
                 const prev = ( r[num-1] )? r[num-1][id]: undefined,
                       next = ( r[num+1] )? r[num+1][id]: undefined,
                       first =( prev )? r[0][id]: undefined,
                       last = ( next )? r[r.length-1][id]: undefined;
-                ws.traceIdSelecterCheck( first, prev, next, last ); 
+                ws.traceIdSelecterCheck( first, prev, next, last );
 
                 ws.data[key].detail.update( data, key );
 
@@ -178,7 +178,7 @@ wsResultCommon.prototype = {
                     const result = {
                         'status': 200,
                         'data': ws.dummy[key] // ダミーデータを入れる
-                    }              
+                    }
 
                     if ( result.status === 200 ) {
                         resolve( result );
@@ -189,12 +189,12 @@ wsResultCommon.prototype = {
                 }
             });
         }
-    
+
         const dataList = [];
         for ( const key in ws.modal.block ) {
             dataList.push( loadData( ws.data[key].url, key ));
         }
-            
+
         window.Promise.all( dataList )
             // 全てのリストの読み込みが完了したら
             .then(function( result ){
@@ -236,7 +236,7 @@ wsResultCommon.prototype = {
         'first': first,
         'prev': prev,
         'next': next,
-        'last': last        
+        'last': last
       };
       for ( const type in buttonList ) {
           const d = ( buttonList[type] )? false: true;
@@ -248,12 +248,12 @@ wsResultCommon.prototype = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //   アプリケーションコードリポジトリ結果確認
-// 
+//
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 function wsAppCodeRepoCheck( gitService ) {
   const ws = this;
   ws.cmn = new wsResultCommon();
-  
+
   // モーダル構造
   ws.cmn.modal.st = {
       'id': 'application-code-repository-check',
@@ -280,9 +280,9 @@ function wsAppCodeRepoCheck( gitService ) {
           'url': workspace_api_conf.api.ci_pipeline.git.commits.get.replace('{workspace_id}', (new URLSearchParams(window.location.search)).get('workspace_id')),
           'header': [
               {'className': 'repository rs', 'title': 'リポジトリ', 'type': 'link', 'sort': 'on', 'filter': 'on'},
-              {'className': 'branch rs', 'title': 'ブランチ', 'type': 'text', 'sort': 'on', 'filter': 'on'},        
-              {'className': 'message lb rs', 'title': 'メッセージ', 'type': 'text', 'sort': 'on', 'filter': 'on'},        
-              {'className': 'changer lb rs', 'title': '更新者', 'type': 'text', 'sort': 'on', 'filter': 'on'},        
+              {'className': 'branch rs', 'title': 'ブランチ', 'type': 'text', 'sort': 'on', 'filter': 'on'},
+              {'className': 'message lb rs', 'title': 'メッセージ', 'type': 'text', 'sort': 'on', 'filter': 'on'},
+              {'className': 'changer lb rs', 'title': '更新者', 'type': 'text', 'sort': 'on', 'filter': 'on'},
               {'className': 'update rs', 'title': '更新日時', 'type': 'date', 'sort': 'on', 'filter': 'on'},
               {'className': 'rebuild lb rs', 'title': '再実行', 'type': 'button', 'buttonClass': 'rebuild-button table-button icon ' + rebuild_class, 'popup': false},
               {'className': 'commit-id lb rs', 'title': 'Commit ID', 'align': 'center', 'type': 'link', 'sort': 'on', 'filter': 'on'}
@@ -303,7 +303,7 @@ function wsAppCodeRepoCheck( gitService ) {
           }
       }
   };
-  
+
   // GitHub Webhook
   if ( gitService['git-service-select'] === 'github') {
       commitBlock.title = 'Commit一覧';
@@ -328,7 +328,7 @@ function wsAppCodeRepoCheck( gitService ) {
               }
           }
       };
-  
+
       // Webhook詳細モーダル
       ws.cmn.modal.de = {
           'id': 'application-code-repository-webhook-detail',
@@ -354,10 +354,10 @@ function wsAppCodeRepoCheck( gitService ) {
           'header': [
               {'className': 'status-icon', 'title': '結果', 'type': 'status', 'align': 'center', 'list': {'Succeeded': '正常', 'Failed': '異常'}, 'sort': 'on', 'filter': 'on'},
               {'className': 'repository lb rs', 'title': 'リポジトリ', 'type': 'link', 'sort': 'on', 'filter': 'on'},
-              {'className': 'branch lb rs', 'title': 'ブランチ', 'type': 'text', 'sort': 'on', 'filter': 'on'},        
-              {'className': 'payload lb rs','title': 'Payload URL', 'type': 'text', 'sort': 'on', 'filter': 'on'},        
-              {'className': 'trigger lb rs','title': 'トリガー', 'type': 'text', 'sort': 'on', 'filter': 'on'},        
-              {'className': 'status lb rs','title': 'ステータス', 'type': 'text', 'sort': 'on', 'filter': 'on'},        
+              {'className': 'branch lb rs', 'title': 'ブランチ', 'type': 'text', 'sort': 'on', 'filter': 'on'},
+              {'className': 'payload lb rs','title': 'Payload URL', 'type': 'text', 'sort': 'on', 'filter': 'on'},
+              {'className': 'trigger lb rs','title': 'トリガー', 'type': 'text', 'sort': 'on', 'filter': 'on'},
+              {'className': 'status lb rs','title': 'ステータス', 'type': 'text', 'sort': 'on', 'filter': 'on'},
               {'className': 'update lb rs','title': '更新日時', 'type': 'date', 'sort': 'on', 'filter': 'on'},
               {'className': 'result lb','title': '詳細', 'type': 'button', 'buttonClass': 'result-button table-button icon icon-Detail'},
               {'type': 'class'}
@@ -392,7 +392,7 @@ function wsAppCodeRepoCheck( gitService ) {
   }
 
   ws.cmn.open( 960 );
-  
+
   ws.cmn.modal.fn.$modal.on('click', '.result-button', function(){
     const n = Number( $( this ).attr('data-button') );
     ws.cmn.modal.sub.open('de', {
@@ -406,10 +406,10 @@ function wsAppCodeRepoCheck( gitService ) {
     }, '640');
   });
 
-  if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ws-cd-update".replace('{ws_id}',(new URLSearchParams(window.location.search)).get('workspace_id'))) != -1) {
+  if(currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ws-ci-update".replace('{ws_id}',(new URLSearchParams(window.location.search)).get('workspace_id'))) != -1) {
     ws.cmn.modal.fn.$modal.on('click','.rebuild-button', function() {
         const execItem = JSON.parse($( this ).attr('data-button'));
-        
+
         // Check branch
         const pipelines = RefWsDataJSON['application-code'];
         let buildTarget = false;
@@ -454,7 +454,7 @@ function wsAppCodeRepoCheck( gitService ) {
                 }
             }, {});
             confirmModal.open('message', {
-                'OK': function(){       
+                'OK': function(){
                     confirmModal.close();
                     resolve();
                 },
@@ -462,7 +462,7 @@ function wsAppCodeRepoCheck( gitService ) {
                     confirmModal.close();
                     reject();
                 }
-            });     
+            });
         }).then(() => { return new Promise((resolve, reject) => {
             console.log("[CALL] POST " + workspace_api_conf.api.ci_pipeline.execute.post);
 
@@ -551,10 +551,10 @@ function wsAppCodeRepoCheck( gitService ) {
                 }
             }, {});
             msgmodal.open('message', {
-                'OK': function(){       
+                'OK': function(){
                     msgmodal.close();
                 }
-            });     
+            });
         }).catch(() => {
             return;
         });
@@ -565,7 +565,7 @@ function wsAppCodeRepoCheck( gitService ) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //   TEKTON結果確認
-// 
+//
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 function wsTektonCheck() {
   const ws = this;
@@ -574,7 +574,7 @@ function wsTektonCheck() {
   // ポーリング設定
   ws.cmn.update = true;
   ws.cmn.pollingTime = 3000;
-  
+
   // モーダル構造
   ws.cmn.modal.st = {
     'id': 'tekton-check',
@@ -606,7 +606,7 @@ function wsTektonCheck() {
       }
     }
   };
-  
+
   const commonDataHeader = [
           {'className': 'status', 'title': '状態', 'type': 'status', 'sort': 'on', 'filter': 'on', 'align': 'center', 'list': {
             'Succeeded': '完了',
@@ -641,7 +641,7 @@ function wsTektonCheck() {
           }
           return body;
       };
-  
+
   // 表示データ
   ws.cmn.data = {
       'new': {'header': commonDataHeader, 'option': commonDataOption, 'change': commonDataChange, 'detail': {} },
@@ -654,11 +654,11 @@ function wsTektonCheck() {
   ws.cmn.data.all.target = '#all-task';
 
   ws.cmn.open( 800 );
-  
+
   // 実行状況詳細画面
   ws.cmn.modal.de.title = 'タスク実行状況';
   ws.cmn.modal.de.class = 'tekton-result-check';
-  
+
   const detailInfo = [],
         detailInfoList = [
     ['repository','アプリケーションコードリポジトリ'],
@@ -666,12 +666,12 @@ function wsTektonCheck() {
     ['date','開始日時'],
     ['branch','ブランチ']
   ];
-    
+
   const detailInfoLength = detailInfoList.length;
   for ( let i = 0; i < detailInfoLength; i++ ) {
     detailInfo.push(ws.cmn.item( detailInfoList[i][0], detailInfoList[i][1], '', ''));
   }
-  
+
   const $detail = $(''
   + ws.cmn.traceIdSelecter('TASK ID')
   + detailInfo.join('')
@@ -684,7 +684,7 @@ function wsTektonCheck() {
     + '</div>'
   + '</div>'
   );
-  
+
   const update = function( d, k ) {
       const setData = {
         '.status-trace-id-number': d.task_id,
@@ -692,13 +692,13 @@ function wsTektonCheck() {
         '.image': d.container_image,
         '.date': d.start_time,
         '.branch': d.build_branch,
-      };      
-      
+      };
+
       const $modal = ws.cmn.modal.sub.$modal;
-      
+
       // タスク詳細
       const taskLength = d.tasks.length;
-      
+
       // タスク一覧
       if ( String( d.task_id ) !== $modal.find('.status-trace-id-number').text() ) {
         let taskHTML = '';
@@ -735,21 +735,21 @@ function wsTektonCheck() {
               const $task = $(this).closest('.task-detail-item');
               $task.toggleClass('task-status-show').find('.task-detail-log').stop(0,0).animate({ height: 'toggle' }, 200 );
           });
-          
+
           $modal.on('click', '.task-log-button ', function(){
               const $b = $( this ),
                     data = $b.data(),
                     type = data.type,
                     taskID = data.id;
-              
+
               // タスクデータ取得
               const getTask = function() {
                 return ws.cmn.data[type].result.find( function( v ){
                     return v.task_id === taskID;
                 });
-            };              
+            };
               let task = getTask();
-              
+
               if ( task ) {
                   const t = task.tasks[data.num];
                   switch ( data.button ) {
@@ -788,7 +788,7 @@ function wsTektonCheck() {
                                           }, ws.cmn.pollingTime );
                                       }
                                   };
-                                  logUpdate();                              
+                                  logUpdate();
                               }
                           }, 'none');
                       } break;
@@ -823,7 +823,7 @@ function wsTektonCheck() {
               $modal.find('.task-detail-item').eq(i).find( key ).html( taskSetData[key] );
           }
       }
-      
+
       for ( const key in setData ) {
           $modal.find( key ).html( setData[key] );
       }
@@ -831,10 +831,10 @@ function wsTektonCheck() {
 
   ws.cmn.data.new.detail.$detail = $detail;
   ws.cmn.data.all.detail.$detail = $detail;
-  
+
   ws.cmn.data.new.detail.update = update;
   ws.cmn.data.all.detail.update = update;
-  
+
   ws.cmn.modal.fn.$modal.on('click', '.table-button', function(){
       const type = ( $(this).closest('#all-task').length )? 'all': 'new';
       ws.cmn.data[type].detail.traceid = $( this ).attr('data-button');
@@ -846,12 +846,12 @@ function wsTektonCheck() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //   Manifestリポジトリ結果確認
-// 
+//
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 function wsManiRepoCheck( environment ) {
   const ws = this;
   ws.cmn = new wsResultCommon();
-  
+
   // モーダル構造
   ws.cmn.modal.st = {
       'id': 'manifest-repository-check',
@@ -870,14 +870,14 @@ function wsManiRepoCheck( environment ) {
           }
       }
   };
-  
-  const commonHeader = [      
+
+  const commonHeader = [
       {'className': 'manifest-file', 'width': '240px', 'title': 'Manifest', 'type': 'link', 'filter': 'on'},
-      {'className': 'branch lb', 'width': '160px', 'title': 'ブランチ', 'type': 'text', 'filter': 'on'},        
-      {'className': 'message lb', 'title': 'メッセージ', 'type': 'text', 'filter': 'on'},        
-      {'className': 'changer lb', 'title': '更新者', 'type': 'text', 'filter': 'on'},        
+      {'className': 'branch lb', 'width': '160px', 'title': 'ブランチ', 'type': 'text', 'filter': 'on'},
+      {'className': 'message lb', 'title': 'メッセージ', 'type': 'text', 'filter': 'on'},
+      {'className': 'changer lb', 'title': '更新者', 'type': 'text', 'filter': 'on'},
       {'className': 'update', 'title': '更新日時', 'type': 'date', 'filter': 'on'},
-      {'className': 'commit-id lb', 'width': '100px', 'title': 'Commit ID', 'align': 'center', 'type': 'link', 'filter': 'on'},     
+      {'className': 'commit-id lb', 'width': '100px', 'title': 'Commit ID', 'align': 'center', 'type': 'link', 'filter': 'on'},
   ];
   const commonOption = {
             'className': 'table-grid commit-status manifest', 'download': 'on'
@@ -893,7 +893,7 @@ function wsManiRepoCheck( environment ) {
       }
       return body;
   };
-  
+
   // 環境の数だけタブを用意する
   ws.cmn.data = {};
   ws.cmn.dummy = {};
@@ -918,7 +918,7 @@ for ( const key in environment ) {
           'header': commonHeader,
           'option': commonOption,
           'change': commonChange,
-          'url': workspace_api_conf.api.cd_pipeline.git.commits.get.replace('{workspace_id}', (new URLSearchParams(window.location.search)).get('workspace_id')) + 
+          'url': workspace_api_conf.api.cd_pipeline.git.commits.get.replace('{workspace_id}', (new URLSearchParams(window.location.search)).get('workspace_id')) +
                  "?git_url=" + encodeURI(repository),
           'target': '#' + key + '-manifest-repository'
       };
@@ -930,7 +930,7 @@ for ( const key in environment ) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //   レジストリサービス結果確認
-// 
+//
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 function wsRegiSerCheck() {
     const ws = this;
@@ -939,7 +939,7 @@ function wsRegiSerCheck() {
     // ポーリング設定
     ws.cmn.update = true;
     ws.cmn.pollingTime = 3000;
-    
+
     // モーダル構造
     ws.cmn.modal.st = {
         'id': 'registry-service-check',
@@ -967,10 +967,10 @@ function wsRegiSerCheck() {
             'target': '#registry-service',
             'header': [
                 {'className': 'image', 'title': 'イメージ名', 'type': 'link', 'width': '20%', 'sort': 'on', 'filter': 'on'},
-                {'className': 'tag lb', 'title': 'TAG', 'type': 'text', 'width': '20%', 'sort': 'on', 'filter': 'on'},        
-                {'className': 'push lb', 'title': 'Push日時', 'type': 'date', 'width': '160px', 'sort': 'on', 'filter': 'on'},        
-                {'className': 'size lb', 'title': 'サイズ', 'type': 'text', 'width': '100px', 'align': 'right', 'sort': 'on', 'filter': 'on'},        
-                {'className': 'repository lb', 'title': 'ビルドリポジトリ名', 'type': 'link', 'width': '20%', 'sort': 'on', 'filter': 'on'},        
+                {'className': 'tag lb', 'title': 'TAG', 'type': 'text', 'width': '20%', 'sort': 'on', 'filter': 'on'},
+                {'className': 'push lb', 'title': 'Push日時', 'type': 'date', 'width': '160px', 'sort': 'on', 'filter': 'on'},
+                {'className': 'size lb', 'title': 'サイズ', 'type': 'text', 'width': '100px', 'align': 'right', 'sort': 'on', 'filter': 'on'},
+                {'className': 'repository lb', 'title': 'ビルドリポジトリ名', 'type': 'link', 'width': '20%', 'sort': 'on', 'filter': 'on'},
                 {'className': 'branch lb', 'title': 'ビルドブランチ', 'type': 'text', 'width': 'auto', 'sort': 'on', 'filter': 'on'}
             ],
             'option': {
@@ -981,7 +981,7 @@ function wsRegiSerCheck() {
                       length = data.length;
                 for ( let i = 0; i < length; i++ ) {
                     const d = data[i],
-                          size = Math.round( d.registry.full_size / 1024 / 1024 * 100 ) / 100; 
+                          size = Math.round( d.registry.full_size / 1024 / 1024 * 100 ) / 100;
                     body.push([
                         [ d.registry.url, d.registry.name ], // イメージ名
                         d.registry.tag, // TAG
@@ -1002,13 +1002,13 @@ function wsRegiSerCheck() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //   ArgoCD結果確認
-// 
+//
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 function wsArgocdCheck() {
     const ws_id = (new URLSearchParams(window.location.search)).get('workspace_id');
     const ws = this;
     ws.cmn = new wsResultCommon();
-    
+
     // ポーリング設定
     ws.cmn.update = true;
     ws.cmn.pollingTime = 3000;
@@ -1051,12 +1051,12 @@ function wsArgocdCheck() {
                 },
                 {'className': 'sync-icon lb rs', 'iconClass': 'icon icon-','title': 'SYNC STATUS', 'type': 'status', 'sort': 'on', 'filter': 'on',
                     'list': {'Synced':'Synced','OutOfSync':'OutOfSync'}
-                },     
-                {'className': 'sync', 'title': 'SYNC STATUS TEXT', 'type': 'text' },        
+                },
+                {'className': 'sync', 'title': 'SYNC STATUS TEXT', 'type': 'text' },
                 {'className': 'head lb rs', 'title': 'from HEAD', 'type': 'link', 'sort': 'on', 'filter': 'on'},
-                {'className': 'start lb rs', 'title': '同期開始日時', 'type': 'date', 'sort': 'on', 'filter': 'on'},        
+                {'className': 'start lb rs', 'title': '同期開始日時', 'type': 'date', 'sort': 'on', 'filter': 'on'},
                 {'className': 'finish lb rs', 'title': '同期終了日時', 'type': 'date', 'sort': 'on', 'filter': 'on'},
-                {'className': 'environment lb rs', 'title': '環境', 'type': 'text', 'sort': 'on', 'filter': 'on'},        
+                {'className': 'environment lb rs', 'title': '環境', 'type': 'text', 'sort': 'on', 'filter': 'on'},
                 {'className': 'trace-id lb rs', 'title': 'トレースID', 'type': 'text', 'sort': 'on', 'filter': 'on'},
                 {'className': 'execution-status lb','title': '詳細', 'type': 'button', 'buttonClass': 'execution-status-button table-button icon icon-Detail'},
                 {'type': 'class'}
@@ -1082,7 +1082,7 @@ function wsArgocdCheck() {
                     const d = data[i],
                              head = (d.sync_status === undefined)?"":d.sync_status.revision.slice( 0, 6 );
                     body.push([
-                        d.health.status, // Healthアイコン 
+                        d.health.status, // Healthアイコン
                         d.sync_status.status, // Syncアイコン
                         d.sync_status.status, // Sync
                         [ d.sync_status.html_url, head ], // Head
@@ -1104,12 +1104,12 @@ function wsArgocdCheck() {
     // --------------------------------------------------
 
     ws.cmn.open( 800 );
-    
-    
-    
+
+
+
     // 実行状況詳細画面
     ws.cmn.modal.de.title = 'ArgoCD 実行状況確認';
-    
+
     const detailInfo = [],
           detailInfoList = [
       ['argocd-environment','環境名'],
@@ -1121,12 +1121,12 @@ function wsArgocdCheck() {
       ['argocd-start','同期開始日時'],
       ['argocd-end','同期終了日時']
     ];
-    
+
     const detailInfoLength = detailInfoList.length;
     for ( let i = 0; i < detailInfoLength; i++ ) {
       detailInfo.push(ws.cmn.item( detailInfoList[i][0], detailInfoList[i][1], '', '', false));
     }
-    
+
     ws.cmn.data.argocd.detail.$detail = $(''
     + ws.cmn.traceIdSelecter()
     + '<div class="argocd-detail">'
@@ -1158,12 +1158,12 @@ function wsArgocdCheck() {
 
         const result = d,
               nl = result.nodes.length;
-        
+
         const resourceRow = function( n, r ){
             const node = [];
-            
+
             if ( n.name ) node.push(`<div class="argocd-resource-name">${n.name}</div>`);
-            
+
             // status
             if ( r ) {
                 if ( r.health_status ) {
@@ -1186,7 +1186,7 @@ function wsArgocdCheck() {
             + `<dt class="argocd-resource-kind">${n.kind}</dt>`
             + `<dd class="argocd-resource-meta">${node.join('')}</dd></dl>`;
         };
-      
+
         const ul = function( parentUid ) {
             const h = [];
             for ( let i = 0; i < nl; i++ ) {
@@ -1211,7 +1211,7 @@ function wsArgocdCheck() {
             return ( h.length )? `<ul class="argocd-resource-list">${h.join('')}</ul>`: '';
         }
         const resource = ul();
-      
+
         const setData = [
             ['.status-trace-id-number', d.trace_id ],
             ['.argocd-environment', d.environment_name ],
@@ -1223,8 +1223,8 @@ function wsArgocdCheck() {
             ['.argocd-health-status', health ],
             ['.argocd-sync-status', sync + ' ' + head ],
             ['.argocd-resource', resource ]
-          ];        
-          
+          ];
+
         const setDataLength = setData.length;
 
         for ( let i = 0; i < setDataLength; i++ ) {
@@ -1278,7 +1278,7 @@ function wsArgocdCheck() {
     ws.cmn.modal.fn.$modal.on('click', '.execution-status-button', function(){
         ws.cmn.data.argocd.detail.traceid = $( this ).attr('data-button');
         ws.cmn.detail('argocd', 'none');
-        
+
         // SYNCボタン
         ws.cmn.modal.sub.$modal.find('.argocd-menu-button').on('click', function(){
             const $b = $( this ),
@@ -1315,7 +1315,7 @@ function wsArgocdCheck() {
                     progress.open('progress', {
                         'callback': function(){
                             progress.$modal.find('.modal-close').remove();
-                            
+
                             console.log("[CALL] POST " + workspace_api_conf.api.cd_pipeline.argocd.rollback.post.replace('{workspace_id}', workspace_id) + ", environment_id:" + environmentid);
                             // Call argoCD Rollback processing - ArgoCD同期処理呼び出し
                             $.ajax({
@@ -1343,7 +1343,7 @@ function wsArgocdCheck() {
                         progress.open('progress', {
                             'callback': function(){
                                 progress.$modal.find('.modal-close').remove();
-                                
+
                                 console.log("[CALL] POST " + workspace_api_conf.api.cd_pipeline.argocd.sync.post.replace('{workspace_id}', workspace_id) + ", environment_id:" + environmentid);
                                 // Call argoCD sync processing - ArgoCD同期処理呼び出し
                                 $.ajax({
@@ -1373,7 +1373,7 @@ function wsArgocdCheck() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //   IT Automation結果確認
-// 
+//
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 function wsItaCheck() {
     const ws = this;
@@ -1382,7 +1382,7 @@ function wsItaCheck() {
     // ポーリング設定
     ws.cmn.update = true;
     ws.cmn.pollingTime = 3000;
-    
+
     // モーダル構造
     ws.cmn.modal.st = {
         'id': 'ita-check',
@@ -1411,8 +1411,8 @@ function wsItaCheck() {
             'header': [
                 {'className': 'status-icon', 'title': '状態', 'type': 'status', 'align': 'center', 'sort': 'on', 'filter': 'on', 'list':{'Succeeded': '正常終了','Running':'実行中','reserve':'予約','Failed': 'エラー'}},
                 {'className': 'date lb rs', 'title': '実行開始日時', 'type': 'date', 'sort': 'on', 'filter': 'on'},
-                {'className': 'user lb rs', 'title': '実行者', 'type': 'text', 'sort': 'on', 'filter': 'on'},        
-                {'className': 'environment lb rs', 'title': '環境名', 'type': 'text', 'sort': 'on', 'filter': 'on'},        
+                {'className': 'user lb rs', 'title': '実行者', 'type': 'text', 'sort': 'on', 'filter': 'on'},
+                {'className': 'environment lb rs', 'title': '環境名', 'type': 'text', 'sort': 'on', 'filter': 'on'},
                 {'className': 'trace-id lb rs', 'title': 'トレースID', 'type': 'text', 'sort': 'on', 'filter': 'on'},
                 {'className': 'menu nb', 'title': '','type': 'menu', 'align': 'right', 'menu': [
                     {'type': 'cancel', 'icon': 'icon-Cal_off', 'text': '予約取消'},
@@ -1429,7 +1429,7 @@ function wsItaCheck() {
                       length = data.length;
                 for ( let i = 0; i < length; i++ ) {
                     const d = data[i];
-                    
+
                     const statusList = {
                               '実行中': 'Running',
                               '予約': 'reserve',
@@ -1462,18 +1462,18 @@ function wsItaCheck() {
                 return body;
             },
             'detail': {}
-        }        
+        }
     };
 
     // --------------------------------------------------
-    
+
     ws.cmn.open( 640 );
-    
-  
+
+
     // 実行状況詳細画面
     ws.cmn.modal.de.title = 'IT Automation 実行状況確認';
     ws.cmn.modal.de.class = 'ita-result-check';
-    
+
     // 実行状況ベース
     const itaConductor = ''
     + '<div class="conductor-area"><div class="conductor-area-inner">'
@@ -1483,8 +1483,8 @@ function wsItaCheck() {
       + '<div class="conductor-line1"></div>'
       + '<div class="conductor-line2"></div>'
     + '</div></div>';
-    
-    
+
+
     const body = {
       'block01': {
         'item': {
@@ -1520,11 +1520,11 @@ function wsItaCheck() {
     };
     const $detailBody = ws.cmn.modal.sub.createBody( body );
 
-    $detailBody.find('.modal-block').eq(0).prepend( ws.cmn.traceIdSelecter() ); 
-    
+    $detailBody.find('.modal-block').eq(0).prepend( ws.cmn.traceIdSelecter() );
+
     ws.cmn.data.ita_result.detail.$detail = $( $detailBody.html() );
 
-    
+
     ws.cmn.data.ita_result.detail.update = function( d ){
       // (BEGIN) APIの結果に所定項目が無いときの対処
       // (修正前)
@@ -1546,7 +1546,7 @@ function wsItaCheck() {
       const $manifest = ws.cmn.modal.sub.$modal.find('#tab01-ita-manifest-parameter'),
             manifests = d.contents.workspace_info.ci_config.environments[0].manifests,
             manifestLength = manifests.length;
-      
+
       $manifest.empty();
       for ( let i = 0; i < manifestLength; i++ ) {
         const parameters = manifests[i].parameters;
@@ -1556,13 +1556,13 @@ function wsItaCheck() {
               + `<th class="c-table-col c-table-col-header"><div class="c-table-ci">${key}</div></th>`
               + `<td class="c-table-col"><div class="c-table-ci">${parameters[key]}</div></td>`
             + `</tr>`;
-        }       
+        }
         parameterHTML += '</tbody></table>';
          $manifest.append(ws.cmn.modal.sub.createHtml({
             'type': 'html', 'title': manifests[i].file, 'accordion': 'on', 'html': parameterHTML
          }));
       }
-    
+
       const setData = {
         '.status-trace-id-number': d.trace_id,
         '.ita-start': start,
@@ -1605,7 +1605,7 @@ function wsItaCheck() {
           }
           $log.find('.item-log').html( logData[key] );
       }
-      
+
       // Conductor
       const $conductor = ws.cmn.modal.sub.$modal.find('.conductor-area');
       switch (  d.cd_status_name ) {
@@ -1620,15 +1620,15 @@ function wsItaCheck() {
           break;
           default:
               $conductor.attr('data-mode','checking');
-      }      
-      
+      }
+
     };
-    
+
     ws.cmn.modal.fn.$modal.on('click', '.table-button', function(){
         const $b = $( this ),
               type = $b.attr('data-button'),
               id = $b.attr('data-value');
-        
+
         switch ( type ) {
             case 'exe-status':
                 ws.cmn.data.ita_result.detail.traceid = id;
