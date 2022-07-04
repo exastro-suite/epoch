@@ -16,6 +16,8 @@
 BASE_DIR=`dirname $0`
 
 ALL_MANIFESTS="${BASE_DIR}/epoch-install.yaml"
+UPDATE_MANIFESTS="${BASE_DIR}/epoch-update.yaml"
+
 SOURCE_MANIFEST="${BASE_DIR}/source"
 TEMPLATES_DIR="${BASE_DIR}/source/templates"
 TEKTON_MANIFEST="${BASE_DIR}/source/tekton"
@@ -223,15 +225,11 @@ YAMLFILES+=("gateway-httpd.yaml")
 YAMLFILES+=("gateway-httpd-pv-create-script.yaml")
 YAMLFILES+=("gateway-httpd-pv-create.yaml")
 
-#YAMLFILES+=("authentication-infra-setting.yaml")
-
 # TEKTON instasller
 YAMLFILES+=("tekton-installer-script.yaml")
 YAMLFILES+=("tekton-installer.yaml")
 
 # gitlab Installer
-#YAMLFILES+=("gitlab-installer.yaml")
-#YAMLFILES+=("gitlab-installer-script.yaml")
 YAMLFILES+=("gitlab-installer-start-script.yaml")
 YAMLFILES+=("gitlab-installer-start.yaml")
 
@@ -239,12 +237,40 @@ YAMLFILES+=("gitlab-installer-start.yaml")
 YAMLFILES+=("epoch-setting-tools-script.yaml")
 YAMLFILES+=("epoch-setting-tools.yaml")
 
+# update exclude files
+UPDATE_EXCLUDE_FILES=()
+UPDATE_EXCLUDE_FILES+=("host-setting-config.yaml")
+UPDATE_EXCLUDE_FILES+=("proxy-setting.yaml")
+UPDATE_EXCLUDE_FILES+=("epoch-control-api-config.yaml")
+UPDATE_EXCLUDE_FILES+=("epoch-service-api-config.yaml")
+UPDATE_EXCLUDE_FILES+=("authentication-infra-env.yaml")
+UPDATE_EXCLUDE_FILES+=("authentication-infra-secret.yaml")
+UPDATE_EXCLUDE_FILES+=("gitlab-installer-start-script.yaml")
+UPDATE_EXCLUDE_FILES+=("gitlab-installer-start.yaml")
+
+
 # -----------------------------------
 
 
 
 cat <<EOF > ${ALL_MANIFESTS}
-#   Copyright 2019 NEC Corporation
+#   Copyright 2022 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+EOF
+
+cat <<EOF > ${UPDATE_MANIFESTS}
+#   Copyright 2022 NEC Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -269,6 +295,13 @@ for YAMLFILE in ${YAMLFILES[@]}; do
     echo    "#---- ${YAMLFILE}"                     >>  ${ALL_MANIFESTS}
     echo    "---"                                   >>  ${ALL_MANIFESTS}
     cat     "${SOURCE_MANIFEST}/${YAMLFILE}"        >>  ${ALL_MANIFESTS}
+
+    if [[ $(printf '%s\n' "${UPDATE_EXCLUDE_FILES[@]}" | grep -qx "${YAMLFILE}"; echo -n $? ) -ne 0 ]]; then
+        echo    ""                                      >>  ${UPDATE_MANIFESTS}
+        echo    "#---- ${YAMLFILE}"                     >>  ${UPDATE_MANIFESTS}
+        echo    "---"                                   >>  ${UPDATE_MANIFESTS}
+        cat     "${SOURCE_MANIFEST}/${YAMLFILE}"        >>  ${UPDATE_MANIFESTS}
+    fi
 done
 
 for YAMLFILEPATH in $(ls ${SOURCE_MANIFEST}/*.yaml); do
