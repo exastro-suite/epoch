@@ -272,7 +272,7 @@ function wsAppCodeRepoCheck( gitService ) {
       }
   };
 
-  let rebuild_class = currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ws-cd-update".replace('{ws_id}',(new URLSearchParams(window.location.search)).get('workspace_id'))) == -1 ? " disabled": "";
+  let rebuild_class = currentUser.data.composite_roles.indexOf("ws-{ws_id}-role-ws-ci-update".replace('{ws_id}',(new URLSearchParams(window.location.search)).get('workspace_id'))) == -1 ? " disabled": "";
 
   // 表示データ
   ws.cmn.data = {
