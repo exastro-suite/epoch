@@ -101,7 +101,7 @@ spec:
         #- name: mysqldata
         #  mountPath: /var/lib/mysql
         - name: mysqlconf-volume
-          mountPath: /etc/mysql
+          mountPath: /etc/mysql/conf.d
         - name: mysqlinitdb-volume
           mountPath: /docker-entrypoint-initdb.d
         env:
