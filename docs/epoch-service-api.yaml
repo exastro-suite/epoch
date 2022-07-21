@@ -1,4 +1,4 @@
-openapi: 2.0.0
+swagger: 2.0.0
 
 # 基本情報
 info:
