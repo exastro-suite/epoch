@@ -821,7 +821,7 @@ spec:
           name: epoch-control-tekton-conf
       containers:
       - name: epoch-control-tekton-api
-        image: exastro/epoch-control-tekton-api:1.1.0_20220630_1100
+        image: exastro/epoch-control-tekton-api:1.2.0_20220721_1400
         env:
         - name: CONFIG_API_TEKTON_PATH
           value: "/etc/epoch/epochControlTektonApi/api_tekton.conf"
@@ -1246,7 +1246,7 @@ spec:
           name: epoch-control-dockerhub-conf
       containers:
       - name: epoch-control-dockerhub-api
-        image: exastro/epoch-control-dockerhub-api:1.1.0_20220630_1100
+        image: exastro/epoch-control-dockerhub-api:1.2.0_20220721_1400
         env:
         - name: HTTP_PROXY
           valueFrom:
@@ -2163,7 +2163,7 @@ spec:
           name: epoch-service-api2-conf
       containers:
       - name: epoch-service-api2
-        image: exastro/epoch-service-api2:1.1.0_20220701_0900
+        image: exastro/epoch-service-api2:1.2.0_20220721_1400
         env:
         - name: CONFIG_API_SERVICE_PATH
           value: "/etc/epoch/epochServiceApi/api_service.conf"
@@ -2235,7 +2235,7 @@ spec:
     spec:
       containers:
       - name: epoch-ui
-        image: exastro/epoch-ui:1.1.0_20220704_1500
+        image: exastro/epoch-ui:1.2.0_20220721_1400
 
 ---
 apiVersion: v1

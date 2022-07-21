@@ -42,7 +42,7 @@ spec:
           name: epoch-service-api2-conf
       containers:
       - name: epoch-service-api2
-        image: exastro/epoch-service-api2:1.1.0_20220701_0900
+        image: exastro/epoch-service-api2:1.2.0_20220721_1400
         env:
         - name: CONFIG_API_SERVICE_PATH
           value: "/etc/epoch/epochServiceApi/api_service.conf"
