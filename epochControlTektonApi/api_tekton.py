@@ -157,13 +157,12 @@ def post_tekton_pipeline(workspace_id):
 
             # コンテナレジストリ情報付加
             pipeline['container_registry']['secret_server'] = 'index.docker.io/v1/'
-            # 内部レジストリ時は実際作成されてから再度有効化
-            # if pipeline['container_registry']['interface'] == 'dockerhub':
-            #     pipeline['container_registry']['secret_server'] = 'index.docker.io/v1/'
-            # else:
-            #     giturl = urlparse('http://' + pipeline['container_registry']['image'])
-            #     pipeline['container_registry']['secret_server'] = giturl.netloc + '/'
-            
+            if pipeline['container_registry']['interface'] == 'dockerhub':
+                pipeline['container_registry']['secret_server'] = 'index.docker.io/v1/'
+            else:
+                giturl = urlparse('http://' + pipeline['container_registry']['image'])
+                pipeline['container_registry']['secret_server'] = giturl.netloc + '/'
+
             pipeline['container_registry']['auth'] = base64.b64encode('{}:{}'.format(pipeline['container_registry']['user'], pipeline['container_registry']['password']).encode()).decode()
 
             # build branchの設定

@@ -27,6 +27,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 import traceback
 from datetime import timedelta, timezone
+import urllib.parse
 
 import globals
 import common
@@ -593,6 +594,7 @@ def get_registry(workspace_id):
         # コンテナレジストリ情報取得用 リクエストヘッダ
         request_headers = {
             'Content-Type': 'application/json',
+            'interface': workspace_json["rows"][0]["ci_config"]["pipelines_common"]["container_registry"]["interface"],
             'username': workspace_json["rows"][0]["ci_config"]["pipelines_common"]["container_registry"]["user"],
             'password': workspace_json["rows"][0]["ci_config"]["pipelines_common"]["container_registry"]["password"]
         }
@@ -615,22 +617,31 @@ def get_registry(workspace_id):
 
         # Extract the repository information from the acquired CI result information and format it
         # 取得したCI結果情報の内、リポジトリ情報を抜き出して整形
+        cache_registry = {}
         for ci_result in ci_result_json["rows"]:
 
-            # Container registry information acquisition URL - コンテナレジストリ情報取得URL
-            api_url = "{}://{}:{}/registry/{}".format(os.environ['EPOCH_CONTROL_DOCKERHUB_PROTOCOL'],
-                                                        os.environ['EPOCH_CONTROL_DOCKERHUB_HOST'],
-                                                        os.environ['EPOCH_CONTROL_DOCKERHUB_PORT'],
-                                                        ci_result["container_registry_image"])
+            # Determine if the result is cached - 結果がキャッシュされているかを判定
+            if not ci_result["container_registry_image"] in cache_registry:
+                # Container registry information acquisition URL - コンテナレジストリ情報取得URL
+                api_url = "{}://{}:{}/registry/{}".format(os.environ['EPOCH_CONTROL_DOCKERHUB_PROTOCOL'],
+                                                            os.environ['EPOCH_CONTROL_DOCKERHUB_HOST'],
+                                                            os.environ['EPOCH_CONTROL_DOCKERHUB_PORT'],
+                                                            ci_result["container_registry_image"])
 
-            # Get container registry information - コンテナレジストリ情報取得
-            response = requests.post(api_url, headers=request_headers)
-            registry_json = json.loads(response.text)
+                # Get container registry information - コンテナレジストリ情報取得
+                response = requests.post(api_url, headers=request_headers)
+                registry_json = json.loads(response.text)
 
-            if response.status_code != 200:
-                error_detail = multi_lang.get_text("EP020-0075", "コンテナレジストリ情報の取得に失敗しました")
-                globals.logger.debug(error_detail)
-                raise common.UserException(error_detail)
+                # Save the result to cache - 結果をキャッシュに保存する
+                cache_registry[ci_result["container_registry_image"]] = registry_json
+
+                if response.status_code != 200:
+                    error_detail = multi_lang.get_text("EP020-0075", "コンテナレジストリ情報の取得に失敗しました")
+                    globals.logger.debug(error_detail)
+                    raise common.UserException(error_detail)
+            else:
+                # If there is a result in the cache, get the result from the cache - キャッシュに結果がある場合はキャッシュから結果を取得する
+                registry_json = cache_registry[ci_result["container_registry_image"]]
 
             for registry in registry_json["rows"]:
                 # Merge repository information with repository information that matches the registry name and image tag

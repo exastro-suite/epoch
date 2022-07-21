@@ -308,7 +308,8 @@ const wsModalJSON = {
             'name': 'registry-service-select',
             'item': {
               //'epoch': 'EPOCH内レジストリ',
-              'dockerhub': 'DockerHub'
+              'dockerhub': 'DockerHub',
+              'ACR': 'Azure Container Registry',
             }
           }
         }
