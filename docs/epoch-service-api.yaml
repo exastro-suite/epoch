@@ -1,9 +1,9 @@
-openapi: 2.0.0
+swagger: 2.0.0
 
 # 基本情報
 info:
   # バージョン表記
-  version: 1.0.0
+  version: 1.2.0
   # タイトル
   title: epoch-service-api
   # 説明
