@@ -1504,6 +1504,7 @@ const setParameterData = function(){
 const setRegistryServiceInput = function(){
   const $modal = $('#registry-service'),
         inputArray = [];
+        $interfaceDockerhub = $modal.find('#registry-service-select-dockerhub');
   $modal.find('.registry-service-account-user').on({
     // フォーカスが当たった時にURLと未入力チェック
     'focus': function(){
@@ -1528,7 +1529,7 @@ const setRegistryServiceInput = function(){
       const value = $( this ).val();
       $modal.find('.modal-tab-body-block').each(function(i){
         const $imageTarget = $( this ).find('.registry-service-output-destination');
-        if ( inputArray[i][1] === null ) {
+        if ( $interfaceDockerhub.prop('checked') && inputArray[i][1] === null ) {
           $imageTarget.val( value + '/' + inputArray[i][0].toLowerCase() ).trigger('input');
         }
       });

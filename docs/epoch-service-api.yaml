@@ -1245,7 +1245,7 @@ definitions:
                   },
                   "container_registry": {
                       "housing": "レジストリサービス選択 outer or inner",
-                      "interface": "dockerhub固定",
+                      "interface": "レジストリサービス選択 dockerhub or ACR",
                       "user": "レジストリユーザ名",
                       "password": "レジストリユーザパスワード"
                   }
@@ -1486,7 +1486,7 @@ definitions:
               },
               "container_registry": {
                   "housing": "レジストリサービス選択 outer or inner",
-                  "interface": "dockerhub固定",
+                  "interface": "レジストリサービス選択 dockerhub or ACR",
                   "user": "レジストリユーザ名",
                   "password": "レジストリユーザパスワード"
               }
