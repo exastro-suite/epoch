@@ -630,15 +630,17 @@ def get_registry(workspace_id):
 
                 # Get container registry information - コンテナレジストリ情報取得
                 response = requests.post(api_url, headers=request_headers)
-                registry_json = json.loads(response.text)
+
+                if response.status_code == 200:
+                    registry_json = json.loads(response.text)
+                else:
+                    # If the registry information cannot be obtained, it will be treated as 0 without an error.
+                    # - レジストリの情報を取得できなかったときはエラーとせず０件の扱いにする
+                    globals.logger.debug('no images : ' + ci_result["container_registry_image"])
+                    registry_json= {"rows":[]}
 
                 # Save the result to cache - 結果をキャッシュに保存する
                 cache_registry[ci_result["container_registry_image"]] = registry_json
-
-                if response.status_code != 200:
-                    error_detail = multi_lang.get_text("EP020-0075", "コンテナレジストリ情報の取得に失敗しました")
-                    globals.logger.debug(error_detail)
-                    raise common.UserException(error_detail)
             else:
                 # If there is a result in the cache, get the result from the cache - キャッシュに結果がある場合はキャッシュから結果を取得する
                 registry_json = cache_registry[ci_result["container_registry_image"]]
