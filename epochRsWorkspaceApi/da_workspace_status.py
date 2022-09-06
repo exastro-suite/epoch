@@ -27,8 +27,8 @@ def insert_workspace_status(cursor, workspace_id, info):
         info (Dict)): 状態のJson形式 status json
 
     Returns:
-        int: workspace id 
-        
+        int: workspace id
+
     """
     # ワークスペース状態情報 insert実行 Workspace status information insert execution
     cursor.execute('INSERT INTO workspace_status ( workspace_id, info )' \
@@ -51,7 +51,7 @@ def update_workspace_status(cursor, workspace_id, info_upadate_colums):
 
     Returns:
         int: アップデート件数 update count
-        
+
     """
     upd_item = ""
     upd_json = {
@@ -86,7 +86,7 @@ def delete_workspace_status(cursor, workspace_id):
 
     Returns:
         int: 削除件数 delete count
-        
+
     """
     # ワークスペース状態情報 delete実行 Workspace status information delete execution
     cursor.execute('DELETE FROM workspace_status' \

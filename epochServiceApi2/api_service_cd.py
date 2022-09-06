@@ -702,10 +702,14 @@ def get_cd_pipeline_argocd(workspace_id):
                         and "kind" in sync_result_resources and "name" in sync_result_resources:
                             if str(status_resources["kind"]) == str(sync_result_resources["kind"]) \
                             and str(status_resources["name"]) == str(sync_result_resources["name"]):
+                                if "health" in status_resources and "status" in status_resources["health"]:
+                                    health_status = status_resources["health"]["status"]
+                                else:
+                                    health_status = ""
                                 status_add = {
                                     "kind": status_resources["kind"],
                                     "name": status_resources["name"],
-                                    "health_status": status_resources["health"]["status"],
+                                    "health_status": health_status,
                                     "sync_status": sync_result_resources["status"],
                                     "message": sync_result_resources["message"],
                                 }
