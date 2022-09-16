@@ -124,6 +124,10 @@ def post_tekton_pipeline(workspace_id):
         # namespace、eventlistener設定
         param['ci_config']['pipeline_namespace'] = tekton_pipeline_namespace(workspace_id)
         param['ci_config']['event_listener_name'] = event_listener_name
+
+        # 最大実行数
+        param['ci_config']['max_execute_build_task'] = os.environ.get('MAX_EXECUTE_BUILD_TASK', '1')
+
         # sonarqube設定
         param['ci_config']['sonarqube_password'] = access_data['SONARQUBE_PASSWORD']
         # proxy設定
@@ -589,11 +593,14 @@ def get_responsePipelineRunItem(plRunitem):
 
     task_id = get_taskResult(plRunitem, 'task-start', 'task_id')
     # task_idが無い場合は、まだ何も返せない
-    if task_id is None:
+    # if task_id is None:
+    #     return None
+
+    if not 'tasks' in plRunitem.get('status', {}).get('pipelineSpec',{}):
         return None
 
     # 情報格納
-    resPlRunitem['task_id'] = int(get_taskResult(plRunitem, 'task-start', 'task_id'))
+    resPlRunitem['task_id'] = int(task_id) if not task_id is None else None
     resPlRunitem['pipeline_id'] = int(plRunitem['metadata']['labels']['pipeline_id'])
     resPlRunitem['pipelinerun_name'] = plRunitem['metadata']['name']
     resPlRunitem['repository_url'] =  get_pipelineParameter(plRunitem,'git_repository_url')
@@ -601,7 +608,16 @@ def get_responsePipelineRunItem(plRunitem):
     resPlRunitem['start_time'] = start_time
     resPlRunitem['finish_time'] = completion_time
     resPlRunitem['status'] = status
-    resPlRunitem['container_image'] = '{}:{}'.format(get_pipelineParameter(plRunitem,'container_registry_image'), get_taskResult(plRunitem, 'task-start', 'container_registry_image_tag'))
+    
+    build_image = get_pipelineParameter(plRunitem,'container_registry_image')
+    build_tag = get_taskResult(plRunitem, 'task-start', 'container_registry_image_tag')
+    if build_image is None and build_tag is None:
+        resPlRunitem['container_image'] = None
+    elif build_tag is None:
+        resPlRunitem['container_image'] = build_image
+    else:
+        resPlRunitem['container_image'] = '{}:{}'.format(build_image, build_tag)
+
     resPlRunitem['git_sender_user'] = get_pipelineParameter(plRunitem,'git_sender_user')
     resPlRunitem['commit_id'] = get_pipelineParameter(plRunitem,'git_clone_revision')
 
@@ -626,9 +642,12 @@ def get_pipelineParameter(plRunitem, parameterName):
         str: パラメータ値
     """
     # spec.params配下にpipelinerunのパラメータが配列化されているので、nameが合致するものを探してvalueを返す
+    if not 'params' in plRunitem.get('spec', {}):
+        return None
+
     for param in plRunitem['spec']['params']:
-        if param['name'] == parameterName:
-            return param['value']
+        if param.get('name', None)  == parameterName:
+            return param.get('value', None)
 
     return None
 
@@ -644,13 +663,16 @@ def get_taskResult(plRunitem, taskname, resultName):
         (str): タスクResult値
     """
     # status.taskRuns[*]にtask毎、Result項目毎で格納されているので、タスク名、Result項目名が合致するものを探して値を返します
+    if not 'taskRuns' in plRunitem.get('status', {}):
+        return None
+
     for taskRun in plRunitem['status']['taskRuns'].values():
-        if taskRun['pipelineTaskName'] == taskname:
+        if taskRun.get('pipelineTaskName', None) == taskname:
             # キー値が存在する場合のみ処理する
-            if 'taskResults' in taskRun['status']:
+            if 'taskResults' in taskRun.get('status', {}):
                 for taskResult in taskRun['status']['taskResults']:
-                    if taskResult['name'] == resultName:
-                        return taskResult['value']
+                    if taskResult.get('name', None) == resultName:
+                        return taskResult.get('value', None)
     return None
 
 def get_taskStatus(plRunitem, taskname):
@@ -703,6 +725,9 @@ def convert_branch(branch):
         str: branchパラメータ レスポンス(表示)形式
     """
     # branchパラメータの"refs/heads/"の部分を取り除く
+    if branch is None:
+        return None
+
     return re.sub('^.*/', '', branch)
 
 
