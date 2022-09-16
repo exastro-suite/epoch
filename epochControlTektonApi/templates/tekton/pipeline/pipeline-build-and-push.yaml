@@ -37,6 +37,7 @@ spec:
     - name: git_sender_user
     - name: git_webhook_header
     - name: git_webhook_body
+    - name: max_execute_build_task
     - name: pipeline_run_name
     - name: pipeline_run_uid
   tasks:
@@ -67,6 +68,8 @@ spec:
           value: "$(params.git_webhook_header)"
         - name: git_webhook_body
           value: "$(params.git_webhook_body)"
+        - name: max_execute_build_task
+          value: "$(params.max_execute_build_task)"
         - name: pipeline_run_name
           value: "$(context.pipelineRun.name)"
         - name: pipeline_run_uid

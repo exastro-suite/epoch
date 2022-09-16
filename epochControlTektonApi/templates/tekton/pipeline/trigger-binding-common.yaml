@@ -22,3 +22,5 @@ spec:
     value: $(extensions.git_webhook_header)
   - name: git_webhook_body
     value: $(extensions.git_webhook_body)
+  - name: max_execute_build_task
+    value: "{{ param.ci_config.max_execute_build_task }}"

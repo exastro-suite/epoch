@@ -23,6 +23,9 @@ rules:
 - apiGroups: ["apps"]
   resources: ["deployments"]
   verbs: ["get", "create", "update", "patch"]
+- apiGroups: ["tekton.dev"]
+  resources: ["pipelineruns"]
+  verbs: ["get", "list", "watch"]
 
 {% for item in param.ci_config.pipelines %}
 {% if item.git_repositry.user != "" and  item.git_repositry.token != "" %}
@@ -75,7 +78,7 @@ stringData:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: pipeline-sa-rolebinding
+  name: pipeline-sa-rolebinding-{{ loop.index }}
   namespace: {{ param.ci_config.pipeline_namespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io

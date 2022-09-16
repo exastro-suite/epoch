@@ -1,0 +1,142 @@
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: pipeline-task-start
+  namespace: {{ param.ci_config.pipeline_namespace }}
+  labels:
+    app.kubernetes.io/version: "0.1"
+  annotations:
+    tekton.dev/pipelines.minVersion: "0.12.1"
+    tekton.dev/tags: start
+    tekton.dev/displayName: "pipeline start"
+spec:
+  params:
+    - name: workspace_id
+    - name: pipeline_id
+    - name: git_repositry_interface
+    - name: git_repository_url
+    - name: git_revision
+    - name: git_branch
+    - name: git_sender_user
+    - name: container_registry_image
+    - name: git_webhook_header
+    - name: git_webhook_body
+    - name: pipeline_run_name
+    - name: pipeline_run_uid
+  workspaces:
+  - name: source
+    description: Holds the context and docker file
+  results:
+    - name: container_registry_image_tag
+    - name: task_id
+  steps:
+    - name: pipeline-start-task
+      # image: python
+      image: exastro/epoch-kube-command:0.1.5_20211026_1600
+      env:
+      - name: API_TEKTON_TASK
+        value: "http://epoch-rs-ci-result-api.epoch-system.svc:8000"
+      script: |
+        #!/bin/bash
+        MAX_EXECUTE_BUILD=1
+
+        echo "[INFO] task start ver.2.8"
+        echo "pipeline_run_name: $(params.pipeline_run_name)"
+
+        # Delete the directory of pipeline run after 120 minutes (measures when garbage remains at the end of error)
+        find $(workspaces.source.path) -mindepth 1 -type d -mmin +120 -exec rm -rf {} \;
+
+        REQ_URL="$API_TEKTON_TASK/workspace/$(params.workspace_id)/tekton/task"
+
+        TEMP_HTTP_CODE=/tmp/$(params.pipeline_run_name)_http_code.tmp
+        TEMP_HTTP_RESP=/tmp/$(params.pipeline_run_name)_http_resp.tmp
+
+        echo "[INFO] call curl : ${REQ_URL}"
+        curl  -s -X POST \
+              -H 'content-type: application/json' \
+              -o "${TEMP_HTTP_RESP}" \
+              -d  @- \
+              -w '%{http_code}\n' \
+              "${REQ_URL}" \
+        <<EOF > "${TEMP_HTTP_CODE}"
+        {
+          "pipeline_id"               : $(params.pipeline_id),
+          "git_repositry_interface"   : "$(params.git_repositry_interface)",
+          "git_repository_url"        : "$(params.git_repository_url)",
+          "git_revision"              : "$(params.git_revision)",
+          "git_branch"                : "$(params.git_branch)",
+          "git_sender_user"           : "$(params.git_sender_user)",
+          "container_registry_image"  : "$(params.container_registry_image)",
+          "git_webhook_header"        : "",
+          "git_webhook_body"          : "",
+          "pipeline_run_name"         : "$(params.pipeline_run_name)",
+          "pipeline_run_uid"          : "$(params.pipeline_run_uid)"
+        }
+        EOF
+        EXIT_CODE=$?
+        echo "[INFO] finish curl"
+
+        if [ ${EXIT_CODE} -ne 0 ]; then
+          echo "[ERROR] curl exit-code: ${EXIT_CODE}"
+          exit 1
+        fi
+        HTTP_CODE=$(cat "${TEMP_HTTP_CODE}")
+        if [ "${HTTP_CODE}" != "200" -a "${HTTP_CODE}" != "201" ]; then
+          echo "[ERROR] curl http-code: ${HTTP_CODE}"
+          exit 1
+        fi
+        cat "${TEMP_HTTP_RESP}" | jq -r ".param.task_id" | tr -d '\n' > "$(results.task_id.path)"
+        EXIT_CODE=$?
+        if [ ${EXIT_CODE} -ne 0 ]; then
+          echo "[ERROR] write param.task_id exit-code: ${EXIT_CODE}"
+          exit 1
+        fi
+        echo -n "[INFO] param.task_id:"
+        cat "$(results.task_id.path)"
+        echo ""
+
+        cat "${TEMP_HTTP_RESP}" | jq -r ".param.container_registry_image_tag" | tr -d '\n' > "$(results.container_registry_image_tag.path)"
+        EXIT_CODE=$?
+        if [ ${EXIT_CODE} -ne 0 ]; then
+          echo "[ERROR] write results.container_registry_image_tag exit-code: ${EXIT_CODE}"
+          exit 1
+        fi
+        echo -n "[INFO] results.container_registry_image_tag:"
+        cat "$(results.container_registry_image_tag.path)"
+        echo ""
+
+        echo "[INFO] check start execute"
+        while true; do
+          RUN_COUNT=$(\
+            kubectl get pipelinerun -o jsonpath='{range .items[*]}{@.metadata.creationTimestamp}{"\t"}{@.metadata.uid}{"\t"}{@.metadata.name}{"\t"}{@.status.conditions[0].reason}{"\n"}' |\
+            sort |\
+            awk 'BEGIN {IFS="\t";sw=0;} $1==""{next;} $3=="$(params.pipeline_run_name)"{sw=1;} $4=="Running"{if(sw==0){print;}}' |\
+            wc -l \
+          )
+          EXIT_CODE=$?
+          if [ ${EXIT_CODE} -ne 0 ]; then
+            echo "[ERROR] kubectl get pipelinerun exit-code: ${EXIT_CODE}"
+            exit 1
+          fi;
+          if [ ${RUN_COUNT} -lt ${MAX_EXECUTE_BUILD} ]; then
+            break;
+          fi;
+          echo "[INFO] remaining running=`expr ${RUN_COUNT} - ${MAX_EXECUTE_BUILD}`, wait for other builds to complete."
+          sleep 5;
+        done;
+
+        echo "[INFO] task finish"
+        exit 0

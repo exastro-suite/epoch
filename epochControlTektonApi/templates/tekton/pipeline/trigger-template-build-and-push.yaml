@@ -31,6 +31,8 @@ spec:
   - name: git_sender_user
   - name: git_webhook_header
   - name: git_webhook_body
+  - name: max_execute_build_task
+  - name: rs_ci_result_api_base
   - name: pipeline_run_name
   - name: pipeline_run_uid
   - name: pipeline_sa
@@ -71,6 +73,8 @@ spec:
         value: $(tt.params.git_webhook_header)
       - name: git_webhook_body
         value: $(tt.params.git_webhook_body)
+      - name: max_execute_build_task
+        value: $(tt.params.max_execute_build_task)
       - name: pipeline_run_name
         value: $(tt.params.pipeline_run_name)
       - name: pipeline_run_uid
