@@ -697,6 +697,7 @@ def get_ci_pipeline_result(workspace_id):
         # Get Query Parameter
         latest = request.args.get('latest', default='False')
         getlog = request.args.get('log', default='True')
+        getlogId = request.args.get('logID', default='')
 
         # ヘッダ情報
         post_headers = {
@@ -738,8 +739,7 @@ def get_ci_pipeline_result(workspace_id):
                 # Get only if task has a log
                 if "taskrun_name" in task:
                     taskrun_name = task["taskrun_name"]
-
-                    if getlog == 'True':
+                    if getlog == 'True' and row.get('pipelinerun_name', '') == getlogId:
 
                         # epoch-control-tekton-api の呼び先設定
                         api_url_tekton = "{}://{}:{}/workspace/{}/tekton/taskrun/{}/logs".format(
