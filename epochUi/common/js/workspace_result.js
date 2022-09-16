@@ -694,6 +694,16 @@ function wsTektonCheck() {
         '.branch': d.build_branch,
       };
 
+      // 表示対象のログ切替
+      try {
+        display_pipeline_run_name = d.pipelinerun_name
+        ws.cmn.data.new.url = workspace_api_conf.api.ciResult.pipelinerun.get.replace('{workspace_id}', (new URLSearchParams(window.location.search)).get('workspace_id')) + "?latest=True&logID=" + display_pipeline_run_name;
+        ws.cmn.data.all.url = workspace_api_conf.api.ciResult.pipelinerun.get.replace('{workspace_id}', (new URLSearchParams(window.location.search)).get('workspace_id')) + "?logID=" + display_pipeline_run_name;
+      } catch(e) {
+        ws.cmn.data.new.url = workspace_api_conf.api.ciResult.pipelinerun.get.replace('{workspace_id}', (new URLSearchParams(window.location.search)).get('workspace_id')) + "?latest=True&log=False";
+        ws.cmn.data.all.url = workspace_api_conf.api.ciResult.pipelinerun.get.replace('{workspace_id}', (new URLSearchParams(window.location.search)).get('workspace_id')) + "?log=False";
+      }
+
       const $modal = ws.cmn.modal.sub.$modal;
 
       // タスク詳細
@@ -839,15 +849,6 @@ function wsTektonCheck() {
       const type = ( $(this).closest('#all-task').length )? 'all': 'new';
       ws.cmn.data[type].detail.traceid = $( this ).attr('data-button');
       ws.cmn.data[type].detail.targetID = 'task_id';
-      try {
-        display_pipeline_run_name = ws.cmn.data[type].result.find((v) => { return v.task_id === parseInt(ws.cmn.data[type].detail.traceid) }).pipelinerun_name
-        ws.cmn.data.new.url = workspace_api_conf.api.ciResult.pipelinerun.get.replace('{workspace_id}', (new URLSearchParams(window.location.search)).get('workspace_id')) + "?latest=True&logID=" + display_pipeline_run_name;
-        ws.cmn.data.all.url = workspace_api_conf.api.ciResult.pipelinerun.get.replace('{workspace_id}', (new URLSearchParams(window.location.search)).get('workspace_id')) + "?logID=" + display_pipeline_run_name;
-      } catch(e) {
-        ws.cmn.data.new.url = workspace_api_conf.api.ciResult.pipelinerun.get.replace('{workspace_id}', (new URLSearchParams(window.location.search)).get('workspace_id')) + "?latest=True&log=False";
-        ws.cmn.data.all.url = workspace_api_conf.api.ciResult.pipelinerun.get.replace('{workspace_id}', (new URLSearchParams(window.location.search)).get('workspace_id')) + "?log=False";
-      }
-    
       ws.cmn.detail( type, 760 );
   });
 }
