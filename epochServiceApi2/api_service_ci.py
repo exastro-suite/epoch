@@ -12,6 +12,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+from telnetlib import theNULL
 from flask import Flask, request, abort, jsonify, render_template
 from datetime import datetime
 import inspect
@@ -324,9 +325,14 @@ def get_git_commits(workspace_id):
         }
 
         rows = []
+        treated_git_url = {}
         # パイプライン数分処理する Process for a few minutes in the pipelines
         for pipeline in workspace_info["ci_config"]["pipelines"]:
             git_url = pipeline["git_repositry"]["url"]
+            if git_url in treated_git_url:
+                continue
+            else:
+                treated_git_url[git_url] = True
 
             if workspace_info["ci_config"]["pipelines_common"]["git_repositry"]["housing"] == const.HOUSING_INNER:
                 # EPOCH内レジストリ ブランチの一覧取得 Get a list of registry branches in EPOCH
@@ -483,10 +489,15 @@ def get_git_hooks(workspace_id):
             'Content-Type': 'application/json',
         }
 
+        treated_git_url = {}
         rows = []
         # パイプライン数分処理する Process for a few minutes in the pipelines
         for pipeline in workspace_info["ci_config"]["pipelines"]:
             git_url = pipeline["git_repositry"]["url"]
+            if git_url in treated_git_url:
+                continue
+            else:
+                treated_git_url[git_url] = True
 
             # GitHubのみ対応 Only compatible with GitHub
             if workspace_info["cd_config"]["environments_common"]["git_repositry"]["housing"] == const.HOUSING_OUTER:
