@@ -1045,7 +1045,7 @@ definitions:
       schema:
         type: string
 
-    Log:
+    logID:
       name: logID
       in: string
       description: タスクログ取得(pipelinerun name)
