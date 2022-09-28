@@ -517,7 +517,7 @@ paths:
       parameters:
         - $ref: '#/definitions/parameters/Workspace_Id'
         - $ref: '#/definitions/parameters/Latest'
-        - $ref: '#/definitions/parameters/Log'
+        - $ref: '#/definitions/parameters/logID'
 
       # レスポンス結果
       responses:
@@ -1046,9 +1046,9 @@ definitions:
         type: string
 
     Log:
-      name: log
+      name: logID
       in: string
-      description: タスクログ取得(True or False)
+      description: タスクログ取得(pipelinerun name)
       schema:
         type: string
 
