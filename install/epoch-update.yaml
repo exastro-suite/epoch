@@ -799,7 +799,15 @@ data:
     RESOURCE_CREATION_WAIT=60
 
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: epoch-control-tekton-api
+  namespace: epoch-system
+data:
+  MAX_EXECUTE_BUILD_TASK: "1"
 
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -821,7 +829,7 @@ spec:
           name: epoch-control-tekton-conf
       containers:
       - name: epoch-control-tekton-api
-        image: exastro/epoch-control-tekton-api:1.2.0_20220721_1400
+        image: exastro/epoch-control-tekton-api:1.2.0_20220929_1200
         env:
         - name: CONFIG_API_TEKTON_PATH
           value: "/etc/epoch/epochControlTektonApi/api_tekton.conf"
@@ -831,6 +839,11 @@ spec:
           value: "8000"
         - name: PYTHONIOENCODING
           value: utf-8
+        - name: MAX_EXECUTE_BUILD_TASK
+          valueFrom:
+            configMapKeyRef:
+              name: epoch-control-tekton-api
+              key: MAX_EXECUTE_BUILD_TASK
         - name: EPOCH_HTTP_PROXY
           valueFrom:
             configMapKeyRef:
@@ -2163,7 +2176,7 @@ spec:
           name: epoch-service-api2-conf
       containers:
       - name: epoch-service-api2
-        image: exastro/epoch-service-api2:1.2.0_20220722_1100
+        image: exastro/epoch-service-api2:1.2.0_20220929_1200
         env:
         - name: CONFIG_API_SERVICE_PATH
           value: "/etc/epoch/epochServiceApi/api_service.conf"
@@ -2235,7 +2248,7 @@ spec:
     spec:
       containers:
       - name: epoch-ui
-        image: exastro/epoch-ui:1.2.0_20220721_1400
+        image: exastro/epoch-ui:1.2.0_20220929_1200
 
 ---
 apiVersion: v1
