@@ -103,6 +103,20 @@ wsResultCommon.prototype = {
                     d.fn.loadingEnd();
                 }
             }
+
+            // clipbord対応
+            ws.modal.fn.$modal.find('td.clipbord').append('<a class="clipbord" style="margin-right:3px;"><img src="common/img/clipbord_icon.svg" width="15px" height="20px"></a>');
+            ws.modal.fn.$modal.find('a.clipbord').on('click',function() { 
+                if ( navigator.clipboard ) {
+                    navigator.clipboard.writeText( $(this).prev().text() ).then( function(){
+                        alert('クリップボードにコピーしました。')
+                    });
+                } else {
+                    alert('お使いのブラウザは対応していません。');
+                }
+            })
+            // clipbord対応
+
             if ( ws.update ) {
                 ws.timerID = setTimeout( function(){
                     ws.getData( ws.updateTable );
@@ -615,7 +629,7 @@ function wsTektonCheck() {
             'Pending': '保留'
           }},
           {'className': 'repository lb rs', 'title': 'アプリケーションコードリポジトリ', 'type': 'link', 'sort': 'on', 'filter': 'on'},
-          {'className': 'image lb rs', 'title': 'イメージ出力先（タグ含む）', 'type': 'text', 'sort': 'on', 'filter': 'on'},
+          {'className': 'image lb rs clipbord', 'title': 'イメージ出力先（タグ含む）', 'type': 'text', 'sort': 'on', 'filter': 'on'},
           {'className': 'date lb rs', 'title': '開始日時', 'type': 'date', 'sort': 'on', 'filter': 'on'},
           {'className': 'branch lb rs', 'title': 'ブランチ', 'type': 'text', 'sort': 'on', 'filter': 'on'},
           {'className': 'task lb','title': '詳細', 'type': 'button', 'buttonClass': 'execution-status-button table-button icon icon-Detail'},
@@ -648,12 +662,12 @@ function wsTektonCheck() {
       'all': {'header': commonDataHeader, 'option': commonDataOption, 'change': commonDataChange, 'detail': {} }
   };
 
-  ws.cmn.data.new.url = workspace_api_conf.api.ciResult.pipelinerun.get.replace('{workspace_id}', (new URLSearchParams(window.location.search)).get('workspace_id')) + "?latest=True&log=False";
+  ws.cmn.data.new.url = workspace_api_conf.api.ciResult.pipelinerun.get.replace('{workspace_id}', (new URLSearchParams(window.location.search)).get('workspace_id')) + "?latest=True";
   ws.cmn.data.new.target = '#new-task';
-  ws.cmn.data.all.url = workspace_api_conf.api.ciResult.pipelinerun.get.replace('{workspace_id}', (new URLSearchParams(window.location.search)).get('workspace_id')) + "?log=False";
+  ws.cmn.data.all.url = workspace_api_conf.api.ciResult.pipelinerun.get.replace('{workspace_id}', (new URLSearchParams(window.location.search)).get('workspace_id'));
   ws.cmn.data.all.target = '#all-task';
 
-  ws.cmn.open( 800 );
+  ws.cmn.open( 1000 );
 
   // 実行状況詳細画面
   ws.cmn.modal.de.title = 'タスク実行状況';
@@ -700,8 +714,8 @@ function wsTektonCheck() {
         ws.cmn.data.new.url = workspace_api_conf.api.ciResult.pipelinerun.get.replace('{workspace_id}', (new URLSearchParams(window.location.search)).get('workspace_id')) + "?latest=True&logID=" + display_pipeline_run_name;
         ws.cmn.data.all.url = workspace_api_conf.api.ciResult.pipelinerun.get.replace('{workspace_id}', (new URLSearchParams(window.location.search)).get('workspace_id')) + "?logID=" + display_pipeline_run_name;
       } catch(e) {
-        ws.cmn.data.new.url = workspace_api_conf.api.ciResult.pipelinerun.get.replace('{workspace_id}', (new URLSearchParams(window.location.search)).get('workspace_id')) + "?latest=True&log=False";
-        ws.cmn.data.all.url = workspace_api_conf.api.ciResult.pipelinerun.get.replace('{workspace_id}', (new URLSearchParams(window.location.search)).get('workspace_id')) + "?log=False";
+        ws.cmn.data.new.url = workspace_api_conf.api.ciResult.pipelinerun.get.replace('{workspace_id}', (new URLSearchParams(window.location.search)).get('workspace_id')) + "?latest=True";
+        ws.cmn.data.all.url = workspace_api_conf.api.ciResult.pipelinerun.get.replace('{workspace_id}', (new URLSearchParams(window.location.search)).get('workspace_id'));
       }
 
       const $modal = ws.cmn.modal.sub.$modal;
@@ -849,8 +863,9 @@ function wsTektonCheck() {
       const type = ( $(this).closest('#all-task').length )? 'all': 'new';
       ws.cmn.data[type].detail.traceid = $( this ).attr('data-button');
       ws.cmn.data[type].detail.targetID = 'task_id';
-      ws.cmn.detail( type, 760 );
+      ws.cmn.detail( type, 900 );
   });
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -978,15 +993,15 @@ function wsRegiSerCheck() {
             'header':
                 RefWsDataJSON["registry-service"]["registry-service-select"] === "ACR"?
                     [
-                        {'className': 'image', 'title': 'イメージ名', 'type': 'text', 'width': '30%', 'sort': 'on', 'filter': 'on'},
-                        {'className': 'tag lb', 'title': 'TAG', 'type': 'text', 'width': '20%', 'sort': 'on', 'filter': 'on'},
+                        {'className': 'image clipbord', 'title': 'イメージ名', 'type': 'text', 'width': '30%', 'sort': 'on', 'filter': 'on'},
+                        {'className': 'tag lb clipbord', 'title': 'TAG', 'type': 'text', 'width': '20%', 'sort': 'on', 'filter': 'on'},
                         {'className': 'push lb', 'title': 'Push日時', 'type': 'date', 'width': '160px', 'sort': 'on', 'filter': 'on'},
                         {'className': 'repository lb', 'title': 'ビルドリポジトリ名', 'type': 'link', 'width': '20%', 'sort': 'on', 'filter': 'on'},
                         {'className': 'branch lb', 'title': 'ビルドブランチ', 'type': 'text', 'width': 'auto', 'sort': 'on', 'filter': 'on'}
                     ] :
                     [
-                        {'className': 'image', 'title': 'イメージ名', 'type': 'link', 'width': '20%', 'sort': 'on', 'filter': 'on'},
-                        {'className': 'tag lb', 'title': 'TAG', 'type': 'text', 'width': '20%', 'sort': 'on', 'filter': 'on'},
+                        {'className': 'image clipbord', 'title': 'イメージ名', 'type': 'link', 'width': '20%', 'sort': 'on', 'filter': 'on'},
+                        {'className': 'tag lb clipbord', 'title': 'TAG', 'type': 'text', 'width': '20%', 'sort': 'on', 'filter': 'on'},
                         {'className': 'push lb', 'title': 'Push日時', 'type': 'date', 'width': '160px', 'sort': 'on', 'filter': 'on'},
                         {'className': 'size lb', 'title': 'サイズ', 'type': 'text', 'width': '100px', 'align': 'right', 'sort': 'on', 'filter': 'on'},
                         {'className': 'repository lb', 'title': 'ビルドリポジトリ名', 'type': 'link', 'width': '20%', 'sort': 'on', 'filter': 'on'},
@@ -1025,7 +1040,7 @@ function wsRegiSerCheck() {
         }
     };
 
-    ws.cmn.open( 1200 );
+    ws.cmn.open( 1400 );
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

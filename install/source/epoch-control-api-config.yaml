@@ -29,4 +29,3 @@ data:
   RS_WORKSPACE_PROTOCOL: "http"
   RS_WORKSPACE_HOST: "epoch-rs-workspace-api"
   RS_WORKSPACE_PORT: "8000"
-  MAX_EXECUTE_BUILD_TASK: "1"
