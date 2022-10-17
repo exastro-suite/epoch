@@ -130,6 +130,7 @@ def post_gitlab_webhooks(workspace_id):
             "id": "{}%2F{}".format(json_url['group_name'], json_url['repos_name']),
             "url": webhooks_url,
             "push_events": True,
+            "tag_push_events": True,
             "enable_ssl_verification": False,
         })
 
