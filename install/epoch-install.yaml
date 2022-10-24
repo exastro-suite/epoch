@@ -917,6 +917,12 @@ spec:
       - name: epoch-control-tekton-conf
         configMap:
           name: epoch-control-tekton-conf
+      - name: epoch-control-tekton-api-templates-ns
+        configMap:
+          name: epoch-control-tekton-api-templates-ns
+      - name: epoch-control-tekton-api-templates-pl
+        configMap:
+          name: epoch-control-tekton-api-templates-pl
       containers:
       - name: epoch-control-tekton-api
         image: exastro/epoch-control-tekton-api:1.2.0_20220929_1200
@@ -960,6 +966,10 @@ spec:
         volumeMounts:
         - name: epoch-control-tekton-conf
           mountPath: /etc/epoch/epochControlTektonApi
+        - name: epoch-control-tekton-api-templates-ns
+          mountPath: /app/templates/tekton/namespace
+        - name: epoch-control-tekton-api-templates-pl
+          mountPath: /app/templates/tekton/pipeline
 
 ---
 
@@ -978,6 +988,1625 @@ spec:
     targetPort: 8000
   selector:
     name: epoch-control-tekton-api
+
+#---- epoch-control-tekton-api-templates-pl.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+data:
+  event-listener.yaml: |
+    #   Copyright 2019 NEC Corporation
+    #
+    #   Licensed under the Apache License, Version 2.0 (the "License");
+    #   you may not use this file except in compliance with the License.
+    #   You may obtain a copy of the License at
+    #
+    #       http://www.apache.org/licenses/LICENSE-2.0
+    #
+    #   Unless required by applicable law or agreed to in writing, software
+    #   distributed under the License is distributed on an "AS IS" BASIS,
+    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    #   See the License for the specific language governing permissions and
+    #   limitations under the License.
+    apiVersion: triggers.tekton.dev/v1alpha1
+    kind: EventListener
+    metadata:
+      name: {{ param.ci_config.event_listener_name }}
+      namespace: {{ param.ci_config.pipeline_namespace }}
+    spec:
+      serviceAccountName: trigger-sa
+      triggers:
+        #{% for item in param.ci_config.pipelines %}
+        - bindings:
+            - ref: trigger-binding-common
+            #{% if param.ci_config.pipelines_common.git_repositry.housing == "inner" %}
+            - ref: trigger-binding-webhook-gitlab
+            #{% else %}
+            - ref: trigger-binding-webhook-github
+            #{% endif %}
+            - ref: trigger-binding-pipeline-{{ loop.index }}
+          template:
+            ref: trigger-template-build-and-push-{{ loop.index }}
+          interceptors:
+            - cel:
+                filter: >
+                  {% if param.ci_config.pipelines_common.git_repositry.housing == "inner" %}
+                  body.repository.git_http_url == '{{ item.git_repositry.url }}'
+                  {% else %}
+                  body.repository.clone_url == '{{ item.git_repositry.url }}'
+                  {% endif %}
+                  {% if item.build.branch|count > 0 %}
+                    && ( body.ref.startsWith("refs/tags/") || body.ref in {{ item.build_refs }} )
+                  {% endif %}
+                overlays:
+                - key: git_webhook_header
+                  expression: "header.marshalJSON()"
+                - key: git_webhook_body
+                  expression: "body.marshalJSON()"
+        #{% endfor %}
+  pipeline-build-and-push.yaml: |
+    #   Copyright 2019 NEC Corporation
+    #
+    #   Licensed under the Apache License, Version 2.0 (the "License");
+    #   you may not use this file except in compliance with the License.
+    #   You may obtain a copy of the License at
+    #
+    #       http://www.apache.org/licenses/LICENSE-2.0
+    #
+    #   Unless required by applicable law or agreed to in writing, software
+    #   distributed under the License is distributed on an "AS IS" BASIS,
+    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    #   See the License for the specific language governing permissions and
+    #   limitations under the License.
+    #{% for item in param.ci_config.pipelines %}---
+    apiVersion: tekton.dev/v1beta1
+    kind: Pipeline
+    metadata:
+      name: pipeline-build-and-push-{{ loop.index }}
+      namespace: {{ param.ci_config.pipeline_namespace }}
+    spec:
+      workspaces:
+        - name: git-source
+        #{% if item.static_analysis.interface == "sonarQube" %}
+        - name: sonar-settings
+        #{% endif %}
+        - name: dockerconfig
+      params:
+        - name: workspace_id
+        - name: pipeline_id
+        - name: git_repositry_interface
+        - name: build_context_path
+        - name: build_dockerfile_path
+        - name: container_registry_image
+        - name: git_repository_url
+        - name: git_clone_revision
+        - name: git_branch
+        - name: git_sender_user
+        - name: git_webhook_header
+        - name: git_webhook_body
+        - name: max_execute_build_task
+        - name: pipeline_run_name
+        - name: pipeline_run_uid
+      tasks:
+        - name: task-start
+          taskRef:
+            name: pipeline-task-start
+          workspaces:
+            - name: source
+              workspace: git-source
+          params:
+            - name: workspace_id
+              value: "$(params.workspace_id)"
+            - name: pipeline_id
+              value: "$(params.pipeline_id)"
+            - name: git_repositry_interface
+              value: "$(params.git_repositry_interface)"
+            - name: git_repository_url
+              value: "$(params.git_repository_url)"
+            - name: git_revision
+              value: "$(params.git_clone_revision)"
+            - name: git_branch
+              value: "$(params.git_branch)"
+            - name: git_sender_user
+              value: "$(params.git_sender_user)"
+            - name: container_registry_image
+              value: "$(params.container_registry_image)"
+            - name: git_webhook_header
+              value: "$(params.git_webhook_header)"
+            - name: git_webhook_body
+              value: "$(params.git_webhook_body)"
+            - name: max_execute_build_task
+              value: "$(params.max_execute_build_task)"
+            - name: pipeline_run_name
+              value: "$(context.pipelineRun.name)"
+            - name: pipeline_run_uid
+              value: "$(context.pipelineRun.uid)"
+        - name: task-git-clone
+          taskRef:
+            name: pipeline-task-git-clone
+          runAfter:
+            - task-start
+          workspaces:
+            - name: output
+              workspace: git-source
+          params:
+            - name: url
+              value: "$(params.git_repository_url)"
+            - name: revision
+              value: "$(params.git_clone_revision)"
+            - name: subdirectory
+              value: $(context.pipelineRun.name)
+            - name: deleteExisting
+              value: "true"
+            - name: sslVerify
+              value: "false"
+        #{% if item.static_analysis.interface == "sonarQube" %}
+        - name: task-sonarqube-scanner
+          taskRef:
+            name: pipeline-task-sonarqube-scanner
+          runAfter:
+            - task-git-clone
+          workspaces:
+            - name: source-dir
+              workspace: git-source
+            - name: sonar-settings
+              workspace: sonar-settings
+          params:
+            - name: SONAR_HOST_URL
+              value: "http://sonarqube.{{ param.ci_config.pipeline_namespace }}.svc.cluster.local:9000/"
+            - name: subdirectory
+              value: $(context.pipelineRun.name)
+        #{% endif %}
+        #{% if item.unit_test.enable == "true" %}
+        - name: task-unit-test
+          runAfter:
+          #{% if item.static_analysis.interface == "sonarQube" %}
+          - task-sonarqube-scanner
+          #{% else %}
+          - task-git-clone
+          #{% endif %}
+          taskRef:
+            name: pipeline-task-unit-test-{{ loop.index }}
+          workspaces:
+            - name: source
+              workspace: git-source
+          params:
+            - name: clone_source_dir
+              value: "$(workspaces.source.path)/$(context.pipelineRun.name)"
+        #{% endif %}
+        - name: task-build-and-push
+          taskRef:
+            name: pipeline-task-build-and-push
+          runAfter:
+            #{% if item.unit_test.enable == "true" %}
+            - task-unit-test
+            #{% elif item.static_analysis.interface == "sonarQube" %}
+            - task-sonarqube-scanner
+            #{% else %}
+            - task-git-clone
+            #{% endif %}
+          workspaces:
+            - name: source
+              workspace: git-source
+            - name: dockerconfig
+              workspace: dockerconfig
+          params:
+            - name: CONTEXT
+              value: "$(context.pipelineRun.name)/$(params.build_context_path)"
+            - name: DOCKERFILE
+              value: "$(params.build_dockerfile_path)"
+            - name: IMAGE
+              value: "$(params.container_registry_image):$(tasks.task-start.results.container_registry_image_tag)"
+        - name: task-complete
+          taskRef:
+            name: pipeline-task-complete
+          runAfter:
+            - task-build-and-push
+          workspaces:
+            - name: source
+              workspace: git-source
+          params:
+            - name: workspace_id
+              value: "$(params.workspace_id)"
+            - name: task_id
+              value: "$(tasks.task-start.results.task_id)"
+            - name: subdirectory
+              value: "$(context.pipelineRun.name)"
+            #- name: container_registry_image_digest
+            #  value: "$(tasks.task-build-and-push.results.IMAGE-DIGEST)"
+    {% endfor %}
+  pipeline-sa.yaml: |
+    #   Copyright 2019 NEC Corporation
+    #
+    #   Licensed under the Apache License, Version 2.0 (the "License");
+    #   you may not use this file except in compliance with the License.
+    #   You may obtain a copy of the License at
+    #
+    #       http://www.apache.org/licenses/LICENSE-2.0
+    #
+    #   Unless required by applicable law or agreed to in writing, software
+    #   distributed under the License is distributed on an "AS IS" BASIS,
+    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    #   See the License for the specific language governing permissions and
+    #   limitations under the License.
+    kind: Role
+    apiVersion: rbac.authorization.k8s.io/v1
+    metadata:
+      name: pipeline-sa-role
+      namespace: {{ param.ci_config.pipeline_namespace }}
+    rules:
+    - apiGroups: [""]
+      resources: ["services"]
+      verbs: ["get", "create", "update", "patch"]
+    - apiGroups: ["apps"]
+      resources: ["deployments"]
+      verbs: ["get", "create", "update", "patch"]
+    - apiGroups: ["tekton.dev"]
+      resources: ["pipelineruns"]
+      verbs: ["get", "list", "watch"]
+
+    {% for item in param.ci_config.pipelines %}
+    {% if item.git_repositry.user != "" and  item.git_repositry.token != "" %}
+    ---
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: pipeline-sa-{{ loop.index }}-git-secret
+      namespace: {{ param.ci_config.pipeline_namespace }}
+      annotations:
+        tekton.dev/git-0: {{ item.git_repositry.secret_url }}
+    type: kubernetes.io/basic-auth
+    stringData:
+      username: {{ item.git_repositry.user }}
+      password: {{ item.git_repositry.token }}
+    {% endif %}
+
+    ---
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: pipeline-sa-{{ loop.index }}
+      namespace: {{ param.ci_config.pipeline_namespace }}
+      #{% if item.git_repositry.user != "" and  item.git_repositry.token != "" %}
+    secrets:
+      - name: pipeline-sa-{{ loop.index }}-git-secret
+      #{% endif %}
+
+    ---
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: pipeline-sa-{{ loop.index }}-container-registry
+      namespace: {{ param.ci_config.pipeline_namespace }}
+    type: Opaque
+    stringData:
+      config.json: |-
+        {
+          "auths": {
+            "https://{{ item.container_registry.secret_server }}" : {
+              "auth": "{{ item.container_registry.auth }}"
+            },
+            "http://{{ item.container_registry.secret_server }}" : {
+              "auth": "{{ item.container_registry.auth }}"
+            }
+          }
+        }
+
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      name: pipeline-sa-rolebinding-{{ loop.index }}
+      namespace: {{ param.ci_config.pipeline_namespace }}
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: Role
+      name: pipeline-sa-role
+    subjects:
+    - kind: ServiceAccount
+      name: pipeline-sa-{{ loop.index }}
+      namespace: {{ param.ci_config.pipeline_namespace }}
+    {% endfor %}
+  pipeline-task-build-and-push.yaml: |
+    #   Copyright 2019 NEC Corporation
+    #
+    #   Licensed under the Apache License, Version 2.0 (the "License");
+    #   you may not use this file except in compliance with the License.
+    #   You may obtain a copy of the License at
+    #
+    #       http://www.apache.org/licenses/LICENSE-2.0
+    #
+    #   Unless required by applicable law or agreed to in writing, software
+    #   distributed under the License is distributed on an "AS IS" BASIS,
+    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    #   See the License for the specific language governing permissions and
+    #   limitations under the License.
+    apiVersion: tekton.dev/v1beta1
+    kind: Task
+    metadata:
+      name: pipeline-task-build-and-push
+      namespace: {{ param.ci_config.pipeline_namespace }}
+      labels:
+        app.kubernetes.io/version: "0.3"
+      annotations:
+        tekton.dev/pipelines.minVersion: "0.17.0"
+        tekton.dev/tags: image-build
+        tekton.dev/displayName: "image build and push"
+    spec:
+      description: >-
+        This Task builds source into a container image using Google's kaniko tool.
+
+        Kaniko doesn't depend on a Docker daemon and executes each
+        command within a Dockerfile completely in userspace. This enables
+        building container images in environments that can't easily or
+        securely run a Docker daemon, such as a standard Kubernetes cluster.
+
+      params:
+      - name: IMAGE
+        description: Name (reference) of the image to build.
+      - name: DOCKERFILE
+        description: Path to the Dockerfile to build.
+        default: ./Dockerfile
+      - name: CONTEXT
+        description: The build context used by Kaniko.
+        default: ./
+      - name: EXTRA_ARGS
+        default: ""
+      - name: BUILDER_IMAGE
+        description: The image on which builds will run (default is v1.5.1)
+        default: gcr.io/kaniko-project/executor:v1.5.1@sha256:c6166717f7fe0b7da44908c986137ecfeab21f31ec3992f6e128fff8a94be8a5
+      workspaces:
+      - name: source
+        description: Holds the context and docker file
+      - name: dockerconfig
+        description: Includes a docker `config.json`
+        optional: true
+        mountPath: /kaniko/.docker
+      #results:
+      #- name: IMAGE-DIGEST
+      #  description: Digest of the image just built.
+
+      steps:
+      - name: build-and-push
+        workingDir: $(workspaces.source.path)
+        image: $(params.BUILDER_IMAGE)
+        env:
+        - name: DOCKER_CONFIG
+          value: /kaniko/.docker
+        - name: HTTP_PROXY
+          value: "{{ param.proxy.http }}"
+        - name: http_proxy
+          value: "{{ param.proxy.http }}"
+        - name: HTTPS_PROXY
+          value: "{{ param.proxy.https }}"
+        - name: https_proxy
+          value: "{{ param.proxy.https }}"
+        - name: NO_PROXY
+          value: "{{ param.proxy.no_proxy }}"
+        - name: no_proxy
+          value: "{{ param.proxy.no_proxy }}"
+        command:
+        - /kaniko/executor
+        - $(params.EXTRA_ARGS)
+        - --dockerfile=$(params.DOCKERFILE)
+        - --context=$(workspaces.source.path)/$(params.CONTEXT)  # The user does not need to care the workspace and the source.
+        - --destination=$(params.IMAGE)
+    #    - --oci-layout-path=$(workspaces.source.path)/$(params.CONTEXT)/image-digest
+        # Add Local Registry
+        - --skip-tls-verify
+        - --insecure
+        - --insecure-pull
+        # kaniko assumes it is running as root, which means this example fails on platforms
+        # that default to run containers as random uid (like OpenShift). Adding this securityContext
+        # makes it explicit that it needs to run as root.
+        - --build-arg
+        - HTTP_PROXY={{ param.proxy.http }}
+        - --build-arg
+        - HTTPS_PROXY={{ param.proxy.https }}
+        - --build-arg
+        - NO_PROXY={{ param.proxy.no_proxy }}
+        - --build-arg
+        - http_proxy={{ param.proxy.http }}
+        - --build-arg
+        - https_proxy={{ param.proxy.https }}
+        - --build-arg
+        - no_proxy={{ param.proxy.no_proxy }}
+  pipeline-task-complete.yaml: "#   Copyright 2019 NEC Corporation\n#\n#   Licensed
+    under the Apache License, Version 2.0 (the \"License\");\n#   you may not use
+    this file except in compliance with the License.\n#   You may obtain a copy of
+    the License at\n#\n#       http://www.apache.org/licenses/LICENSE-2.0\n#\n#   Unless
+    required by applicable law or agreed to in writing, software\n#   distributed
+    under the License is distributed on an \"AS IS\" BASIS,\n#   WITHOUT WARRANTIES
+    OR CONDITIONS OF ANY KIND, either express or implied.\n#   See the License for
+    the specific language governing permissions and\n#   limitations under the License.\napiVersion:
+    tekton.dev/v1beta1\nkind: Task\nmetadata:\n  name: pipeline-task-complete\n  namespace:
+    {{ param.ci_config.pipeline_namespace }}\n  labels:\n    app.kubernetes.io/version:
+    \"0.1\"\n  annotations:\n    tekton.dev/pipelines.minVersion: \"0.12.1\"\n    tekton.dev/tags:
+    complete\n    tekton.dev/displayName: \"pipeline complete\"\nspec:\n  params:\n
+    \   - name: workspace_id\n    - name: task_id\n    - name: subdirectory\n  workspaces:\n
+    \ - name: source\n    description: Holds the context and docker file\n  steps:\n
+    \   - name: pipeline-complete-task\n      image: python\n      env:\n      - name:
+    API_TEKTON_TASK\n        value: \"http://epoch-rs-ci-result-api.epoch-system.svc:8000\"\n
+    \     script: |\n        #!/bin/bash\n\n        rm -rf $(workspaces.source.path)/$(params.subdirectory)\n\n
+    \       python - <<EOF\n        import urllib.request\n        import json\n\n
+    \       req_url=\"$API_TEKTON_TASK/workspace/$(params.workspace_id)/tekton/task/$(params.task_id)\"\n\n
+    \       req_header = {\n          'Content-Type': 'application/json',\n        }\n
+    \       req_body = json.dumps({\n          'status' :                          'COMPLETE',\n
+    \       })\n        \n        request = urllib.request.Request(req_url, data=req_body.encode(),
+    method='PATCH', headers=req_header)\n\n        with urllib.request.urlopen(request)
+    as response:\n            body = json.loads(response.read())\n            headers
+    = response.getheaders()\n            status = response.getcode()\n\n        if
+    not ( status == 200 or status == 201 ):\n            raise Exception('HTTP Reseponse
+    Error HTTP-CODE = {}'.format(status))\n\n        EOF\n\n"
+  pipeline-task-git-clone.yaml: |-
+    #   Copyright 2019 NEC Corporation
+    #
+    #   Licensed under the Apache License, Version 2.0 (the "License");
+    #   you may not use this file except in compliance with the License.
+    #   You may obtain a copy of the License at
+    #
+    #       http://www.apache.org/licenses/LICENSE-2.0
+    #
+    #   Unless required by applicable law or agreed to in writing, software
+    #   distributed under the License is distributed on an "AS IS" BASIS,
+    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    #   See the License for the specific language governing permissions and
+    #   limitations under the License.
+    apiVersion: tekton.dev/v1beta1
+    kind: Task
+    metadata:
+      name: pipeline-task-git-clone
+      namespace: {{ param.ci_config.pipeline_namespace }}
+      labels:
+        app.kubernetes.io/version: "0.3"
+      annotations:
+        tekton.dev/pipelines.minVersion: "0.21.0"
+        tekton.dev/tags: git
+        tekton.dev/displayName: "git clone"
+    spec:
+      description: >-
+        These Tasks are Git tasks to work with repositories used by other tasks
+        in your Pipeline.
+
+        The git-clone Task will clone a repo from the provided url into the
+        output Workspace. By default the repo will be cloned into the root of
+        your Workspace. You can clone into a subdirectory by setting this Task's
+        subdirectory param. This Task also supports sparse checkouts. To perform
+        a sparse checkout, pass a list of comma separated directory patterns to
+        this Task's sparseCheckoutDirectories param.
+
+      workspaces:
+        - name: output
+          description: The git repo will be cloned onto the volume backing this workspace
+      params:
+        - name: url
+          description: git url to clone
+          type: string
+        - name: revision
+          description: git revision to checkout (branch, tag, sha, ref...)
+          type: string
+          default: ""
+        - name: refspec
+          description: (optional) git refspec to fetch before checking out revision
+          default: ""
+        - name: submodules
+          description: defines if the resource should initialize and fetch the submodules
+          type: string
+          default: "true"
+        - name: depth
+          description: performs a shallow clone where only the most recent commit(s) will be fetched
+          type: string
+          default: "1"
+        - name: sslVerify
+          description: defines if http.sslVerify should be set to true or false in the global git config
+          type: string
+          default: "true"
+        - name: subdirectory
+          description: subdirectory inside the "output" workspace to clone the git repo into
+          type: string
+          default: ""
+        - name: sparseCheckoutDirectories
+          description: defines which directories patterns to match or exclude when performing a sparse checkout
+          type: string
+          default: ""
+        - name: deleteExisting
+          description: clean out the contents of the repo's destination directory (if it already exists) before trying to clone the repo there
+          type: string
+          default: "true"
+        - name: httpProxy
+          description: git HTTP proxy server for non-SSL requests
+          type: string
+          default: "{{ param.proxy.http }}"
+        - name: httpsProxy
+          description: git HTTPS proxy server for SSL requests
+          type: string
+          default: "{{ param.proxy.https }}"
+        - name: noProxy
+          description: git no proxy - opt out of proxying HTTP/HTTPS requests
+          type: string
+          default: "{{ param.proxy.no_proxy }}"
+        - name: verbose
+          description: log the commands used during execution
+          type: string
+          default: "true"
+        - name: gitInitImage
+          description: the image used where the git-init binary is
+          type: string
+          default: "gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/git-init:v0.21.0"
+      results:
+        - name: commit
+          description: The precise commit SHA that was fetched by this Task
+        - name: url
+          description: The precise URL that was fetched by this Task
+      steps:
+        - name: clone
+          image: $(params.gitInitImage)
+          script: |
+            #!/bin/sh
+            set -eu -o pipefail
+
+            if [[ "$(params.verbose)" == "true" ]] ; then
+              set -x
+            fi
+
+            CHECKOUT_DIR="$(workspaces.output.path)/$(params.subdirectory)"
+
+            cleandir() {
+              # Delete any existing contents of the repo directory if it exists.
+              #
+              # We don't just "rm -rf $CHECKOUT_DIR" because $CHECKOUT_DIR might be "/"
+              # or the root of a mounted volume.
+              if [[ -d "$CHECKOUT_DIR" ]] ; then
+                # Delete non-hidden files and directories
+                rm -rf "$CHECKOUT_DIR"/*
+                # Delete files and directories starting with . but excluding ..
+                rm -rf "$CHECKOUT_DIR"/.[!.]*
+                # Delete files and directories starting with .. plus any other character
+                rm -rf "$CHECKOUT_DIR"/..?*
+              fi
+            }
+
+            if [[ "$(params.deleteExisting)" == "true" ]] ; then
+              cleandir
+            fi
+
+            test -z "$(params.httpProxy)" || export HTTP_PROXY=$(params.httpProxy)
+            test -z "$(params.httpsProxy)" || export HTTPS_PROXY=$(params.httpsProxy)
+            test -z "$(params.noProxy)" || export NO_PROXY=$(params.noProxy)
+
+            /ko-app/git-init \
+              -url "$(params.url)" \
+              -revision "$(params.revision)" \
+              -refspec "$(params.refspec)" \
+              -path "$CHECKOUT_DIR" \
+              -sslVerify="$(params.sslVerify)" \
+              -submodules="$(params.submodules)" \
+              -depth "$(params.depth)" \
+              -sparseCheckoutDirectories "$(params.sparseCheckoutDirectories)"
+            cd "$CHECKOUT_DIR"
+            RESULT_SHA="$(git rev-parse HEAD)"
+            EXIT_CODE="$?"
+            if [ "$EXIT_CODE" != 0 ] ; then
+              exit $EXIT_CODE
+            fi
+            # ensure we don't add a trailing newline to the result
+            echo -n "$RESULT_SHA" > $(results.commit.path)
+            echo -n "$(params.url)" > $(results.url.path)
+  pipeline-task-sonarqube-scanner.yaml: |-
+    #   Copyright 2019 NEC Corporation
+    #
+    #   Licensed under the Apache License, Version 2.0 (the "License");
+    #   you may not use this file except in compliance with the License.
+    #   You may obtain a copy of the License at
+    #
+    #       http://www.apache.org/licenses/LICENSE-2.0
+    #
+    #   Unless required by applicable law or agreed to in writing, software
+    #   distributed under the License is distributed on an "AS IS" BASIS,
+    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    #   See the License for the specific language governing permissions and
+    #   limitations under the License.
+    apiVersion: tekton.dev/v1beta1
+    kind: Task
+    metadata:
+      name: pipeline-task-sonarqube-scanner
+      namespace: {{ param.ci_config.pipeline_namespace }}
+      labels:
+        app.kubernetes.io/version: "0.1"
+      annotations:
+        tekton.dev/pipelines.minVersion: "0.12.1"
+        tekton.dev/tags: security
+        tekton.dev/displayName: "sonarqube scanner"
+    spec:
+      description: >-
+        The following task can be used to perform static analysis on the source code
+        provided the SonarQube server is hosted
+
+        SonarQube is the leading tool for continuously inspecting the Code Quality and Security
+        of your codebases, all while empowering development teams. Analyze over 25 popular
+        programming languages including C#, VB.Net, JavaScript, TypeScript and C++. It detects
+        bugs, vulnerabilities and code smells across project branches and pull requests.
+
+      workspaces:
+        - name: source-dir
+        - name: sonar-settings
+      params:
+        - name: SONAR_HOST_URL
+          description: Host URL where the sonarqube server is running
+          default: ""
+        - name: SONAR_PROJECT_KEY
+          description: Project's unique key
+          default: ""
+        - name: subdirectory
+          description: "devide subdirectory each pipelineRun name"
+          default: ""
+      steps:
+        - name: sonar-properties-create
+          image: registry.access.redhat.com/ubi8/ubi-minimal:8.2
+          workingDir: $(workspaces.source-dir.path)/$(params.subdirectory)
+          script: |
+            #!/usr/bin/env bash
+
+            replaceValues() {
+              filename=$1
+              thekey=$2
+              newvalue=$3
+
+              if ! grep -R "^[#]*\s*${thekey}=.*" $filename >/dev/null; then
+                echo "APPENDING because '${thekey}' not found"
+                echo "" >>$filename
+                echo "$thekey=$newvalue" >>$filename
+              else
+                echo "SETTING because '${thekey}' found already"
+                sed -ir "s|^[#]*\s*${thekey}=.*|$thekey=$newvalue|" $filename
+              fi
+            }
+
+            if [[ -f $(workspaces.sonar-settings.path)/sonar-project.properties ]]; then
+              echo "using user provided sonar-project.properties file"
+              cp $(workspaces.sonar-settings.path)/sonar-project.properties $(workspaces.source-dir.path)/$(params.subdirectory)/sonar-project.properties
+            fi
+
+            if [[ -f $(workspaces.source-dir.path)/$(params.subdirectory)/sonar-project.properties ]]; then
+              if [[ -n "$(params.SONAR_HOST_URL)" ]]; then
+                replaceValues $(workspaces.source-dir.path)/$(params.subdirectory)/sonar-project.properties sonar.host.url $(params.SONAR_HOST_URL)
+              fi
+              if [[ -n "$(params.SONAR_PROJECT_KEY)" ]]; then
+                replaceValues $(workspaces.source-dir.path)/$(params.subdirectory)/sonar-project.properties sonar.projectKey $(params.SONAR_PROJECT_KEY)
+              fi
+            else
+              touch sonar-project.properties
+              echo "sonar.projectKey=$(params.SONAR_PROJECT_KEY)" >> sonar-project.properties
+              echo "sonar.host.url=$(params.SONAR_HOST_URL)" >> sonar-project.properties
+              echo "sonar.sources=." >> sonar-project.properties
+            fi
+
+            echo "---------------------------"
+            cat $(workspaces.source-dir.path)/$(params.subdirectory)/sonar-project.properties
+
+        - name: sonar-scan
+          image: docker.io/sonarsource/sonar-scanner-cli:4.5@sha256:b8c95a37025f3c13162118cd55761ea0b2a13d1837f9deec51b7b6d82c52040a #tag: 4.5
+          workingDir: $(workspaces.source-dir.path)/$(params.subdirectory)
+          command:
+            - sonar-scanner
+  pipeline-task-start.yaml: |
+    #   Copyright 2019 NEC Corporation
+    #
+    #   Licensed under the Apache License, Version 2.0 (the "License");
+    #   you may not use this file except in compliance with the License.
+    #   You may obtain a copy of the License at
+    #
+    #       http://www.apache.org/licenses/LICENSE-2.0
+    #
+    #   Unless required by applicable law or agreed to in writing, software
+    #   distributed under the License is distributed on an "AS IS" BASIS,
+    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    #   See the License for the specific language governing permissions and
+    #   limitations under the License.
+    apiVersion: tekton.dev/v1beta1
+    kind: Task
+    metadata:
+      name: pipeline-task-start
+      namespace: {{ param.ci_config.pipeline_namespace }}
+      labels:
+        app.kubernetes.io/version: "0.1"
+      annotations:
+        tekton.dev/pipelines.minVersion: "0.12.1"
+        tekton.dev/tags: start
+        tekton.dev/displayName: "pipeline start"
+    spec:
+      params:
+        - name: workspace_id
+        - name: pipeline_id
+        - name: git_repositry_interface
+        - name: git_repository_url
+        - name: git_revision
+        - name: git_branch
+        - name: git_sender_user
+        - name: container_registry_image
+        - name: git_webhook_header
+        - name: git_webhook_body
+        - name: max_execute_build_task
+        - name: pipeline_run_name
+        - name: pipeline_run_uid
+      workspaces:
+      - name: source
+        description: Holds the context and docker file
+      results:
+        - name: container_registry_image_tag
+        - name: task_id
+      steps:
+        - name: pipeline-start-task
+          image: exastro/epoch-api-base:0.1
+          # env:
+          # - name: API_TEKTON_TASK
+          #   value: "http://epoch-rs-ci-result-api.epoch-system.svc:8000"
+          script: |
+            #!/bin/bash
+
+            echo "[INFO] clear temporary files"
+
+            # Delete the directory of pipeline run after 120 minutes (measures when garbage remains at the end of error)
+            find $(workspaces.source.path) -mindepth 1 -type d -mmin +120 -exec rm -rf {} \;
+
+            echo "[INFO] start pipeline initialize"
+
+            python3 - <<EOF
+            import  os
+            import  requests
+            import  json
+
+            workspace_id="$(params.workspace_id)"
+            req_url="http://epoch-rs-ci-result-api.epoch-system.svc:8000/workspace/{}/tekton/task".format(workspace_id)
+            req_header = {
+              'Content-Type': 'application/json',
+            }
+            req_body = json.dumps({
+              'pipeline_id' :             $(params.pipeline_id),
+              'git_repositry_interface' : '$(params.git_repositry_interface)',
+              'git_repository_url' :      '$(params.git_repository_url)',
+              'git_revision' :            '$(params.git_revision)',
+              'git_branch' :              '$(params.git_branch)',
+              'git_sender_user' :         '$(params.git_sender_user)',
+              'container_registry_image' :'$(params.container_registry_image)',
+              'git_webhook_header' :      '$(params.git_webhook_header)',
+              'git_webhook_body' :        '$(params.git_webhook_body)',
+              'pipeline_run_name' :       '$(params.pipeline_run_name)',
+              'pipeline_run_uid' :        '$(params.pipeline_run_uid)',
+            })
+            response = requests.post(req_url, headers = req_header, data = req_body)
+
+            if response.status_code != 200 and response.status_code != 201:
+              raise Exception('HTTP Reseponse Error HTTP-CODE = {}'.format(response.status_code))
+
+            response_json = json.loads(response.text)
+
+            with open('$(results.task_id.path)', mode='w') as fp:
+              fp.write(str(response_json['param']['task_id']))
+
+            with open('$(results.container_registry_image_tag.path)', mode='w') as fp:
+              fp.write(response_json['param']['container_registry_image_tag'])
+
+            EOF
+
+            EXIT_CODE=$?
+            if [ ${EXIT_CODE} -ne 0 ]; then
+              echo "[ERROR] pipeline initialize"
+              exit ${EXIT_CODE}
+            fi
+
+            MAX_EXECUTE_BUILD=$(params.max_execute_build_task)
+
+            echo "[INFO] check start execute"
+            while true; do
+              RUN_COUNT=$(\
+                kubectl get pipelinerun -o jsonpath='{range .items[*]}{@.metadata.creationTimestamp}{"\t"}{@.metadata.uid}{"\t"}{@.metadata.name}{"\t"}{@.status.conditions[0].reason}{"\n"}' |\
+                sort |\
+                awk 'BEGIN {IFS="\t";sw=0;} $1==""{next;} $3=="$(params.pipeline_run_name)"{sw=1;} $4=="Running"{if(sw==0){print;}}' |\
+                wc -l \
+              )
+              EXIT_CODE=$?
+              if [ ${EXIT_CODE} -ne 0 ]; then
+                echo "[ERROR] kubectl get pipelinerun exit-code: ${EXIT_CODE}"
+                exit 1
+              fi;
+              if [ ${RUN_COUNT} -lt ${MAX_EXECUTE_BUILD} ]; then
+                break;
+              fi;
+
+              RCOUNT=`expr ${RUN_COUNT} - ${MAX_EXECUTE_BUILD} + 1`
+              echo "[INFO] remaining running=${RCOUNT}, wait for other builds to complete."
+              sleep `expr ${RCOUNT} "*" 5`
+            done;
+
+            exit 0
+  pipeline-task-unit-test.yaml: |
+    #   Copyright 2019 NEC Corporation
+    #
+    #   Licensed under the Apache License, Version 2.0 (the "License");
+    #   you may not use this file except in compliance with the License.
+    #   You may obtain a copy of the License at
+    #
+    #       http://www.apache.org/licenses/LICENSE-2.0
+    #
+    #   Unless required by applicable law or agreed to in writing, software
+    #   distributed under the License is distributed on an "AS IS" BASIS,
+    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    #   See the License for the specific language governing permissions and
+    #   limitations under the License.
+    #{% for item in param.ci_config.pipelines %}---
+    #{% if item.unit_test.enable == "true" %}
+    apiVersion: tekton.dev/v1beta1
+    kind: Task
+    metadata:
+      name: pipeline-task-unit-test-{{ loop.index }}
+      namespace: {{ param.ci_config.pipeline_namespace }}
+      labels:
+        app.kubernetes.io/version: "0.1"
+      annotations:
+        tekton.dev/pipelines.minVersion: "0.12.1"
+        tekton.dev/tags: unit-test
+        tekton.dev/displayName: "unit-test"
+    spec:
+      params:
+        - name: clone_source_dir
+        - name: working_dir
+          default: "{{ item.unit_test.directory }}"
+      workspaces:
+      - name: source
+      steps:
+      - name: unit-test
+        image: {{ item.unit_test.image }}
+        env:
+        #{% if not item.unit_test.defined_var_http_proxy %}
+        - name: HTTP_PROXY
+          value: "{{ param.proxy.http }}"
+        #{% endif %}
+        #{% if not item.unit_test.defined_var_http_proxy %}
+        - name: http_proxy
+          value: "{{ param.proxy.http }}"
+        #{% endif %}
+        #{% if not item.unit_test.defined_var_https_proxy %}
+        - name: HTTPS_PROXY
+          value: "{{ param.proxy.https }}"
+        #{% endif %}
+        #{% if not item.unit_test.defined_var_https_proxy %}
+        - name: https_proxy
+          value: "{{ param.proxy.https }}"
+        #{% endif %}
+        #{% if not item.unit_test.defined_var_no_proxy %}
+        - name: NO_PROXY
+          value: "{{ param.proxy.no_proxy }}"
+        #{% endif %}
+        #{% if not item.unit_test.defined_var_no_proxy %}
+        - name: no_proxy
+          value: "{{ param.proxy.no_proxy }}"
+        #{% endif %}
+        #{% for ut_param in item.unit_test.params %}
+        #{% for ut_param_name, ut_param_value in ut_param.items() %}
+        - name: {{ ut_param_name }}
+          value: "{{ ut_param_value }}"
+        #{% endfor %}
+        #{% endfor %}
+        script: |
+            #!/bin/sh
+            # Unit test pre-processing
+            mkdir -p "$(params.working_dir)"
+            if [ $? -ne 0 ]; then
+                echo "[ERROR] command exit not zero : mkdir $(params.working_dir)"
+                exit 1
+            fi
+            cp -r $(params.clone_source_dir)/* $(params.clone_source_dir)/.[^\.]* $(params.working_dir)/.
+            if [ $? -ne 0 ]; then
+                echo "[ERROR] command exit not zero : cp $(params.working_dir)"
+                exit 1
+            fi
+            cd $(params.working_dir)
+            if [ $? -ne 0 ]; then
+                echo "[ERROR] command exit not zero : cd $(params.working_dir)"
+                exit 1
+            fi
+            # Execute Unit Test
+            {{ item.unit_test.command }}
+            # TASK exit
+            exit $?
+    {% endif %}
+    {% endfor %}
+  sonar-settings-config.yaml: |
+    #   Copyright 2019 NEC Corporation
+    #
+    #   Licensed under the Apache License, Version 2.0 (the "License");
+    #   you may not use this file except in compliance with the License.
+    #   You may obtain a copy of the License at
+    #
+    #       http://www.apache.org/licenses/LICENSE-2.0
+    #
+    #   Unless required by applicable law or agreed to in writing, software
+    #   distributed under the License is distributed on an "AS IS" BASIS,
+    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    #   See the License for the specific language governing permissions and
+    #   limitations under the License.
+    #{% for item in param.ci_config.pipelines %}
+    ---
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: sonar-settings-config-{{ loop.index }}
+      namespace: {{ param.ci_config.pipeline_namespace }}
+    data:
+      sonar-project.properties: |
+    {% if item.static_analysis.interface == "sonarQube" %}
+        sonar.projectKey=epoch-pipeline-{{ loop.index }}
+        sonar.projectName={{ item.sonar_project_name }}
+        sonar.projectVersion=0.1
+        sonar.login={{ param.ci_config.sonar_token }}
+    {% else %}
+        setting not used
+    {% endif %}
+    {% endfor %}
+  trigger-binding-common.yaml: |
+    #   Copyright 2019 NEC Corporation
+    #
+    #   Licensed under the Apache License, Version 2.0 (the "License");
+    #   you may not use this file except in compliance with the License.
+    #   You may obtain a copy of the License at
+    #
+    #       http://www.apache.org/licenses/LICENSE-2.0
+    #
+    #   Unless required by applicable law or agreed to in writing, software
+    #   distributed under the License is distributed on an "AS IS" BASIS,
+    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    #   See the License for the specific language governing permissions and
+    #   limitations under the License.
+    apiVersion: triggers.tekton.dev/v1alpha1
+    kind: TriggerBinding
+    metadata:
+      name: trigger-binding-common
+      namespace: {{ param.ci_config.pipeline_namespace }}
+    spec:
+      params:
+      - name: git_webhook_header
+        value: ""
+      - name: git_webhook_body
+        value: ""
+      - name: max_execute_build_task
+        value: "{{ param.ci_config.max_execute_build_task }}"
+  trigger-binding-pipeline.yaml: |
+    #   Copyright 2019 NEC Corporation
+    #
+    #   Licensed under the Apache License, Version 2.0 (the "License");
+    #   you may not use this file except in compliance with the License.
+    #   You may obtain a copy of the License at
+    #
+    #       http://www.apache.org/licenses/LICENSE-2.0
+    #
+    #   Unless required by applicable law or agreed to in writing, software
+    #   distributed under the License is distributed on an "AS IS" BASIS,
+    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    #   See the License for the specific language governing permissions and
+    #   limitations under the License.
+    #{% for item in param.ci_config.pipelines %}---
+    apiVersion: triggers.tekton.dev/v1alpha1
+    kind: TriggerBinding
+    metadata:
+      name: trigger-binding-pipeline-{{ loop.index }}
+      namespace: {{ param.ci_config.pipeline_namespace }}
+    spec:
+      params:
+        - name: workspace_id
+          value: "{{ workspace_id }}"
+        - name: pipeline_id
+          value: "{{ loop.index }}"
+        - name: git_repositry_interface
+          value: "{{ param.ci_config.pipelines_common.git_repositry.interface }}"
+        - name: build_context_path
+          value: "{{ item.build.context_path }}"
+        - name: build_dockerfile_path
+          value: "{{ item.build.dockerfile_path }}"
+        - name: container_registry_image
+          value: {{ item.container_registry.image }}
+        - name: pipeline_sa
+          value: "pipeline-sa-{{ loop.index }}"
+        - name: pipeline_sa_reg_secret
+          value: "pipeline-sa-{{ loop.index }}-container-registry"
+    {% endfor %}
+  trigger-binding-webhook.yaml: |+
+    #   Copyright 2019 NEC Corporation
+    #
+    #   Licensed under the Apache License, Version 2.0 (the "License");
+    #   you may not use this file except in compliance with the License.
+    #   You may obtain a copy of the License at
+    #
+    #       http://www.apache.org/licenses/LICENSE-2.0
+    #
+    #   Unless required by applicable law or agreed to in writing, software
+    #   distributed under the License is distributed on an "AS IS" BASIS,
+    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    #   See the License for the specific language governing permissions and
+    #   limitations under the License.
+    apiVersion: triggers.tekton.dev/v1alpha1
+    kind: TriggerBinding
+    metadata:
+      name: trigger-binding-webhook-gitlab
+      namespace: {{ param.ci_config.pipeline_namespace }}
+    spec:
+      params:
+      - name: git_repository_url
+        value: $(body.repository.git_http_url)
+      - name: git_clone_revision
+        value: $(body.after)
+      - name: git_branch
+        value: $(body.ref)
+      - name: git_sender_user
+        value: $(body.user_username)
+
+    ---
+    apiVersion: triggers.tekton.dev/v1alpha1
+    kind: TriggerBinding
+    metadata:
+      name: trigger-binding-webhook-github
+      namespace: {{ param.ci_config.pipeline_namespace }}
+    spec:
+      params:
+      - name: git_repository_url
+        value: $(body.repository.clone_url)
+      - name: git_clone_revision
+        value: $(body.after)
+      - name: git_branch
+        value: $(body.ref)
+      - name: git_sender_user
+        value: $(body.sender.login)
+
+  trigger-sa.yaml: |
+    #   Copyright 2019 NEC Corporation
+    #
+    #   Licensed under the Apache License, Version 2.0 (the "License");
+    #   you may not use this file except in compliance with the License.
+    #   You may obtain a copy of the License at
+    #
+    #       http://www.apache.org/licenses/LICENSE-2.0
+    #
+    #   Unless required by applicable law or agreed to in writing, software
+    #   distributed under the License is distributed on an "AS IS" BASIS,
+    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    #   See the License for the specific language governing permissions and
+    #   limitations under the License.
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: trigger-sa
+      namespace: {{ param.ci_config.pipeline_namespace }}
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      name: trigger-sa-role
+      namespace: {{ param.ci_config.pipeline_namespace }}
+    rules:
+    - apiGroups: ["triggers.tekton.dev"]
+      resources: ["eventlisteners", "triggerbindings", "triggertemplates", "triggers"]
+      verbs: ["get", "list", "watch"]
+    - apiGroups: [""]
+      resources: ["configmaps", "secrets"]
+      verbs: ["get", "list", "watch"]
+    - apiGroups: ["tekton.dev"]
+      resources: ["pipelineruns", "pipelineresources", "taskruns"]
+      verbs: ["create"]
+    - apiGroups: [""]
+      resources: ["serviceaccounts"]
+      verbs: ["impersonate"]
+    - apiGroups: ["policy"]
+      resources: ["podsecuritypolicies"]
+      resourceNames: ["tekton-triggers"]
+      verbs: ["use"]
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      name: trigger-sa-rolebinding
+      namespace: {{ param.ci_config.pipeline_namespace }}
+    subjects:
+    - kind: ServiceAccount
+      name: trigger-sa
+      namespace: {{ param.ci_config.pipeline_namespace }}
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: Role
+      name: trigger-sa-role
+
+    ---
+    kind: ClusterRole
+    apiVersion: rbac.authorization.k8s.io/v1
+    metadata:
+      name: trigger-sa-cluster-role-{{ workspace_id }}
+    rules:
+    - apiGroups: ["triggers.tekton.dev"]
+      resources: ["clustertriggerbindings"]
+      verbs: ["get", "list", "watch"]
+    - apiGroups: ["triggers.tekton.dev"]
+      resources: ["clusterinterceptors"]
+      verbs: ["get", "list", "watch"]
+
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      name: trigger-sa-cluster-rolebinding-{{ workspace_id }}
+    subjects:
+    - kind: ServiceAccount
+      name: trigger-sa
+      namespace: {{ param.ci_config.pipeline_namespace }}
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: trigger-sa-cluster-role-{{ workspace_id }}
+  trigger-template-build-and-push.yaml: |
+    #   Copyright 2019 NEC Corporation
+    #
+    #   Licensed under the Apache License, Version 2.0 (the "License");
+    #   you may not use this file except in compliance with the License.
+    #   You may obtain a copy of the License at
+    #
+    #       http://www.apache.org/licenses/LICENSE-2.0
+    #
+    #   Unless required by applicable law or agreed to in writing, software
+    #   distributed under the License is distributed on an "AS IS" BASIS,
+    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    #   See the License for the specific language governing permissions and
+    #   limitations under the License.
+    #{% for item in param.ci_config.pipelines %}---
+    apiVersion: triggers.tekton.dev/v1alpha1
+    kind: TriggerTemplate
+    metadata:
+      name: trigger-template-build-and-push-{{ loop.index }}
+      namespace: {{ param.ci_config.pipeline_namespace }}
+    spec:
+      params:
+      - name: workspace_id
+      - name: pipeline_id
+      - name: git_repositry_interface
+      - name: build_context_path
+      - name: build_dockerfile_path
+      - name: container_registry_image
+      - name: git_repository_url
+      - name: git_clone_revision
+      - name: git_branch
+      - name: git_sender_user
+      - name: git_webhook_header
+      - name: git_webhook_body
+      - name: max_execute_build_task
+      - name: rs_ci_result_api_base
+      - name: pipeline_run_name
+      - name: pipeline_run_uid
+      - name: pipeline_sa
+      - name: pipeline_sa_reg_secret
+      resourcetemplates:
+      - apiVersion: tekton.dev/v1beta1
+        kind: PipelineRun
+        metadata:
+          generateName: pipeline-run-{{ loop.index }}-
+          labels:
+            workspace_id: $(tt.params.workspace_id)
+            pipeline_id: $(tt.params.pipeline_id)
+        spec:
+          pipelineRef:
+            name: pipeline-build-and-push-{{ loop.index }}
+          params:
+          - name: workspace_id
+            value: $(tt.params.workspace_id)
+          - name: pipeline_id
+            value: $(tt.params.pipeline_id)
+          - name: git_repositry_interface
+            value: $(tt.params.git_repositry_interface)
+          - name: build_context_path
+            value: $(tt.params.build_context_path)
+          - name: build_dockerfile_path
+            value: $(tt.params.build_dockerfile_path)
+          - name: container_registry_image
+            value: $(tt.params.container_registry_image)
+          - name: git_repository_url
+            value: $(tt.params.git_repository_url)
+          - name: git_clone_revision
+            value: $(tt.params.git_clone_revision)
+          - name: git_branch
+            value: $(tt.params.git_branch)
+          - name: git_sender_user
+            value: $(tt.params.git_sender_user)
+          - name: git_webhook_header
+            value: $(tt.params.git_webhook_header)
+          - name: git_webhook_body
+            value: $(tt.params.git_webhook_body)
+          - name: max_execute_build_task
+            value: $(tt.params.max_execute_build_task)
+          - name: pipeline_run_name
+            value: $(tt.params.pipeline_run_name)
+          - name: pipeline_run_uid
+            value: $(tt.params.pipeline_run_uid)
+          serviceAccountName: $(tt.params.pipeline_sa)
+          workspaces:
+            - name: git-source
+              persistentVolumeClaim:
+                claimName: pipeline-pvc
+            #{% if item.static_analysis.interface == "sonarQube" %}
+            - name: sonar-settings
+              configmap:
+                name: sonar-settings-config-{{ loop.index }}
+            #{% endif %}
+            - name: dockerconfig
+              secret:
+                secretName: $(tt.params.pipeline_sa_reg_secret)
+    {% endfor %}
+  webhook-secret.yaml: |
+    #   Copyright 2019 NEC Corporation
+    #
+    #   Licensed under the Apache License, Version 2.0 (the "License");
+    #   you may not use this file except in compliance with the License.
+    #   You may obtain a copy of the License at
+    #
+    #       http://www.apache.org/licenses/LICENSE-2.0
+    #
+    #   Unless required by applicable law or agreed to in writing, software
+    #   distributed under the License is distributed on an "AS IS" BASIS,
+    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    #   See the License for the specific language governing permissions and
+    #   limitations under the License.
+    #{% for item in param.ci_config.pipelines %}---
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: webhook-secret-{{ loop.index }}
+      namespace: {{ param.ci_config.pipeline_namespace }}
+    type: Opaque
+    stringData:
+      secretToken: "{{ param.allocation.webhook.token }}"
+    {% endfor %}
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: epoch-control-tekton-api-templates-pl
+  namespace: epoch-system
+
+#---- epoch-control-tekton-api-templates-ns.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+data:
+  namespace.yaml: |
+    #   Copyright 2019 NEC Corporation
+    #
+    #   Licensed under the Apache License, Version 2.0 (the "License");
+    #   you may not use this file except in compliance with the License.
+    #   You may obtain a copy of the License at
+    #
+    #       http://www.apache.org/licenses/LICENSE-2.0
+    #
+    #   Unless required by applicable law or agreed to in writing, software
+    #   distributed under the License is distributed on an "AS IS" BASIS,
+    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    #   See the License for the specific language governing permissions and
+    #   limitations under the License.
+    kind: Namespace
+    apiVersion: v1
+    metadata:
+      name: {{ param.ci_config.pipeline_namespace }}
+  pipeline-pvc.yaml: |
+    #   Copyright 2019 NEC Corporation
+    #
+    #   Licensed under the Apache License, Version 2.0 (the "License");
+    #   you may not use this file except in compliance with the License.
+    #   You may obtain a copy of the License at
+    #
+    #       http://www.apache.org/licenses/LICENSE-2.0
+    #
+    #   Unless required by applicable law or agreed to in writing, software
+    #   distributed under the License is distributed on an "AS IS" BASIS,
+    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    #   See the License for the specific language governing permissions and
+    #   limitations under the License.
+    apiVersion: v1
+    kind: PersistentVolume
+    metadata:
+      name: {{ param.ci_config.pipeline_namespace }}-pv
+      labels:
+        type: local
+      annotations:
+        pv.kubernetes.io/bound-by-controller: "yes"
+    spec:
+      storageClassName: epoch-tekton-pipeline-storage
+      capacity:
+        storage: 500Mi
+      accessModes:
+        - ReadWriteOnce
+      persistentVolumeReclaimPolicy: Retain
+      hostPath:
+        path: /var/data/epoch/workspaces/workspace-{{ workspace_id }}/{{ param.ci_config.pipeline_namespace }}-pv
+        type: DirectoryOrCreate
+      nodeAffinity:
+        required:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+              - {{ param.node }}
+
+    ---
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: pipeline-pvc
+      namespace: {{ param.ci_config.pipeline_namespace }}
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 500Mi
+      storageClassName: epoch-tekton-pipeline-storage
+      volumeMode: Filesystem
+      volumeName: {{ param.ci_config.pipeline_namespace }}-pv
+
+    ---
+    apiVersion: v1
+    kind: PersistentVolume
+    metadata:
+      name: {{ param.ci_config.pipeline_namespace }}-sonarqube-pv
+      labels:
+        type: local
+      annotations:
+        pv.kubernetes.io/bound-by-controller: "yes"
+    spec:
+      storageClassName: epoch-tekton-pipeline-storage
+      capacity:
+        storage: 8Gi
+      accessModes:
+        - ReadWriteOnce
+      persistentVolumeReclaimPolicy: Retain
+      hostPath:
+        path: /var/data/epoch/workspaces/workspace-{{ workspace_id }}/{{ param.ci_config.pipeline_namespace }}-sonarqube-pv
+        type: DirectoryOrCreate
+      nodeAffinity:
+        required:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+              - {{ param.node }}
+
+    ---
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: pipeline-sonarqube-pvc
+      namespace: {{ param.ci_config.pipeline_namespace }}
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 8Gi
+      storageClassName: epoch-tekton-pipeline-storage
+      volumeMode: Filesystem
+      volumeName: {{ param.ci_config.pipeline_namespace }}-sonarqube-pv
+
+    ---
+    apiVersion: v1
+    kind: PersistentVolume
+    metadata:
+      name: {{ param.ci_config.pipeline_namespace }}-sonarqube-db-pv
+      labels:
+        type: local
+      annotations:
+        pv.kubernetes.io/bound-by-controller: "yes"
+    spec:
+      storageClassName: epoch-tekton-pipeline-storage
+      capacity:
+        storage: 8Gi
+      accessModes:
+        - ReadWriteOnce
+      persistentVolumeReclaimPolicy: Retain
+      hostPath:
+        path: /var/data/epoch/workspaces/workspace-{{ workspace_id }}/{{ param.ci_config.pipeline_namespace }}-sonarqube-db-pv
+        type: DirectoryOrCreate
+      nodeAffinity:
+        required:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+              - {{ param.node }}
+
+    ---
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: pipeline-sonarqube-db-pvc
+      namespace: {{ param.ci_config.pipeline_namespace }}
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 8Gi
+      storageClassName: epoch-tekton-pipeline-storage
+      volumeMode: Filesystem
+      volumeName: {{ param.ci_config.pipeline_namespace }}-sonarqube-db-pv
+  sonarqube.yaml: |
+    #   Copyright 2019 NEC Corporation
+    #
+    #   Licensed under the Apache License, Version 2.0 (the "License");
+    #   you may not use this file except in compliance with the License.
+    #   You may obtain a copy of the License at
+    #
+    #       http://www.apache.org/licenses/LICENSE-2.0
+    #
+    #   Unless required by applicable law or agreed to in writing, software
+    #   distributed under the License is distributed on an "AS IS" BASIS,
+    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    #   See the License for the specific language governing permissions and
+    #   limitations under the License.
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: sonarqube
+      labels:
+        app: sonarqube
+      namespace: {{ param.ci_config.pipeline_namespace }}
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: sonarqube
+      template:
+        metadata:
+          labels:
+            app: sonarqube
+        spec:
+          hostname: sonarqube
+          volumes:
+          - name: sonar-volume
+            persistentVolumeClaim:
+              claimName: pipeline-sonarqube-pvc
+          initContainers:
+          - name: sonarqube-init
+            image: busybox
+            #command: ['sysctl', '-w', 'vm.max_map_count=262144']
+            command: ['sh', '-c']
+            args:
+                - |
+                  COUNT=$(sysctl -n vm.max_map_count);
+                  if [ ${COUNT} -lt ${MIN_VM_MAX_MAP_COUNT} ]; then
+                      sysctl -w vm.max_map_count=${MIN_VM_MAX_MAP_COUNT};
+                  fi
+            env:
+            - name: MIN_VM_MAX_MAP_COUNT
+              value: "262144"
+            securityContext:
+              privileged: true
+          containers:
+          - name: sonarqube
+            image: sonarqube
+            env:
+            - name: SONAR_JDBC_URL
+              value: jdbc:postgresql://sonarqube-db:5432/sonar
+            - name: SONAR_JDBC_USERNAME
+              value: sonar
+            - name: SONAR_JDBC_PASSWORD
+              value: password
+            volumeMounts:
+            - name: sonar-volume
+              subPath: sonarqube-data
+              mountPath: /opt/sonarqube/data
+            - name: sonar-volume
+              subPath: sonarqube-extensions
+              mountPath: /opt/sonarqube/extensions
+            - name: sonar-volume
+              subPath: sonarqube-logs
+              mountPath: /opt/sonarqube/logs
+
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: sonarqube
+      labels:
+        app: sonarqube
+      namespace: {{ param.ci_config.pipeline_namespace }}
+    spec:
+      type: ClusterIP
+      selector:
+        app: sonarqube
+      ports:
+      - name: http
+        port: 9000
+        targetPort: 9000
+
+    ---
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: sonarqube-db
+      labels:
+        app: sonarqube-db
+      namespace: {{ param.ci_config.pipeline_namespace }}
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: sonarqube-db
+      template:
+        metadata:
+          labels:
+            app: sonarqube-db
+        spec:
+          hostname: sonarqube-db
+          volumes:
+          - name: sonar-db-volume
+            persistentVolumeClaim:
+              claimName: pipeline-sonarqube-db-pvc
+          containers:
+          - name: sonarqube-db
+            image: postgres:12
+            env:
+            - name: POSTGRES_USER
+              value: sonar
+            - name: POSTGRES_PASSWORD
+              value: password
+            volumeMounts:
+            - name: sonar-db-volume
+              subPath: postgresql
+              mountPath: /var/lib/postgresql
+            - name: sonar-db-volume
+              subPath: postgresql-data
+              mountPath: /var/lib/postgresql/data
+
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: sonarqube-db
+      labels:
+        app: sonarqube-db
+      namespace: {{ param.ci_config.pipeline_namespace }}
+    spec:
+      type: ClusterIP
+      selector:
+        app: sonarqube-db
+      ports:
+      - name: postgres
+        port: 5432
+        targetPort: 5432
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: epoch-control-tekton-api-templates-ns
+  namespace: epoch-system
 
 #---- epoch-control-tekton-db.yaml
 ---
@@ -1068,11 +2697,9 @@ spec:
       - name: mysqlconf-volume
         configMap:
           name: tekton-pipeline-db-myconf
-      # COMMENT OUT:Persistent data retention
-      #- name: mysqldata
-      #  hostPath:
-      #    path: /var/data/epoch/tekton_pipeline_db/mysql
-      #    type: DirectoryOrCreate
+      - name: mysqldata
+        persistentVolumeClaim:
+          claimName: epoch-tekton-pipeline-db
       - name: mysqlinitdb-volume
         configMap:
           name: tekton-pipeline-db-initdb
@@ -1080,9 +2707,8 @@ spec:
       - name: mysql
         image: mysql
         volumeMounts:
-        # COMMENT OUT:Persistent data retention
-        #- name: mysqldata
-        #  mountPath: /var/lib/mysql
+        - name: mysqldata
+          mountPath: /var/lib/mysql
         - name: mysqlconf-volume
           mountPath: /etc/mysql/conf.d
         - name: mysqlinitdb-volume
@@ -1237,6 +2863,9 @@ spec:
       - name: epoch-control-ita-conf
         configMap:
           name: epoch-control-ita-conf
+      - name: epoch-control-ita-api-templates
+        configMap:
+          name: epoch-control-ita-api-templates
       containers:
       - name: epoch-control-ita-api
         image: exastro/epoch-control-ita-api:1.1.0_20220630_1100
@@ -1287,6 +2916,8 @@ spec:
         volumeMounts:
         - name: epoch-control-ita-conf
           mountPath: /etc/epoch/epochControlITAApi
+        - name: epoch-control-ita-api-templates
+          mountPath: /app/templates
 ---
 apiVersion: v1
 kind: Service
@@ -1303,6 +2934,283 @@ spec:
     targetPort: 8000
   selector:
     name: epoch-control-ita-api
+
+#---- epoch-control-ita-api-templates.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+data:
+  ita_install.yaml: |
+    #   Copyright 2019 NEC Corporation
+    #
+    #   Licensed under the Apache License, Version 2.0 (the "License");
+    #   you may not use this file except in compliance with the License.
+    #   You may obtain a copy of the License at
+    #
+    #       http://www.apache.org/licenses/LICENSE-2.0
+    #
+    #   Unless required by applicable law or agreed to in writing, software
+    #   distributed under the License is distributed on an "AS IS" BASIS,
+    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    #   See the License for the specific language governing permissions and
+    #   limitations under the License.
+    ---
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: epoch-ita-conf
+    data:
+      ita_table_update.sql: |
+        UPDATE A_ACCOUNT_LIST
+        SET
+          PW_LAST_UPDATE_TIME = '2999-12-31 23:59:58',
+          PASSWORD = 'e2af70b260b03a8f66b8f276fa0246c7'
+        WHERE USER_ID = 1;
+
+    ---
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: it-automation
+    spec:
+      selector:
+        matchLabels:
+          app: it-automation
+      replicas: 1
+      template:
+        metadata:
+          labels:
+            app: it-automation
+        spec:
+          containers:
+          - name: it-automation
+            image: exastro/it-automation:1.9.0-ja
+            ports:
+            - containerPort: 80
+            - containerPort: 443
+            securityContext:
+              privileged: true
+            env:
+            - name: EXASTRO_AUTO_FILE_VOLUME_INIT
+              value: "true"
+            - name: EXASTRO_AUTO_DATABASE_VOLUME_INIT
+              value: "true"
+            volumeMounts:
+            - name: epoch-ita-conf
+              mountPath: /app/epoch/tmp
+            - name: epoch-ita-database-volume
+              mountPath: /exastro-database-volume
+            - name: epoch-ita-file-volume
+              mountPath: /exastro-file-volume
+          hostAliases:
+          - hostnames:
+            - exastro-it-automation
+            ip: 127.0.0.1
+          volumes:
+          - name: epoch-ita-conf
+            configMap:
+              name: epoch-ita-conf
+          - name: epoch-ita-database-volume
+            persistentVolumeClaim:
+              claimName: epoch-ita-database-volume
+          - name: epoch-ita-file-volume
+            persistentVolumeClaim:
+              claimName: epoch-ita-file-volume
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: it-automation
+    spec:
+      type: ClusterIP
+      selector:
+        app: it-automation
+      ports:
+        - name: "8084"
+          port: 8084
+          targetPort: 80
+        - name: "10483"
+          port: 10483
+          targetPort: 443
+
+    ---
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: ita-worker
+    spec:
+      selector:
+        matchLabels:
+          name: ita-worker
+      replicas: 1
+      template:
+        metadata:
+          labels:
+            name: ita-worker
+        spec:
+          containers:
+          - name: ita-worker
+            image: exastro/epoch-ita-worker:0.3.1_20220201_1000
+            ports:
+            - containerPort: 22
+            env:
+              - name: "HTTP_PROXY"
+                value: "{{ param.HTTP_PROXY }}"
+              - name: "http_proxy"
+                value: "{{ param.HTTP_PROXY }}"
+              - name: "HTTPS_PROXY"
+                value: "{{ param.HTTPS_PROXY }}"
+              - name: "https_proxy"
+                value: "{{ param.HTTPS_PROXY }}"
+              - name: "NO_PROXY"
+                value: "{{ param.NO_PROXY }}"
+            command: ["sh", "-c"]
+            args:
+            - |
+              echo "export HTTPS_PROXY=$HTTPS_PROXY"  >  /etc/profile.d/99-proxy.sh;
+              echo "export https_proxy=$https_proxy"  >> /etc/profile.d/99-proxy.sh;
+              echo "export HTTP_PROXY=$HTTP_PROXY"    >> /etc/profile.d/99-proxy.sh;
+              echo "export http_proxy=$http_proxy"    >> /etc/profile.d/99-proxy.sh;
+              echo "export NO_PROXY=$NO_PROXY"        >> /etc/profile.d/99-proxy.sh;
+              echo "export HTTPS_PROXY=$HTTPS_PROXY"  >  /etc/environment;
+              echo "export https_proxy=$https_proxy"  >> /etc/environment;
+              echo "export HTTP_PROXY=$HTTP_PROXY"    >> /etc/environment;
+              echo "export http_proxy=$http_proxy"    >> /etc/environment;
+              echo "export NO_PROXY=$NO_PROXY"        >> /etc/environment;
+              /usr/sbin/sshd -De
+
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: ita-worker
+      labels:
+        name: ita-worker
+    spec:
+      type: ClusterIP
+      ports:
+      - name: ssh
+        port: 22
+        targetPort: 22
+      selector:
+        name: ita-worker
+  ita_pv.yaml: |
+    #   Copyright 2022 NEC Corporation
+    #
+    #   Licensed under the Apache License, Version 2.0 (the "License");
+    #   you may not use this file except in compliance with the License.
+    #   You may obtain a copy of the License at
+    #
+    #       http://www.apache.org/licenses/LICENSE-2.0
+    #
+    #   Unless required by applicable law or agreed to in writing, software
+    #   distributed under the License is distributed on an "AS IS" BASIS,
+    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    #   See the License for the specific language governing permissions and
+    #   limitations under the License.
+    apiVersion: v1
+    kind: PersistentVolume
+    metadata:
+      name: {{ param.NAMESPACE }}-ita-database-pv
+      labels:
+        type: local
+      annotations:
+        pv.kubernetes.io/bound-by-controller: "yes"
+    spec:
+      storageClassName: epoch-ita-database-volume-storage
+      capacity:
+        storage: 4Gi
+      accessModes:
+        - ReadWriteOnce
+      persistentVolumeReclaimPolicy: Retain
+      hostPath:
+        path: /var/data/epoch/workspaces/workspace-{{ param.WORKSPACE_ID }}/{{ param.NAMESPACE }}-ita-pv/database
+        type: DirectoryOrCreate
+      nodeAffinity:
+        required:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+              - {{ param.NODE }}
+
+    ---
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: epoch-ita-database-volume
+      namespace: {{ param.NAMESPACE }}
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 4Gi
+      storageClassName: epoch-ita-database-volume-storage
+      volumeMode: Filesystem
+      volumeName: {{ param.NAMESPACE }}-ita-database-pv
+
+    ---
+    apiVersion: v1
+    kind: PersistentVolume
+    metadata:
+      name: {{ param.NAMESPACE }}-ita-file-pv
+      labels:
+        type: local
+      annotations:
+        pv.kubernetes.io/bound-by-controller: "yes"
+    spec:
+      storageClassName: epoch-ita-file-volume-storage
+      capacity:
+        storage: 4Gi
+      accessModes:
+        - ReadWriteOnce
+      persistentVolumeReclaimPolicy: Retain
+      hostPath:
+        path: /var/data/epoch/workspaces/workspace-{{ param.WORKSPACE_ID }}/{{ param.NAMESPACE }}-ita-pv/file
+        type: DirectoryOrCreate
+      nodeAffinity:
+        required:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+              - {{ param.NODE }}
+
+    ---
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: epoch-ita-file-volume
+      namespace: {{ param.NAMESPACE }}
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 4Gi
+      storageClassName: epoch-ita-file-volume-storage
+      volumeMode: Filesystem
+      volumeName: {{ param.NAMESPACE }}-ita-file-pv
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: epoch-control-ita-api-templates
+  namespace: epoch-system
 
 #---- epoch-control-dockerhub-api.yaml
 ---

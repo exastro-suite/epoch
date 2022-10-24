@@ -33,6 +33,22 @@ spec:
       - name: sonar-volume
         persistentVolumeClaim:
           claimName: pipeline-sonarqube-pvc
+      initContainers:
+      - name: sonarqube-init
+        image: busybox
+        #command: ['sysctl', '-w', 'vm.max_map_count=262144']
+        command: ['sh', '-c']
+        args:
+            - |
+              COUNT=$(sysctl -n vm.max_map_count);
+              if [ ${COUNT} -lt ${MIN_VM_MAX_MAP_COUNT} ]; then
+                  sysctl -w vm.max_map_count=${MIN_VM_MAX_MAP_COUNT};
+              fi
+        env:
+        - name: MIN_VM_MAX_MAP_COUNT
+          value: "262144"
+        securityContext:
+          privileged: true
       containers:
       - name: sonarqube
         image: sonarqube

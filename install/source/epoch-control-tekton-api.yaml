@@ -55,6 +55,12 @@ spec:
       - name: epoch-control-tekton-conf
         configMap:
           name: epoch-control-tekton-conf
+      - name: epoch-control-tekton-api-templates-ns
+        configMap:
+          name: epoch-control-tekton-api-templates-ns
+      - name: epoch-control-tekton-api-templates-pl
+        configMap:
+          name: epoch-control-tekton-api-templates-pl
       containers:
       - name: epoch-control-tekton-api
         image: exastro/epoch-control-tekton-api:1.2.0_20220929_1200
@@ -98,6 +104,10 @@ spec:
         volumeMounts:
         - name: epoch-control-tekton-conf
           mountPath: /etc/epoch/epochControlTektonApi
+        - name: epoch-control-tekton-api-templates-ns
+          mountPath: /app/templates/tekton/namespace
+        - name: epoch-control-tekton-api-templates-pl
+          mountPath: /app/templates/tekton/pipeline
 
 ---
 
