@@ -39,6 +39,9 @@ spec:
       - name: epoch-control-ita-conf
         configMap:
           name: epoch-control-ita-conf
+      - name: epoch-control-ita-api-templates
+        configMap:
+          name: epoch-control-ita-api-templates
       containers:
       - name: epoch-control-ita-api
         image: exastro/epoch-control-ita-api:1.1.0_20220630_1100
@@ -89,6 +92,8 @@ spec:
         volumeMounts:
         - name: epoch-control-ita-conf
           mountPath: /etc/epoch/epochControlITAApi
+        - name: epoch-control-ita-api-templates
+          mountPath: /etc/templates
 ---
 apiVersion: v1
 kind: Service
