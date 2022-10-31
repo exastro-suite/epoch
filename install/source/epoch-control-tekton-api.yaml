@@ -58,6 +58,12 @@ spec:
       - name: epoch-control-tekton-api-templates-ns
         configMap:
           name: epoch-control-tekton-api-templates-ns
+      - name: epoch-control-tekton-api-templates-pvc
+        configMap:
+          name: epoch-control-tekton-api-templates-pvc
+      - name: epoch-control-tekton-api-templates-sq
+        configMap:
+          name: epoch-control-tekton-api-templates-sq
       - name: epoch-control-tekton-api-templates-pl
         configMap:
           name: epoch-control-tekton-api-templates-pl
@@ -105,7 +111,14 @@ spec:
         - name: epoch-control-tekton-conf
           mountPath: /etc/epoch/epochControlTektonApi
         - name: epoch-control-tekton-api-templates-ns
-          mountPath: /app/templates/tekton/namespace
+          mountPath: /app/templates/tekton/namespace/namespace.yaml
+          subPath: namespace.yaml
+        - name: epoch-control-tekton-api-templates-pvc
+          mountPath: /app/templates/tekton/namespace/pipeline-pvc.yaml
+          subPath: pipeline-pvc.yaml
+        - name: epoch-control-tekton-api-templates-sq
+          mountPath: /app/templates/tekton/namespace/sonarqube.yaml
+          subPath: sonarqube.yaml
         - name: epoch-control-tekton-api-templates-pl
           mountPath: /app/templates/tekton/pipeline
 

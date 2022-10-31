@@ -782,6 +782,12 @@ spec:
       - name: epoch-control-tekton-api-templates-ns
         configMap:
           name: epoch-control-tekton-api-templates-ns
+      - name: epoch-control-tekton-api-templates-pvc
+        configMap:
+          name: epoch-control-tekton-api-templates-pvc
+      - name: epoch-control-tekton-api-templates-sq
+        configMap:
+          name: epoch-control-tekton-api-templates-sq
       - name: epoch-control-tekton-api-templates-pl
         configMap:
           name: epoch-control-tekton-api-templates-pl
@@ -829,7 +835,14 @@ spec:
         - name: epoch-control-tekton-conf
           mountPath: /etc/epoch/epochControlTektonApi
         - name: epoch-control-tekton-api-templates-ns
-          mountPath: /app/templates/tekton/namespace
+          mountPath: /app/templates/tekton/namespace/namespace.yaml
+          subPath: namespace.yaml
+        - name: epoch-control-tekton-api-templates-pvc
+          mountPath: /app/templates/tekton/namespace/pipeline-pvc.yaml
+          subPath: pipeline-pvc.yaml
+        - name: epoch-control-tekton-api-templates-sq
+          mountPath: /app/templates/tekton/namespace/sonarqube.yaml
+          subPath: sonarqube.yaml
         - name: epoch-control-tekton-api-templates-pl
           mountPath: /app/templates/tekton/pipeline
 
@@ -850,6 +863,381 @@ spec:
     targetPort: 8000
   selector:
     name: epoch-control-tekton-api
+
+#---- epoch-control-tekton-api-templates-ns.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+data:
+  namespace.yaml: |
+    #   Copyright 2019 NEC Corporation
+    #
+    #   Licensed under the Apache License, Version 2.0 (the "License");
+    #   you may not use this file except in compliance with the License.
+    #   You may obtain a copy of the License at
+    #
+    #       http://www.apache.org/licenses/LICENSE-2.0
+    #
+    #   Unless required by applicable law or agreed to in writing, software
+    #   distributed under the License is distributed on an "AS IS" BASIS,
+    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    #   See the License for the specific language governing permissions and
+    #   limitations under the License.
+    kind: Namespace
+    apiVersion: v1
+    metadata:
+      name: {{ param.ci_config.pipeline_namespace }}
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: epoch-control-tekton-api-templates-ns
+  namespace: epoch-system
+
+#---- epoch-control-tekton-api-templates-pvc.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+data:
+  pipeline-pvc.yaml: |
+    #   Copyright 2019 NEC Corporation
+    #
+    #   Licensed under the Apache License, Version 2.0 (the "License");
+    #   you may not use this file except in compliance with the License.
+    #   You may obtain a copy of the License at
+    #
+    #       http://www.apache.org/licenses/LICENSE-2.0
+    #
+    #   Unless required by applicable law or agreed to in writing, software
+    #   distributed under the License is distributed on an "AS IS" BASIS,
+    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    #   See the License for the specific language governing permissions and
+    #   limitations under the License.
+    apiVersion: v1
+    kind: PersistentVolume
+    metadata:
+      name: {{ param.ci_config.pipeline_namespace }}-pv
+      labels:
+        type: local
+      annotations:
+        pv.kubernetes.io/bound-by-controller: "yes"
+    spec:
+      storageClassName: epoch-tekton-pipeline-storage
+      capacity:
+        storage: 500Mi
+      accessModes:
+        - ReadWriteOnce
+      persistentVolumeReclaimPolicy: Retain
+      hostPath:
+        path: /var/data/epoch/workspaces/workspace-{{ workspace_id }}/{{ param.ci_config.pipeline_namespace }}-pv
+        type: DirectoryOrCreate
+      nodeAffinity:
+        required:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+              - {{ param.node }}
+
+    ---
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: pipeline-pvc
+      namespace: {{ param.ci_config.pipeline_namespace }}
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 500Mi
+      storageClassName: epoch-tekton-pipeline-storage
+      volumeMode: Filesystem
+      volumeName: {{ param.ci_config.pipeline_namespace }}-pv
+
+    ---
+    apiVersion: v1
+    kind: PersistentVolume
+    metadata:
+      name: {{ param.ci_config.pipeline_namespace }}-sonarqube-pv
+      labels:
+        type: local
+      annotations:
+        pv.kubernetes.io/bound-by-controller: "yes"
+    spec:
+      storageClassName: epoch-tekton-pipeline-storage
+      capacity:
+        storage: 8Gi
+      accessModes:
+        - ReadWriteOnce
+      persistentVolumeReclaimPolicy: Retain
+      hostPath:
+        path: /var/data/epoch/workspaces/workspace-{{ workspace_id }}/{{ param.ci_config.pipeline_namespace }}-sonarqube-pv
+        type: DirectoryOrCreate
+      nodeAffinity:
+        required:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+              - {{ param.node }}
+
+    ---
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: pipeline-sonarqube-pvc
+      namespace: {{ param.ci_config.pipeline_namespace }}
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 8Gi
+      storageClassName: epoch-tekton-pipeline-storage
+      volumeMode: Filesystem
+      volumeName: {{ param.ci_config.pipeline_namespace }}-sonarqube-pv
+
+    ---
+    apiVersion: v1
+    kind: PersistentVolume
+    metadata:
+      name: {{ param.ci_config.pipeline_namespace }}-sonarqube-db-pv
+      labels:
+        type: local
+      annotations:
+        pv.kubernetes.io/bound-by-controller: "yes"
+    spec:
+      storageClassName: epoch-tekton-pipeline-storage
+      capacity:
+        storage: 8Gi
+      accessModes:
+        - ReadWriteOnce
+      persistentVolumeReclaimPolicy: Retain
+      hostPath:
+        path: /var/data/epoch/workspaces/workspace-{{ workspace_id }}/{{ param.ci_config.pipeline_namespace }}-sonarqube-db-pv
+        type: DirectoryOrCreate
+      nodeAffinity:
+        required:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+              - {{ param.node }}
+
+    ---
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: pipeline-sonarqube-db-pvc
+      namespace: {{ param.ci_config.pipeline_namespace }}
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 8Gi
+      storageClassName: epoch-tekton-pipeline-storage
+      volumeMode: Filesystem
+      volumeName: {{ param.ci_config.pipeline_namespace }}-sonarqube-db-pv
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: epoch-control-tekton-api-templates-pvc
+  namespace: epoch-system
+
+#---- epoch-control-tekton-api-templates-sq.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+data:
+  sonarqube.yaml: |
+    #   Copyright 2019 NEC Corporation
+    #
+    #   Licensed under the Apache License, Version 2.0 (the "License");
+    #   you may not use this file except in compliance with the License.
+    #   You may obtain a copy of the License at
+    #
+    #       http://www.apache.org/licenses/LICENSE-2.0
+    #
+    #   Unless required by applicable law or agreed to in writing, software
+    #   distributed under the License is distributed on an "AS IS" BASIS,
+    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    #   See the License for the specific language governing permissions and
+    #   limitations under the License.
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: sonarqube
+      labels:
+        app: sonarqube
+      namespace: {{ param.ci_config.pipeline_namespace }}
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: sonarqube
+      template:
+        metadata:
+          labels:
+            app: sonarqube
+        spec:
+          hostname: sonarqube
+          volumes:
+          - name: sonar-volume
+            persistentVolumeClaim:
+              claimName: pipeline-sonarqube-pvc
+          # initContainers:
+          # - name: sonarqube-init
+          #   image: busybox
+          #   command: ['sh', '-c']
+          #   args:
+          #      - |
+          #         COUNT=$(sysctl -n vm.max_map_count);
+          #         if [ ${COUNT} -lt ${MIN_VM_MAX_MAP_COUNT} ]; then
+          #             sysctl -w vm.max_map_count=${MIN_VM_MAX_MAP_COUNT};
+          #         fi
+          #   env:
+          #   - name: MIN_VM_MAX_MAP_COUNT
+          #     value: "262144"
+          #   securityContext:
+          #     privileged: true
+          containers:
+          - name: sonarqube
+            image: sonarqube
+            env:
+            - name: SONAR_JDBC_URL
+              value: jdbc:postgresql://sonarqube-db:5432/sonar
+            - name: SONAR_JDBC_USERNAME
+              value: sonar
+            - name: SONAR_JDBC_PASSWORD
+              value: password
+            volumeMounts:
+            - name: sonar-volume
+              subPath: sonarqube-data
+              mountPath: /opt/sonarqube/data
+            - name: sonar-volume
+              subPath: sonarqube-extensions
+              mountPath: /opt/sonarqube/extensions
+            - name: sonar-volume
+              subPath: sonarqube-logs
+              mountPath: /opt/sonarqube/logs
+
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: sonarqube
+      labels:
+        app: sonarqube
+      namespace: {{ param.ci_config.pipeline_namespace }}
+    spec:
+      type: ClusterIP
+      selector:
+        app: sonarqube
+      ports:
+      - name: http
+        port: 9000
+        targetPort: 9000
+
+    ---
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: sonarqube-db
+      labels:
+        app: sonarqube-db
+      namespace: {{ param.ci_config.pipeline_namespace }}
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: sonarqube-db
+      template:
+        metadata:
+          labels:
+            app: sonarqube-db
+        spec:
+          hostname: sonarqube-db
+          volumes:
+          - name: sonar-db-volume
+            persistentVolumeClaim:
+              claimName: pipeline-sonarqube-db-pvc
+          containers:
+          - name: sonarqube-db
+            image: postgres:12
+            env:
+            - name: POSTGRES_USER
+              value: sonar
+            - name: POSTGRES_PASSWORD
+              value: password
+            volumeMounts:
+            - name: sonar-db-volume
+              subPath: postgresql
+              mountPath: /var/lib/postgresql
+            - name: sonar-db-volume
+              subPath: postgresql-data
+              mountPath: /var/lib/postgresql/data
+
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: sonarqube-db
+      labels:
+        app: sonarqube-db
+      namespace: {{ param.ci_config.pipeline_namespace }}
+    spec:
+      type: ClusterIP
+      selector:
+        app: sonarqube-db
+      ports:
+      - name: postgres
+        port: 5432
+        targetPort: 5432
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: epoch-control-tekton-api-templates-sq
+  namespace: epoch-system
 
 #---- epoch-control-tekton-api-templates-pl.yaml
 ---
@@ -2140,336 +2528,6 @@ metadata:
   name: epoch-control-tekton-api-templates-pl
   namespace: epoch-system
 
-#---- epoch-control-tekton-api-templates-ns.yaml
----
-#   Copyright 2019 NEC Corporation
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
-apiVersion: v1
-data:
-  namespace.yaml: |
-    #   Copyright 2019 NEC Corporation
-    #
-    #   Licensed under the Apache License, Version 2.0 (the "License");
-    #   you may not use this file except in compliance with the License.
-    #   You may obtain a copy of the License at
-    #
-    #       http://www.apache.org/licenses/LICENSE-2.0
-    #
-    #   Unless required by applicable law or agreed to in writing, software
-    #   distributed under the License is distributed on an "AS IS" BASIS,
-    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    #   See the License for the specific language governing permissions and
-    #   limitations under the License.
-    kind: Namespace
-    apiVersion: v1
-    metadata:
-      name: {{ param.ci_config.pipeline_namespace }}
-  pipeline-pvc.yaml: |
-    #   Copyright 2019 NEC Corporation
-    #
-    #   Licensed under the Apache License, Version 2.0 (the "License");
-    #   you may not use this file except in compliance with the License.
-    #   You may obtain a copy of the License at
-    #
-    #       http://www.apache.org/licenses/LICENSE-2.0
-    #
-    #   Unless required by applicable law or agreed to in writing, software
-    #   distributed under the License is distributed on an "AS IS" BASIS,
-    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    #   See the License for the specific language governing permissions and
-    #   limitations under the License.
-    apiVersion: v1
-    kind: PersistentVolume
-    metadata:
-      name: {{ param.ci_config.pipeline_namespace }}-pv
-      labels:
-        type: local
-      annotations:
-        pv.kubernetes.io/bound-by-controller: "yes"
-    spec:
-      storageClassName: epoch-tekton-pipeline-storage
-      capacity:
-        storage: 500Mi
-      accessModes:
-        - ReadWriteOnce
-      persistentVolumeReclaimPolicy: Retain
-      hostPath:
-        path: /var/data/epoch/workspaces/workspace-{{ workspace_id }}/{{ param.ci_config.pipeline_namespace }}-pv
-        type: DirectoryOrCreate
-      nodeAffinity:
-        required:
-          nodeSelectorTerms:
-          - matchExpressions:
-            - key: kubernetes.io/hostname
-              operator: In
-              values:
-              - {{ param.node }}
-
-    ---
-    apiVersion: v1
-    kind: PersistentVolumeClaim
-    metadata:
-      name: pipeline-pvc
-      namespace: {{ param.ci_config.pipeline_namespace }}
-    spec:
-      accessModes:
-        - ReadWriteOnce
-      resources:
-        requests:
-          storage: 500Mi
-      storageClassName: epoch-tekton-pipeline-storage
-      volumeMode: Filesystem
-      volumeName: {{ param.ci_config.pipeline_namespace }}-pv
-
-    ---
-    apiVersion: v1
-    kind: PersistentVolume
-    metadata:
-      name: {{ param.ci_config.pipeline_namespace }}-sonarqube-pv
-      labels:
-        type: local
-      annotations:
-        pv.kubernetes.io/bound-by-controller: "yes"
-    spec:
-      storageClassName: epoch-tekton-pipeline-storage
-      capacity:
-        storage: 8Gi
-      accessModes:
-        - ReadWriteOnce
-      persistentVolumeReclaimPolicy: Retain
-      hostPath:
-        path: /var/data/epoch/workspaces/workspace-{{ workspace_id }}/{{ param.ci_config.pipeline_namespace }}-sonarqube-pv
-        type: DirectoryOrCreate
-      nodeAffinity:
-        required:
-          nodeSelectorTerms:
-          - matchExpressions:
-            - key: kubernetes.io/hostname
-              operator: In
-              values:
-              - {{ param.node }}
-
-    ---
-    apiVersion: v1
-    kind: PersistentVolumeClaim
-    metadata:
-      name: pipeline-sonarqube-pvc
-      namespace: {{ param.ci_config.pipeline_namespace }}
-    spec:
-      accessModes:
-        - ReadWriteOnce
-      resources:
-        requests:
-          storage: 8Gi
-      storageClassName: epoch-tekton-pipeline-storage
-      volumeMode: Filesystem
-      volumeName: {{ param.ci_config.pipeline_namespace }}-sonarqube-pv
-
-    ---
-    apiVersion: v1
-    kind: PersistentVolume
-    metadata:
-      name: {{ param.ci_config.pipeline_namespace }}-sonarqube-db-pv
-      labels:
-        type: local
-      annotations:
-        pv.kubernetes.io/bound-by-controller: "yes"
-    spec:
-      storageClassName: epoch-tekton-pipeline-storage
-      capacity:
-        storage: 8Gi
-      accessModes:
-        - ReadWriteOnce
-      persistentVolumeReclaimPolicy: Retain
-      hostPath:
-        path: /var/data/epoch/workspaces/workspace-{{ workspace_id }}/{{ param.ci_config.pipeline_namespace }}-sonarqube-db-pv
-        type: DirectoryOrCreate
-      nodeAffinity:
-        required:
-          nodeSelectorTerms:
-          - matchExpressions:
-            - key: kubernetes.io/hostname
-              operator: In
-              values:
-              - {{ param.node }}
-
-    ---
-    apiVersion: v1
-    kind: PersistentVolumeClaim
-    metadata:
-      name: pipeline-sonarqube-db-pvc
-      namespace: {{ param.ci_config.pipeline_namespace }}
-    spec:
-      accessModes:
-        - ReadWriteOnce
-      resources:
-        requests:
-          storage: 8Gi
-      storageClassName: epoch-tekton-pipeline-storage
-      volumeMode: Filesystem
-      volumeName: {{ param.ci_config.pipeline_namespace }}-sonarqube-db-pv
-  sonarqube.yaml: |
-    #   Copyright 2019 NEC Corporation
-    #
-    #   Licensed under the Apache License, Version 2.0 (the "License");
-    #   you may not use this file except in compliance with the License.
-    #   You may obtain a copy of the License at
-    #
-    #       http://www.apache.org/licenses/LICENSE-2.0
-    #
-    #   Unless required by applicable law or agreed to in writing, software
-    #   distributed under the License is distributed on an "AS IS" BASIS,
-    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    #   See the License for the specific language governing permissions and
-    #   limitations under the License.
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      name: sonarqube
-      labels:
-        app: sonarqube
-      namespace: {{ param.ci_config.pipeline_namespace }}
-    spec:
-      replicas: 1
-      selector:
-        matchLabels:
-          app: sonarqube
-      template:
-        metadata:
-          labels:
-            app: sonarqube
-        spec:
-          hostname: sonarqube
-          volumes:
-          - name: sonar-volume
-            persistentVolumeClaim:
-              claimName: pipeline-sonarqube-pvc
-          initContainers:
-          - name: sonarqube-init
-            image: busybox
-            #command: ['sysctl', '-w', 'vm.max_map_count=262144']
-            command: ['sh', '-c']
-            args:
-                - |
-                  COUNT=$(sysctl -n vm.max_map_count);
-                  if [ ${COUNT} -lt ${MIN_VM_MAX_MAP_COUNT} ]; then
-                      sysctl -w vm.max_map_count=${MIN_VM_MAX_MAP_COUNT};
-                  fi
-            env:
-            - name: MIN_VM_MAX_MAP_COUNT
-              value: "262144"
-            securityContext:
-              privileged: true
-          containers:
-          - name: sonarqube
-            image: sonarqube
-            env:
-            - name: SONAR_JDBC_URL
-              value: jdbc:postgresql://sonarqube-db:5432/sonar
-            - name: SONAR_JDBC_USERNAME
-              value: sonar
-            - name: SONAR_JDBC_PASSWORD
-              value: password
-            volumeMounts:
-            - name: sonar-volume
-              subPath: sonarqube-data
-              mountPath: /opt/sonarqube/data
-            - name: sonar-volume
-              subPath: sonarqube-extensions
-              mountPath: /opt/sonarqube/extensions
-            - name: sonar-volume
-              subPath: sonarqube-logs
-              mountPath: /opt/sonarqube/logs
-
-    ---
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: sonarqube
-      labels:
-        app: sonarqube
-      namespace: {{ param.ci_config.pipeline_namespace }}
-    spec:
-      type: ClusterIP
-      selector:
-        app: sonarqube
-      ports:
-      - name: http
-        port: 9000
-        targetPort: 9000
-
-    ---
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      name: sonarqube-db
-      labels:
-        app: sonarqube-db
-      namespace: {{ param.ci_config.pipeline_namespace }}
-    spec:
-      replicas: 1
-      selector:
-        matchLabels:
-          app: sonarqube-db
-      template:
-        metadata:
-          labels:
-            app: sonarqube-db
-        spec:
-          hostname: sonarqube-db
-          volumes:
-          - name: sonar-db-volume
-            persistentVolumeClaim:
-              claimName: pipeline-sonarqube-db-pvc
-          containers:
-          - name: sonarqube-db
-            image: postgres:12
-            env:
-            - name: POSTGRES_USER
-              value: sonar
-            - name: POSTGRES_PASSWORD
-              value: password
-            volumeMounts:
-            - name: sonar-db-volume
-              subPath: postgresql
-              mountPath: /var/lib/postgresql
-            - name: sonar-db-volume
-              subPath: postgresql-data
-              mountPath: /var/lib/postgresql/data
-
-    ---
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: sonarqube-db
-      labels:
-        app: sonarqube-db
-      namespace: {{ param.ci_config.pipeline_namespace }}
-    spec:
-      type: ClusterIP
-      selector:
-        app: sonarqube-db
-      ports:
-      - name: postgres
-        port: 5432
-        targetPort: 5432
-kind: ConfigMap
-metadata:
-  creationTimestamp: null
-  name: epoch-control-tekton-api-templates-ns
-  namespace: epoch-system
-
 #---- epoch-control-tekton-db.yaml
 ---
 #   Copyright 2019 NEC Corporation
@@ -2725,12 +2783,15 @@ spec:
       - name: epoch-control-ita-conf
         configMap:
           name: epoch-control-ita-conf
-      - name: epoch-control-ita-api-templates
+      - name: epoch-control-ita-api-templates-inst
         configMap:
-          name: epoch-control-ita-api-templates
+          name: epoch-control-ita-api-templates-inst
+      - name: epoch-control-ita-api-templates-pv
+        configMap:
+          name: epoch-control-ita-api-templates-pv
       containers:
       - name: epoch-control-ita-api
-        image: exastro/epoch-control-ita-api:1.1.0_20220630_1100
+        image: exastro/epoch-control-ita-api:1.2.0_20221031_1500
         env:
         - name: CONFIG_API_ITA_PATH
           value: "/etc/epoch/epochControlITAApi/api_ita.conf"
@@ -2778,8 +2839,12 @@ spec:
         volumeMounts:
         - name: epoch-control-ita-conf
           mountPath: /etc/epoch/epochControlITAApi
-        - name: epoch-control-ita-api-templates
-          mountPath: /app/templates
+        - name: epoch-control-ita-api-templates-inst
+          mountPath: /app/templates/ita_install.yaml
+          subPath: ita_install.yaml
+        - name: epoch-control-ita-api-templates-pv
+          mountPath: /app/templates/ita_pv.yaml
+          subPath: ita_pv.yaml
 ---
 apiVersion: v1
 kind: Service
@@ -2797,7 +2862,7 @@ spec:
   selector:
     name: epoch-control-ita-api
 
-#---- epoch-control-ita-api-templates.yaml
+#---- epoch-control-ita-api-templates-inst.yaml
 ---
 #   Copyright 2019 NEC Corporation
 #
@@ -2968,6 +3033,29 @@ data:
         targetPort: 22
       selector:
         name: ita-worker
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: epoch-control-ita-api-templates-inst
+  namespace: epoch-system
+
+#---- epoch-control-ita-api-templates-pv.yaml
+---
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+data:
   ita_pv.yaml: |
     #   Copyright 2022 NEC Corporation
     #
@@ -3071,7 +3159,7 @@ data:
 kind: ConfigMap
 metadata:
   creationTimestamp: null
-  name: epoch-control-ita-api-templates
+  name: epoch-control-ita-api-templates-pv
   namespace: epoch-system
 
 #---- epoch-control-dockerhub-api.yaml

@@ -199,9 +199,45 @@ cat <<EOF > ${SOURCE_MANIFEST}/epoch-control-tekton-api-templates-ns.yaml
 EOF
 kubectl create cm epoch-control-tekton-api-templates-ns -n epoch-system --dry-run=client -o yaml \
     --from-file=${TEKTON_PIPELINE_TEMPLATE_NS}/namespace.yaml \
-    --from-file=${TEKTON_PIPELINE_TEMPLATE_NS}/pipeline-pvc.yaml \
-    --from-file=${TEKTON_PIPELINE_TEMPLATE_NS}/sonarqube.yaml \
     >>   ${SOURCE_MANIFEST}/epoch-control-tekton-api-templates-ns.yaml
+
+cat <<EOF > ${SOURCE_MANIFEST}/epoch-control-tekton-api-templates-pvc.yaml
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+EOF
+kubectl create cm epoch-control-tekton-api-templates-pvc -n epoch-system --dry-run=client -o yaml \
+    --from-file=${TEKTON_PIPELINE_TEMPLATE_NS}/pipeline-pvc.yaml \
+    >>   ${SOURCE_MANIFEST}/epoch-control-tekton-api-templates-pvc.yaml
+
+cat <<EOF > ${SOURCE_MANIFEST}/epoch-control-tekton-api-templates-sq.yaml
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+EOF
+kubectl create cm epoch-control-tekton-api-templates-sq -n epoch-system --dry-run=client -o yaml \
+    --from-file=${TEKTON_PIPELINE_TEMPLATE_NS}/sonarqube.yaml \
+    >>   ${SOURCE_MANIFEST}/epoch-control-tekton-api-templates-sq.yaml
 
 cat <<EOF > ${SOURCE_MANIFEST}/epoch-control-tekton-api-templates-pl.yaml
 #   Copyright 2019 NEC Corporation
@@ -238,7 +274,7 @@ kubectl create cm epoch-control-tekton-api-templates-pl -n epoch-system --dry-ru
     >>   ${SOURCE_MANIFEST}/epoch-control-tekton-api-templates-pl.yaml
 
 
-cat <<EOF > ${SOURCE_MANIFEST}/epoch-control-ita-api-templates.yaml
+cat <<EOF > ${SOURCE_MANIFEST}/epoch-control-ita-api-templates-inst.yaml
 #   Copyright 2019 NEC Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -253,10 +289,28 @@ cat <<EOF > ${SOURCE_MANIFEST}/epoch-control-ita-api-templates.yaml
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 EOF
-kubectl create cm epoch-control-ita-api-templates -n epoch-system --dry-run=client -o yaml \
+kubectl create cm epoch-control-ita-api-templates-inst -n epoch-system --dry-run=client -o yaml \
     --from-file=${ITA_TEMPLATE}/ita_install.yaml \
+    >>   ${SOURCE_MANIFEST}/epoch-control-ita-api-templates-inst.yaml
+
+cat <<EOF > ${SOURCE_MANIFEST}/epoch-control-ita-api-templates-pv.yaml
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+EOF
+kubectl create cm epoch-control-ita-api-templates-pv -n epoch-system --dry-run=client -o yaml \
     --from-file=${ITA_TEMPLATE}/ita_pv.yaml \
-    >>   ${SOURCE_MANIFEST}/epoch-control-ita-api-templates.yaml
+    >>   ${SOURCE_MANIFEST}/epoch-control-ita-api-templates-pv.yaml
 
 # ---- source内のyamlファイル定義 ----
 YAMLFILES=()
@@ -273,12 +327,15 @@ YAMLFILES+=("epoch-control-workspace-api.yaml")
 YAMLFILES+=("epoch-control-github-api.yaml")
 YAMLFILES+=("epoch-control-inside-gitlab-api.yaml")
 YAMLFILES+=("epoch-control-tekton-api.yaml")
-YAMLFILES+=("epoch-control-tekton-api-templates-pl.yaml")
 YAMLFILES+=("epoch-control-tekton-api-templates-ns.yaml")
+YAMLFILES+=("epoch-control-tekton-api-templates-pvc.yaml")
+YAMLFILES+=("epoch-control-tekton-api-templates-sq.yaml")
+YAMLFILES+=("epoch-control-tekton-api-templates-pl.yaml")
 YAMLFILES+=("epoch-control-tekton-db.yaml")
 YAMLFILES+=("epoch-control-argocd-api.yaml")
 YAMLFILES+=("epoch-control-ita-api.yaml")
-YAMLFILES+=("epoch-control-ita-api-templates.yaml")
+YAMLFILES+=("epoch-control-ita-api-templates-inst.yaml")
+YAMLFILES+=("epoch-control-ita-api-templates-pv.yaml")
 YAMLFILES+=("epoch-control-dockerhub-api.yaml")
 YAMLFILES+=("epoch-rs-workspace-api.yaml")
 YAMLFILES+=("epoch-rs-workspace-db.yaml")
