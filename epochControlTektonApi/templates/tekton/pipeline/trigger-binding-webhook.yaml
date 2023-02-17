@@ -26,6 +26,8 @@ spec:
     value: $(body.ref)
   - name: git_sender_user
     value: $(body.user_username)
+  - name: request_time
+    value: $(header.EpochRequestTime)
 
 ---
 apiVersion: triggers.tekton.dev/v1alpha1
@@ -43,4 +45,6 @@ spec:
     value: $(body.ref)
   - name: git_sender_user
     value: $(body.sender.login)
+  - name: request_time
+    value: $(header.EpochRequestTime)
 

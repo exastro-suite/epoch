@@ -37,6 +37,7 @@ spec:
     - name: max_execute_build_task
     - name: pipeline_run_name
     - name: pipeline_run_uid
+    - name: request_time
   workspaces:
   - name: source
     description: Holds the context and docker file
@@ -58,7 +59,7 @@ spec:
         find $(workspaces.source.path) -mindepth 1 -type d -mmin +120 -exec rm -rf {} \;
 
         echo "[INFO] start pipeline initialize"
-
+        echo "request_time: $(params.request_time)"
         python3 - <<EOF
         import  os
         import  requests
@@ -81,6 +82,7 @@ spec:
           'git_webhook_body' :        '$(params.git_webhook_body)',
           'pipeline_run_name' :       '$(params.pipeline_run_name)',
           'pipeline_run_uid' :        '$(params.pipeline_run_uid)',
+          'request_time' :            '$(params.request_time)',
         })
         response = requests.post(req_url, headers = req_header, data = req_body)
 
