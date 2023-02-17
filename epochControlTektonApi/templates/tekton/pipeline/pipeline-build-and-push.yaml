@@ -40,6 +40,7 @@ spec:
     - name: max_execute_build_task
     - name: pipeline_run_name
     - name: pipeline_run_uid
+    - name: request_time
   tasks:
     - name: task-start
       taskRef:
@@ -74,6 +75,8 @@ spec:
           value: "$(context.pipelineRun.name)"
         - name: pipeline_run_uid
           value: "$(context.pipelineRun.uid)"
+        - name: request_time
+          value: "$(params.request_time)"
     - name: task-git-clone
       taskRef:
         name: pipeline-task-git-clone

@@ -59,14 +59,21 @@ def post_tekton_task(workspace_id):
             # tag push時は、imageのタグもgitのタグ名とする
             image_tag = re.sub(r'.*/', '', request.json['git_branch'])
         else:
-            image_tag = '{}.{}.{}'.format(
-                    re.sub(r'.*/', '', request.json['git_branch']),
-                    request.json['git_revision'][0:6],
-                    datetime.now(globals.TZ).strftime("%Y%m%d-%H%M%S")
-                )
+            try:
+                image_tag = '{}.{}.{}'.format(
+                        re.sub(r'.*/', '', request.json['git_branch']),
+                        request.json['git_revision'][0:6],
+                        request.json['request_time']
+                    )
+            except Exception:
+                image_tag = '{}.{}.{}'.format(
+                        re.sub(r'.*/', '', request.json['git_branch']),
+                        request.json['git_revision'][0:6],
+                        datetime.now(globals.TZ).strftime("%Y%m%d-%H%M%S")
+                    )
 
         with dbconnector() as db, dbcursor(db) as cursor:
-            
+
             # Requestからinfo項目を生成する
             info = request.json
             info['workspace_id'] = workspace_id
@@ -127,13 +134,13 @@ def get_tekton_task(workspace_id):
         globals.logger.debug('CALL {}:from[{}] workspace_id[{}]'.format(inspect.currentframe().f_code.co_name, request.method, workspace_id))
 
         with dbconnector() as db, dbcursor(db) as cursor:
-            
+
             # CI result information select execution - CI結果情報 select実行
             fetch_rows = da_ci_result.select_tekton_pipeline_task(cursor, workspace_id)
 
         # Successful completion - 正常終了
         res_status = 200
-        
+
         return jsonify({ "result": res_status, "rows": fetch_rows }), res_status
 
     except Exception as e:

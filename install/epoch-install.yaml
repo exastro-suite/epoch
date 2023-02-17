@@ -931,7 +931,7 @@ spec:
           name: epoch-control-tekton-api-templates-pl
       containers:
       - name: epoch-control-tekton-api
-        image: exastro/epoch-control-tekton-api:1.2.0_20220929_1200
+        image: exastro/epoch-control-tekton-api:1.2.0_20230217_1830
         env:
         - name: CONFIG_API_TEKTON_PATH
           value: "/etc/epoch/epochControlTektonApi/api_tekton.conf"
@@ -1487,6 +1487,7 @@ data:
         - name: max_execute_build_task
         - name: pipeline_run_name
         - name: pipeline_run_uid
+        - name: request_time
       tasks:
         - name: task-start
           taskRef:
@@ -1521,6 +1522,8 @@ data:
               value: "$(context.pipelineRun.name)"
             - name: pipeline_run_uid
               value: "$(context.pipelineRun.uid)"
+            - name: request_time
+              value: "$(params.request_time)"
         - name: task-git-clone
           taskRef:
             name: pipeline-task-git-clone
@@ -1754,7 +1757,8 @@ data:
         default: ""
       - name: BUILDER_IMAGE
         description: The image on which builds will run (default is v1.5.1)
-        default: gcr.io/kaniko-project/executor:v1.5.1@sha256:c6166717f7fe0b7da44908c986137ecfeab21f31ec3992f6e128fff8a94be8a5
+        # default: gcr.io/kaniko-project/executor:v1.5.1@sha256:c6166717f7fe0b7da44908c986137ecfeab21f31ec3992f6e128fff8a94be8a5
+        default: gcr.io/kaniko-project/executor:v1.9.1
       workspaces:
       - name: source
         description: Holds the context and docker file
@@ -1765,7 +1769,6 @@ data:
       #results:
       #- name: IMAGE-DIGEST
       #  description: Digest of the image just built.
-
       steps:
       - name: build-and-push
         workingDir: $(workspaces.source.path)
@@ -1796,6 +1799,11 @@ data:
         - --skip-tls-verify
         - --insecure
         - --insecure-pull
+        # Build cache
+        # - --cache=true
+        # - --cache-repo={{ param.ci_config.pipelines_common.container_registry.user }}/{{ param.ci_config.pipeline_namespace }}-build-cache
+        # Memory reduction
+        # - --compressed-caching=false
         # kaniko assumes it is running as root, which means this example fails on platforms
         # that default to run containers as random uid (like OpenShift). Adding this securityContext
         # makes it explicit that it needs to run as root.
@@ -2129,6 +2137,7 @@ data:
         - name: max_execute_build_task
         - name: pipeline_run_name
         - name: pipeline_run_uid
+        - name: request_time
       workspaces:
       - name: source
         description: Holds the context and docker file
@@ -2150,7 +2159,7 @@ data:
             find $(workspaces.source.path) -mindepth 1 -type d -mmin +120 -exec rm -rf {} \;
 
             echo "[INFO] start pipeline initialize"
-
+            echo "request_time: $(params.request_time)"
             python3 - <<EOF
             import  os
             import  requests
@@ -2173,6 +2182,7 @@ data:
               'git_webhook_body' :        '$(params.git_webhook_body)',
               'pipeline_run_name' :       '$(params.pipeline_run_name)',
               'pipeline_run_uid' :        '$(params.pipeline_run_uid)',
+              'request_time' :            '$(params.request_time)',
             })
             response = requests.post(req_url, headers = req_header, data = req_body)
 
@@ -2439,6 +2449,8 @@ data:
         value: $(body.ref)
       - name: git_sender_user
         value: $(body.user_username)
+      - name: request_time
+        value: $(header.EpochRequestTime)
 
     ---
     apiVersion: triggers.tekton.dev/v1alpha1
@@ -2456,6 +2468,8 @@ data:
         value: $(body.ref)
       - name: git_sender_user
         value: $(body.sender.login)
+      - name: request_time
+        value: $(header.EpochRequestTime)
 
   trigger-sa.yaml: |
     #   Copyright 2019 NEC Corporation
@@ -2580,6 +2594,7 @@ data:
       - name: pipeline_run_uid
       - name: pipeline_sa
       - name: pipeline_sa_reg_secret
+      - name: request_time
       resourcetemplates:
       - apiVersion: tekton.dev/v1beta1
         kind: PipelineRun
@@ -2622,6 +2637,8 @@ data:
             value: $(tt.params.pipeline_run_name)
           - name: pipeline_run_uid
             value: $(tt.params.pipeline_run_uid)
+          - name: request_time
+            value: $(tt.params.request_time)
           serviceAccountName: $(tt.params.pipeline_sa)
           workspaces:
             - name: git-source
@@ -3668,7 +3685,7 @@ spec:
           name: epoch-rs-ci-result-conf
       containers:
       - name: epoch-rs-ci-result-api
-        image: exastro/epoch-rs-ci-result-api:1.2.0_20221017_1500
+        image: exastro/epoch-rs-ci-result-api:1.2.0_20230217_1830
         env:
         - name: CONFIG_API_CI_RESULT_PATH
           value: "/etc/epoch/epochRsCiResultApi/api_ci_result.conf"

@@ -236,7 +236,7 @@ def sonarqube_initialize(workspace_id, param):
     globals.logger.debug('start sonarqube_initialize workspace_id:{}'.format(workspace_id))
 
     access_data = get_access_info(workspace_id)
-    
+
     host = "http://sonarqube.{}.svc:9000/".format(param["ci_config"]["pipeline_namespace"])
     sonarqube_user_name = access_data['SONARQUBE_USER']
     sonarqube_user_password = access_data['SONARQUBE_PASSWORD']
@@ -286,7 +286,7 @@ def sonarqube_initialize(workspace_id, param):
 
             # ユーザ作成API呼び出し
             response = requests.post(api_uri, auth=HTTPBasicAuth(sonarqube_user_name, sonarqube_user_password), timeout=3)
-            
+
             globals.logger.debug('code: {}, message: {}'.format(str(response.status_code), response.text))
             if response.status_code == 200:
                 globals.logger.debug('SonarQube user create SUCCEED')
@@ -481,7 +481,7 @@ def delete_tekton_pipelinerun(workspace_id):
             ['kubectl', 'tkn', 'pipelinerun', 'delete', '--all', '-f',
             '-n', tekton_pipeline_namespace(workspace_id),
             ], stderr=subprocess.STDOUT)
-        
+
         globals.logger.debug('COMMAAND SUCCEED: kubectl tkn pipelinerun delete --all -f\n{}'.format(result_kubectl.decode('utf-8')))
 
     except subprocess.CalledProcessError as e:
@@ -534,7 +534,7 @@ def get_tekton_pipelinerun(workspace_id):
                         idx = int(resPlRunitem['pipeline_id'])
 
                         if idx in resRowsDict:
-                            # そのpipeline idの結果が既に存在するときはstart_timeで比較し、大きい方を残す                
+                            # そのpipeline idの結果が既に存在するときはstart_timeで比較し、大きい方を残す
                             if resRowsDict[idx]['start_time'] < resPlRunitem['start_time']:
                                 resRowsDict[idx] = resPlRunitem
                         else:
@@ -608,7 +608,7 @@ def get_responsePipelineRunItem(plRunitem):
     resPlRunitem['start_time'] = start_time
     resPlRunitem['finish_time'] = completion_time
     resPlRunitem['status'] = status
-    
+
     build_image = get_pipelineParameter(plRunitem,'container_registry_image')
     build_tag = get_taskResult(plRunitem, 'task-start', 'container_registry_image_tag')
     if build_image is None and build_tag is None:
@@ -625,7 +625,7 @@ def get_responsePipelineRunItem(plRunitem):
     resPlRunitem['tasks'] = []
     for task in plRunitem['status']['pipelineSpec']['tasks']:
         resPlRunitem['tasks'].append(
-            dict({'name' : task['name']}, **get_taskStatus(plRunitem, task['name']))            
+            dict({'name' : task['name']}, **get_taskStatus(plRunitem, task['name']))
         )
 
     return  resPlRunitem
@@ -763,7 +763,7 @@ def get_tekton_taskrun_logs(workspace_id, taskrun_name):
                     ['kubectl', 'tkn', 'taskrun', 'logs', taskrun_name,
                     '-n', tekton_pipeline_namespace(workspace_id),
                     ], stderr=subprocess.STDOUT)
-                
+
                 globals.logger.debug('COMMAAND SUCCEED: kubectl tkn taskrun logs')
 
                 # 正常応答
@@ -841,7 +841,9 @@ def post_listener(workspace_id):
         listener_url = "http://el-event-listener.{}.svc:8080/".format(tekton_pipeline_namespace(workspace_id))
 
         # TEKTONのイベントリスナーへ転送
-        response = requests.post(listener_url, headers=request.headers, data=request.data)
+        headers = {k:v for k, v in request.headers.items()}
+        headers['EpochRequestTime'] = datetime.now(globals.TZ).strftime("%Y%m%d-%H%M%S")
+        response = requests.post(listener_url, headers=headers, data=request.data)
 
         # TEKTONのリスナーの応答をそのまま返す
         return Response(response.text, headers=dict(response.raw.headers), status=response.status_code)
