@@ -44,7 +44,7 @@ data:
       workspace_id int unsigned not null,
       kind varchar(16),
       filename varchar(256),
-      yamltext text,
+      yamltext longtext,
       index(workspace_id)
     );
     create table tekton_pipeline_task (
