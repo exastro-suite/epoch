@@ -265,6 +265,40 @@ paths:
         500:
           $ref: '#/definitions/responses/CommonException'
 
+  # エンドポイント
+  /workspace/{workspace_id}/pod:
+    post:
+      tags:
+        - Workspace
+      summary:
+        ワークスペース初期設定
+      description:
+        指定されたワークスペースIDのワークスペース情報を元に、ワークスペースの初期設定(各種ツールの初期化)を行う
+      parameters:
+        - $ref: '#/definitions/parameters/Workspace_Id'
+
+      # レスポンス結果
+      responses:
+        200:
+          description: "成功時のレスポンス"
+          content:
+            項目説明: # レスポンスの形式指定
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: "200 正常終了"
+            application/json: # レスポンスの形式指定
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: 200
+        500:
+          $ref: '#/definitions/responses/CommonException'
+
   #
   # Manifest
   #
