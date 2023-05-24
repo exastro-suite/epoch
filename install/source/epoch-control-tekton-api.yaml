@@ -27,7 +27,15 @@ data:
     RESOURCE_CREATION_WAIT=60
 
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: epoch-control-tekton-api
+  namespace: epoch-system
+data:
+  MAX_EXECUTE_BUILD_TASK: "1"
 
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -47,9 +55,21 @@ spec:
       - name: epoch-control-tekton-conf
         configMap:
           name: epoch-control-tekton-conf
+      - name: epoch-control-tekton-api-templates-ns
+        configMap:
+          name: epoch-control-tekton-api-templates-ns
+      - name: epoch-control-tekton-api-templates-pvc
+        configMap:
+          name: epoch-control-tekton-api-templates-pvc
+      - name: epoch-control-tekton-api-templates-sq
+        configMap:
+          name: epoch-control-tekton-api-templates-sq
+      - name: epoch-control-tekton-api-templates-pl
+        configMap:
+          name: epoch-control-tekton-api-templates-pl
       containers:
       - name: epoch-control-tekton-api
-        image: exastro/epoch-control-tekton-api:1.1.0_20220630_1100
+        image: exastro/epoch-control-tekton-api:1.2.0_20230217_1830
         env:
         - name: CONFIG_API_TEKTON_PATH
           value: "/etc/epoch/epochControlTektonApi/api_tekton.conf"
@@ -59,6 +79,11 @@ spec:
           value: "8000"
         - name: PYTHONIOENCODING
           value: utf-8
+        - name: MAX_EXECUTE_BUILD_TASK
+          valueFrom:
+            configMapKeyRef:
+              name: epoch-control-tekton-api
+              key: MAX_EXECUTE_BUILD_TASK
         - name: EPOCH_HTTP_PROXY
           valueFrom:
             configMapKeyRef:
@@ -85,6 +110,17 @@ spec:
         volumeMounts:
         - name: epoch-control-tekton-conf
           mountPath: /etc/epoch/epochControlTektonApi
+        - name: epoch-control-tekton-api-templates-ns
+          mountPath: /app/templates/tekton/namespace/namespace.yaml
+          subPath: namespace.yaml
+        - name: epoch-control-tekton-api-templates-pvc
+          mountPath: /app/templates/tekton/namespace/pipeline-pvc.yaml
+          subPath: pipeline-pvc.yaml
+        - name: epoch-control-tekton-api-templates-sq
+          mountPath: /app/templates/tekton/namespace/sonarqube.yaml
+          subPath: sonarqube.yaml
+        - name: epoch-control-tekton-api-templates-pl
+          mountPath: /app/templates/tekton/pipeline
 
 ---
 

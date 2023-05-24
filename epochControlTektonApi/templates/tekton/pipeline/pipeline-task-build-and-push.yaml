@@ -44,7 +44,8 @@ spec:
     default: ""
   - name: BUILDER_IMAGE
     description: The image on which builds will run (default is v1.5.1)
-    default: gcr.io/kaniko-project/executor:v1.5.1@sha256:c6166717f7fe0b7da44908c986137ecfeab21f31ec3992f6e128fff8a94be8a5
+    # default: gcr.io/kaniko-project/executor:v1.5.1@sha256:c6166717f7fe0b7da44908c986137ecfeab21f31ec3992f6e128fff8a94be8a5
+    default: gcr.io/kaniko-project/executor:v1.9.1
   workspaces:
   - name: source
     description: Holds the context and docker file
@@ -55,7 +56,6 @@ spec:
   #results:
   #- name: IMAGE-DIGEST
   #  description: Digest of the image just built.
-
   steps:
   - name: build-and-push
     workingDir: $(workspaces.source.path)
@@ -86,6 +86,11 @@ spec:
     - --skip-tls-verify
     - --insecure
     - --insecure-pull
+    # Build cache
+    # - --cache=true
+    # - --cache-repo={{ param.ci_config.pipelines_common.container_registry.user }}/{{ param.ci_config.pipeline_namespace }}-build-cache
+    # Memory reduction
+    # - --compressed-caching=false
     # kaniko assumes it is running as root, which means this example fails on platforms
     # that default to run containers as random uid (like OpenShift). Adding this securityContext
     # makes it explicit that it needs to run as root.

@@ -124,6 +124,10 @@ def post_tekton_pipeline(workspace_id):
         # namespace、eventlistener設定
         param['ci_config']['pipeline_namespace'] = tekton_pipeline_namespace(workspace_id)
         param['ci_config']['event_listener_name'] = event_listener_name
+
+        # 最大実行数
+        param['ci_config']['max_execute_build_task'] = os.environ.get('MAX_EXECUTE_BUILD_TASK', '1')
+
         # sonarqube設定
         param['ci_config']['sonarqube_password'] = access_data['SONARQUBE_PASSWORD']
         # proxy設定
@@ -157,13 +161,12 @@ def post_tekton_pipeline(workspace_id):
 
             # コンテナレジストリ情報付加
             pipeline['container_registry']['secret_server'] = 'index.docker.io/v1/'
-            # 内部レジストリ時は実際作成されてから再度有効化
-            # if pipeline['container_registry']['interface'] == 'dockerhub':
-            #     pipeline['container_registry']['secret_server'] = 'index.docker.io/v1/'
-            # else:
-            #     giturl = urlparse('http://' + pipeline['container_registry']['image'])
-            #     pipeline['container_registry']['secret_server'] = giturl.netloc + '/'
-            
+            if pipeline['container_registry']['interface'] == 'dockerhub':
+                pipeline['container_registry']['secret_server'] = 'index.docker.io/v1/'
+            else:
+                giturl = urlparse('http://' + pipeline['container_registry']['image'])
+                pipeline['container_registry']['secret_server'] = giturl.netloc + '/'
+
             pipeline['container_registry']['auth'] = base64.b64encode('{}:{}'.format(pipeline['container_registry']['user'], pipeline['container_registry']['password']).encode()).decode()
 
             # build branchの設定
@@ -233,7 +236,7 @@ def sonarqube_initialize(workspace_id, param):
     globals.logger.debug('start sonarqube_initialize workspace_id:{}'.format(workspace_id))
 
     access_data = get_access_info(workspace_id)
-    
+
     host = "http://sonarqube.{}.svc:9000/".format(param["ci_config"]["pipeline_namespace"])
     sonarqube_user_name = access_data['SONARQUBE_USER']
     sonarqube_user_password = access_data['SONARQUBE_PASSWORD']
@@ -283,7 +286,7 @@ def sonarqube_initialize(workspace_id, param):
 
             # ユーザ作成API呼び出し
             response = requests.post(api_uri, auth=HTTPBasicAuth(sonarqube_user_name, sonarqube_user_password), timeout=3)
-            
+
             globals.logger.debug('code: {}, message: {}'.format(str(response.status_code), response.text))
             if response.status_code == 200:
                 globals.logger.debug('SonarQube user create SUCCEED')
@@ -478,7 +481,7 @@ def delete_tekton_pipelinerun(workspace_id):
             ['kubectl', 'tkn', 'pipelinerun', 'delete', '--all', '-f',
             '-n', tekton_pipeline_namespace(workspace_id),
             ], stderr=subprocess.STDOUT)
-        
+
         globals.logger.debug('COMMAAND SUCCEED: kubectl tkn pipelinerun delete --all -f\n{}'.format(result_kubectl.decode('utf-8')))
 
     except subprocess.CalledProcessError as e:
@@ -531,7 +534,7 @@ def get_tekton_pipelinerun(workspace_id):
                         idx = int(resPlRunitem['pipeline_id'])
 
                         if idx in resRowsDict:
-                            # そのpipeline idの結果が既に存在するときはstart_timeで比較し、大きい方を残す                
+                            # そのpipeline idの結果が既に存在するときはstart_timeで比較し、大きい方を残す
                             if resRowsDict[idx]['start_time'] < resPlRunitem['start_time']:
                                 resRowsDict[idx] = resPlRunitem
                         else:
@@ -590,11 +593,14 @@ def get_responsePipelineRunItem(plRunitem):
 
     task_id = get_taskResult(plRunitem, 'task-start', 'task_id')
     # task_idが無い場合は、まだ何も返せない
-    if task_id is None:
+    # if task_id is None:
+    #     return None
+
+    if not 'tasks' in plRunitem.get('status', {}).get('pipelineSpec',{}):
         return None
 
     # 情報格納
-    resPlRunitem['task_id'] = int(get_taskResult(plRunitem, 'task-start', 'task_id'))
+    resPlRunitem['task_id'] = int(task_id) if not task_id is None else None
     resPlRunitem['pipeline_id'] = int(plRunitem['metadata']['labels']['pipeline_id'])
     resPlRunitem['pipelinerun_name'] = plRunitem['metadata']['name']
     resPlRunitem['repository_url'] =  get_pipelineParameter(plRunitem,'git_repository_url')
@@ -602,7 +608,16 @@ def get_responsePipelineRunItem(plRunitem):
     resPlRunitem['start_time'] = start_time
     resPlRunitem['finish_time'] = completion_time
     resPlRunitem['status'] = status
-    resPlRunitem['container_image'] = '{}:{}'.format(get_pipelineParameter(plRunitem,'container_registry_image'), get_taskResult(plRunitem, 'task-start', 'container_registry_image_tag'))
+
+    build_image = get_pipelineParameter(plRunitem,'container_registry_image')
+    build_tag = get_taskResult(plRunitem, 'task-start', 'container_registry_image_tag')
+    if build_image is None and build_tag is None:
+        resPlRunitem['container_image'] = None
+    elif build_tag is None:
+        resPlRunitem['container_image'] = build_image
+    else:
+        resPlRunitem['container_image'] = '{}:{}'.format(build_image, build_tag)
+
     resPlRunitem['git_sender_user'] = get_pipelineParameter(plRunitem,'git_sender_user')
     resPlRunitem['commit_id'] = get_pipelineParameter(plRunitem,'git_clone_revision')
 
@@ -610,7 +625,7 @@ def get_responsePipelineRunItem(plRunitem):
     resPlRunitem['tasks'] = []
     for task in plRunitem['status']['pipelineSpec']['tasks']:
         resPlRunitem['tasks'].append(
-            dict({'name' : task['name']}, **get_taskStatus(plRunitem, task['name']))            
+            dict({'name' : task['name']}, **get_taskStatus(plRunitem, task['name']))
         )
 
     return  resPlRunitem
@@ -627,9 +642,12 @@ def get_pipelineParameter(plRunitem, parameterName):
         str: パラメータ値
     """
     # spec.params配下にpipelinerunのパラメータが配列化されているので、nameが合致するものを探してvalueを返す
+    if not 'params' in plRunitem.get('spec', {}):
+        return None
+
     for param in plRunitem['spec']['params']:
-        if param['name'] == parameterName:
-            return param['value']
+        if param.get('name', None)  == parameterName:
+            return param.get('value', None)
 
     return None
 
@@ -645,13 +663,16 @@ def get_taskResult(plRunitem, taskname, resultName):
         (str): タスクResult値
     """
     # status.taskRuns[*]にtask毎、Result項目毎で格納されているので、タスク名、Result項目名が合致するものを探して値を返します
+    if not 'taskRuns' in plRunitem.get('status', {}):
+        return None
+
     for taskRun in plRunitem['status']['taskRuns'].values():
-        if taskRun['pipelineTaskName'] == taskname:
+        if taskRun.get('pipelineTaskName', None) == taskname:
             # キー値が存在する場合のみ処理する
-            if 'taskResults' in taskRun['status']:
+            if 'taskResults' in taskRun.get('status', {}):
                 for taskResult in taskRun['status']['taskResults']:
-                    if taskResult['name'] == resultName:
-                        return taskResult['value']
+                    if taskResult.get('name', None) == resultName:
+                        return taskResult.get('value', None)
     return None
 
 def get_taskStatus(plRunitem, taskname):
@@ -704,6 +725,9 @@ def convert_branch(branch):
         str: branchパラメータ レスポンス(表示)形式
     """
     # branchパラメータの"refs/heads/"の部分を取り除く
+    if branch is None:
+        return None
+
     return re.sub('^.*/', '', branch)
 
 
@@ -739,7 +763,7 @@ def get_tekton_taskrun_logs(workspace_id, taskrun_name):
                     ['kubectl', 'tkn', 'taskrun', 'logs', taskrun_name,
                     '-n', tekton_pipeline_namespace(workspace_id),
                     ], stderr=subprocess.STDOUT)
-                
+
                 globals.logger.debug('COMMAAND SUCCEED: kubectl tkn taskrun logs')
 
                 # 正常応答
@@ -817,7 +841,9 @@ def post_listener(workspace_id):
         listener_url = "http://el-event-listener.{}.svc:8080/".format(tekton_pipeline_namespace(workspace_id))
 
         # TEKTONのイベントリスナーへ転送
-        response = requests.post(listener_url, headers=request.headers, data=request.data)
+        headers = {k:v for k, v in request.headers.items()}
+        headers['EpochRequestTime'] = datetime.now(globals.TZ).strftime("%Y%m%d-%H%M%S")
+        response = requests.post(listener_url, headers=headers, data=request.data)
 
         # TEKTONのリスナーの応答をそのまま返す
         return Response(response.text, headers=dict(response.raw.headers), status=response.status_code)

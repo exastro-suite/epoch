@@ -31,10 +31,13 @@ spec:
   - name: git_sender_user
   - name: git_webhook_header
   - name: git_webhook_body
+  - name: max_execute_build_task
+  - name: rs_ci_result_api_base
   - name: pipeline_run_name
   - name: pipeline_run_uid
   - name: pipeline_sa
   - name: pipeline_sa_reg_secret
+  - name: request_time
   resourcetemplates:
   - apiVersion: tekton.dev/v1beta1
     kind: PipelineRun
@@ -71,10 +74,14 @@ spec:
         value: $(tt.params.git_webhook_header)
       - name: git_webhook_body
         value: $(tt.params.git_webhook_body)
+      - name: max_execute_build_task
+        value: $(tt.params.max_execute_build_task)
       - name: pipeline_run_name
         value: $(tt.params.pipeline_run_name)
       - name: pipeline_run_uid
         value: $(tt.params.pipeline_run_uid)
+      - name: request_time
+        value: $(tt.params.request_time)
       serviceAccountName: $(tt.params.pipeline_sa)
       workspaces:
         - name: git-source

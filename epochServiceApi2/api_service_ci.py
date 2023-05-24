@@ -12,6 +12,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+from telnetlib import theNULL
 from flask import Flask, request, abort, jsonify, render_template
 from datetime import datetime
 import inspect
@@ -27,6 +28,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 import traceback
 from datetime import timedelta, timezone
+import urllib.parse
 
 import globals
 import common
@@ -323,9 +325,14 @@ def get_git_commits(workspace_id):
         }
 
         rows = []
+        treated_git_url = {}
         # パイプライン数分処理する Process for a few minutes in the pipelines
         for pipeline in workspace_info["ci_config"]["pipelines"]:
             git_url = pipeline["git_repositry"]["url"]
+            if git_url in treated_git_url:
+                continue
+            else:
+                treated_git_url[git_url] = True
 
             if workspace_info["ci_config"]["pipelines_common"]["git_repositry"]["housing"] == const.HOUSING_INNER:
                 # EPOCH内レジストリ ブランチの一覧取得 Get a list of registry branches in EPOCH
@@ -482,10 +489,15 @@ def get_git_hooks(workspace_id):
             'Content-Type': 'application/json',
         }
 
+        treated_git_url = {}
         rows = []
         # パイプライン数分処理する Process for a few minutes in the pipelines
         for pipeline in workspace_info["ci_config"]["pipelines"]:
             git_url = pipeline["git_repositry"]["url"]
+            if git_url in treated_git_url:
+                continue
+            else:
+                treated_git_url[git_url] = True
 
             # GitHubのみ対応 Only compatible with GitHub
             if workspace_info["cd_config"]["environments_common"]["git_repositry"]["housing"] == const.HOUSING_OUTER:
@@ -593,6 +605,7 @@ def get_registry(workspace_id):
         # コンテナレジストリ情報取得用 リクエストヘッダ
         request_headers = {
             'Content-Type': 'application/json',
+            'interface': workspace_json["rows"][0]["ci_config"]["pipelines_common"]["container_registry"]["interface"],
             'username': workspace_json["rows"][0]["ci_config"]["pipelines_common"]["container_registry"]["user"],
             'password': workspace_json["rows"][0]["ci_config"]["pipelines_common"]["container_registry"]["password"]
         }
@@ -615,22 +628,33 @@ def get_registry(workspace_id):
 
         # Extract the repository information from the acquired CI result information and format it
         # 取得したCI結果情報の内、リポジトリ情報を抜き出して整形
+        cache_registry = {}
         for ci_result in ci_result_json["rows"]:
 
-            # Container registry information acquisition URL - コンテナレジストリ情報取得URL
-            api_url = "{}://{}:{}/registry/{}".format(os.environ['EPOCH_CONTROL_DOCKERHUB_PROTOCOL'],
-                                                        os.environ['EPOCH_CONTROL_DOCKERHUB_HOST'],
-                                                        os.environ['EPOCH_CONTROL_DOCKERHUB_PORT'],
-                                                        ci_result["container_registry_image"])
+            # Determine if the result is cached - 結果がキャッシュされているかを判定
+            if not ci_result["container_registry_image"] in cache_registry:
+                # Container registry information acquisition URL - コンテナレジストリ情報取得URL
+                api_url = "{}://{}:{}/registry/{}".format(os.environ['EPOCH_CONTROL_DOCKERHUB_PROTOCOL'],
+                                                            os.environ['EPOCH_CONTROL_DOCKERHUB_HOST'],
+                                                            os.environ['EPOCH_CONTROL_DOCKERHUB_PORT'],
+                                                            ci_result["container_registry_image"])
 
-            # Get container registry information - コンテナレジストリ情報取得
-            response = requests.post(api_url, headers=request_headers)
-            registry_json = json.loads(response.text)
+                # Get container registry information - コンテナレジストリ情報取得
+                response = requests.post(api_url, headers=request_headers)
 
-            if response.status_code != 200:
-                error_detail = multi_lang.get_text("EP020-0075", "コンテナレジストリ情報の取得に失敗しました")
-                globals.logger.debug(error_detail)
-                raise common.UserException(error_detail)
+                if response.status_code == 200:
+                    registry_json = json.loads(response.text)
+                else:
+                    # If the registry information cannot be obtained, it will be treated as 0 without an error.
+                    # - レジストリの情報を取得できなかったときはエラーとせず０件の扱いにする
+                    globals.logger.debug('no images : ' + ci_result["container_registry_image"])
+                    registry_json= {"rows":[]}
+
+                # Save the result to cache - 結果をキャッシュに保存する
+                cache_registry[ci_result["container_registry_image"]] = registry_json
+            else:
+                # If there is a result in the cache, get the result from the cache - キャッシュに結果がある場合はキャッシュから結果を取得する
+                registry_json = cache_registry[ci_result["container_registry_image"]]
 
             for registry in registry_json["rows"]:
                 # Merge repository information with repository information that matches the registry name and image tag
@@ -683,7 +707,7 @@ def get_ci_pipeline_result(workspace_id):
 
         # Get Query Parameter
         latest = request.args.get('latest', default='False')
-        getlog = request.args.get('log', default='True')
+        getlogId = request.args.get('logID', default='')
 
         # ヘッダ情報
         post_headers = {
@@ -725,8 +749,7 @@ def get_ci_pipeline_result(workspace_id):
                 # Get only if task has a log
                 if "taskrun_name" in task:
                     taskrun_name = task["taskrun_name"]
-
-                    if getlog == 'True':
+                    if row.get('pipelinerun_name', '') == getlogId:
 
                         # epoch-control-tekton-api の呼び先設定
                         api_url_tekton = "{}://{}:{}/workspace/{}/tekton/taskrun/{}/logs".format(

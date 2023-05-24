@@ -44,7 +44,7 @@ data:
       workspace_id int unsigned not null,
       kind varchar(16),
       filename varchar(256),
-      yamltext text,
+      yamltext longtext,
       index(workspace_id)
     );
     create table tekton_pipeline_task (
@@ -85,11 +85,9 @@ spec:
       - name: mysqlconf-volume
         configMap:
           name: tekton-pipeline-db-myconf
-      # COMMENT OUT:Persistent data retention
-      #- name: mysqldata
-      #  hostPath:
-      #    path: /var/data/epoch/tekton_pipeline_db/mysql
-      #    type: DirectoryOrCreate
+      - name: mysqldata
+        persistentVolumeClaim:
+          claimName: epoch-tekton-pipeline-db
       - name: mysqlinitdb-volume
         configMap:
           name: tekton-pipeline-db-initdb
@@ -97,11 +95,10 @@ spec:
       - name: mysql
         image: mysql
         volumeMounts:
-        # COMMENT OUT:Persistent data retention
-        #- name: mysqldata
-        #  mountPath: /var/lib/mysql
+        - name: mysqldata
+          mountPath: /var/lib/mysql
         - name: mysqlconf-volume
-          mountPath: /etc/mysql
+          mountPath: /etc/mysql/conf.d
         - name: mysqlinitdb-volume
           mountPath: /docker-entrypoint-initdb.d
         env:

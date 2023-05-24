@@ -1,0 +1,174 @@
+#   Copyright 2019 NEC Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+apiVersion: v1
+data:
+  ita_install.yaml: |
+    #   Copyright 2019 NEC Corporation
+    #
+    #   Licensed under the Apache License, Version 2.0 (the "License");
+    #   you may not use this file except in compliance with the License.
+    #   You may obtain a copy of the License at
+    #
+    #       http://www.apache.org/licenses/LICENSE-2.0
+    #
+    #   Unless required by applicable law or agreed to in writing, software
+    #   distributed under the License is distributed on an "AS IS" BASIS,
+    #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    #   See the License for the specific language governing permissions and
+    #   limitations under the License.
+    ---
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: epoch-ita-conf
+    data:
+      ita_table_update.sql: |
+        UPDATE A_ACCOUNT_LIST
+        SET
+          PW_LAST_UPDATE_TIME = '2999-12-31 23:59:58',
+          PASSWORD = 'e2af70b260b03a8f66b8f276fa0246c7'
+        WHERE USER_ID = 1;
+
+    ---
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: it-automation
+    spec:
+      selector:
+        matchLabels:
+          app: it-automation
+      replicas: 1
+      template:
+        metadata:
+          labels:
+            app: it-automation
+        spec:
+          containers:
+          - name: it-automation
+            image: exastro/it-automation:1.9.0-ja
+            ports:
+            - containerPort: 80
+            - containerPort: 443
+            securityContext:
+              privileged: true
+            env:
+            - name: EXASTRO_AUTO_FILE_VOLUME_INIT
+              value: "true"
+            - name: EXASTRO_AUTO_DATABASE_VOLUME_INIT
+              value: "true"
+            volumeMounts:
+            - name: epoch-ita-conf
+              mountPath: /app/epoch/tmp
+            - name: epoch-ita-database-volume
+              mountPath: /exastro-database-volume
+            - name: epoch-ita-file-volume
+              mountPath: /exastro-file-volume
+          hostAliases:
+          - hostnames:
+            - exastro-it-automation
+            ip: 127.0.0.1
+          volumes:
+          - name: epoch-ita-conf
+            configMap:
+              name: epoch-ita-conf
+          - name: epoch-ita-database-volume
+            persistentVolumeClaim:
+              claimName: epoch-ita-database-volume
+          - name: epoch-ita-file-volume
+            persistentVolumeClaim:
+              claimName: epoch-ita-file-volume
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: it-automation
+    spec:
+      type: ClusterIP
+      selector:
+        app: it-automation
+      ports:
+        - name: "8084"
+          port: 8084
+          targetPort: 80
+        - name: "10483"
+          port: 10483
+          targetPort: 443
+
+    ---
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: ita-worker
+    spec:
+      selector:
+        matchLabels:
+          name: ita-worker
+      replicas: 1
+      template:
+        metadata:
+          labels:
+            name: ita-worker
+        spec:
+          containers:
+          - name: ita-worker
+            image: exastro/epoch-ita-worker:0.3.1_20220201_1000
+            ports:
+            - containerPort: 22
+            env:
+              - name: "HTTP_PROXY"
+                value: "{{ param.HTTP_PROXY }}"
+              - name: "http_proxy"
+                value: "{{ param.HTTP_PROXY }}"
+              - name: "HTTPS_PROXY"
+                value: "{{ param.HTTPS_PROXY }}"
+              - name: "https_proxy"
+                value: "{{ param.HTTPS_PROXY }}"
+              - name: "NO_PROXY"
+                value: "{{ param.NO_PROXY }}"
+            command: ["sh", "-c"]
+            args:
+            - |
+              echo "export HTTPS_PROXY=$HTTPS_PROXY"  >  /etc/profile.d/99-proxy.sh;
+              echo "export https_proxy=$https_proxy"  >> /etc/profile.d/99-proxy.sh;
+              echo "export HTTP_PROXY=$HTTP_PROXY"    >> /etc/profile.d/99-proxy.sh;
+              echo "export http_proxy=$http_proxy"    >> /etc/profile.d/99-proxy.sh;
+              echo "export NO_PROXY=$NO_PROXY"        >> /etc/profile.d/99-proxy.sh;
+              echo "export HTTPS_PROXY=$HTTPS_PROXY"  >  /etc/environment;
+              echo "export https_proxy=$https_proxy"  >> /etc/environment;
+              echo "export HTTP_PROXY=$HTTP_PROXY"    >> /etc/environment;
+              echo "export http_proxy=$http_proxy"    >> /etc/environment;
+              echo "export NO_PROXY=$NO_PROXY"        >> /etc/environment;
+              /usr/sbin/sshd -De
+
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: ita-worker
+      labels:
+        name: ita-worker
+    spec:
+      type: ClusterIP
+      ports:
+      - name: ssh
+        port: 22
+        targetPort: 22
+      selector:
+        name: ita-worker
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: epoch-control-ita-api-templates-inst
+  namespace: epoch-system

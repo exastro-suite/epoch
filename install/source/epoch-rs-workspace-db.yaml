@@ -61,7 +61,7 @@ data:
       id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
       workspace_id int unsigned not null,
       file_name varchar(1024) not null,
-      file_text text not null,
+      file_text longtext not null,
       create_at datetime not null DEFAULT CURRENT_TIMESTAMP,
       update_at datetime not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     );
@@ -101,7 +101,7 @@ spec:
         - name: mysql-persistent-storage
           mountPath: /var/lib/mysql
         - name: mysqlconf-volume
-          mountPath: /etc/mysql
+          mountPath: /etc/mysql/conf.d
         - name: mysqlinitdb-volume
           mountPath: /docker-entrypoint-initdb.d
         env:

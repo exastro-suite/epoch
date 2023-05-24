@@ -41,7 +41,7 @@ spec:
           name: epoch-control-dockerhub-conf
       containers:
       - name: epoch-control-dockerhub-api
-        image: exastro/epoch-control-dockerhub-api:1.1.0_20220630_1100
+        image: exastro/epoch-control-dockerhub-api:1.2.0_20220721_1400
         env:
         - name: HTTP_PROXY
           valueFrom:

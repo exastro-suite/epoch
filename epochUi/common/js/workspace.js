@@ -308,7 +308,8 @@ const wsModalJSON = {
             'name': 'registry-service-select',
             'item': {
               //'epoch': 'EPOCH内レジストリ',
-              'dockerhub': 'DockerHub'
+              'dockerhub': 'DockerHub',
+              'ACR': 'Azure Container Registry',
             }
           }
         }
@@ -1503,6 +1504,7 @@ const setParameterData = function(){
 const setRegistryServiceInput = function(){
   const $modal = $('#registry-service'),
         inputArray = [];
+        $interfaceDockerhub = $modal.find('#registry-service-select-dockerhub');
   $modal.find('.registry-service-account-user').on({
     // フォーカスが当たった時にURLと未入力チェック
     'focus': function(){
@@ -1527,7 +1529,7 @@ const setRegistryServiceInput = function(){
       const value = $( this ).val();
       $modal.find('.modal-tab-body-block').each(function(i){
         const $imageTarget = $( this ).find('.registry-service-output-destination');
-        if ( inputArray[i][1] === null ) {
+        if ( $interfaceDockerhub.prop('checked') && inputArray[i][1] === null ) {
           $imageTarget.val( value + '/' + inputArray[i][0].toLowerCase() ).trigger('input');
         }
       });
@@ -3872,7 +3874,7 @@ const compareInfo = function( modalID, compareData ){
       $.ajax({
         "type": "GET",
         "url": workspace_api_conf.api.ciResult.pipelinerun.get.replace('{workspace_id}', workspace_id),
-        "data": {'latest': "True", "log": "False"}
+        "data": {'latest': "True"}
       }).done(function(response) {
         current_pipelineruns = response.rows;
         var visibility = "hidden";

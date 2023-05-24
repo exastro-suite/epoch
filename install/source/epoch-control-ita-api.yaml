@@ -39,9 +39,15 @@ spec:
       - name: epoch-control-ita-conf
         configMap:
           name: epoch-control-ita-conf
+      - name: epoch-control-ita-api-templates-inst
+        configMap:
+          name: epoch-control-ita-api-templates-inst
+      - name: epoch-control-ita-api-templates-pv
+        configMap:
+          name: epoch-control-ita-api-templates-pv
       containers:
       - name: epoch-control-ita-api
-        image: exastro/epoch-control-ita-api:1.1.0_20220630_1100
+        image: exastro/epoch-control-ita-api:1.2.0_20221031_1500
         env:
         - name: CONFIG_API_ITA_PATH
           value: "/etc/epoch/epochControlITAApi/api_ita.conf"
@@ -89,6 +95,12 @@ spec:
         volumeMounts:
         - name: epoch-control-ita-conf
           mountPath: /etc/epoch/epochControlITAApi
+        - name: epoch-control-ita-api-templates-inst
+          mountPath: /app/templates/ita_install.yaml
+          subPath: ita_install.yaml
+        - name: epoch-control-ita-api-templates-pv
+          mountPath: /app/templates/ita_pv.yaml
+          subPath: ita_pv.yaml
 ---
 apiVersion: v1
 kind: Service
